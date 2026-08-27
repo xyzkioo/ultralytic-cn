@@ -8,39 +8,38 @@ from typing import Any
 import cv2
 import numpy as np
 
-from ultralytics.solutions.solutions import BaseSolution, SolutionResults  # Import a parent class
+from ultralytics.solutions.solutions import BaseSolution, SolutionResults  # 导入父类
 from ultralytics.utils import plt_settings
 
 
 class Analytics(BaseSolution):
-    """A class for creating and updating various types of charts for visual analytics.
+    """创建和更新多种图表以进行可视化分析的类。
 
-    This class extends BaseSolution to provide functionality for generating line, bar, pie, and area charts based on
-    object detection and tracking data.
+    此类扩展 BaseSolution，提供基于目标检测和跟踪数据生成折线图、柱状图、饼图和面积图的功能。
 
-    Attributes:
-        type (str): The type of analytics chart to generate ('line', 'bar', 'pie', or 'area').
-        x_label (str): Label for the x-axis.
-        y_label (str): Label for the y-axis.
-        bg_color (str): Background color of the chart frame.
-        fg_color (str): Foreground color of the chart frame.
-        title (str): Title of the chart window.
-        max_points (int): Maximum number of data points to display on the chart.
-        fontsize (int): Font size for text display.
-        color_cycle (cycle): Cyclic iterator for chart colors.
-        total_counts (int): Total count of detected objects (used for line charts).
-        clswise_count (dict[str, int]): Dictionary for class-wise object counts.
-        fig (Figure): Matplotlib figure object for the chart.
-        ax (Axes): Matplotlib axes object for the chart.
-        canvas (FigureCanvasAgg): Canvas for rendering the chart.
-        lines (dict): Dictionary to store line objects for area charts.
-        color_mapping (dict[str, str]): Dictionary mapping class labels to colors for consistent visualization.
+    属性：
+        type (str): 要生成的分析图表类型（'line'、'bar'、'pie' 或 'area'）。
+        x_label (str): x 轴标签。
+        y_label (str): y 轴标签。
+        bg_color (str): 图表背景颜色。
+        fg_color (str): 图表前景颜色。
+        title (str): 图表窗口标题。
+        max_points (int): 图表显示的数据点最大数量。
+        fontsize (int): 显示文本的字体大小。
+        color_cycle (cycle): 图表颜色的循环迭代器。
+        total_counts (int): 检测到的对象总数（用于折线图）。
+        clswise_count (dict[str, int]): 按类别统计的对象数量字典。
+        fig (Figure): 图表的 Matplotlib 图形对象。
+        ax (Axes): 图表的 Matplotlib 坐标轴对象。
+        canvas (FigureCanvasAgg): 用于渲染图表的画布。
+        lines (dict): 用于保存面积图折线对象的字典。
+        color_mapping (dict[str, str]): 类别标签到颜色的映射，确保可视化颜色一致。
 
-    Methods:
-        process: Process image data and update the chart.
-        update_graph: Update the chart with new data points.
+    方法：
+        process: 处理图像数据并更新图表。
+        update_graph: 使用新的数据点更新图表。
 
-    Examples:
+    示例：
         >>> analytics = Analytics(analytics_type="line")
         >>> frame = cv2.imread("image.jpg")
         >>> results = analytics.process(frame, frame_number=1)
@@ -49,69 +48,69 @@ class Analytics(BaseSolution):
 
     @plt_settings()
     def __init__(self, **kwargs: Any) -> None:
-        """Initialize Analytics class with various chart types for visual data representation."""
+        """使用不同图表类型初始化 Analytics 类，以可视化表示数据。"""
         super().__init__(**kwargs)
 
         import matplotlib.pyplot as plt  # scope for faster 'import ultralytics'
         from matplotlib.backends.backend_agg import FigureCanvasAgg
         from matplotlib.figure import Figure
 
-        self.type = self.CFG["analytics_type"]  # Chart type: "line", "pie", "bar", or "area".
+        self.type = self.CFG["analytics_type"]  # 图表类型："line"、"pie"、"bar" 或 "area"
         self.x_label = "Classes" if self.type in {"bar", "pie"} else "Frame#"
         self.y_label = "Total Counts"
 
-        # Predefined data
-        self.bg_color = "#F3F3F3"  # background color of frame
-        self.fg_color = "#111E68"  # foreground color of frame
-        self.title = "Ultralytics Solutions"  # window name
-        self.max_points = 45  # maximum points to be drawn on window
-        self.fontsize = 25  # text font size for display
-        figsize = self.CFG["figsize"]  # Output size, e.g. (12.8, 7.2) -> 1280x720.
+        # 预定义数据
+        self.bg_color = "#F3F3F3"  # 画布背景颜色
+        self.fg_color = "#111E68"  # 画布前景颜色
+        self.title = "Ultralytics Solutions"  # 窗口名称
+        self.max_points = 45  # 窗口中绘制的数据点最大数量
+        self.fontsize = 25  # 显示文本的字体大小
+        figsize = self.CFG["figsize"]  # 输出尺寸，例如 (12.8, 7.2) -> 1280x720
         self.color_cycle = cycle(["#DD00BA", "#042AFF", "#FF4447", "#7D24FF", "#BD00FF"])
 
-        self.total_counts = 0  # Stores total counts for line charts.
-        self.clswise_count = {}  # dictionary for class-wise counts
-        self.update_every = kwargs.get("update_every", 30)  # Only update graph every 30 frames by default
-        self.last_plot_im = None  # Cache of the last rendered chart
+        self.total_counts = 0  # 保存折线图的总计数
+        self.clswise_count = {}  # 按类别统计数量的字典
+        self.update_every = kwargs.get("update_every", 30)  # 默认每 30 帧更新一次图表
+        self.last_plot_im = None  # 缓存最近渲染的图表
 
-        # Ensure line and area chart
+        # 确保使用折线图和面积图
         if self.type in {"line", "area"}:
             self.lines = {}
             self.fig = Figure(facecolor=self.bg_color, figsize=figsize)
-            self.canvas = FigureCanvasAgg(self.fig)  # Set common axis properties
+            self.canvas = FigureCanvasAgg(self.fig)  # 设置通用坐标轴属性
             self.ax = self.fig.add_subplot(111, facecolor=self.bg_color)
             if self.type == "line":
                 (self.line,) = self.ax.plot([], [], color="cyan", linewidth=self.line_width)
         elif self.type in {"bar", "pie"}:
-            # Initialize bar or pie plot
+            # 初始化柱状图或饼图
             self.fig, self.ax = plt.subplots(figsize=figsize, facecolor=self.bg_color)
-            self.canvas = FigureCanvasAgg(self.fig)  # Set common axis properties
+            self.canvas = FigureCanvasAgg(self.fig)  # 设置通用坐标轴属性
             self.ax.set_facecolor(self.bg_color)
             self.color_mapping = {}
 
-            if self.type == "pie":  # Ensure pie chart is circular
+            if self.type == "pie":  # 确保饼图为圆形
                 self.ax.axis("equal")
 
     def process(self, im0: np.ndarray, frame_number: int) -> SolutionResults:
-        """Process image data and run object tracking to update analytics charts.
+        """处理图像数据并执行对象跟踪，以更新分析图表。
 
-        Args:
-            im0 (np.ndarray): Input image for processing.
-            frame_number (int): Video frame number for plotting the data.
+        参数：
+            im0 (np.ndarray): 要处理的输入图像。
+            frame_number (int): 用于绘制数据的视频帧编号。
 
-        Returns:
-            (SolutionResults): Contains processed image `plot_im`, 'total_tracks' (int, total number of tracked objects)
-                and 'classwise_count' (dict, per-class object count).
+        返回：
+            (SolutionResults): 包含处理后的图像 `plot_im`、`total_tracks`（跟踪对象总数）和 `classwise_count`
+                （按类别统计的对象数量）。
 
-        Raises:
+        异常：
             ValueError: If an unsupported chart type is specified.
 
-        Examples:
+        示例：
             >>> analytics = Analytics(analytics_type="line")
             >>> frame = np.zeros((480, 640, 3), dtype=np.uint8)
             >>> results = analytics.process(frame, frame_number=1)
         """
-        self.extract_tracks(im0)  # Extract tracks
+        self.extract_tracks(im0)  # 提取跟踪结果
         if self.type == "line":
             self.total_counts += len(self.boxes)
             update_required = frame_number % self.update_every == 0 or self.last_plot_im is None
@@ -132,31 +131,30 @@ class Analytics(BaseSolution):
         else:
             raise ValueError(f"Unsupported analytics_type='{self.type}'. Supported types: line, bar, pie, area.")
 
-        # Return results for downstream use.
+        # 返回结果供下游使用
         return SolutionResults(plot_im=plot_im, total_tracks=len(self.track_ids), classwise_count=self.clswise_count)
 
     def update_graph(
         self, frame_number: int, count_dict: dict[str, int] | None = None, plot: str = "line"
     ) -> np.ndarray:
-        """Update the graph with new data for single or multiple classes.
+        """使用单个或多个类别的新数据更新图表。
 
-        Args:
-            frame_number (int): The current frame number.
-            count_dict (dict[str, int], optional): Dictionary with class names as keys and counts as values for multiple
-                classes. If None, updates a single line graph.
-            plot (str): Type of the plot. Options are 'line', 'bar', 'pie', or 'area'.
+        参数：
+            frame_number (int): 当前帧编号。
+            count_dict (dict[str, int], 可选): 多类别数据字典，键为类别名称，值为数量；为 None 时更新单条折线图。
+            plot (str): 图表类型，可选 'line'、'bar'、'pie' 或 'area'。
 
-        Returns:
-            (np.ndarray): Updated image containing the graph.
+        返回：
+            (np.ndarray): 包含更新后图表的图像。
 
-        Examples:
+        示例：
             >>> analytics = Analytics(analytics_type="bar")
             >>> frame_num = 10
             >>> results_dict = {"person": 5, "car": 3}
             >>> updated_image = analytics.update_graph(frame_num, results_dict, plot="bar")
         """
         if count_dict is None:
-            # Single line update
+            # 更新单条折线
             x_data = np.append(self.line.get_xdata(), float(frame_number))
             y_data = np.append(self.line.get_ydata(), float(self.total_counts))
 
@@ -165,7 +163,7 @@ class Analytics(BaseSolution):
 
             self.line.set_data(x_data, y_data)
             self.line.set_label("Counts")
-            self.line.set_color("#7b0068")  # Pink color
+            self.line.set_color("#7b0068")  # 粉色
             self.line.set_marker("*")
             self.line.set_markersize(self.line_width * 5)
         else:
@@ -173,7 +171,7 @@ class Analytics(BaseSolution):
             counts = list(count_dict.values())
             if plot == "area":
                 color_cycle = cycle(["#DD00BA", "#042AFF", "#FF4447", "#7D24FF", "#BD00FF"])
-                # Multiple lines or area update
+                # 更新多条折线或面积图
                 x_data = self.ax.lines[0].get_xdata() if self.ax.lines else np.array([])
                 y_data_dict = {key: np.array([]) for key in count_dict}
                 if self.ax.lines:
@@ -205,8 +203,8 @@ class Analytics(BaseSolution):
                         label=f"{key} Data Points",
                     )
             elif plot == "bar":
-                self.ax.clear()  # clear bar data
-                for label in labels:  # Map labels to colors
+                self.ax.clear()  # 清除柱状图数据
+                for label in labels:  # 将标签映射到颜色
                     if label not in self.color_mapping:
                         self.color_mapping[label] = next(self.color_cycle)
                 colors = [self.color_mapping[label] for label in labels]
@@ -220,40 +218,40 @@ class Analytics(BaseSolution):
                         va="bottom",
                         color=self.fg_color,
                     )
-                # Create the legend using labels from the bars
+                # 使用柱状图标签创建图例
                 for bar, label in zip(bars, labels):
-                    bar.set_label(label)  # Assign label to each bar
+                    bar.set_label(label)  # 为每个柱状条设置标签
             elif plot == "pie":
                 total = sum(counts)
                 percentages = [size / total * 100 for size in counts]
                 self.ax.clear()
 
                 start_angle = 90
-                # Create pie chart and create legend labels with percentages
+                # 创建饼图，并使用百分比创建图例标签
                 wedges, _ = self.ax.pie(
                     counts, labels=labels, startangle=start_angle, textprops={"color": self.fg_color}, autopct=None
                 )
                 legend_labels = [f"{label} ({percentage:.1f}%)" for label, percentage in zip(labels, percentages)]
 
-                # Assign the legend using the wedges and manually created labels
+                # 使用扇区和手动创建的标签设置图例
                 self.ax.legend(wedges, legend_labels, title="Classes", loc="center left", bbox_to_anchor=(1, 0, 0.5, 1))
                 self.fig.subplots_adjust(left=0.1, right=0.75)  # Adjust layout to fit the legend
 
-        # Common plot settings
-        self.ax.set_facecolor("#f0f0f0")  # Set to light gray or any other color you like
-        self.ax.grid(True, linestyle="--", linewidth=0.5, alpha=0.5)  # Display grid for more data insights
+        # 通用图表设置
+        self.ax.set_facecolor("#f0f0f0")  # 设置为浅灰色，也可替换为其他颜色
+        self.ax.grid(True, linestyle="--", linewidth=0.5, alpha=0.5)  # 显示网格以便观察数据
         self.ax.set_title(self.title, color=self.fg_color, fontsize=self.fontsize)
         self.ax.set_xlabel(self.x_label, color=self.fg_color, fontsize=self.fontsize - 3)
         self.ax.set_ylabel(self.y_label, color=self.fg_color, fontsize=self.fontsize - 3)
 
-        # Add and format legend
+        # 添加并格式化图例
         legend = self.ax.get_legend() or self.ax.legend(
             loc="upper left", fontsize=13, facecolor=self.bg_color, edgecolor=self.bg_color
         )
         for text in legend.get_texts():
             text.set_color(self.fg_color)
 
-        # Redraw graph, update view, capture, and display the updated plot
+        # 重绘图表、更新视图、捕获并显示更新后的图像
         self.ax.relim()
         self.ax.autoscale_view()
         self.canvas.draw()
@@ -261,4 +259,4 @@ class Analytics(BaseSolution):
         im0 = cv2.cvtColor(im0[:, :, :3], cv2.COLOR_RGBA2BGR)
         self.display_output(im0)
 
-        return im0  # Return the image
+        return im0  # 返回图像

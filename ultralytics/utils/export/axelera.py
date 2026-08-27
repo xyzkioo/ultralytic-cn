@@ -16,9 +16,8 @@ import torch
 from ultralytics.utils import LOGGER, YAML
 from ultralytics.utils.checks import check_requirements
 
-# Axelera exports mutate process-global state (the PROTOCOL_BUFFERS env var below, plus any working-directory
-# files the compiler emits), so a module-level lock serializes concurrent in-process exports. Cross-process
-# Platform workers each hold their own lock and never contend.
+# Axelera 导出会修改进程级全局状态（包括下方的 PROTOCOL_BUFFERS 环境变量和编译器生成的任意工作目录文件），
+# 因此使用模块级锁串行执行同一进程内的并发导出。跨进程的平台工作进程各自持有独立的锁，互不竞争。
 _AXELERA_EXPORT_LOCK = threading.Lock()
 
 
@@ -31,22 +30,22 @@ def torch2axelera(
     metadata: dict | None = None,
     prefix: str = "",
 ) -> str:
-    """Convert a YOLO model to Axelera format.
+    """将 YOLO 模型转换为 Axelera 格式。
 
-    Args:
-        model (torch.nn.Module): Source YOLO model for quantization.
-        output_dir (Path | str): Directory to save the exported Axelera model.
-        calibration_dataset (torch.utils.data.DataLoader): Calibration dataloader for quantization.
-        transform_fn (Callable[[Any], np.ndarray]): Calibration preprocessing transform function.
-        model_name (str, optional): Name for the compiled model. Defaults to "model".
-        metadata (dict | None, optional): Optional metadata to save as YAML. Defaults to None.
-        prefix (str, optional): Prefix for log messages. Defaults to "".
+    参数：
+        model (torch.nn.Module): 用于量化的源 YOLO 模型。
+        output_dir (Path | str): 保存导出 Axelera 模型的目录。
+        calibration_dataset (torch.utils.数据.DataLoader): 用于量化的校准数据加载器。
+        transform_fn (Callable[[Any], np.ndarray]): 校准预处理变换函数。
+        model_name (str, 可选): 编译模型的名称。默认为 "model"。
+        metadata (dict | None, 可选): 保存为 YAML 的可选元数据。默认为 None。
+        prefix (str, 可选): 日志消息前缀。默认为 ""。
 
-    Returns:
-        (str): Path to exported Axelera model directory.
+    返回：
+        (str): 导出的 Axelera 模型目录路径。
     """
-    # Serialize within the process: the steps below mutate process-global state (the protobuf env var and any
-    # working-directory files the compiler writes), so concurrent in-process exports must not overlap.
+    # 在进程内串行执行：下面的步骤会修改进程级全局状态（protobuf 环境变量和编译器写入的任意工作目录文件），
+    # 因此同一进程内的并发导出不能重叠。
     with _AXELERA_EXPORT_LOCK:
         prev_protobuf = os.environ.get("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION")
         os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
@@ -66,7 +65,7 @@ def torch2axelera(
 
             LOGGER.info(f"\n{prefix} starting export with Axelera compiler...")
 
-            # Resolve to an absolute path so the relative compile dir below can never alias it.
+            # 解析为绝对路径，确保下面的相对编译目录不会与其产生别名。
             output_dir = Path(output_dir).resolve()
             if output_dir.exists():
                 shutil.rmtree(output_dir)
@@ -87,11 +86,10 @@ def torch2axelera(
                 transform_fn=transform_fn,
             )
 
-            # The Axelera compiler emits invalid artifacts for absolute output paths, so compile into a local
-            # relative directory. TemporaryDirectory gives it a unique name (so back-to-back exports of identically
-            # named models never collide) in the current working directory, and removes it on exit even if
-            # compilation raises; passing its relative basename keeps it from aliasing the absolute output_dir, so
-            # cleanup can never delete the result.
+            # Axelera 编译器在绝对输出路径下会生成无效产物，因此在本地相对目录中编译。
+            # TemporaryDirectory 会在当前工作目录中生成唯一名称（连续导出同名模型时也不会冲突），
+            # 并在退出时删除该目录，即使编译抛出异常也一样；传入相对目录名可避免它与绝对 output_dir
+            # 产生别名，从而确保清理操作不会删除最终结果。
             with tempfile.TemporaryDirectory(prefix="axelera_compile_", dir=".") as compile_root:
                 compile_dir = Path(Path(compile_root).name)
                 compiler.compile(model=qmodel, config=config, output_dir=compile_dir)
@@ -103,7 +101,7 @@ def torch2axelera(
                             artifact_path.replace(output_dir / artifact_path.name)
                             break
 
-                # Remove intermediate compiler artifacts, keeping only the compiled model and config.
+                # 删除编译器生成的中间产物，仅保留已编译模型和配置文件。
                 keep_suffixes = {".axm"}
                 keep_names = {"compiler_config_final.toml", "metadata.yaml"}
                 for f in output_dir.iterdir():
@@ -115,7 +113,7 @@ def torch2axelera(
 
             return str(output_dir)
         finally:
-            # Restore original PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION value
+            # 恢复原始的 PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION 值。
             if prev_protobuf is None:
                 os.environ.pop("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", None)
             else:

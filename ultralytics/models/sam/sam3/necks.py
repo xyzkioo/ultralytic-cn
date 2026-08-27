@@ -2,7 +2,7 @@
 
 # Copyright (c) Meta Platforms, Inc. and affiliates. All Rights Reserved
 
-"""Necks are the interface between a vision backbone and the rest of the detection model."""
+"""颈部网络是视觉骨干网络与检测模型其余部分之间的接口。"""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from torch import nn
 
 
 class Sam3DualViTDetNeck(nn.Module):
-    """A neck that implements a simple FPN as in ViTDet, with support for dual necks (for SAM3 and SAM2)."""
+    """实现 ViTDet 风格简单 FPN 的颈部，并支持双颈部结构（用于 SAM3 和 SAM2）。"""
 
     def __init__(
         self,
@@ -23,16 +23,16 @@ class Sam3DualViTDetNeck(nn.Module):
         scale_factors=(4.0, 2.0, 1.0, 0.5),
         add_sam2_neck: bool = False,
     ):
-        """SimpleFPN neck a la ViTDet, very lightly adapted from detectron2.
+        """ViTDet 风格的 SimpleFPN 颈部，基于 detectron2 做了少量调整。
 
-        Supports a "dual neck" setting with two identical necks (for SAM3 and SAM2) that have different weights.
+        支持“双颈部”设置：使用两个结构相同但权重不同的颈部，分别用于 SAM3 和 SAM2。
 
-        Args:
-            trunk (nn.Module): The backbone.
-            position_encoding (nn.Module): The positional encoding to use.
-            d_model (int): The dimension of the model.
-            scale_factors (tuple): Scale factors for each FPN level.
-            add_sam2_neck (bool): Whether to add a second neck for SAM2.
+        参数：
+            trunk (nn.Module): 骨干网络。
+            position_encoding (nn.Module): 要使用的位置编码。
+            d_model (int): 模型维度。
+            scale_factors (tuple): 每个 FPN 层级的缩放因子。
+            add_sam2_neck (bool): 是否为 SAM2 添加第二个颈部。
         """
         super().__init__()
         self.trunk = trunk
@@ -100,13 +100,13 @@ class Sam3DualViTDetNeck(nn.Module):
 
         self.sam2_convs = None
         if add_sam2_neck:
-            # Assumes sam2 neck is just a clone of the original neck
+            # 假设 sam2 neck 只是原始 neck 的克隆
             self.sam2_convs = deepcopy(self.convs)
 
     def forward(
         self, tensor_list: list[torch.Tensor]
     ) -> tuple[list[torch.Tensor], list[torch.Tensor], list[torch.Tensor] | None, list[torch.Tensor] | None]:
-        """Get feature maps and positional encodings from the neck."""
+        """从颈部网络获取特征图和位置编码。"""
         xs = self.trunk(tensor_list)
         x = xs[-1]  # simpleFPN
         sam3_out, sam3_pos = self.sam_forward_feature_levels(x, self.convs)
@@ -118,7 +118,7 @@ class Sam3DualViTDetNeck(nn.Module):
     def sam_forward_feature_levels(
         self, x: torch.Tensor, convs: nn.ModuleList
     ) -> tuple[list[torch.Tensor], list[torch.Tensor]]:
-        """Run neck convolutions and compute positional encodings for each feature level."""
+        """运行颈部卷积，并计算每个特征层级的位置编码。"""
         outs, poss = [], []
         for conv in convs:
             feat = conv(x)
@@ -127,6 +127,6 @@ class Sam3DualViTDetNeck(nn.Module):
         return outs, poss
 
     def set_imgsz(self, imgsz: list[int] | None = None):
-        """Set the image size for the trunk backbone."""
+        """为主干骨干网络设置图像尺寸。"""
         imgsz = imgsz if imgsz is not None else [1008, 1008]
         self.trunk.set_imgsz(imgsz)

@@ -15,38 +15,38 @@ from ultralytics.nn.modules.transformer import MLP
 
 
 class LinearPresenceHead(nn.Sequential):
-    """Linear presence head for predicting the presence of classes in an image."""
+    """用于预测图像中类别是否存在的线性存在性头。"""
 
     def __init__(self, d_model):
-        """Initializes the LinearPresenceHead."""
-        # a hack to make `LinearPresenceHead` compatible with old checkpoints
+        """初始化 LinearPresenceHead。"""
+            # 兼容旧检查点的临时处理，使 `LinearPresenceHead` 可以正常加载
         super().__init__(nn.Identity(), nn.Identity(), nn.Linear(d_model, 1))
 
     def forward(self, hs, prompt, prompt_mask):
-        """Forward pass of the presence head."""
+        """执行存在性头的前向传播。"""
         return super().forward(hs)
 
 
 class MaskPredictor(nn.Module):
-    """Predicts masks from object queries and pixel embeddings."""
+    """根据目标查询和像素嵌入预测掩码。"""
 
     def __init__(self, hidden_dim, mask_dim):
-        """Initializes the MaskPredictor."""
+        """初始化 MaskPredictor。"""
         super().__init__()
         self.mask_embed = MLP(hidden_dim, hidden_dim, mask_dim, 3)
 
     def forward(self, obj_queries, pixel_embed):
-        """Predicts masks from object queries and pixel embeddings."""
+        """根据目标查询和像素嵌入预测掩码。"""
         if len(obj_queries.shape) == 3:
             if pixel_embed.ndim == 3:
-                # batch size was omitted
+                # 批次大小 was omitted
                 mask_preds = torch.einsum("bqc,chw->bqhw", self.mask_embed(obj_queries), pixel_embed)
             else:
                 mask_preds = torch.einsum("bqc,bchw->bqhw", self.mask_embed(obj_queries), pixel_embed)
         else:
-            # Assumed to have aux masks
+            # 假设包含辅助掩码
             if pixel_embed.ndim == 3:
-                # batch size was omitted
+                # 批次大小 was omitted
                 mask_preds = torch.einsum("lbqc,chw->lbqhw", self.mask_embed(obj_queries), pixel_embed)
             else:
                 mask_preds = torch.einsum("lbqc,bchw->lbqhw", self.mask_embed(obj_queries), pixel_embed)
@@ -55,7 +55,7 @@ class MaskPredictor(nn.Module):
 
 
 class SegmentationHead(nn.Module):
-    """Segmentation head that predicts masks from backbone features and object queries."""
+    """根据骨干网络特征和目标查询预测掩码的分割头。"""
 
     def __init__(
         self,
@@ -69,7 +69,7 @@ class SegmentationHead(nn.Module):
         shared_conv=False,
         compile_mode_pixel_decoder=None,
     ):
-        """Initializes the SegmentationHead."""
+        """初始化 SegmentationHead。"""
         super().__init__()
         self.use_encoder_inputs = use_encoder_inputs
         self.aux_masks = aux_masks
@@ -90,14 +90,14 @@ class SegmentationHead(nn.Module):
 
         self.act_ckpt = act_ckpt
 
-        # used to update the output dictionary
+            # 用于更新输出字典
         self.instance_keys = ["pred_masks"]
 
     def _embed_pixels(self, backbone_feats: list[torch.Tensor], encoder_hidden_states) -> torch.Tensor:
-        """Embeds pixels using the pixel decoder."""
+        """使用像素解码器生成像素嵌入。"""
         if self.use_encoder_inputs:
             backbone_visual_feats = [bb_feat.clone() for bb_feat in backbone_feats]
-            # Extract visual embeddings
+            # 提取视觉嵌入
             encoder_hidden_states = encoder_hidden_states.permute(1, 2, 0)
             spatial_dim = math.prod(backbone_feats[-1].shape[-2:])
             encoder_visual_embed = encoder_hidden_states[..., :spatial_dim].reshape(-1, *backbone_feats[-1].shape[1:])
@@ -111,7 +111,7 @@ class SegmentationHead(nn.Module):
             backbone_feats = [x for x in backbone_feats]
             pixel_embed = self.pixel_decoder(backbone_feats)
             if pixel_embed.shape[0] == 1:
-                # For batch_size=1 training, we can avoid the indexing to save memory
+                # 对于 batch_size=1 的训练，可以跳过索引操作以节省内存
                 pixel_embed = pixel_embed.squeeze(0)
             else:
                 pixel_embed = pixel_embed[[0], ...]
@@ -124,7 +124,7 @@ class SegmentationHead(nn.Module):
         encoder_hidden_states: torch.Tensor = None,
         **kwargs,
     ) -> dict[str, torch.Tensor]:
-        """Forward pass of the SegmentationHead."""
+        """执行 SegmentationHead 的前向传播。"""
         if self.use_encoder_inputs:
             assert encoder_hidden_states is not None
 
@@ -141,7 +141,7 @@ class SegmentationHead(nn.Module):
 
 
 class PixelDecoder(nn.Module):
-    """Pixel decoder module that upsamples backbone features."""
+    """对骨干网络特征进行上采样的像素解码器模块。"""
 
     def __init__(
         self,
@@ -151,7 +151,7 @@ class PixelDecoder(nn.Module):
         shared_conv=False,
         compile_mode=None,
     ):
-        """Initializes the PixelDecoder."""
+        """初始化 PixelDecoder。"""
         super().__init__()
         self.hidden_dim = hidden_dim
         self.num_upsampling_stages = num_upsampling_stages
@@ -169,18 +169,18 @@ class PixelDecoder(nn.Module):
         self.out_dim = self.conv_layers[-1].out_channels
         if compile_mode is not None:
             self.forward = torch.compile(self.forward, mode=compile_mode, dynamic=True, fullgraph=True)
-            # Needed to make checkpointing happy. But we don't know if the module is checkpointed, so we disable it by default.
+            # 这是检查点机制所需的处理。但无法确定模块是否使用检查点，因此默认禁用。
             torch._dynamo.config.optimize_ddp = False
 
     def forward(self, backbone_feats: list[torch.Tensor]):
-        """Forward pass of the PixelDecoder."""
+        """执行 PixelDecoder 的前向传播。"""
         prev_fpn = backbone_feats[-1]
         fpn_feats = backbone_feats[:-1]
         for layer_idx, bb_feat in enumerate(fpn_feats[::-1]):
             curr_fpn = bb_feat
             prev_fpn = curr_fpn + F.interpolate(prev_fpn, size=curr_fpn.shape[-2:], mode=self.interpolation_mode)
             if self.shared_conv:
-                # only one conv layer
+                # 仅使用一个卷积层
                 layer_idx = 0
             prev_fpn = self.conv_layers[layer_idx](prev_fpn)
             prev_fpn = F.relu(self.norms[layer_idx](prev_fpn))
@@ -189,7 +189,7 @@ class PixelDecoder(nn.Module):
 
 
 class UniversalSegmentationHead(SegmentationHead):
-    """This module handles semantic+instance segmentation."""
+    """处理语义分割和实例分割的模块。"""
 
     def __init__(
         self,
@@ -203,7 +203,7 @@ class UniversalSegmentationHead(SegmentationHead):
         dot_product_scorer=None,
         cross_attend_prompt=None,
     ):
-        """Initializes the UniversalSegmentationHead."""
+        """初始化 UniversalSegmentationHead。"""
         super().__init__(
             hidden_dim=hidden_dim,
             upsampling_stages=upsampling_stages,
@@ -240,7 +240,7 @@ class UniversalSegmentationHead(SegmentationHead):
         prompt_mask: torch.Tensor = None,
         **kwargs,
     ) -> dict[str, torch.Tensor]:
-        """Forward pass of the UniversalSegmentationHead."""
+        """执行 UniversalSegmentationHead 的前向传播。"""
         assert encoder_hidden_states is not None
         bs = encoder_hidden_states.shape[1]
 

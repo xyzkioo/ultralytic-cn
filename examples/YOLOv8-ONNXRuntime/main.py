@@ -59,10 +59,10 @@ class YOLOv8:
         self.confidence_thres = confidence_thres
         self.iou_thres = iou_thres
 
-        # Load the class names from the COCO dataset
+        # 从 COCO 数据集加载类别名称
         self.classes = YAML.load(ROOT / "cfg/datasets/coco8.yaml")["names"]
 
-        # Generate a color palette for the classes
+        # 为各类别生成颜色调色板
         self.color_palette = np.random.uniform(0, 255, size=(len(self.classes), 3))
 
     def letterbox(self, img: np.ndarray, new_shape: tuple[int, int] = (640, 640)) -> tuple[np.ndarray, tuple[int, int]]:
@@ -78,10 +78,10 @@ class YOLOv8:
         """
         shape = img.shape[:2]  # current shape [height, width]
 
-        # Scale ratio (new / old)
+        # 缩放比例（新尺寸 / 原尺寸）
         r = min(new_shape[0] / shape[0], new_shape[1] / shape[1])
 
-        # Compute padding
+        # 计算填充量
         new_unpad = round(shape[1] * r), round(shape[0] * r)
         dw, dh = (new_shape[1] - new_unpad[0]) / 2, (new_shape[0] - new_unpad[1]) / 2  # wh padding
 
@@ -95,31 +95,31 @@ class YOLOv8:
 
     def draw_detections(self, img: np.ndarray, box: list[float], score: float, class_id: int) -> None:
         """Draw bounding boxes and labels on the input image based on the detected objects."""
-        # Extract the coordinates of the bounding box
+        # 提取边界框坐标
         x1, y1, w, h = box
 
-        # Retrieve the color for the class ID
+        # 获取类别 ID 对应的颜色
         color = self.color_palette[class_id]
 
-        # Draw the bounding box on the image
+        # 在图像上绘制边界框
         cv2.rectangle(img, (int(x1), int(y1)), (int(x1 + w), int(y1 + h)), color, 2)
 
-        # Create the label text with class name and score
+        # 使用类别名称和分数创建标签文本
         label = f"{self.classes[class_id]}: {score:.2f}"
 
-        # Calculate the dimensions of the label text
+        # 计算标签文本尺寸
         (label_width, label_height), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
 
-        # Calculate the position of the label text
+        # 计算标签文本位置
         label_x = x1
         label_y = y1 - 10 if y1 - 10 > label_height else y1 + 10
 
-        # Draw a filled rectangle as the background for the label text
+        # 绘制填充矩形作为标签文本背景
         cv2.rectangle(
             img, (label_x, label_y - label_height), (label_x + label_width, label_y + label_height), color, cv2.FILLED
         )
 
-        # Draw the label text on the image
+        # 在图像上绘制标签文本
         cv2.putText(img, label, (label_x, label_y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1, cv2.LINE_AA)
 
     def preprocess(self) -> tuple[np.ndarray, tuple[int, int]]:
@@ -132,27 +132,27 @@ class YOLOv8:
             image_data (np.ndarray): Preprocessed image data ready for inference with shape (1, 3, height, width).
             pad (tuple[int, int]): Padding values (top, left) applied during letterboxing.
         """
-        # Read the input image using OpenCV
+        # 使用 OpenCV 读取输入图像
         self.img = cv2.imread(self.input_image)
 
-        # Get the height and width of the input image
+        # 获取输入图像的高度和宽度
         self.img_height, self.img_width = self.img.shape[:2]
 
-        # Convert the image color space from BGR to RGB
+        # 将图像颜色空间从 BGR 转换为 RGB
         img = cv2.cvtColor(self.img, cv2.COLOR_BGR2RGB)
 
         img, pad = self.letterbox(img, (self.input_height, self.input_width))
 
-        # Normalize the image data by dividing it by 255.0
+        # 将图像数据除以 255.0 进行归一化
         image_data = np.array(img) / 255.0
 
-        # Transpose the image to have the channel dimension as the first dimension
+        # 转置图像，使通道维度位于第一维
         image_data = np.transpose(image_data, (2, 0, 1))  # Channel first
 
-        # Expand the dimensions of the image data to match the expected input shape
+        # 扩展图像数据维度，使其匹配预期输入形状
         image_data = image_data[None].astype(np.float32)
 
-        # Return the preprocessed image data
+        # 返回预处理后的图像数据
         return image_data, pad
 
     def postprocess(self, input_image: np.ndarray, output: list[np.ndarray], pad: tuple[int, int]) -> np.ndarray:
@@ -169,63 +169,63 @@ class YOLOv8:
         Returns:
             (np.ndarray): The input image with detections drawn on it.
         """
-        # Transpose and squeeze the output to match the expected shape
+        # 转置并压缩输出，使其匹配预期形状
         outputs = np.transpose(np.squeeze(output[0]))
 
-        # Get the number of rows in the outputs array
+        # 获取输出数组中的行数
         rows = outputs.shape[0]
 
-        # Lists to store the bounding boxes, scores, and class IDs of the detections
+        # 用于保存检测结果边界框、分数和类别 ID 的列表
         boxes = []
         scores = []
         class_ids = []
 
-        # Calculate the scaling factors for the bounding box coordinates
+        # 计算边界框坐标的缩放因子
         gain = min(self.input_height / self.img_height, self.input_width / self.img_width)
         outputs[:, 0] -= pad[1]
         outputs[:, 1] -= pad[0]
 
-        # Iterate over each row in the outputs array
+        # 遍历输出数组中的每一行
         for i in range(rows):
-            # Extract the class scores from the current row
+            # 从当前行提取类别分数
             classes_scores = outputs[i][4:]
 
-            # Find the maximum score among the class scores
+            # 找到类别分数中的最大值
             max_score = np.amax(classes_scores)
 
-            # If the maximum score is above the confidence threshold
+            # 如果最大分数高于置信度阈值
             if max_score >= self.confidence_thres:
-                # Get the class ID with the highest score
+                # 获取分数最高的类别 ID
                 class_id = np.argmax(classes_scores)
 
-                # Extract the bounding box coordinates from the current row
+                # 从当前行提取边界框坐标
                 x, y, w, h = outputs[i][0], outputs[i][1], outputs[i][2], outputs[i][3]
 
-                # Calculate the scaled coordinates of the bounding box
+                # 计算缩放后的边界框坐标
                 left = int((x - w / 2) / gain)
                 top = int((y - h / 2) / gain)
                 width = int(w / gain)
                 height = int(h / gain)
 
-                # Add the class ID, score, and box coordinates to the respective lists
+                # 将类别 ID、分数和框坐标添加到对应列表
                 class_ids.append(class_id)
                 scores.append(max_score)
                 boxes.append([left, top, width, height])
 
-        # Apply non-maximum suppression to filter out overlapping bounding boxes
+        # 应用非极大值抑制，过滤重叠边界框
         indices = cv2.dnn.NMSBoxes(boxes, scores, self.confidence_thres, self.iou_thres)
 
-        # Iterate over the selected indices after non-maximum suppression
+        # 遍历非极大值抑制后选中的索引
         for i in np.array(indices).flatten():
-            # Get the box, score, and class ID corresponding to the index
+        # 获取索引对应的框、分数和类别 ID
             box = boxes[int(i)]
             score = scores[int(i)]
             class_id = class_ids[int(i)]
 
-            # Draw the detection on the input image
+        # 在输入图像上绘制检测结果
             self.draw_detections(input_image, box, score, class_id)
 
-        # Return the modified input image
+        # 返回修改后的输入图像
         return input_image
 
     def main(self) -> np.ndarray:
@@ -238,26 +238,26 @@ class YOLOv8:
         providers = [p for p in ("CUDAExecutionProvider", "CPUExecutionProvider") if p in available]
         session = ort.InferenceSession(self.onnx_model, providers=providers or available)
 
-        # Get the model inputs
+        # 获取模型输入
         model_inputs = session.get_inputs()
 
-        # Store the shape of the input for later use, falling back to 640 for dynamic (non-integer) axes
+        # 保存输入形状供后续使用；动态（非整数）轴回退到 640
         _, _, height, width = model_inputs[0].shape
         self.input_height = height if isinstance(height, int) else 640
         self.input_width = width if isinstance(width, int) else 640
 
-        # Preprocess the image data
+        # 预处理图像数据
         img_data, pad = self.preprocess()
 
-        # Run inference using the preprocessed image data
+        # 使用预处理后的图像数据运行推理
         outputs = session.run(None, {model_inputs[0].name: img_data})
 
-        # Perform post-processing on the outputs to obtain output image
+        # 对输出执行后处理以获得输出图像
         return self.postprocess(self.img, outputs, pad)
 
 
 if __name__ == "__main__":
-    # Create an argument parser to handle command-line arguments
+    # 创建参数解析器以处理命令行参数
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, default="yolov8n.onnx", help="Input your ONNX model.")
     parser.add_argument("--img", type=str, default=str(ASSETS / "bus.jpg"), help="Path to input image.")
@@ -265,18 +265,18 @@ if __name__ == "__main__":
     parser.add_argument("--iou-thres", type=float, default=0.5, help="NMS IoU threshold")
     args = parser.parse_args()
 
-    # Check the requirements and select the appropriate backend (CPU or GPU)
+    # 检查依赖并选择合适的后端（CPU 或 GPU）
     check_requirements("onnxruntime-gpu" if torch.cuda.is_available() else "onnxruntime")
 
-    # Create an instance of the YOLOv8 class with the specified arguments
+    # 使用指定参数创建 YOLOv8 类实例
     detection = YOLOv8(args.model, args.img, args.conf_thres, args.iou_thres)
 
-    # Perform object detection and obtain the output image
+    # 执行目标检测并获取输出图像
     output_image = detection.main()
 
-    # Display the output image in a window
+    # 在窗口中显示输出图像
     cv2.namedWindow("Output", cv2.WINDOW_NORMAL)
     cv2.imshow("Output", output_image)
 
-    # Wait for a key press to exit
+    # 等待按键退出
     cv2.waitKey(0)

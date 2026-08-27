@@ -1,8 +1,8 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
-"""Shared helpers for operating on lists of track objects across trackers.
+"""用于在不同跟踪器之间操作跟踪对象列表的通用辅助函数。
 
-These functions are intentionally generic: they only touch attributes that every track
-implementation exposes (`track_id`, `frame_id`, `start_frame`, `xyxy`, `mean`, `covariance`).
+这些函数保持通用性，只访问所有跟踪实现都会提供的属性（`track_id`、`frame_id`、`start_frame`、`xyxy`、
+`mean` 和 `covariance`）。
 """
 
 from __future__ import annotations
@@ -23,22 +23,22 @@ def merge_track_pools(
     removed: list,
     removed_buffer: int = 1000,
 ) -> None:
-    """Apply the standard end-of-frame bookkeeping to a tracker's persistent pools in place.
+    """在原地对跟踪器的持久化跟踪池执行标准的帧末整理。
 
-    Merges newly activated and re-found tracks into `tracker.tracked_stracks`, moves the transitioned tracks into
-    `tracker.lost_stracks`, dedups by IoU, appends removals to `tracker.removed_stracks`, and trims the removed buffer
-    to `removed_buffer` entries.
+    将新激活和重新找回的跟踪对象合并到 `tracker.tracked_stracks`，将状态发生转移的对象移动到
+    `tracker.lost_stracks`，按 IoU 去重，将已移除对象追加到 `tracker.removed_stracks`，并将移除缓冲区裁剪为
+    `removed_buffer` 个条目。
 
-    Args:
-        tracker (Any): Object exposing `tracked_stracks`, `lost_stracks`, `removed_stracks` lists.
-        activated (list): Tracks updated from the Tracked state this frame.
-        refind (list): Tracks re-activated from the Lost state this frame.
-        lost (list): Tracks transitioned to Lost this frame.
-        removed (list): Tracks transitioned to Removed this frame.
-        removed_buffer (int): Maximum number of historical removed tracks to retain.
+    参数：
+        tracker (Any): 提供 `tracked_stracks`、`lost_stracks` 和 `removed_stracks` 列表的对象。
+        activated (列表): 本帧从 Tracked 状态更新得到的跟踪对象。
+        refind (列表): 本帧从 Lost 状态重新激活的跟踪对象。
+        lost (列表): 本帧转为 Lost 状态的跟踪对象。
+        removed (列表): 本帧转为 Removed 状态的跟踪对象。
+        removed_buffer (int): 保留的历史移除跟踪对象的最大数量。
 
-    Examples:
-        Run end-of-frame bookkeeping inside a tracker's `update` method
+    示例：
+        在跟踪器的 `update` 方法中执行帧末整理
         >>> merge_track_pools(self, activated_stracks, refind_stracks, lost_stracks, removed_stracks)
     """
     tracker.tracked_stracks = [t for t in tracker.tracked_stracks if t.state == TrackState.Tracked]
@@ -57,31 +57,31 @@ def merge_track_pools(
 
 
 def parse_bboxes(results) -> np.ndarray:
-    """Return detection bounding boxes with appended indices from a Results-like object.
+    """从类似 Results 的对象中返回追加了原始索引的检测边界框。
 
-    Args:
-        results (Any): Object exposing ``xywh`` (or ``xywhr``), ``conf``, and ``cls``.
+    参数：
+        results (Any): 提供 ``xywh``（或 ``xywhr``）、``conf`` 和 ``cls`` 属性的对象。
 
-    Returns:
-        (np.ndarray): Array of shape ``(N, 5)`` for ``xywh`` or ``(N, 6)`` for ``xywhr``, with the last column
-            containing the original detection index.
+    返回：
+        (np.ndarray): 对于 ``xywh``，返回形状为 ``(N, 5)`` 的数组；对于 ``xywhr``，返回形状为 ``(N, 6)`` 的数组。
+            最后一列保存检测对象的原始索引。
     """
     bboxes = results.xywhr if hasattr(results, "xywhr") else results.xywh
     return np.concatenate([bboxes, np.arange(len(bboxes)).reshape(-1, 1)], axis=-1)
 
 
 def joint_stracks(atracks: list, btracks: list) -> list:
-    """Combine two track lists into one, de-duplicating by `track_id`.
+    """合并两个跟踪对象列表，并按 `track_id` 去重。
 
-    Args:
-        atracks (list[STrack]): First list of tracks; entries win on `track_id` collisions.
-        btracks (list[STrack]): Second list of tracks.
+    参数：
+        atracks (列表[STrack]): 第一个跟踪对象列表；发生 `track_id` 冲突时保留其中的对象。
+        btracks (列表[STrack]): 第二个跟踪对象列表。
 
-    Returns:
-        (list[STrack]): Union of `atracks` and `btracks` with duplicate `track_id`s removed.
+    返回：
+        (列表[STrack]): 合并后的列表，其中重复的 `track_id` 已被移除。
 
-    Examples:
-        Merge the currently tracked pool with newly activated tracks
+    示例：
+        将当前跟踪池与新激活的跟踪对象合并
         >>> merged = joint_stracks(tracked_stracks, activated_stracks)
     """
     a_ids = {t.track_id for t in atracks}
@@ -89,17 +89,17 @@ def joint_stracks(atracks: list, btracks: list) -> list:
 
 
 def sub_stracks(atracks: list, btracks: list) -> list:
-    """Filter out tracks from `atracks` whose `track_id` appears in `btracks`.
+    """过滤掉 `atracks` 中 `track_id` 出现在 `btracks` 里的跟踪对象。
 
-    Args:
-        atracks (list[STrack]): Source list of tracks to filter.
-        btracks (list[STrack]): Tracks whose `track_id`s should be excluded from the output.
+    参数：
+        atracks (列表[STrack]): 待过滤的源跟踪对象列表。
+        btracks (列表[STrack]): 其 `track_id` 应从结果中排除的跟踪对象列表。
 
-    Returns:
-        (list[STrack]): Elements of `atracks` whose `track_id` is not present in `btracks`.
+    返回：
+        (列表[STrack]): `atracks` 中 `track_id` 不存在于 `btracks` 的对象。
 
-    Examples:
-        Remove any re-tracked objects from the lost pool
+    示例：
+        从丢失池中移除重新跟踪到的对象
         >>> lost_stracks = sub_stracks(lost_stracks, tracked_stracks)
     """
     btrack_ids = {t.track_id for t in btracks}
@@ -107,23 +107,22 @@ def sub_stracks(atracks: list, btracks: list) -> list:
 
 
 def remove_duplicate_stracks(atracks: list, btracks: list, dup_thresh: float = 0.15) -> tuple[list, list]:
-    """Remove duplicate tracks across two lists based on Intersection over Union (IoU) distance.
+    """根据交并比（IoU）距离移除两个列表中的重复跟踪对象。
 
-    Track pairs with IoU distance < `dup_thresh` (IoU > `1 - dup_thresh`) are treated as duplicates of the same
-    object. The shorter-lived track (smaller `frame_id - start_frame`) is dropped; ties drop
-    from `atracks`.
+    当跟踪对象对的 IoU 距离小于 `dup_thresh`（即 IoU 大于 `1 - dup_thresh`）时，将其视为同一对象的重复跟踪。
+    生命周期较短的跟踪对象（`frame_id - start_frame` 较小）会被丢弃；若时长相同，则从 `atracks` 中丢弃。
 
-    Args:
-        atracks (list[STrack]): First list of tracks; entries must expose `xyxy`, `frame_id`, and `start_frame`.
-        btracks (list[STrack]): Second list of tracks with the same attribute requirements.
-        dup_thresh (float): IoU-distance ceiling for treating two tracks as duplicates. Default 0.15 (IoU > 0.85).
+    参数：
+        atracks (列表[STrack]): 第一个跟踪对象列表；对象必须提供 `xyxy`、`frame_id` 和 `start_frame` 属性。
+        btracks (列表[STrack]): 第二个跟踪对象列表，属性要求与 `atracks` 相同。
+        dup_thresh (float): 判定两个对象重复时允许的最大 IoU 距离，默认为 0.15（IoU > 0.85）。
 
-    Returns:
-        resa (list[STrack]): `atracks` with duplicate tracks removed.
-        resb (list[STrack]): `btracks` with duplicate tracks removed.
+    返回：
+        resa (列表[STrack]): 移除重复对象后的 `atracks`。
+        resb (列表[STrack]): 移除重复对象后的 `btracks`。
 
-    Examples:
-        De-duplicate the tracked and lost pools at the end of a frame
+    示例：
+        在帧末对活动池和丢失池去重
         >>> tracked, lost = remove_duplicate_stracks(tracked_stracks, lost_stracks)
     """
     pdist = matching.iou_distance(atracks, btracks)
@@ -143,19 +142,19 @@ def remove_duplicate_stracks(atracks: list, btracks: list, dup_thresh: float = 0
 
 
 def multi_gmc(stracks: list, H: np.ndarray) -> None:
-    """Update multiple track positions and covariances using a 2x3 affine homography.
+    """使用 2x3 仿射单应矩阵更新多个跟踪对象的位置和协方差。
 
-    The Kalman state is assumed to be laid out as `(*box, *box_velocity)` with the box center `(x, y)` in the first two
-    dims. `R8x8` rotates all four 2-d pairs block-diagonally; the translation `t` is applied only to the position.
-    This assumes the state layout is four spatial/velocity pairs (e.g. XYWH); XYAH trackers must override this.
+    假设卡尔曼状态布局为 `(*box, *box_velocity)`，边界框中心 `(x, y)` 位于前两个维度。
+    `R8x8` 以块对角形式旋转全部四个二维向量对，平移量 `t` 只应用于位置。
+    该布局假设状态包含四组空间位置/速度向量（例如 XYWH）；XYAH 跟踪器必须重写此方法。
 
-    Args:
-        stracks (list[STrack]): Tracks to warp in place; each must expose `mean` (shape (8,)) and `covariance` (shape
-            (8, 8)).
-        H (np.ndarray): 2x3 affine homography mapping the previous frame to the current one.
+    参数：
+        stracks (列表[STrack]): 要原地变换的跟踪对象；每个对象必须提供形状为 `(8,)` 的 `mean` 和形状为 `(8, 8)` 的
+            `covariance`。
+        H (np.ndarray): 将上一帧映射到当前帧的 2x3 仿射单应矩阵。
 
-    Examples:
-        Apply camera-motion compensation to the active track pool
+    示例：
+        将相机运动补偿应用于活动跟踪池
         >>> warp = gmc.apply(frame, detection_boxes)
         >>> multi_gmc(tracked_stracks, warp)
     """
@@ -170,9 +169,8 @@ def multi_gmc(stracks: list, H: np.ndarray) -> None:
 
     multi_mean = np.matmul(R8x8, multi_mean[..., None])[..., 0]
     multi_mean[:, :2] += t
-    # Keep the right operand C-contiguous. An F-contiguous one sends matmul into BLAS's transposed-gemm kernel,
-    # which on macOS Accelerate leaves FP-exception flags set even for finite inputs — numpy then reports spurious
-    # divide/overflow/invalid RuntimeWarnings — and measures slower here than the untransposed kernel.
+    # 保持右操作数为 C 连续数组。F 连续数组会让 matmul 使用 BLAS 的转置 GEMM 内核；在 macOS Accelerate 上，
+    # 即使输入值有限，该内核也可能留下浮点异常标志，导致 NumPy 报告虚假的除零、溢出或无效值警告，且速度更慢。
     multi_covariance = np.matmul(np.matmul(R8x8, multi_covariance), np.ascontiguousarray(R8x8.T))
     for i, (mean, cov) in enumerate(zip(multi_mean, multi_covariance)):
         stracks[i].mean = mean

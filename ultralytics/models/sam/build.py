@@ -3,8 +3,7 @@
 # Copyright (c) Meta Platforms, Inc. and affiliates.
 # All rights reserved.
 
-# This source code is licensed under the license found in the
-# LICENSE file in the root directory of this source tree.
+# 此源代码遵循本源代码树根目录 LICENSE 文件中规定的许可证。
 
 from functools import partial
 
@@ -22,14 +21,14 @@ from .modules.transformer import TwoWayTransformer
 
 
 def _load_checkpoint(model, checkpoint):
-    """Load checkpoint into model from file path."""
+    """从文件路径将检查点加载到模型中。"""
     if checkpoint is None:
         return model
 
     checkpoint = attempt_download_asset(checkpoint)
     with open(checkpoint, "rb") as f:
         state_dict = torch_load(f)
-    # Handle nested "model" key
+    # 处理嵌套的 "model" 键
     if "model" in state_dict and isinstance(state_dict["model"], dict):
         state_dict = state_dict["model"]
     model.load_state_dict(state_dict)
@@ -37,7 +36,7 @@ def _load_checkpoint(model, checkpoint):
 
 
 def build_sam_vit_h(checkpoint=None):
-    """Build and return a Segment Anything Model (SAM) h-size model with specified encoder parameters."""
+    """使用指定编码器参数构建并返回 h 尺寸的 Segment Anything Model（SAM）。"""
     return _build_sam(
         encoder_embed_dim=1280,
         encoder_depth=32,
@@ -48,7 +47,7 @@ def build_sam_vit_h(checkpoint=None):
 
 
 def build_sam_vit_l(checkpoint=None):
-    """Build and return a Segment Anything Model (SAM) l-size model with specified encoder parameters."""
+    """使用指定编码器参数构建并返回 l 尺寸的 Segment Anything Model（SAM）。"""
     return _build_sam(
         encoder_embed_dim=1024,
         encoder_depth=24,
@@ -59,7 +58,7 @@ def build_sam_vit_l(checkpoint=None):
 
 
 def build_sam_vit_b(checkpoint=None):
-    """Build and return a Segment Anything Model (SAM) b-size model with specified encoder parameters."""
+    """使用指定编码器参数构建并返回 b 尺寸的 Segment Anything Model（SAM）。"""
     return _build_sam(
         encoder_embed_dim=768,
         encoder_depth=12,
@@ -70,7 +69,7 @@ def build_sam_vit_b(checkpoint=None):
 
 
 def build_mobile_sam(checkpoint=None):
-    """Build and return a Mobile Segment Anything Model (Mobile-SAM) for efficient image segmentation."""
+    """构建并返回用于高效图像分割的 Mobile Segment Anything Model（Mobile-SAM）。"""
     return _build_sam(
         encoder_embed_dim=[64, 128, 160, 320],
         encoder_depth=[2, 2, 6, 2],
@@ -82,7 +81,7 @@ def build_mobile_sam(checkpoint=None):
 
 
 def build_sam2_t(checkpoint=None):
-    """Build and return a Segment Anything Model 2 (SAM2) tiny-size model with specified architecture parameters."""
+    """使用指定架构参数构建并返回 tiny 尺寸的 Segment Anything Model 2（SAM2）。"""
     return _build_sam2(
         encoder_embed_dim=96,
         encoder_stages=[1, 2, 7, 2],
@@ -95,7 +94,7 @@ def build_sam2_t(checkpoint=None):
 
 
 def build_sam2_s(checkpoint=None):
-    """Build and return a small-size Segment Anything Model 2 (SAM2) with specified architecture parameters."""
+    """使用指定架构参数构建并返回 small 尺寸的 Segment Anything Model 2（SAM2）。"""
     return _build_sam2(
         encoder_embed_dim=96,
         encoder_stages=[1, 2, 11, 2],
@@ -108,7 +107,7 @@ def build_sam2_s(checkpoint=None):
 
 
 def build_sam2_b(checkpoint=None):
-    """Build and return a Segment Anything Model 2 (SAM2) base-size model with specified architecture parameters."""
+    """使用指定架构参数构建并返回 base 尺寸的 Segment Anything Model 2（SAM2）。"""
     return _build_sam2(
         encoder_embed_dim=112,
         encoder_stages=[2, 3, 16, 3],
@@ -122,7 +121,7 @@ def build_sam2_b(checkpoint=None):
 
 
 def build_sam2_l(checkpoint=None):
-    """Build and return a large-size Segment Anything Model 2 (SAM2) with specified architecture parameters."""
+    """使用指定架构参数构建并返回 large 尺寸的 Segment Anything Model 2（SAM2）。"""
     return _build_sam2(
         encoder_embed_dim=144,
         encoder_stages=[2, 6, 36, 4],
@@ -142,20 +141,20 @@ def _build_sam(
     checkpoint=None,
     mobile_sam=False,
 ):
-    """Build a Segment Anything Model (SAM) with specified encoder parameters.
+    """使用指定编码器参数构建 Segment Anything Model（SAM）。
 
-    Args:
-        encoder_embed_dim (int | list[int]): Embedding dimension for the encoder.
-        encoder_depth (int | list[int]): Depth of the encoder.
-        encoder_num_heads (int | list[int]): Number of attention heads in the encoder.
-        encoder_global_attn_indexes (list[int] | None): Indexes for global attention in the encoder.
-        checkpoint (str | None, optional): Path to the model checkpoint file.
-        mobile_sam (bool, optional): Whether to build a Mobile-SAM model.
+    参数：
+        encoder_embed_dim (int | 列表[int]): 编码器嵌入维度。
+        encoder_depth (int | 列表[int]): 编码器深度。
+        encoder_num_heads (int | 列表[int]): 编码器注意力头数量。
+        encoder_global_attn_indexes (列表[int] | None): 编码器中的全局注意力索引。
+        checkpoint (str | None, 可选): 模型检查点文件路径。
+        mobile_sam (bool, 可选): 是否构建 Mobile-SAM 模型。
 
-    Returns:
-        (SAMModel): A Segment Anything Model instance with the specified architecture.
+    返回：
+        (SAMModel): 具有指定架构的 Segment Anything Model 实例。
 
-    Examples:
+    示例：
         >>> sam = _build_sam(768, 12, 12, [2, 5, 8, 11])
         >>> sam = _build_sam([64, 128, 160, 320], [2, 2, 6, 2], [2, 4, 5, 10], None, mobile_sam=True)
     """
@@ -235,22 +234,22 @@ def _build_sam2(
     encoder_window_spec=(8, 4, 16, 8),
     checkpoint=None,
 ):
-    """Build and return a Segment Anything Model 2 (SAM2) with specified architecture parameters.
+    """使用指定架构参数构建并返回 Segment Anything Model 2（SAM2）。
 
-    Args:
-        encoder_embed_dim (int, optional): Embedding dimension for the encoder.
-        encoder_stages (list[int], optional): Number of blocks in each stage of the encoder.
-        encoder_num_heads (int, optional): Number of attention heads in the encoder.
-        encoder_global_att_blocks (list[int], optional): Indices of global attention blocks in the encoder.
-        encoder_backbone_channel_list (list[int], optional): Channel dimensions for each level of the encoder backbone.
-        encoder_window_spatial_size (list[int], optional): Spatial size of the window for position embeddings.
-        encoder_window_spec (list[int], optional): Window specifications for each stage of the encoder.
-        checkpoint (str | None, optional): Path to the checkpoint file for loading pre-trained weights.
+    参数：
+        encoder_embed_dim (int, 可选): 编码器嵌入维度。
+        encoder_stages (列表[int], 可选): 编码器每个阶段的块数量。
+        encoder_num_heads (int, 可选): 编码器注意力头数量。
+        encoder_global_att_blocks (列表[int], 可选): 编码器全局注意力块的索引。
+        encoder_backbone_channel_list (列表[int], 可选): 编码器骨干网络每个层级的通道维度。
+        encoder_window_spatial_size (列表[int], 可选): 位置嵌入窗口的空间尺寸。
+        encoder_window_spec (列表[int], 可选): 编码器每个阶段的窗口规格。
+        checkpoint (str | None, 可选): 用于加载预训练权重的检查点文件路径。
 
-    Returns:
-        (SAM2Model): A configured and initialized SAM2 model.
+    返回：
+        (SAM2Model): 已配置并初始化的 SAM2 模型。
 
-    Examples:
+    示例：
         >>> sam2_model = _build_sam2(encoder_embed_dim=96, encoder_stages=[1, 2, 7, 2])
         >>> sam2_model.eval()
     """
@@ -333,25 +332,25 @@ sam_model_map = {
 
 
 def build_sam(ckpt="sam_b.pt"):
-    """Build and return a Segment Anything Model (SAM) based on the provided checkpoint.
+    """根据给定检查点构建并返回 Segment Anything Model（SAM）。
 
-    Args:
-        ckpt (str | Path, optional): Path to the checkpoint file or name of a pre-defined SAM model.
+    参数：
+        ckpt (str | Path, 可选): 检查点文件路径或预定义 SAM 模型名称。
 
-    Returns:
-        (SAMModel | SAM2Model): A configured and initialized SAM or SAM2 model instance.
+    返回：
+        (SAMModel | SAM2Model): 已配置并初始化的 SAM 或 SAM2 模型实例。
 
-    Raises:
-        FileNotFoundError: If the provided checkpoint is not a supported SAM model.
+    异常：
+        FileNotFoundError：给定检查点不是受支持的 SAM 模型时引发。
 
-    Examples:
+    示例：
         >>> sam_model = build_sam("sam_b.pt")
         >>> sam_model = build_sam("path/to/custom_checkpoint.pt")
 
-    Notes:
-        Supported pre-defined models include:
-        - SAM: 'sam_h.pt', 'sam_l.pt', 'sam_b.pt', 'mobile_sam.pt'
-        - SAM2: 'sam2_t.pt', 'sam2_s.pt', 'sam2_b.pt', 'sam2_l.pt'
+    注意：
+        支持的预定义模型包括：
+        - SAM：'sam_h.pt'、'sam_l.pt'、'sam_b.pt'、'mobile_sam.pt'
+        - SAM2：'sam2_t.pt'、'sam2_s.pt'、'sam2_b.pt'、'sam2_l.pt'
     """
     model_builder = None
     ckpt = str(ckpt)  # to allow Path ckpt types

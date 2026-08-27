@@ -2,8 +2,8 @@
 
 # Copyright (c) Meta Platforms, Inc. and affiliates. All Rights Reserved
 """
-Transformer decoder.
-Inspired from Pytorch's version, adds the pre-norm variant.
+Transformer 解码器。
+参考 PyTorch 版本，并增加预归一化变体。
 """
 
 from __future__ import annotations
@@ -20,7 +20,7 @@ from .model_misc import gen_sineembed_for_position
 
 
 class TransformerDecoderLayer(nn.Module):
-    """TransformerDecoderLayer is made up of self-attn, cross-attn, and feedforward network (FFN)."""
+    """由自注意力、交叉注意力和前馈网络（FFN）组成的 Transformer 解码器层。"""
 
     def __init__(
         self,
@@ -31,21 +31,21 @@ class TransformerDecoderLayer(nn.Module):
         n_heads: int,
         use_text_cross_attention: bool = False,
     ):
-        """Initialize the TransformerDecoderLayer."""
+        """初始化 TransformerDecoderLayer。"""
         super().__init__()
-        # cross attention
+        # 交叉注意力
         self.cross_attn = cross_attention
         self.dropout1 = nn.Dropout(dropout) if dropout > 0 else nn.Identity()
         self.norm1 = nn.LayerNorm(d_model)
 
-        # cross attention text
+        # 文本交叉注意力
         self.use_text_cross_attention = use_text_cross_attention
         if use_text_cross_attention:
             self.ca_text = nn.MultiheadAttention(d_model, n_heads, dropout=dropout)
             self.catext_dropout = nn.Dropout(dropout) if dropout > 0 else nn.Identity()
             self.catext_norm = nn.LayerNorm(d_model)
 
-        # self attention
+        # 自注意力
         self.self_attn = nn.MultiheadAttention(d_model, n_heads, dropout=dropout)
         self.dropout2 = nn.Dropout(dropout) if dropout > 0 else nn.Identity()
         self.norm2 = nn.LayerNorm(d_model)
@@ -60,11 +60,11 @@ class TransformerDecoderLayer(nn.Module):
 
     @staticmethod
     def with_pos_embed(tensor, pos):
-        """Add positional embedding to the tensor."""
+        """将位置嵌入添加到张量。"""
         return tensor if pos is None else tensor + pos
 
     def forward_ffn(self, tgt):
-        """Feedforward network forward pass."""
+        """执行前馈网络的前向传播。"""
         tgt2 = self.linear2(self.dropout3(self.activation(self.linear1(tgt))))
         tgt = tgt + self.dropout4(tgt2)
         tgt = self.norm3(tgt)
@@ -72,27 +72,27 @@ class TransformerDecoderLayer(nn.Module):
 
     def forward(
         self,
-        # for tgt
+        # 处理目标特征
         tgt: torch.Tensor,  # nq, bs, d_model
         tgt_query_pos: torch.Tensor = None,  # pos for query. MLP(Sine(pos))
         memory_text: torch.Tensor = None,  # num_token, bs, d_model
         text_attention_mask: torch.Tensor = None,  # bs, num_token
-        # for memory
+        # 处理记忆特征
         memory: torch.Tensor = None,  # hw, bs, d_model
         memory_key_padding_mask: torch.Tensor = None,
         memory_pos: torch.Tensor = None,  # pos for memory
         # sa
-        self_attn_mask: torch.Tensor = None,  # mask used for self-attention
-        cross_attn_mask: torch.Tensor = None,  # mask used for cross-attention
+        self_attn_mask: torch.Tensor = None,  # 掩码 used for self-attention
+        cross_attn_mask: torch.Tensor = None,  # 掩码 used for cross-attention
         # dac
         dac=False,
         dac_use_selfatt_ln=True,
         presence_token=None,
-        # skip inside deformable attn
+        # 跳过可变形注意力内部处理
         **kwargs,  # additional kwargs for compatibility
     ):
-        """Forward pass of the TransformerDecoderLayer."""
-        # self attention
+        """执行 TransformerDecoderLayer 的前向传播。"""
+        # 自注意力
         tgt, tgt_query_pos = self._apply_self_attention(
             tgt, tgt_query_pos, dac, dac_use_selfatt_ln, presence_token, self_attn_mask
         )
@@ -111,7 +111,7 @@ class TransformerDecoderLayer(nn.Module):
             presence_token_mask = torch.zeros_like(cross_attn_mask[:, :1, :])
             cross_attn_mask = torch.cat([presence_token_mask, cross_attn_mask], dim=1)  # (bs*nheads, 1+nq, hw)
 
-        # Cross attention to image
+        # 对图像执行交叉注意力
         tgt2 = self.cross_attn(
             query=self.with_pos_embed(tgt, tgt_query_pos),
             key=self.with_pos_embed(memory, memory_pos),
@@ -124,7 +124,7 @@ class TransformerDecoderLayer(nn.Module):
         tgt = tgt + self.dropout1(tgt2)
         tgt = self.norm1(tgt)
 
-        # ffn
+        # 前馈网络
         tgt = self.forward_ffn(tgt.to(memory.dtype))
 
         presence_token_out = None
@@ -135,13 +135,13 @@ class TransformerDecoderLayer(nn.Module):
         return tgt, presence_token_out
 
     def _apply_self_attention(self, tgt, tgt_query_pos, dac, dac_use_selfatt_ln, presence_token, self_attn_mask):
-        """Apply self-attention with optional DAC splitting."""
+        """应用自注意力，并可选择使用 DAC 拆分。"""
         if self.self_attn is None:
             return tgt
 
         if dac:
-            # Split queries for DAC (detect-and-classify)
-            assert tgt.shape[0] % 2 == 0, "DAC requires even number of queries"
+            # 为 DAC（检测与分类）拆分查询
+            assert tgt.shape[0] % 2 == 0, "DAC 要求查询数量为偶数"
             num_o2o_queries = tgt.shape[0] // 2
             tgt_o2o = tgt[:num_o2o_queries]
             tgt_query_pos_o2o = tgt_query_pos[:num_o2o_queries]
@@ -150,7 +150,7 @@ class TransformerDecoderLayer(nn.Module):
             tgt_o2o = tgt
             tgt_query_pos_o2o = tgt_query_pos
 
-        # Handle presence token
+        # 处理存在性词元
         if presence_token is not None:
             tgt_o2o = torch.cat([presence_token, tgt_o2o], dim=0)
             tgt_query_pos_o2o = torch.cat([torch.zeros_like(presence_token), tgt_query_pos_o2o], dim=0).to(
@@ -158,12 +158,12 @@ class TransformerDecoderLayer(nn.Module):
             )
             tgt_query_pos = torch.cat([torch.zeros_like(presence_token), tgt_query_pos], dim=0)
 
-        # Self-attention
+        # 自注意力
         q = k = self.with_pos_embed(tgt_o2o, tgt_query_pos_o2o)
         tgt2 = self.self_attn(q, k, tgt_o2o, attn_mask=self_attn_mask)[0].to(tgt.dtype)
         tgt_o2o = tgt_o2o + self.dropout2(tgt2)
 
-        # Recombine and normalize
+        # 重新组合并归一化
         if dac:
             if not dac_use_selfatt_ln:
                 tgt_o2o = self.norm2(tgt_o2o)
@@ -178,7 +178,7 @@ class TransformerDecoderLayer(nn.Module):
 
 
 class TransformerDecoder(nn.Module):
-    """Transformer Decoder consisting of multiple layers."""
+    """由多个层组成的 Transformer 解码器。"""
 
     def __init__(
         self,
@@ -193,11 +193,10 @@ class TransformerDecoder(nn.Module):
         num_o2m_queries: int = 0,
         dac: bool = False,
         boxRPB: str = "none",
-        # Experimental: An object query for SAM 2 tasks
+        # 实验性功能：用于 SAM2 任务的目标查询
         instance_query: bool = False,
-        # Defines the number of additional instance queries,
-        # 1 or 4 are the most likely for single vs multi mask support
-        num_instances: int = 1,  # Irrelevant if instance_query is False
+        # 定义额外实例查询的数量；单掩码和多掩码支持通常分别使用 1 或 4
+        num_instances: int = 1,  # instance_query 为 False 时无效
         dac_use_selfatt_ln: bool = True,
         use_act_checkpoint: bool = False,
         compile_mode=None,
@@ -208,7 +207,7 @@ class TransformerDecoder(nn.Module):
         separate_box_head_instance: bool = False,
         separate_norm_instance: bool = False,
     ):
-        """Initialize the TransformerDecoder."""
+        """初始化 TransformerDecoder。"""
         super().__init__()
         self.d_model = d_model
         self.layers = _get_clones(layer, num_layers)
@@ -265,7 +264,7 @@ class TransformerDecoder(nn.Module):
             self.coord_cache = {}
 
         if interaction_layer is not None:
-            # Scoped for import ultralytics speed: ROI align requires optional torchvision ops.
+            # 为提高 ultralytics 导入速度，将其限定在此处：ROI align 需要可选的 torchvision 算子。
             from torchvision.ops.roi_align import RoIAlign
 
             self.roi_pooler = RoIAlign(output_size=7, spatial_scale=1, sampling_ratio=-1, aligned=True)
@@ -297,23 +296,23 @@ class TransformerDecoder(nn.Module):
 
         self.compile_mode = compile_mode
         self.compiled = False
-        # We defer compilation till after the first forward, to first warm-up the boxRPB cache
+        # 将编译推迟到第一次前向传播之后，以便先预热 boxRPB 缓存
 
-        # assign layer index to each layer so that some layers can decide what to do
-        # based on which layer index they are (e.g. cross attention to memory bank only
-        # in selected layers)
+        # 为每一层分配层索引，使部分层可以根据自身索引决定行为
+        # 例如，仅对特定层执行与记忆库的交叉注意力
+        # 在选定层中）
         for layer_idx, decoder_layer in enumerate(self.layers):
             decoder_layer.layer_idx = layer_idx
 
     @staticmethod
     def _get_coords(H, W, device, dtype):
-        """Get normalized coordinates for height and width."""
+        """获取高度和宽度方向的归一化坐标。"""
         coords_h = torch.arange(0, H, dtype=dtype, device=device) / H
         coords_w = torch.arange(0, W, dtype=dtype, device=device) / W
         return coords_h, coords_w
 
     def _get_rpb_matrix(self, reference_boxes, feat_size):
-        """Get the relative position bias (RPB) matrix for box-relative position bias."""
+        """获取边界框相对位置偏置使用的相对位置偏置（RPB）矩阵。"""
         H, W = feat_size
         boxes_xyxy = xywh2xyxy(reference_boxes).transpose(0, 1)
         bs, num_queries, _ = boxes_xyxy.shape
@@ -325,11 +324,11 @@ class TransformerDecoder(nn.Module):
             H,
             W,
         ):
-            # good, hitting the cache, will be compilable
+            # 命中缓存时即可编译
             coords_h, coords_w = self.compilable_cord_cache
         else:
-            # cache miss, will create compilation issue
-            # In case we're not compiling, we'll still rely on the dict-based cache
+            # 缓存未命中会导致编译问题。
+            # 不进行编译时，仍使用基于字典的缓存
             if feat_size not in self.coord_cache:
                 self.coord_cache[feat_size] = self._get_coords(H, W, reference_boxes.device, reference_boxes.dtype)
             coords_h, coords_w = self.coord_cache[feat_size]
@@ -383,22 +382,22 @@ class TransformerDecoder(nn.Module):
         memory_key_padding_mask: torch.Tensor = None,
         pos: torch.Tensor = None,
         reference_boxes: torch.Tensor = None,  # num_queries, bs, 4
-        # for memory
+        # 用于记忆
         spatial_shapes: torch.Tensor = None,  # bs, num_levels, 2
         valid_ratios: torch.Tensor = None,
-        # for text
+        # 用于文本
         memory_text: torch.Tensor = None,
         text_attention_mask: torch.Tensor = None,
-        # if `apply_dac` is None, it will default to `self.dac`
+        # 如果 `apply_dac` 为 None，则默认使用 `self.dac`
         apply_dac: bool | None = None,
         is_instance_prompt=False,
         decoder_extra_kwargs: dict | None = None,
-        # ROI memory bank
+        # ROI 内存库
         obj_roi_memory_feat=None,
         obj_roi_memory_mask=None,
         box_head_trk=None,
     ):
-        """Forward pass of the TransformerDecoder."""
+        """执行 TransformerDecoder 的前向传播。"""
         if memory_mask is not None:
             assert self.boxRPB == "none", (
                 "inputting a memory_mask in the presence of boxRPB is unexpected/not implemented"
@@ -411,8 +410,8 @@ class TransformerDecoder(nn.Module):
             )
 
             tgt = tgt.repeat(2, 1, 1)
-            # note that we don't tile tgt_mask, since DAC doesn't
-            # use self-attention in o2m queries
+            # 注意：这里不复制平铺 tgt_mask，因为 DAC 不会
+            # 在 o2m 查询中使用自注意力
             if reference_boxes is not None:
                 assert (reference_boxes.shape[0] == self.num_queries) or (
                     self.use_instance_query and (reference_boxes.shape[0] == self.instance_query_embed.num_embeddings)
@@ -426,7 +425,7 @@ class TransformerDecoder(nn.Module):
 
         if self.box_refine:
             if reference_boxes is None:
-                # In this case, we're in a one-stage model, so we generate the reference boxes
+                # 此时为单阶段模型，因此生成参考边界框
                 reference_boxes = self.reference_points.weight.unsqueeze(1)
                 reference_boxes = reference_boxes.repeat(2, bs, 1) if apply_dac else reference_boxes.repeat(1, bs, 1)
                 reference_boxes = reference_boxes.sigmoid()
@@ -438,7 +437,7 @@ class TransformerDecoder(nn.Module):
         output = tgt
         presence_out = None
         if self.presence_token is not None and is_instance_prompt is False:
-            # expand to batch dim
+            # 扩展批次维度
             presence_out = self.presence_token.weight[None].expand(1, bs, -1)
 
         box_head = self.bbox_embed
@@ -458,7 +457,7 @@ class TransformerDecoder(nn.Module):
                 reference_points_input[:, :, 0, :], self.d_model
             )  # nq, bs, d_model*2
 
-            # conditional query
+            # 条件查询
             query_pos = self.ref_point_head(query_sine_embed)  # nq, bs, d_model
 
             if self.boxRPB != "none" and reference_boxes is not None:
@@ -484,12 +483,12 @@ class TransformerDecoder(nn.Module):
                 dac_use_selfatt_ln=self.dac_use_selfatt_ln,
                 presence_token=presence_out,
                 **(decoder_extra_kwargs or {}),
-                # ROI memory bank
+                # ROI 内存库
                 obj_roi_memory_feat=obj_roi_memory_feat,
                 obj_roi_memory_mask=obj_roi_memory_mask,
             )
 
-            # iter update
+            # 迭代更新
             if self.box_refine:
                 reference_before_sigmoid = inverse_sigmoid(reference_boxes)
                 if box_head_trk is None:
@@ -499,7 +498,7 @@ class TransformerDecoder(nn.Module):
                     else:
                         delta_unsig = box_head(out_norm(output))
                 else:
-                    # box_head_trk use a separate box head for tracking queries
+                    # box_head_trk 为跟踪查询使用独立的边界框头
                     Q_det = decoder_extra_kwargs["Q_det"]
                     assert output.size(0) >= Q_det
                     delta_unsig_det = self.bbox_embed(output[:Q_det])
@@ -521,7 +520,7 @@ class TransformerDecoder(nn.Module):
                     self.presence_token_out_norm(presence_out)
                 ).squeeze(-1)
 
-                # clamp to mitigate numerical issues
+                # 限幅以减轻数值问题
                 if self.clamp_presence_logits:
                     intermediate_layer_presence_logits.clamp_(
                         min=-self.clamp_presence_logit_max_val,

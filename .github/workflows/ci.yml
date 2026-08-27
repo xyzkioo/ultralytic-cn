@@ -1,6 +1,6 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
-# Ultralytics YOLO Continuous Integration (CI) GitHub Actions tests
+# Ultralytics YOLO 持续集成（CI）GitHub Actions 测试
 
 name: CI
 
@@ -51,7 +51,7 @@ jobs:
       id-token: write
     runs-on: ${{ matrix.os }}
     env:
-      # Keep benchmark jobs hermetic so missing export deps fail during setup instead of mutating mid-run.
+      # 保持基准任务环境隔离，使缺少的导出依赖在设置阶段失败，而不是在运行中途修改环境。
       YOLO_AUTOINSTALL: "false"
     strategy:
       fail-fast: false
@@ -81,7 +81,7 @@ jobs:
             if [[ "${{ matrix.os }}" != "cpu-latest" ]]; then
               uv_system_args=(--system)
             fi
-            # Pin PNNX until 20260704 NCNN inference segfault is fixed: https://github.com/pnnx/pnnx/issues/293
+            # 在修复 20260704 的 NCNN 推理段错误前固定 PNNX 版本：https://github.com/pnnx/pnnx/issues/293
             uv pip install "${uv_system_args[@]}" -e ".[export,export-executorch]" \
               ncnn pnnx==20260526 "coverage[toml]" \
               --torch-backend cpu
@@ -187,8 +187,8 @@ jobs:
         run: python tests/cache_test_assets.py
       - name: Pytest tests
         shell: bash # for Windows compatibility
-        # GitHub-hosted ARM runners have disconnected under xdist auto-parallelism: ubuntu-24.04-arm runs
-        # single-process, and the 3-vCPU/7GB macos-26 runners cap at 2 workers to avoid memory starvation.
+        # GitHub 托管的 ARM runner 在 xdist 自动并行时会断开：ubuntu-24.04-arm 使用单进程运行，
+        # 3 vCPU/7 GB 的 macos-26 runner 将 worker 数限制为 2，以避免内存不足。
         run: |
           xdist="-n auto --dist=loadfile"
           [[ "${{ matrix.os }}" == "macos-26" ]] && xdist="-n 2 --dist=loadfile"
@@ -207,7 +207,7 @@ jobs:
       - name: Prune uv Cache
         run: uv cache prune --ci
 
-  # Shared runner CI keeps current stacks on the main path; legacy torch shards are isolated only where needed.
+  # 共享 runner CI 在主路径使用当前软件栈；仅在必要处隔离旧版 torch 分片。
   SlowTests:
     if: (github.event_name == 'workflow_dispatch' && github.event.inputs.tests == 'true') || github.event_name == 'schedule'
     timeout-minutes: 360
@@ -219,7 +219,7 @@ jobs:
         python: ["3.13"]
         torch: [latest]
         include:
-          # Legacy PyTorch shards keep NumPy <2 only where the older torch builds actually need it.
+          # 仅在旧版 torch 构建确实需要时，旧版 PyTorch 分片才保持 NumPy <2。
           - os: ubuntu-latest
             python: "3.8" # torch 1.8.0 requires python >=3.6, <=3.9
             torch: "1.8.0"
@@ -342,8 +342,8 @@ jobs:
         uses: ultralytics/actions/retry@main
         with:
           shell: bash # for Windows compatibility
-          # -n 2 limits parallelism for resource-heavy base export tests on shared runners. The ARM runner is
-          # single-process to avoid xdist worker overhead and runner disconnects during long slow-test runs.
+          # -n 2 限制共享 runner 上资源密集型基础导出测试的并行度。ARM runner 使用单进程，
+          # 避免长时间慢速测试中的 xdist worker 开销和 runner 断开。
           run: |
             pytest_args=(-vv -s --slow --durations=50 --durations-min=1 tests/ --export-env base)
             if [[ "${{ matrix.os }}" == "ubuntu-24.04-arm" ]]; then
@@ -359,7 +359,7 @@ jobs:
       - name: Prune uv Cache
         run: uv cache prune --ci
 
-  # Export recipes that need their own environments are validated here so the shared CI jobs stay lean.
+  # 需要独立环境的导出方案在此验证，使共享 CI 任务保持精简。
   IsolatedExports:
     if: github.event_name == 'pull_request' || github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tests == 'true') || github.event_name == 'schedule'
     timeout-minutes: 360
@@ -429,7 +429,7 @@ jobs:
           activate-environment: true
       - name: Install requirements
         run: |
-          # Install TensorRT into the job venv so uv can reuse the runner image cache.
+          # 将 TensorRT 安装到任务虚拟环境中，使 uv 能复用 runner 镜像缓存。
           uv pip install -e ".[export-base]" pytest-cov onnxruntime-gpu "torch<2.11" "tensorrt-cu12>=7.0.0,!=10.2.0" "nvidia-modelopt[onnx]>=0.44" lap  # TODO: remove torch pin after GPU runner driver update to CUDA 13.0
         env:
           PIP_BREAK_SYSTEM_PACKAGES: 1
@@ -454,7 +454,7 @@ jobs:
           fail_ci_if_error: false
           use_oidc: true
 
-  # Raspberry Pi stays separate because it is a long-tail self-hosted runner with its own setup and cleanup flow.
+  # Raspberry Pi 单独运行，因为它是拥有独立设置和清理流程的低频自托管 runner。
   RaspberryPi:
     if: github.repository == 'ultralytics/ultralytics' && (github.event_name == 'schedule' || github.event.inputs.raspberrypi == 'true')
     timeout-minutes: 120
@@ -621,7 +621,7 @@ jobs:
       - name: Test benchmark CLI
         run: yolo benchmark model=yolo26n.pt data='coco8.yaml' imgsz=640 format=onnx
       - name: Test Python
-        # Note this step must use the updated default bash environment, not a Python environment
+        # 注意：此步骤必须使用更新后的默认 bash 环境，而不是 Python 环境
         run: |
           python -c "
           from ultralytics import YOLO
@@ -647,7 +647,7 @@ jobs:
         run: pytest ultralytics/tests/test_integrations.py -v -s
       - name: test_solutions.py
         run: pytest ultralytics/tests/test_solutions.py -v -s
-      # WARNING: tests hang here for unknown reasons https://github.com/ultralytics/ultralytics/pull/21577
+      # 警告：测试因未知原因在此处挂起：https://github.com/ultralytics/ultralytics/pull/21577
       # - name: test_python.py
       #   run: pytest ultralytics/tests/test_python.py -vv -s
 

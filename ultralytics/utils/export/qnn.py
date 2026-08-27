@@ -9,14 +9,14 @@ from ultralytics.utils.checks import check_requirements
 
 
 def qnn_library_paths() -> tuple[str | None, str]:
-    """Resolve the QNN Execution Provider and HTP backend library paths for the installed onnxruntime-qnn build.
+    """为已安装的 onnxruntime-qnn 构建解析 QNN 执行提供程序和 HTP 后端库路径。
 
-    onnxruntime-qnn ships two ways: plugin builds expose an `onnxruntime_qnn` helper module, while monolithic builds
-    expose `QNNExecutionProvider` directly and bundle the QNN backend libraries in `onnxruntime/capi`.
+    onnxruntime-qnn 有两种构建形式：插件构建提供 `onnxruntime_qnn` 辅助模块，单体构建则直接提供
+    `QNNExecutionProvider`，并将 QNN 后端库放在 `onnxruntime/capi` 中。
 
-    Returns:
-        (tuple[str | None, str]): `(ep_library_path, htp_backend_path)`. `ep_library_path` is `None` when QNN is already
-            built into ONNX Runtime and does not need `register_execution_provider_library`.
+    返回：
+        (tuple[str | None, str]): `(ep_library_path, htp_backend_path)`。当 QNN 已内置于 ONNX Runtime、
+            不需要调用 `register_execution_provider_library` 时，`ep_library_path` 为 `None`。
     """
     try:
         import onnxruntime_qnn as qnn_ep
@@ -44,34 +44,28 @@ def onnx2qnn(
     batch: int = 0,
     prefix: str = "",
 ) -> str:
-    """Convert an ONNX model to a Qualcomm QNN context binary using the ONNX Runtime QNN Execution Provider.
+    """使用 ONNX Runtime QNN 执行提供程序将 ONNX 模型转换为 Qualcomm QNN 上下文二进制文件。
 
-    The conversion runs entirely on the host with no Qualcomm account or cloud upload. The model is quantized with ONNX
-    Runtime's QNN QDQ flow to 16-bit activations and 8-bit weights (the recommended accuracy/performance balance for the
-    Hexagon NPU), then the `onnxruntime-qnn` Execution Provider — which bundles the Qualcomm AI Runtime (QAIRT)
-    libraries — compiles the quantized graph into a QNN context binary embedded in `<stem>_qnn.onnx`. No inference is
-    run.
+    转换过程完全在主机上执行，不需要 Qualcomm 账户，也不会上传到云端。模型使用 ONNX Runtime 的 QNN QDQ 流程
+    量化为 16 位激活值和 8 位权重（Hexagon NPU 推荐的精度与性能平衡方案），随后由包含 Qualcomm AI Runtime
+   （QAIRT）库的 `onnxruntime-qnn` 执行提供程序，将量化图编译为嵌入 `<stem>_qnn.onnx` 的 QNN 上下文二进制文件。
+    不执行推理。
 
-    Args:
-        onnx_file (str | Path): Path to the source ONNX file (already exported).
-        output_file (Path | str): Path to save the exported QNN ONNX context-binary model.
-        dataset (DataLoader): Calibration dataloader (from `Exporter.get_int8_calibration_dataloader`) used for INT8
-            quantization.
-        transform_fn (Callable): Preprocessing transform (`Exporter._transform_fn`) converting a calibration item to a
-            normalized `float32` NCHW array.
-        name (str): Target Hexagon Tensor Processor (HTP) architecture version, e.g. `"73"` (Snapdragon 8 Gen 2), `"75"`
-            (8 Gen 3), `"79"` (8 Elite), or supported SoC name such as `"iq-8275"`. Finalizes the graph for the target
-            chip when exporting on a host without a Snapdragon NPU.
-        metadata (dict | None): Ultralytics model metadata ensured present in the context model's `metadata_props` (ONNX
-            Runtime normally carries the source model's metadata through, but this is not a documented guarantee).
-        batch (int): Static batch dimension of the ONNX graph used to tile undersized calibration batches, or 0 for
-            dynamic-batch models.
-        prefix (str): Prefix for log messages.
+    参数：
+        onnx_file (str | Path): 源 ONNX 文件路径（已导出）。
+        output_file (Path | str): 保存导出 QNN ONNX 上下文二进制模型的路径。
+        dataset (DataLoader): 用于 INT8 量化的校准数据加载器（来自 `Exporter.get_int8_calibration_dataloader`）。
+        transform_fn (Callable): 预处理变换（`Exporter._transform_fn`），将校准数据项转换为归一化的 `float32` NCHW 数组。
+        name (str): Hexagon Tensor Processor（HTP）架构版本，例如 `"73"`、`"75"`、`"79"`，或 `"iq-8275"` 等受支持的 SoC 名称。
+            在没有 Snapdragon NPU 的主机上导出时，该参数用于完成目标芯片的图处理。
+        metadata (dict | None): 确保存在上下文模型 `metadata_props` 中的 Ultralytics 模型元数据。
+        batch (int): 用于填充过小校准批次的 ONNX 图静态批次维度；动态批次模型使用 0。
+        prefix (str): 日志消息前缀。
 
-    Returns:
-        (str): Path to the exported `*_qnn.onnx` file.
+    返回：
+        (str): 导出的 `*_qnn.onnx` 文件路径。
 
-    Notes:
+    注意：
         `onnxruntime-qnn` wheels may expose QNN either as a plugin library or as a built-in ONNX Runtime provider.
     """
     check_requirements("onnxruntime-qnn")
@@ -94,16 +88,16 @@ def onnx2qnn(
     import onnx
 
     dims = [d.dim_value for d in onnx.load(str(onnx_file)).graph.input[0].type.tensor_type.shape.dim]
-    if len(dims) == 4 and dims[3] in {1, 3} and dims[1] not in {1, 3}:  # channel-last graph (QNNModel export)
+    if len(dims) == 4 and dims[3] in {1, 3} and dims[1] not in {1, 3}:  # 通道-last graph (QNNModel export)
         nchw_transform = transform_fn
 
         def transform_fn(data_item):
-            """Transform calibration data from NCHW to NHWC."""
+            """将校准数据从 NCHW 转换为 NHWC。"""
             return nchw_transform(data_item).transpose(0, 2, 3, 1)
 
     try:
         quant_pre_process(str(onnx_file), str(pre_file))
-        # 16-bit activations + 8-bit weights is the ORT-recommended accuracy/perf balance for the HTP backend
+        # 对 HTP 后端而言，16 位激活值加 8 位权重是 ORT 推荐的精度与性能平衡方案。
         qdq_config = get_qnn_qdq_config(
             str(pre_file),
             onnx_calibration_reader(dataset, transform_fn, batch=batch),
@@ -112,10 +106,10 @@ def onnx2qnn(
         )
         quantize(str(pre_file), str(qdq_file), qdq_config)
 
-        # Register the QNN EP, then compile the quantized graph to a context binary during session init (no inference
-        # run). The provider target finalizes the graph offline on a host without an NPU, and the shared-memory allocator
-        # is disabled (no device present). Targets not exposed by ONNX Runtime's htp_arch parser are finalized through
-        # their QNN SoC model instead.
+        # 注册 QNN EP，然后在会话初始化期间将量化图编译为上下文二进制文件（不执行推理）。
+        # provider 目标会在没有 NPU 的主机上离线完成图的最终处理，并禁用共享内存分配器（因为没有设备）。
+        # 对于 ONNX Runtime htp_arch 解析器未公开的目标，通过
+        # 改用其 QNN SoC 模型。
         ep_name = "QNNExecutionProvider"
         ep_options = {
             "backend_path": htp_backend,
@@ -145,13 +139,13 @@ def onnx2qnn(
             if ep_library:
                 ort.unregister_execution_provider_library(ep_name)
     finally:
-        for f in (pre_file, qdq_file):  # remove quantization intermediates; the context binary is self-contained
+        for f in (pre_file, qdq_file):  # 删除量化中间文件；上下文二进制文件是自包含的
             f.unlink(missing_ok=True)
 
     if not ctx_file.exists():
         raise RuntimeError(f"QNN context binary was not generated at {ctx_file}. See {prefix} logs for details.")
 
-    if metadata:  # ensure Ultralytics metadata is present in the context model (usually preserved by ONNX Runtime)
+    if metadata:  # 确保上下文模型中包含 Ultralytics 元数据（通常由 ONNX Runtime 保留）
         import onnx
 
         ctx_model = onnx.load(str(ctx_file))

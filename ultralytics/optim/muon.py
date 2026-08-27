@@ -7,36 +7,34 @@ from torch import optim
 
 
 def zeropower_via_newtonschulz5(G: torch.Tensor, eps: float = 1e-7) -> torch.Tensor:
-    """Compute the zeroth power / orthogonalization of matrix G using Newton-Schulz iteration.
+    """使用 Newton-Schulz 迭代计算矩阵 G 的零次幂或正交化结果。
 
-    This function implements a quintic Newton-Schulz iteration to compute an approximate orthogonalization of the input
-    matrix G. The iteration coefficients are optimized to maximize convergence slope at zero, producing a result similar
-    to UV^T from SVD, where USV^T = G, but with relaxed convergence guarantees that empirically work well for
-    optimization purposes.
+    此函数实现五次 Newton-Schulz 迭代，以近似正交化输入矩阵 G。迭代系数经过优化，可最大化零点处的收敛斜率，
+    生成类似 SVD 中 UV^T 的结果（USV^T = G），同时放宽收敛保证，在优化任务中经过实验证明效果良好。
 
-    Args:
-        G (torch.Tensor): Input 2D matrix or 3D batch of matrices to orthogonalize.
-        eps (float, optional): Small epsilon value added to norm for numerical stability. Default: 1e-7.
+    参数：
+        G (torch.Tensor): 要进行正交化的二维矩阵或三维矩阵批次。
+        eps (float, 可选): 添加到范数中的小 epsilon 值，用于保证数值稳定性。默认：1e-7。
 
-    Returns:
-        (torch.Tensor): Orthogonalized matrix/matrices with same shape as input G.
+    返回：
+        (torch.Tensor): 与输入 G 形状相同的正交化矩阵或矩阵批次。
 
-    Examples:
+    示例：
         >>> G = torch.randn(128, 64)
         >>> G_ortho = zeropower_via_newtonschulz5(G)
         >>> print(G_ortho.shape)
         torch.Size([128, 64])
 
-    Notes:
-        - Uses bfloat16 precision for computation.
-        - Performs exactly 5 Newton-Schulz iteration steps with fixed coefficients.
-        - Automatically transposes for efficiency when rows > columns.
-        - Output approximates US'V^T where S' has diagonal entries ~ Uniform(0.5, 1.5).
-        - Does not produce exact UV^T but works well empirically for neural network optimization.
+    注意：
+        - 使用 bfloat16 精度进行计算。
+        - 使用固定系数准确执行 5 次 Newton-Schulz 迭代。
+        - 当行数大于列数时自动转置，以提高效率。
+        - 输出近似于 US'V^T，其中 S' 的对角元素近似服从 Uniform(0.5, 1.5)。
+        - 不会生成精确的 UV^T，但在神经网络优化中具有良好的经验效果。
     """
     assert G.ndim in {2, 3}
     X = G.reshape(-1, G.size(-2), G.size(-1)).bfloat16()
-    X /= X.norm(dim=(-2, -1), keepdim=True) + eps  # ensure top singular value <= 1
+    X /= X.norm(dim=(-2, -1), keepdim=True) + eps  # 确保最大奇异值 <= 1
     if G.size(-2) > G.size(-1):
         X = X.transpose(-2, -1)
     a, b, c = 3.4445, -4.7750, 2.0315
@@ -55,35 +53,34 @@ def muon_update(
     beta: float = 0.95,
     nesterov: bool = True,
 ) -> torch.Tensor | list[torch.Tensor]:
-    """Compute Muon optimizer updates with momentum and orthogonalization.
+    """使用动量和正交化计算 Muon 优化器更新量。
 
-    This function applies momentum to the gradients, optionally uses Nesterov acceleration, and then orthogonalizes the
-    updates using Newton-Schulz iterations. Matrices with the same row count are zero-padded and orthogonalized in a
-    single batched call, and momentum math uses fused foreach ops, avoiding per-parameter kernel launch overhead.
-    Higher-rank tensors are reshaped before orthogonalization, and each update is scaled based on parameter dimensions.
+    此函数对梯度应用动量，可选使用 Nesterov 加速，然后通过 Newton-Schulz 迭代对更新量进行正交化。
+    行数相同的矩阵会进行零填充，并在一次批量调用中完成正交化；动量计算使用融合的 foreach 操作，
+    避免为每个参数启动内核的额外开销。高阶张量会在正交化前调整形状，每个更新量根据参数维度进行缩放。
 
-    Args:
-        grad (torch.Tensor | list[torch.Tensor]): Gradient tensor(s) to update. Each must have at least two dimensions.
-        momentum (torch.Tensor | list[torch.Tensor]): Momentum buffer tensor(s), modified in-place.
-        beta (float, optional): Momentum coefficient for exponential moving average. Default: 0.95.
-        nesterov (bool, optional): Whether to use Nesterov momentum acceleration. Default: True.
+    参数：
+        grad (torch.Tensor | 列表[torch.Tensor]): 要更新的梯度张量，每个张量至少包含两个维度。
+        momentum (torch.Tensor | 列表[torch.Tensor]): 动量缓冲区张量，会原地修改。
+        beta (float, 可选): 指数移动平均的动量系数。默认：0.95。
+        nesterov (bool, 可选): 是否使用 Nesterov 动量加速。默认：True。
 
-    Returns:
-        (torch.Tensor | list[torch.Tensor]): Orthogonalized update tensor(s), each with the gradient's shape and dtype.
+    返回：
+        (torch.Tensor | 列表[torch.Tensor]): 正交化后的更新张量，每个张量的形状和数据类型与对应梯度相同。
 
-    Examples:
+    示例：
         >>> grad = torch.randn(64, 128)
         >>> momentum = torch.zeros_like(grad)
         >>> update = muon_update(grad, momentum, beta=0.95, nesterov=True)
         >>> print(update.shape)
         torch.Size([64, 128])
 
-    Notes:
-        - Momentum buffers are updated in-place: momentum = beta * momentum + (1-beta) * grad.
-        - With Nesterov: update = beta * momentum + (1-beta) * grad.
-        - Without Nesterov: update = momentum.
-        - Tensors with more than 2 dimensions are reshaped to 2D with the first dimension preserved.
-        - Final updates are scaled by sqrt(max(1, dim[-2] / dim[-1])) to account for parameter dimensions.
+    注意：
+        - 动量缓冲区原地更新：momentum = beta * momentum + (1-beta) * grad。
+        - 使用 Nesterov 时：update = beta * momentum + (1-beta) * grad。
+        - 不使用 Nesterov 时：update = momentum。
+        - 维度大于 2 的张量会重塑为二维，同时保留第一维。
+        - 最终更新量按 sqrt(max(1, dim[-2] / dim[-1])) 缩放，以适配参数维度。
     """
     single = isinstance(grad, torch.Tensor)
     grads, momentums = ([grad], [momentum]) if single else (grad, momentum)
@@ -94,7 +91,7 @@ def muon_update(
         torch._foreach_add_(updates, grads, alpha=1 - beta)
     else:
         updates = list(momentums)
-    buckets = {}  # group matrices transposed to rows <= cols by (rows, scale) for batched orthogonalization
+    buckets = {}  # 按（行数、缩放系数）分组转置后的矩阵，使行数 <= 列数以便批量正交化
     for i, u in enumerate(updates):
         m = u.view(len(u), -1) if u.ndim > 2 else u
         transpose = m.size(0) > m.size(1)
@@ -104,7 +101,7 @@ def muon_update(
         buckets.setdefault((m.size(0), scale, m.device, m.dtype), []).append((i, m, transpose))
     for (_, scale, _, _), items in buckets.items():
         n = max(m.size(1) for _, m, _ in items)
-        # zero-pad columns so different shapes share one batched call (zeros stay zero through Newton-Schulz)
+        # 对列进行零填充，使不同形状可以共享一次批处理调用（零值经过 Newton-Schulz 过程后仍为零）。
         X = torch.stack([torch.nn.functional.pad(m, (0, n - m.size(1))) for _, m, _ in items])
         X = zeropower_via_newtonschulz5(X).to(grads[items[0][0]].dtype).mul_(scale)
         for j, (i, m, transpose) in enumerate(items):
@@ -114,22 +111,21 @@ def muon_update(
 
 
 class MuSGD(optim.Optimizer):
-    """Hybrid optimizer combining Muon and SGD updates for neural network training.
+    """结合 Muon 和 SGD 更新的神经网络混合优化器。
 
-    This optimizer implements a combination of Muon (a momentum-based optimizer with orthogonalization via Newton-Schulz
-    iterations) and standard SGD with momentum. It allows different parameter groups to use either the hybrid Muon+SGD
-    approach or pure SGD.
+    此优化器结合 Muon（通过 Newton-Schulz 迭代进行正交化的动量优化器）和带动量的标准 SGD。
+    不同参数组可以选择使用 Muon+SGD 混合方案或纯 SGD。
 
-    Args:
-        params (Iterable): Parameters to optimize or dicts defining parameter groups.
-        muon (float, optional): Weight factor for Muon updates in hybrid mode. Default: 0.5.
-        sgd (float, optional): Weight factor for SGD updates in hybrid mode. Default: 0.5.
+    参数：
+        params (Iterable): 要优化的参数，或用于定义参数组的字典。
+        muon (float, 可选): 混合模式下 Muon 更新的权重因子。默认值：0.5。
+        sgd (float, 可选): 混合模式下 SGD 更新的权重因子。默认值：0.5。
 
-    Attributes:
+    属性：
         muon (float): Scaling factor applied to Muon learning rate.
         sgd (float): Scaling factor applied to SGD learning rate in hybrid mode.
 
-    Examples:
+    示例：
         >>> param_groups = [
         ...     {
         ...         "params": model.conv_params,
@@ -153,10 +149,10 @@ class MuSGD(optim.Optimizer):
         >>> loss.backward()
         >>> optimizer.step()
 
-    Notes:
-        - Parameter groups with 'use_muon': True will receive both Muon and SGD updates.
-        - Parameter groups with 'use_muon': False will receive only SGD updates.
-        - The Muon update uses orthogonalization which works best for 2D+ parameter tensors.
+    注意：
+        - 'use_muon' 为 True 的参数组同时执行 Muon 和 SGD 更新。
+        - 'use_muon' 为 False 的参数组仅执行 SGD 更新。
+        - Muon 更新使用正交化，最适合二维及更高维的参数张量。
     """
 
     def __init__(
@@ -170,17 +166,17 @@ class MuSGD(optim.Optimizer):
         muon: float = 0.5,
         sgd: float = 0.5,
     ):
-        """Initialize MuSGD optimizer with hybrid Muon and SGD capabilities.
+        """初始化具备 Muon 和 SGD 混合能力的 MuSGD 优化器。
 
-        Args:
-            params (Iterable): Iterable of parameters to optimize or dicts defining parameter groups.
-            lr (float): Learning rate.
-            momentum (float): Momentum factor for SGD.
-            weight_decay (float): Weight decay (L2 penalty).
-            nesterov (bool): Whether to use Nesterov momentum.
-            use_muon (bool): Whether to enable Muon updates.
-            muon (float): Scaling factor for Muon component.
-            sgd (float): Scaling factor for SGD component.
+        参数：
+            params (Iterable): 要优化的参数，或定义参数组的字典。
+            lr (float): 学习率。
+            momentum (float): SGD 动量系数。
+            weight_decay (float): 权重衰减（L2 惩罚）。
+            nesterov (bool): 是否使用 Nesterov 动量。
+            use_muon (bool): 是否启用 Muon 更新。
+            muon (float): Muon 分量的缩放系数。
+            sgd (float): SGD 分量的缩放系数。
         """
         defaults = {
             "lr": lr,
@@ -195,23 +191,21 @@ class MuSGD(optim.Optimizer):
 
     @torch.no_grad()
     def step(self, closure=None):
-        """Perform a single optimization step.
+        """执行一次优化步骤。
 
-        Applies either hybrid Muon+SGD updates or pure SGD updates depending on the
-        'use_muon' flag in each parameter group. For Muon-enabled groups, parameters
-        receive both an orthogonalized Muon update and a standard SGD momentum update.
+        根据每个参数组中的 'use_muon' 标志，执行 Muon+SGD 混合更新或纯 SGD 更新。
+        对于启用 Muon 的参数组，参数会同时接收正交化的 Muon 更新和标准 SGD 动量更新。
 
-        Args:
-            closure (Callable, optional): A closure that reevaluates the model
-                and returns the loss. Default: None.
+        参数：
+            closure (Callable, 可选): 用于重新评估模型并返回损失的闭包。默认值：None。
 
-        Returns:
-            (torch.Tensor | None): The loss value if closure is provided, otherwise None.
+        返回：
+            (torch.Tensor | None): 如果提供 closure，则返回损失值，否则返回 None。
 
-        Notes:
-            - Parameters with None gradients are skipped.
-            - Muon updates use Newton-Schulz orthogonalization and work best on 2D+ tensors.
-            - Weight decay is applied only to the SGD component in hybrid mode.
+        注意：
+            - 梯度为 None 的参数会跳过。
+            - Muon 更新使用 Newton-Schulz 正交化，最适合二维及更高维张量。
+            - 混合模式下，权重衰减仅应用于 SGD 部分。
         """
         loss = None
         if closure is not None:
@@ -240,7 +234,7 @@ class MuSGD(optim.Optimizer):
                 lr *= self.sgd
             else:
                 buffers = [self.state[p]["momentum_buffer"] for p in params]
-            # SGD update
+            # SGD 更新
             grads = [p.grad for p in params]
             if group["weight_decay"] != 0:
                 grads = torch._foreach_add(grads, params, alpha=group["weight_decay"])
@@ -252,71 +246,69 @@ class MuSGD(optim.Optimizer):
 
 
 class Muon(optim.Optimizer):
-    """Muon optimizer for usage in non-distributed settings.
+    """用于非分布式环境的 Muon 优化器。
 
-    This optimizer implements the Muon algorithm, which combines momentum-based updates with orthogonalization via
-    Newton-Schulz iterations. It applies weight decay and learning rate scaling to parameter updates.
+    此优化器实现 Muon 算法，通过 Newton-Schulz 迭代将基于动量的更新与正交化结合，
+    并对参数更新应用权重衰减和学习率缩放。
 
-    Args:
-        params (iterable): Iterable of parameters to optimize or dicts defining parameter groups.
-        lr (float, optional): Learning rate. Default: 0.02.
-        weight_decay (float, optional): Weight decay (L2 penalty) coefficient. Default: 0.
-        momentum (float, optional): Momentum coefficient for exponential moving average. Default: 0.95.
+    参数：
+        params (iterable): 要优化的参数迭代器，或用于定义参数组的字典。
+        lr (float, 可选): 学习率。默认值：0.02。
+        weight_decay (float, 可选): 权重衰减（L2 惩罚）系数。默认值：0。
+        momentum (float, 可选): 指数移动平均的动量系数。默认值：0.95。
 
-    Attributes:
-        param_groups (list): List of parameter groups with their optimization settings.
-        state (dict): Dictionary containing optimizer state for each parameter.
+    属性：
+        param_groups (列表): 包含优化设置的参数组列表。
+        state (dict): 包含每个参数优化器状态的字典。
 
-    Examples:
+    示例：
         >>> model = YourModel()
         >>> optimizer = Muon(model.parameters(), lr=0.02, weight_decay=0.01, momentum=0.95)
         >>> loss = model(data)
         >>> loss.backward()
         >>> optimizer.step()
 
-    Notes:
-        - Designed for non-distributed training environments.
-        - Uses Muon updates with orthogonalization for all parameters.
-        - Weight decay is applied multiplicatively before parameter update.
-        - Parameters with None gradients are assigned zero gradients for synchronization.
+    注意：
+        - 用于非分布式训练环境。
+        - 对所有参数使用带正交化的 Muon 更新。
+        - 权重衰减在参数更新前以乘法形式应用。
+        - 梯度为 None 的参数会被赋予零梯度，以便同步。
     """
 
     def __init__(self, params, lr: float = 0.02, weight_decay: float = 0, momentum: float = 0.95):
-        """Initialize Muon optimizer with orthogonalization-based updates.
+        """初始化使用正交化更新的 Muon 优化器。
 
-        Args:
-            params (Iterable): Iterable of parameters to optimize or dicts defining parameter groups.
-            lr (float): Learning rate.
-            weight_decay (float): Weight decay factor applied multiplicatively.
-            momentum (float): Momentum factor for gradient accumulation.
+        参数：
+            params (Iterable): 要优化的参数，或定义参数组的字典。
+            lr (float): 学习率。
+            weight_decay (float): 乘法形式应用的权重衰减系数。
+            momentum (float): 梯度累积的动量系数。
         """
         defaults = {"lr": lr, "weight_decay": weight_decay, "momentum": momentum}
         super().__init__(params, defaults)
 
     @torch.no_grad()
     def step(self, closure=None):
-        """Perform a single optimization step.
+        """执行一次优化步骤。
 
-        Applies Muon updates to all parameters, incorporating momentum and orthogonalization.
-        Weight decay is applied multiplicatively before the parameter update.
+        对所有参数应用包含动量和正交化的 Muon 更新，并在参数更新前以乘法方式应用权重衰减。
 
-        Args:
-            closure (Callable[[], torch.Tensor] | None, optional): A closure that reevaluates the model
-                and returns the loss. Default: None.
+        参数：
+            closure (Callable[[], torch.Tensor] | None, 可选): 用于重新评估模型并返回损失的闭包。默认值：None。
 
-        Returns:
-            (torch.Tensor | None): The loss value if closure is provided, otherwise None.
+        返回：
+            (torch.Tensor | None): 如果提供 closure，则返回损失值，否则返回 None。
 
-        Examples:
+        示例：
             >>> optimizer = Muon(model.parameters())
             >>> loss = model(inputs)
             >>> loss.backward()
             >>> optimizer.step()
 
-        Notes:
-            - Parameters with None gradients are assigned zero gradients for synchronization.
-            - Weight decay is applied as: p *= (1 - lr * weight_decay).
-            - Muon update uses Newton-Schulz orthogonalization and works best on 2D+ tensors.
+        注意：
+            - 梯度为 None 的参数会被赋予零梯度，以便同步。
+            - 权重衰减按如下方式应用：p *= (1 - lr * weight_decay)。
+            - Muon 更新使用 Newton-Schulz 正交化，最适合二维及更高维张量。
         """
         loss = None
         if closure is not None:
@@ -329,7 +321,7 @@ class Muon(optim.Optimizer):
                 continue
             for p in params:
                 if p.grad is None:
-                    p.grad = torch.zeros_like(p)  # Force synchronization
+                    p.grad = torch.zeros_like(p)  # 强制同步
                 if len(self.state[p]) == 0:
                     self.state[p]["momentum_buffer"] = torch.zeros_like(p)
             updates = muon_update(

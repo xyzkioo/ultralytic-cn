@@ -48,36 +48,35 @@ from .utils import (
     verify_image_mask,
 )
 
-# Ultralytics dataset *.cache version, >= 1.0.0 for Ultralytics YOLO models
+# Ultralytics 数据集 *.cache 版本，适用于版本 >= 1.0.0 的 Ultralytics YOLO 模型。
 DATASET_CACHE_VERSION = "1.0.4"
 
 
 class YOLODataset(BaseDataset):
-    """Dataset class for loading object detection and/or segmentation labels in YOLO format.
+    """以 YOLO 格式加载对象检测和/或分割标签的数据集类。
 
-    This class supports loading data for object detection, instance segmentation, pose estimation, and oriented bounding
-    box (OBB) tasks using the YOLO format.
+    此类支持使用 YOLO 格式加载对象检测、实例分割、姿态估计和定向边界框（OBB）任务的数据。
 
-    Attributes:
-        format_class (type[Format]): Formatter appended by build_transforms; subclasses override it per task.
-        use_segments (bool): Indicates if segmentation masks should be used.
-        use_keypoints (bool): Indicates if keypoints should be used for pose estimation.
-        use_obb (bool): Indicates if oriented bounding boxes should be used.
-        data (dict): Dataset configuration dictionary.
+    属性：
+        format_class (type[Format]): 由 build_transforms 添加的格式化器，子类会按任务覆盖该属性。
+        use_segments (bool): 是否使用分割掩码。
+        use_keypoints (bool): 是否使用姿态估计关键点。
+        use_obb (bool): 是否使用定向边界框。
+        data (dict): 数据集配置字典。
 
-    Methods:
-        cache_labels: Cache dataset labels, check images and read shapes.
-        get_labels: Return list of label dictionaries for YOLO training.
-        get_label_files: Return companion label files for the dataset's images.
-        verify_args: Return the per-image verification function and its arguments.
-        result_to_label: Convert one verification result into a label dict.
-        verify_labels: Check box/segment consistency of the loaded labels.
-        build_transforms: Build and append transforms to the list.
-        close_mosaic: Disable mosaic, copy_paste, mixup and cutmix augmentations and build transformations.
-        update_labels_info: Update label format for different tasks.
-        collate_fn: Collate data samples into batches.
+    方法：
+        cache_labels: 缓存数据集标签，检查图像并读取尺寸。
+        get_labels: 返回用于 YOLO 训练的标签字典列表。
+        get_label_files: 返回数据集图像对应的标签文件。
+        verify_args: 返回逐图像验证函数及其参数。
+        result_to_label: 将单个验证结果转换为标签字典。
+        verify_labels: 检查已加载标签的边界框和分割一致性。
+        build_transforms: 构建变换并追加到列表。
+        close_mosaic: 禁用 mosaic、copy_paste、mixup 和 cutmix 增强，并重新构建变换。
+        update_labels_info: 更新不同任务的标签格式。
+        collate_fn: 将数据样本整理为批次。
 
-    Examples:
+    示例：
         >>> dataset = YOLODataset(img_path="path/to/images", data={"names": {0: "person"}}, task="detect")
         >>> dataset.get_labels()
     """
@@ -85,13 +84,13 @@ class YOLODataset(BaseDataset):
     format_class = Format
 
     def __init__(self, *args, data: dict | None = None, task: str = "detect", **kwargs):
-        """Initialize the YOLODataset.
+        """初始化 YOLODataset。
 
-        Args:
-            data (dict, optional): Dataset configuration dictionary.
-            task (str): Task type, one of 'detect', 'segment', 'pose', or 'obb'.
-            *args (Any): Additional positional arguments for the parent class.
-            **kwargs (Any): Additional keyword arguments for the parent class.
+        参数：
+            data (dict, 可选): 数据集配置字典。
+            task (str): 任务类型，可选 'detect'、'segment'、'pose' 或 'obb'。
+            *args (Any): 传递给父类的其他位置参数。
+            **kwargs (Any): 传递给父类的其他关键字参数。
         """
         self.use_segments = task == "segment"
         self.use_keypoints = task == "pose"
@@ -100,20 +99,19 @@ class YOLODataset(BaseDataset):
         super().__init__(*args, channels=self.data.get("channels", 3), **kwargs)
 
     def cache_labels(self, path: Path = Path("./labels.cache")) -> dict:
-        """Cache dataset labels, check images and read shapes.
+        """缓存数据集标签，检查图像并读取尺寸。
 
-        This is the shared scanning skeleton for file-based datasets; subclasses customize it through the
-        `get_label_files`, `get_cache_hash`, `verify_args`, `result_to_label` and `scan_summary` hooks instead of
-        duplicating this method.
+        这是基于文件数据集的通用扫描框架。子类通过 `get_label_files`、`get_cache_hash`、`verify_args`、
+        `result_to_label` 和 `scan_summary` 钩子进行定制，无需重复实现此方法。
 
-        Args:
-            path (Path): Path where to save the cache file.
+        参数：
+            path (Path): 保存缓存文件的路径。
 
-        Returns:
-            (dict): Dictionary containing cached labels and related information.
+        返回：
+            (dict): 包含缓存标签及相关信息的字典。
         """
         x = {"labels": []}
-        nm, nf, ne, nc, msgs = 0, 0, 0, 0, []  # number missing, found, empty, corrupt, messages
+        nm, nf, ne, nc, msgs = 0, 0, 0, 0, []  # 缺失、找到、空、损坏的数量及消息
         desc = f"{self.prefix}Scanning {path.parent / path.stem}..."
         total = len(self.im_files)
         with ThreadPool(NUM_THREADS) as pool:
@@ -136,7 +134,7 @@ class YOLODataset(BaseDataset):
         if msgs:
             LOGGER.info("\n".join(msgs))
         if nf == 0:
-            if self.augment:  # training requires labels; unlabeled val splits (e.g. COCO test-dev) only warn
+            if self.augment:  # 训练需要标签；未标注的验证划分（例如 COCO test-dev）仅发出警告
                 raise ValueError(f"{self.prefix}No labels found in {path}. {HELP_URL}")
             LOGGER.warning(f"{self.prefix}No labels found in {path}. {HELP_URL}")
         x["hash"] = self.get_cache_hash()
@@ -147,41 +145,41 @@ class YOLODataset(BaseDataset):
         return x
 
     def get_label_files(self) -> list[str]:
-        """Return the companion label files for the dataset's images, storing them on the instance.
+        """返回数据集图像对应的标签文件，并将其保存到实例属性。
 
-        Returns:
-            (list[str]): List of label file paths.
+        返回：
+            (列表[str]): 标签文件路径列表。
         """
         self.label_files = img2label_paths(self.im_files)
         return self.label_files
 
     def get_cache_hash(self) -> str:
-        """Return the hash used to validate a label cache against the current dataset files.
+        """返回用于将标签缓存与当前数据集文件进行校验的哈希值。
 
-        Returns:
-            (str): Dataset cache hash.
+        返回：
+            (str): 数据集缓存哈希值。
         """
         return get_hash(self.label_files + self.im_files)
 
     def scan_summary(self, nf: int, nm: int, ne: int, nc: int) -> str:
-        """Return a one-line summary of scan counters for progress bars and cache logs.
+        """返回扫描计数器的单行摘要，用于进度条和缓存日志。
 
-        Args:
-            nf (int): Number of found images.
-            nm (int): Number of missing labels.
-            ne (int): Number of empty labels.
-            nc (int): Number of corrupt images.
+        参数：
+            nf (int): 找到的图像数量。
+            nm (int): 缺失标签的数量。
+            ne (int): 空标签的数量。
+            nc (int): 损坏图像的数量。
 
-        Returns:
-            (str): Scan summary message.
+        返回：
+            (str): 扫描摘要消息。
         """
-        return f"{nf} images, {nm + ne} backgrounds, {nc} corrupt"
+        return f"{nf} 张图像，{nm + ne} 个背景，{nc} 张损坏图像"
 
     def verify_args(self) -> tuple:
-        """Return the per-image verification function and its argument iterable used by `cache_labels`.
+        """返回 `cache_labels` 使用的逐图像验证函数及其参数可迭代对象。
 
-        Returns:
-            (tuple): (verify function, zipped argument iterable) for ThreadPool.imap.
+        返回：
+            (tuple): 供 ThreadPool.imap 使用的（验证函数、压缩参数可迭代对象）。
         """
         nkpt, ndim = self.data.get("kpt_shape", (0, 0))
         if self.use_keypoints and (nkpt <= 0 or ndim not in {2, 3}):
@@ -201,13 +199,13 @@ class YOLODataset(BaseDataset):
         )
 
     def result_to_label(self, result: list) -> tuple[dict | None, int, int, int, int, str]:
-        """Convert one verification result into a label dict and scan counter increments.
+        """将单个验证结果转换为标签字典，并返回扫描计数增量。
 
-        Args:
-            result (list): One result from the verification function returned by `verify_args`.
+        参数：
+            result (列表): `verify_args` 返回的验证函数结果。
 
-        Returns:
-            (tuple): (label dict or None, missing, found, empty, corrupt, message).
+        返回：
+            (tuple):（标签字典或 None、缺失、找到、空、损坏、消息）。
         """
         im_file, lb, shape, segments, keypoint, nm_f, nf_f, ne_f, nc_f, msg = result
         label = (
@@ -227,13 +225,13 @@ class YOLODataset(BaseDataset):
         return label, nm_f, nf_f, ne_f, nc_f, msg
 
     def verify_labels(self, labels: list[dict], cache_path: Path) -> None:
-        """Check that the dataset is all boxes or all segments, removing mixed segments if necessary.
+        """检查数据集是否完全由边界框或分割标签组成，并在需要时移除混合分割标签。
 
-        Args:
-            labels (list[dict]): List of label dictionaries.
-            cache_path (Path): Path of the dataset cache file, used in warning messages.
+        参数：
+            labels (列表[dict]): 标签字典列表。
+            cache_path (Path): 数据集缓存文件路径，用于警告消息。
         """
-        # Check if the dataset is all boxes or all segments
+        # 检查数据集是否完全由边界框或分割标签组成
         lengths = ((len(lb["cls"]), len(lb["bboxes"]), len(lb["segments"])) for lb in labels)
         len_cls, len_boxes, len_segments = (sum(x) for x in zip(*lengths))
         if self.use_segments and len_boxes != len_segments:
@@ -253,61 +251,61 @@ class YOLODataset(BaseDataset):
             LOGGER.warning(f"Labels are missing or empty in {cache_path}, training may not work correctly. {HELP_URL}")
 
     def _load_or_scan_cache(self, cache_path: Path, cache_hash: str) -> tuple[dict, bool]:
-        """Load a dataset cache file if it matches the current version and hash, otherwise rescan and rebuild it.
+        """如果数据集缓存文件匹配当前版本和哈希则加载，否则重新扫描并构建缓存。
 
-        Args:
-            cache_path (Path): Path of the cache file.
-            cache_hash (str): Expected hash of the dataset files.
+        参数：
+            cache_path (Path): 缓存文件路径。
+            cache_hash (str): 数据集文件的预期哈希值。
 
-        Returns:
-            (tuple): (cache dict, True if a valid existing cache file was loaded).
+        返回：
+            (tuple):（缓存字典、是否加载了有效现有缓存文件）。
         """
         try:
-            cache, exists = load_dataset_cache_file(cache_path), True  # attempt to load a *.cache file
-            assert cache["version"] == DATASET_CACHE_VERSION  # matches current version
-            assert cache["hash"] == cache_hash  # identical hash
+            cache, exists = load_dataset_cache_file(cache_path), True  # 尝试加载 *.cache 文件
+            assert cache["version"] == DATASET_CACHE_VERSION  # 匹配当前版本
+            assert cache["hash"] == cache_hash  # 哈希值相同
         except (FileNotFoundError, AssertionError, AttributeError, ModuleNotFoundError):
-            cache, exists = self.cache_labels(cache_path), False  # run cache ops
+            cache, exists = self.cache_labels(cache_path), False  # 执行缓存操作
         return cache, exists
 
     def get_labels(self) -> list[dict]:
-        """Return list of label dictionaries for YOLO training.
+        """返回用于 YOLO 训练的标签字典列表。
 
-        This method loads labels from disk or cache, verifies their integrity, and prepares them for training.
+        此方法从磁盘或缓存加载标签，验证其完整性，并为训练准备数据。
 
-        Returns:
-            (list[dict]): List of label dictionaries, each containing information about an image and its annotations.
+        返回：
+            (列表[dict]): 标签字典列表，每个字典包含一张图像及其标注信息。
         """
         label_files = self.get_label_files()
         cache_path = Path(label_files[0]).parent.with_suffix(".cache")
         cache, exists = self._load_or_scan_cache(cache_path, self.get_cache_hash())
 
-        # Display cache
-        nf, nm, ne, nc, n = cache.pop("results")  # found, missing, empty, corrupt, total
+        # 显示缓存信息
+        nf, nm, ne, nc, n = cache.pop("results")  # 找到、缺失、空、损坏、总数
         if exists and LOCAL_RANK in {-1, 0}:
             d = f"Scanning {cache_path}... {self.scan_summary(nf, nm, ne, nc)}"
-            TQDM(None, desc=self.prefix + d, total=n, initial=n)  # display results
+            TQDM(None, desc=self.prefix + d, total=n, initial=n)  # 显示结果
             if cache["msgs"]:
-                LOGGER.info("\n".join(cache["msgs"]))  # display warnings
+                LOGGER.info("\n".join(cache["msgs"]))  # 显示警告
 
-        # Read cache
+        # 读取缓存
         labels = cache["labels"]
         if not labels:
             issues = "\n  ".join(sorted(set(cache["msgs"]))) or "no error details"
             raise RuntimeError(f"No valid images found in {cache_path}.\n  {issues}\n{HELP_URL}")
-        [cache.pop(k) for k in ("hash", "version", "msgs")]  # remove items
-        self.im_files = [lb["im_file"] for lb in labels]  # update im_files
+        [cache.pop(k) for k in ("hash", "version", "msgs")]  # 删除这些项目
+        self.im_files = [lb["im_file"] for lb in labels]  # 更新图像文件列表
         self.verify_labels(labels, cache_path)
         return labels
 
     def build_transforms(self, hyp: dict | None = None) -> Compose:
-        """Build and append transforms to the list.
+        """构建变换并将其追加到列表中。
 
-        Args:
-            hyp (dict, optional): Hyperparameters for transforms.
+        参数：
+            hyp (dict, 可选): 变换使用的超参数。
 
-        Returns:
-            (Compose): Composed transforms.
+        返回：
+            (Compose): 组合后的变换。
         """
         if self.augment:
             hyp.mosaic = hyp.mosaic if self.augment and not self.rect else 0.0
@@ -326,26 +324,25 @@ class YOLODataset(BaseDataset):
                 batch_idx=True,
                 mask_ratio=hyp.mask_ratio,
                 mask_overlap=hyp.overlap_mask,
-                bgr=hyp.bgr if self.augment else 0.0,  # only affect training.
+                bgr=hyp.bgr if self.augment else 0.0,  # 仅影响训练
             )
         )
         return transforms
 
     def build_text_transforms(self, transforms: Compose, max_samples: int) -> Compose:
-        """Insert text augmentation for text-based subclasses providing `category_freq`.
+        """为提供 `category_freq` 的文本子类插入文本增强。
 
-        Args:
-            transforms (Compose): Transforms composed by build_transforms.
-            max_samples (int): Maximum number of text samples per image.
+        参数：
+            transforms (Compose): 由 build_transforms 组合的变换。
+            max_samples (int): 每张图像的最大文本样本数量。
 
-        Returns:
-            (Compose): Transforms with RandomLoadText inserted before Format when augmenting.
+        返回：
+            (Compose): 启用增强时在 Format 前插入 RandomLoadText 的变换组合。
         """
         if self.augment:
-            # NOTE: hard-coded the args for now.
-            # NOTE: this implementation is different from official yoloe,
-            # the strategy of selecting negative is restricted in one dataset,
-            # while official pre-saved neg embeddings from all datasets at once.
+            # 注意：当前参数暂时采用硬编码。
+            # 注意：此实现与官方 yoloe 不同，负样本选择策略限制在单个数据集中，
+            # 官方实现则一次使用所有数据集预先保存的负样本嵌入。
             transform = RandomLoadText(
                 max_samples=min(max_samples, 80),
                 padding=True,
@@ -356,15 +353,15 @@ class YOLODataset(BaseDataset):
 
     @staticmethod
     def _get_neg_texts(category_freq: dict) -> list[str]:
-        """Get negative text samples with frequency above the dataset threshold."""
+        """获取出现频率高于数据集阈值的负文本样本。"""
         threshold = min(max(category_freq.values()), 100)
         return [k for k, v in category_freq.items() if v >= threshold]
 
     def close_mosaic(self, hyp: dict) -> None:
-        """Disable mosaic, copy_paste, mixup and cutmix augmentations by setting their values to 0.0.
+        """将 mosaic、copy_paste、mixup 和 cutmix 增强的值设为 0.0，以禁用这些增强。
 
-        Args:
-            hyp (dict): Hyperparameters for transforms.
+        参数：
+            hyp (dict): 变换使用的超参数。
         """
         hyp.mosaic = 0.0
         hyp.copy_paste = 0.0
@@ -373,17 +370,17 @@ class YOLODataset(BaseDataset):
         self.transforms = self.build_transforms(hyp)
 
     def update_labels_info(self, label: dict) -> dict:
-        """Update label format for different tasks.
+        """更新适用于不同任务的标签格式。
 
-        Args:
-            label (dict): Label dictionary containing bboxes, segments, keypoints, etc.
+        参数：
+            label (dict): 包含边界框、分割线、关键点等信息的标签字典。
 
-        Returns:
-            (dict): Updated label dictionary with instances.
+        返回：
+            (dict): 包含实例信息的更新后标签字典。
 
-        Notes:
-            cls is not with bboxes now, classification and semantic segmentation need an independent cls label
-            Can also support classification and semantic segmentation by adding or removing dict keys there.
+        注意：
+            当前 cls 不与 bboxes 一起保存，分类和语义分割需要独立的 cls 标签。
+            也可以通过添加或删除相应字典键来支持分类和语义分割。
         """
         bboxes = label.pop("bboxes")
         segments = label.pop("segments", [])
@@ -391,13 +388,13 @@ class YOLODataset(BaseDataset):
         bbox_format = label.pop("bbox_format")
         normalized = label.pop("normalized")
 
-        # NOTE: do NOT resample oriented boxes
+        # 注意：不要对有向边界框重新采样
         segment_resamples = 100 if self.use_obb else 1000
         if len(segments) > 0:
-            # make sure segments interpolate correctly if original length is greater than segment_resamples
+            # 如果原始长度大于 segment_resamples，确保分割线性插值正确
             max_len = max(len(s) for s in segments)
             segment_resamples = (max_len + 1) if segment_resamples < max_len else segment_resamples
-            # list[np.array(segment_resamples, 2)] * num_samples
+            # 列表[np.数组(segment_resamples, 2)] * num_samples
             segments = np.stack(resample_segments(segments, n=segment_resamples), axis=0)
         else:
             segments = np.zeros((0, segment_resamples, 2), dtype=np.float32)
@@ -406,16 +403,16 @@ class YOLODataset(BaseDataset):
 
     @staticmethod
     def collate_fn(batch: list[dict]) -> dict:
-        """Collate data samples into batches.
+        """将数据样本整理为批次。
 
-        Args:
-            batch (list[dict]): List of dictionaries containing sample data.
+        参数：
+            batch (列表[dict]): 包含样本数据的字典列表。
 
-        Returns:
-            (dict): Collated batch with stacked tensors.
+        返回：
+            (dict): 整理后、张量已堆叠的批次字典。
         """
         new_batch = {}
-        batch = [dict(sorted(b.items())) for b in batch]  # make sure the keys are in the same order
+        batch = [dict(sorted(b.items())) for b in batch]  # 确保所有样本的键顺序一致
         keys = batch[0].keys()
         values = list(zip(*[list(b.values()) for b in batch]))
         for i, k in enumerate(keys):
@@ -430,25 +427,25 @@ class YOLODataset(BaseDataset):
         if "batch_idx" in new_batch:
             new_batch["batch_idx"] = list(new_batch["batch_idx"])
             for i in range(len(new_batch["batch_idx"])):
-                new_batch["batch_idx"][i] += i  # add target image index for build_targets()
+                new_batch["batch_idx"][i] += i  # 为 build_targets() 添加目标图像索引
             new_batch["batch_idx"] = torch.cat(new_batch["batch_idx"], 0)
         return new_batch
 
 
 class DepthDataset(YOLODataset):
-    """Dataset for monocular depth estimation with paired RGB + depth map loading.
+    """加载配对 RGB 图像和深度图的单目深度估计数据集。
 
-    Extends YOLODataset to load depth ground truth maps alongside RGB images. Depth maps are stored as PNG or NPY files
-    in a parallel directory structure (images/train/*.jpg → depth/train/*.{png,npy}).
+    此类继承 YOLODataset，在加载 RGB 图像的同时加载深度真值图。深度图以 PNG 或 NPY 文件保存，
+    与图像目录采用平行结构（图像/train/*.jpg → depth/train/*.{png,npy}）。
 
-    Examples:
+    示例：
         >>> dataset = DepthDataset(img_path="/data/nyu/images/train", data={"nc": 1})
     """
 
     format_class = DepthFormat
 
     def _depth_path_for(self, im_file: str) -> str:
-        """Map an image path to its companion PNG or NPY depth target."""
+        """将图像路径映射到对应的 PNG 或 NPY 深度目标。"""
         parts = list(Path(im_file).parts)
         for i in range(len(parts) - 1, -1, -1):
             if parts[i] == "images":
@@ -458,35 +455,35 @@ class DepthDataset(YOLODataset):
         return str(path if path.is_file() else path.with_suffix(".npy"))
 
     def get_label_files(self) -> list[str]:
-        """Return the depth paths paired with the dataset's images.
+        """返回与数据集图像配对的深度路径。
 
-        Returns:
-            (list[str]): List of depth file paths.
+        返回：
+            (列表[str]): 深度文件路径列表。
         """
         self.depth_files_by_image = {f: self._depth_path_for(f) for f in self.im_files}
         self.depth_files = list(self.depth_files_by_image.values())
         return self.depth_files
 
     def get_cache_hash(self) -> str:
-        """Return a hash over the paired depth and image files.
+        """返回配对深度文件和图像文件的哈希值。
 
-        Returns:
-            (str): Dataset cache hash.
+        返回：
+            (str): 数据集缓存哈希值。
         """
         return get_hash(self.depth_files + self.im_files + [str(self.data.get("depth_scale", 1000))])
 
     def scan_summary(self, nf: int, nm: int, ne: int, nc: int) -> str:
-        """Return a one-line summary of image-depth scan counters."""
+        """返回图像和深度扫描计数器的单行摘要。"""
         return f"{nf} images, {nm} missing depth, {nc} corrupt"
 
     def verify_args(self) -> tuple:
-        """Return the depth verification function and its argument iterable."""
+        """返回深度验证函数及其参数可迭代对象。"""
         return verify_image_depth, zip(
             self.im_files, self.depth_files, repeat(self.prefix), repeat(self.data.get("depth_scale", 1000))
         )
 
     def result_to_label(self, result: tuple) -> tuple[dict | None, int, int, int, int, str]:
-        """Convert one verify_image_depth result into a label dict and scan counter increments."""
+        """将单个 verify_image_depth 结果转换为标签字典，并返回扫描计数增量。"""
         im_file, shape, nf_f, nm_f, nc_f, msg = result
         label = (
             {
@@ -504,14 +501,14 @@ class DepthDataset(YOLODataset):
         return label, nm_f, nf_f, 0, nc_f, msg
 
     def verify_labels(self, labels: list[dict], cache_path: Path) -> None:
-        """Skip box and segment checks; depth datasets carry no box or segment annotations."""
+        """跳过边界框和分割检查；深度数据集不包含边界框或分割标注。"""
 
     def _load_depth(self, index):
-        """Return the native-resolution depth map for an image."""
+        """返回图像的原始分辨率深度图。"""
         return load_depth(self.depth_files_by_image[self.im_files[index]], self.data.get("depth_scale", 1000))
 
     def get_image_and_label(self, index):
-        """Load image, label, and depth map for the given index."""
+        """加载给定索引对应的图像、标签和深度图。"""
         label = super().get_image_and_label(index)
         h, w = label["resized_shape"]
         depth = self._load_depth(index)
@@ -521,129 +518,127 @@ class DepthDataset(YOLODataset):
         return label
 
     def build_transforms(self, hyp=None):
-        """Build transforms for depth estimation.
+        """构建深度估计所需的变换。
 
-        Args:
-            hyp (dict): Hyperparameters.
+        参数：
+            hyp (dict): 超参数。
 
-        Returns:
-            (Compose): Composed transforms.
+        返回：
+            (Compose): 组合后的变换。
         """
-        # NOTE: For now following arguments are not supported
+        # 注意：以下参数目前不受支持
         hyp.mosaic = hyp.mixup = hyp.cutmix = hyp.copy_paste = 0.0
         transforms = super().build_transforms(hyp)
         if not self.augment:
-            # stretch the image instead of padding
+            # 拉伸图像，而不是进行填充
             transforms[-2] = LetterBox(new_shape=(self.imgsz, self.imgsz), scale_fill=True)
         return transforms
 
 
 class YOLOMultiModalDataset(YOLODataset):
-    """Dataset class for loading object detection and/or segmentation labels in YOLO format with multi-modal support.
+    """以 YOLO 格式加载对象检测和/或分割标签，并支持多模态输入的数据集类。
 
-    This class extends YOLODataset to add text information for multi-modal model training, enabling models to process
-    both image and text data.
+    此类扩展 YOLODataset，为多模态模型训练添加文本信息，使模型能够同时处理图像和文本数据。
 
-    Methods:
-        update_labels_info: Add text information for multi-modal model training.
-        build_transforms: Enhance data transformations with text augmentation.
+    方法：
+        update_labels_info: 为多模态模型训练添加文本信息。
+        build_transforms: 使用文本增强改进数据变换。
 
-    Examples:
+    示例：
         >>> dataset = YOLOMultiModalDataset(img_path="path/to/images", data={"names": {0: "person"}}, task="detect")
         >>> batch = next(iter(dataset))
         >>> print(batch.keys())  # Should include 'texts'
     """
 
     def __init__(self, *args, data: dict | None = None, task: str = "detect", **kwargs):
-        """Initialize a YOLOMultiModalDataset.
+        """初始化 YOLOMultiModalDataset。
 
-        Args:
-            data (dict, optional): Dataset configuration dictionary.
-            task (str): Task type, one of 'detect', 'segment', 'pose', or 'obb'.
-            *args (Any): Additional positional arguments for the parent class.
-            **kwargs (Any): Additional keyword arguments for the parent class.
+        参数：
+            data (dict, 可选): 数据集配置字典。
+            task (str): 任务类型，可选 'detect'、'segment'、'pose' 或 'obb'。
+            *args (Any): 父类的其他位置参数。
+            **kwargs (Any): 父类的其他关键字参数。
         """
         super().__init__(*args, data=data, task=task, **kwargs)
 
     def update_labels_info(self, label: dict) -> dict:
-        """Add text information for multi-modal model training.
+        """为多模态模型训练添加文本信息。
 
-        Args:
-            label (dict): Label dictionary containing bboxes, segments, keypoints, etc.
+        参数：
+            label (dict): 包含边界框、分割段、关键点等信息的标签字典。
 
-        Returns:
-            (dict): Updated label dictionary with instances and texts.
+        返回：
+            (dict): 添加实例和文本后的标签字典。
         """
         labels = super().update_labels_info(label)
-        # NOTE: some categories are concatenated with its synonyms by `/`.
-        # NOTE: and `RandomLoadText` would randomly select one of them if there are multiple words.
+        # 注意：某些类别会通过 `/` 与其同义词拼接。
+        # 注意：存在多个词时，`RandomLoadText` 会随机选择其中一个。
         labels["texts"] = [v.split("/") for _, v in self.data["names"].items()]
 
         return labels
 
     def build_transforms(self, hyp: dict | None = None) -> Compose:
-        """Enhance data transformations with text augmentation for multi-modal training.
+        """使用文本增强改进多模态训练的数据变换。
 
-        Args:
-            hyp (dict, optional): Hyperparameters for transforms.
+        参数：
+            hyp (dict, 可选): 变换使用的超参数。
 
-        Returns:
-            (Compose): Composed transforms including text augmentation if applicable.
+        返回：
+            (Compose): 组合后的变换；如果适用则包含文本增强。
         """
         return self.build_text_transforms(super().build_transforms(hyp), self.data["nc"])
 
     @property
     def category_names(self):
-        """Return category names for the dataset.
+        """返回数据集中的类别名称。
 
-        Returns:
-            (set[str]): Set of class names.
+        返回：
+            (set[str]): 类别名称集合。
         """
         names = self.data["names"].values()
-        return {n.strip() for name in names for n in name.split("/")}  # category names
+        return {n.strip() for name in names for n in name.split("/")}  # 类别名称
 
     @property
     def category_freq(self):
-        """Return frequency of each category in the dataset."""
+        """返回数据集中每个类别出现的频率。"""
         texts = [v.split("/") for v in self.data["names"].values()]
         category_freq = defaultdict(int)
         for label in self.labels:
-            for c in label["cls"].squeeze(-1):  # to check
+            for c in label["cls"].squeeze(-1):  # 检查类别
                 text = texts[int(c)]
                 for t in text:
                     t = t.strip()
                     category_freq[t] += 1
-        # a background-only dataset sees no class, leaving every class an equally valid negative
+            # 仅包含背景的数据集没有类别，因此每个类别都同样适合作为负样本
         return category_freq or dict.fromkeys((t.strip() for text in texts for t in text), 0)
 
 
 class GroundingDataset(YOLODataset):
-    """Dataset class for object detection tasks using annotations from a JSON file in grounding format.
+    """使用 grounding 格式 JSON 文件标注执行对象检测任务的数据集类。
 
-    This dataset is designed for grounding tasks where annotations are provided in a JSON file rather than the standard
-    YOLO format text files.
+    此数据集用于 grounding 任务，标注保存在 JSON 文件中，而不是标准的 YOLO 格式文本文件中。
 
-    Attributes:
-        json_file (str): Path to the JSON file containing annotations.
+    属性：
+        json_file (str): 包含标注的 JSON 文件路径。
 
-    Methods:
-        get_labels: Load annotations from a JSON file and prepare them for training.
-        build_transforms: Configure augmentations for training with optional text loading.
+    方法：
+        get_labels: 从 JSON 文件加载标注并为训练准备标签。
+        build_transforms: 配置训练增强，并支持可选的文本加载。
 
-    Examples:
+    示例：
         >>> dataset = GroundingDataset(img_path="path/to/images", json_file="annotations.json", task="detect")
-        >>> len(dataset)  # Number of valid images with annotations
+        >>> len(dataset)  # 带有标注的有效图像数量
     """
 
     def __init__(self, *args, task: str = "detect", json_file: str = "", max_samples: int = 80, **kwargs):
-        """Initialize a GroundingDataset for object detection.
+        """初始化用于目标检测的 GroundingDataset。
 
-        Args:
-            json_file (str): Path to the JSON file containing annotations.
-            task (str): Must be 'detect' or 'segment' for GroundingDataset.
-            max_samples (int): Maximum number of samples to load for text augmentation.
-            *args (Any): Additional positional arguments for the parent class.
-            **kwargs (Any): Additional keyword arguments for the parent class.
+        参数：
+            json_file (str): 包含标注的 JSON 文件路径。
+            task (str): GroundingDataset 必须使用 'detect' 或 'segment'。
+            max_samples (int): 文本增强加载的最大样本数量。
+            *args (Any): 父类的其他位置参数。
+            **kwargs (Any): 父类的其他关键字参数。
         """
         assert task in {"detect", "segment"}, "GroundingDataset currently only supports `detect` and `segment` tasks"
         self.json_file = json_file
@@ -651,17 +646,17 @@ class GroundingDataset(YOLODataset):
         super().__init__(*args, task=task, data={"channels": 3}, **kwargs)
 
     def get_img_files(self, img_path: str) -> list[str]:
-        """Return every image under `img_path`; the annotations, not `fraction`, decide which ones are used."""
-        self.fraction = 1.0  # a truncated inventory would leave later images outside the cache key
+        """返回 `img_path` 下的所有图像；实际使用哪些图像由标注而非 `fraction` 决定。"""
+        self.fraction = 1.0  # 截断后的清单会使后续图像被排除在缓存键之外
         self.scan_files = super().get_img_files(img_path)
         return self.scan_files
 
     def get_cache_hash(self) -> str:
-        """Return a hash over the annotation file and images scanned against it."""
+        """返回由标注文件和已扫描图像共同生成的哈希值。"""
         return get_hash([self.json_file, *self.scan_files])
 
     def _verify_instance_counts(self, labels: list[dict[str, Any]]) -> None:
-        """Verify instance counts for known grounding datasets."""
+        """验证已知 grounding 数据集的实例数量。"""
         expected_counts = {
             "final_mixed_train_no_coco_segm": 3662412,
             "final_mixed_train_no_coco": 3681235,
@@ -677,13 +672,13 @@ class GroundingDataset(YOLODataset):
         LOGGER.warning(f"Skipping instance count verification for unrecognized dataset '{self.json_file}'")
 
     def cache_labels(self, path: Path = Path("./labels.cache")) -> dict[str, Any]:
-        """Load annotations from a JSON file, filter, and normalize bounding boxes for each image.
+        """从 JSON 文件加载标注，为每张图像过滤并归一化边界框。
 
-        Args:
-            path (Path): Path where to save the cache file.
+        参数：
+            path (Path): 保存缓存文件的路径。
 
-        Returns:
-            (dict[str, Any]): Dictionary containing cached labels and related information.
+        返回：
+            (dict[str, Any]): 包含缓存标签及相关信息的字典。
         """
         x = {"labels": []}
         LOGGER.info("Loading annotation file...")
@@ -723,7 +718,7 @@ class GroundingDataset(YOLODataset):
                 if cat_name not in cat2id:
                     cat2id[cat_name] = len(cat2id)
                     texts.append([cat_name])
-                cls = cat2id[cat_name]  # class
+                cls = cat2id[cat_name]  # 类别
                 box = [cls, *box.tolist()]
                 if box not in bboxes:
                     bboxes.append(box)
@@ -739,16 +734,16 @@ class GroundingDataset(YOLODataset):
                         and all(isinstance(c, (int, float)) for c in p)
                     ]
                     dropped |= bool(raw_seg) and (not isinstance(raw_seg, list) or len(polygons) < len(seg))
-                    if not polygons:  # keep one segment per box so an image mixing the two kinds stays aligned
+                    if not polygons:  # 每个边界框保留一个分割段，使混合两种标注的图像保持对齐
                         cx, cy, bw, bh = box[1:]
                         x1, y1, x2, y2 = cx - bw / 2, cy - bh / 2, cx + bw / 2, cy + bh / 2
-                        segments.append([cls, x1, y1, x2, y1, x2, y2, x1, y2])  # segments2boxes returns the box
+                        segments.append([cls, x1, y1, x2, y1, x2, y2, x1, y2])  # segments2boxes 返回边界框
                         continue
                     elif len(polygons) > 1:
                         s = merge_multi_segment(polygons)
                         s = (np.concatenate(s, axis=0) / np.array([w, h], dtype=np.float32)).reshape(-1).tolist()
                     else:
-                        s = [j for i in polygons for j in i]  # all segments concatenated
+                        s = [j for i in polygons for j in i]  # 所有 分割段 concatenated
                         s = (
                             (np.array(s, dtype=np.float32).reshape(-1, 2) / np.array([w, h], dtype=np.float32))
                             .reshape(-1)
@@ -759,9 +754,9 @@ class GroundingDataset(YOLODataset):
 
             if segmented:
                 segments = [np.array(x[1:], dtype=np.float32).reshape(-1, 2) for x in segments]  # (cls, xy1...)
-                lb[:, 1:] = segments2boxes(segments)  # boxes follow the polygons
+                lb[:, 1:] = segments2boxes(segments)  # 边界框跟随多边形
             else:
-                segments = []  # no annotation carried a segmentation, so store no masks
+                segments = []  # 没有标注包含分割信息，因此不保存掩码
 
             x["labels"].append(
                 {
@@ -785,18 +780,18 @@ class GroundingDataset(YOLODataset):
         return x
 
     def get_labels(self) -> list[dict]:
-        """Load labels from cache or generate them from JSON file.
+        """从缓存加载标签，或从 JSON 文件生成标签。
 
-        Returns:
-            (list[dict]): List of label dictionaries, each containing information about an image and its annotations.
+        返回：
+            (列表[dict]): 标签字典列表，每个元素包含图像及其标注信息。
         """
         cache_path = Path(self.json_file).with_suffix(".cache")
         cache, _ = self._load_or_scan_cache(cache_path, self.get_cache_hash())
-        [cache.pop(k) for k in ("hash", "version")]  # remove items
+        [cache.pop(k) for k in ("hash", "version")]  # 移除无关项
         labels = cache["labels"]
         if not labels:
             raise RuntimeError(f"No images from {self.json_file} found in {self.img_path}. {HELP_URL}")
-        if not any(label["texts"] for label in labels):  # category_freq is empty, so negative texts cannot be built
+        if not any(label["texts"] for label in labels):  # category_freq 为空，无法构建负文本
             raise RuntimeError(
                 f"No annotations in {self.json_file} survived filtering. Every one is iscrowd, resolves to an empty "
                 f"caption span or has a zero-size box. {HELP_URL}"
@@ -808,24 +803,24 @@ class GroundingDataset(YOLODataset):
         return labels
 
     def build_transforms(self, hyp: dict | None = None) -> Compose:
-        """Configure augmentations for training with optional text loading.
+        """配置训练增强，并可选择加载文本。
 
-        Args:
-            hyp (dict, optional): Hyperparameters for transforms.
+        参数：
+            hyp (dict, 可选): 变换使用的超参数。
 
-        Returns:
-            (Compose): Composed transforms including text augmentation if applicable.
+        返回：
+            (Compose): 组合后的变换；适用时包含文本增强。
         """
         return self.build_text_transforms(super().build_transforms(hyp), self.max_samples)
 
     @property
     def category_names(self):
-        """Return unique category names from the dataset."""
+        """返回数据集中的唯一类别名称。"""
         return {t.strip() for label in self.labels for text in label["texts"] for t in text}
 
     @property
     def category_freq(self):
-        """Return frequency of each category in the dataset."""
+        """返回数据集中每个类别出现的频率。"""
         category_freq = defaultdict(int)
         for label in self.labels:
             for text in label["texts"]:
@@ -836,15 +831,14 @@ class GroundingDataset(YOLODataset):
 
 
 class YOLOConcatDataset(ConcatDataset):
-    """Dataset as a concatenation of multiple datasets.
+    """将多个数据集串联而成的数据集。
 
-    This class is useful to assemble different existing datasets for YOLO training, ensuring they use the same collation
-    function.
+    此类用于组合多个现有数据集以进行 YOLO 训练，并确保它们使用相同的整理函数。
 
-    Methods:
-        collate_fn: Static method that collates data samples into batches using YOLODataset's collation function.
+    方法：
+        collate_fn: 使用 YOLODataset 整理函数将数据样本整理为批次的静态方法。
 
-    Examples:
+    示例：
         >>> dataset1 = YOLODataset(...)
         >>> dataset2 = YOLODataset(...)
         >>> combined_dataset = YOLOConcatDataset([dataset1, dataset2])
@@ -852,20 +846,20 @@ class YOLOConcatDataset(ConcatDataset):
 
     @staticmethod
     def collate_fn(batch: list[dict]) -> dict:
-        """Collate data samples into batches.
+        """将数据样本整理为批次。
 
-        Args:
-            batch (list[dict]): List of dictionaries containing sample data.
+        参数：
+            batch (列表[dict]): 包含样本数据的字典列表。
 
-        Returns:
-            (dict): Collated batch with stacked tensors.
+        返回：
+            (dict): 包含堆叠张量的整理后批次。
         """
         return YOLODataset.collate_fn(batch)
 
     def close_mosaic(self, hyp: dict) -> None:
-        """Disable mosaic, copy_paste, mixup and cutmix augmentations by setting their values to 0.0.
+        """将 mosaic、copy_paste、mixup 和 cutmix 增强的值设为 0.0，以禁用这些增强。
 
-        Args:
+        参数：
             hyp (dict): Hyperparameters for transforms.
         """
         for dataset in self.datasets:
@@ -875,29 +869,28 @@ class YOLOConcatDataset(ConcatDataset):
 
 
 class SemanticDataset(YOLODataset):
-    """Dataset for semantic segmentation with PNG mask labels.
+    """使用 PNG 掩码标签的语义分割数据集。
 
-    Expects a directory structure where each image has a corresponding PNG mask file with the same stem. Pixel values in
-    masks represent class IDs, with 255 as the ignore label.
+    目录结构中每张图像都应有一个同名的 PNG 掩码文件。掩码中的像素值表示类别 ID，255 表示忽略标签。
 
-    The mask directory is specified in the dataset YAML via 'masks_dir' key, and mirrors the images/ directory structure
-    (e.g., images/train/ -> masks/train/).
+    掩码目录通过数据集 YAML 中的 'masks_dir' 键指定，并镜像图像目录结构
+   （例如，图像/train/ -> 掩码/train/）。
 
-    Attributes:
-        data (dict): Dataset configuration from YAML.
-        mask_files (list[str]): List of mask file paths corresponding to images.
-        include_class (np.ndarray | None): Class ids to keep per pixel (None keeps all).
+    属性：
+        data (dict): 来自 YAML 的数据集配置。
+        mask_files (列表[str]): 与图像对应的掩码文件路径列表。
+        include_class (np.ndarray | None): 每个像素要保留的类别 ID（None 表示保留所有类别）。
     """
 
     format_class = SemanticFormat
 
     def __init__(self, *args, data: dict | None = None, **kwargs):
-        """Initialize SemanticDataset.
+        """初始化 SemanticDataset.
 
-        Args:
-            *args (Any): Additional positional arguments for the parent class.
-            data (dict): Dataset configuration dictionary.
-            **kwargs (Any): Additional keyword arguments for the parent class.
+        参数：
+            *args (Any): 父类的其他位置参数。
+            data (dict): 数据集配置字典。
+            **kwargs (Any): 父类的其他关键字参数。
         """
         self.data = data or {}
         self.label_mapping = self._parse_label_mapping(self.data.get("label_mapping"))
@@ -907,10 +900,10 @@ class SemanticDataset(YOLODataset):
         super().__init__(*args, data=data, **kwargs)
 
     def update_labels(self, include_class: list[int] | None) -> None:
-        """Update labels to include only specified classes.
+        """更新标签，使其只包含指定类别。
 
-        Args:
-            include_class (list[int], optional): List of classes to include. If None, all classes are included.
+        参数：
+            include_class (列表[int], 可选): 要保留的类别列表。为 None 时保留所有类别。
         """
         if self.single_cls:
             raise NotImplementedError(
@@ -927,7 +920,7 @@ class SemanticDataset(YOLODataset):
             self.include_class = None
 
     def _parse_label_mapping(self, mapping):
-        """Normalize label_mapping entries from dataset YAML into integer-to-integer ids."""
+        """将数据集 YAML 中的 label_mapping 条目规范化为整数到整数的映射。"""
         if mapping is None:
             return {}
         if not isinstance(mapping, dict):
@@ -947,39 +940,39 @@ class SemanticDataset(YOLODataset):
         return normalized
 
     def _build_label_luts(self) -> tuple[np.ndarray, np.ndarray]:
-        """Build the 256-entry forward and inverse lookup tables for the dataset label mapping."""
+        """为数据集标签映射构建包含 256 个条目的正向和反向查找表。"""
         forward, inverse = np.arange(256, dtype=np.uint8), np.arange(256, dtype=np.uint8)
-        for k, v in self.label_mapping.items():  # ids outside 0-255 never match a uint8 mask pixel
+        for k, v in self.label_mapping.items():  # 0-255 范围外的 ID 不会匹配 uint8 掩码像素
             if 0 <= k < 256:
                 forward[k] = v
             if 0 <= v < 256:
-                inverse[v] = k & 0xFF  # cityscapes maps -1; the inverse caller casts the result to uint8
+                inverse[v] = k & 0xFF  # cityscapes 将类别映射为 -1；反向调用方会将结果转换为 uint8
         return forward, inverse
 
     def get_label_files(self) -> list[str]:
-        """Return the mask PNG paths paired with the dataset's images.
+        """返回与数据集图像配对的掩码 PNG 路径。
 
-        Returns:
-            (list[str]): List of mask file paths.
+        返回：
+            (列表[str]): 掩码文件路径列表。
         """
         self.mask_files = img2label_paths(self.im_files, label_dir=self.data.get("masks_dir", "masks"), suffix=".png")
         return self.mask_files
 
     def get_cache_hash(self) -> str:
-        """Return a hash for semantic cache validation that also includes label_mapping changes.
+        """返回用于语义缓存验证的哈希值，其中还包含 label_mapping 的变化。
 
-        Returns:
-            (str): Dataset cache hash.
+        返回：
+            (str): 数据集缓存哈希值。
         """
         mapping = json.dumps(self.label_mapping, sort_keys=True, separators=(",", ":"))
         return get_hash(self.im_files + self.mask_files + [f"label_mapping:{mapping}", "mask_bit_depth"])
 
     def scan_summary(self, nf: int, nm: int, ne: int, nc: int) -> str:
-        """Return a one-line summary of image-mask scan counters."""
+        """返回图像-掩码扫描计数器的单行摘要。"""
         return f"{nf} images, {nm} missing masks, {nc} corrupt"
 
     def verify_args(self) -> tuple:
-        """Return the mask verification function and its argument iterable."""
+        """返回掩码验证函数及其参数迭代器。"""
         return verify_image_mask, zip(
             self.im_files,
             self.mask_files,
@@ -988,7 +981,7 @@ class SemanticDataset(YOLODataset):
         )
 
     def result_to_label(self, result: tuple) -> tuple[dict | None, int, int, int, int, str]:
-        """Convert one verify_image_mask result into a label dict and scan counter increments."""
+        """将一次 verify_image_mask 结果转换为标签字典和扫描计数增量。"""
         im_file, mask_file, shape, is_1bit, nm_f, nf_f, nc_f, msg = result
         label = (
             {
@@ -1008,65 +1001,64 @@ class SemanticDataset(YOLODataset):
         return label, nm_f, nf_f, 0, nc_f, msg
 
     def verify_labels(self, labels: list[dict], cache_path: Path) -> None:
-        """Skip box and segment checks; semantic masks carry no box or segment annotations."""
+        """跳过边界框和分割检查；语义掩码不包含边界框或分割标注。"""
 
     def get_labels(self) -> list[dict]:
-        """Load semantic labels from cache or scan image-mask paths.
+        """从缓存加载语义标签，或扫描图像和掩码路径。
 
-        Returns:
-            (list[dict]): List of label dictionaries with mask file paths and image shapes.
+        返回：
+            (列表[dict]): 包含掩码文件路径和图像尺寸的标签字典列表。
         """
         labels = super().get_labels()
         self.mask_files = [lb["mask_file"] for lb in labels]
         return labels
 
     def load_image(self, i, rect_mode=True):
-        """Load an image for semantic segmentation, scaling the short side to imgsz when rect_mode=True."""
+        """加载用于语义分割的图像；rect_mode=True 时将短边缩放到 imgsz。"""
         return super().load_image(i, rect_mode=rect_mode, resize_short=self.augment)
 
     def load_mask(self, index: int, image_shape: tuple[int, int] | None = None) -> np.ndarray:
-        """Load a semantic mask and apply optional dataset label mapping."""
+        """加载语义掩码，并应用可选的数据集标签映射。"""
         mask_file = self.labels[index]["mask_file"]
         mask = cv2.imread(mask_file, cv2.IMREAD_GRAYSCALE)
         if mask is None:
             raise FileNotFoundError(f"Semantic mask not found or unreadable: {mask_file}")
         if int(self.data.get("nc", 0)) == 1 and self.labels[index]["is_1bit"]:
-            mask[mask == 255] = 1  # cv2 expands 1-bit PNG foreground to 255.
+            mask[mask == 255] = 1  # cv2 会将 1 位 PNG 前景扩展为 255
         if self.label_mapping:
             mask = self.convert_label(mask, inverse=False)
         return mask.astype(np.uint8, copy=False)
 
     def convert_label(self, label, inverse=False):
-        """Convert label values using the dataset's label mapping.
+        """使用数据集的标签映射转换标签值。
 
-        Args:
-            label (np.ndarray): Segmentation label array with integer ids in 0-255.
-            inverse (bool): If True, apply inverse mapping (mapped -> original). Defaults to False.
+        参数：
+            label (np.ndarray): 包含 0-255 整数 ID 的分割标签数组。
+            inverse (bool): 为 True 时应用逆映射（映射值 -> 原始值），默认为 False。
 
-        Returns:
-            (np.ndarray): New uint8 array with converted values.
+        返回：
+            (np.ndarray): 包含转换后值的新 uint8 数组。
         """
         lut = self.inverse_lut if inverse else self.label_lut
-        return cv2.LUT(label, lut) if label.dtype == np.uint8 else lut[label]  # cv2.LUT needs a uint8 input
+        return cv2.LUT(label, lut) if label.dtype == np.uint8 else lut[label]  # cv2.LUT 需要 uint8 输入
 
     def get_image_and_label(self, index):
-        """Get image, label and semantic mask for the given index.
+        """获取给定索引对应的图像、标签和语义掩码。
 
-        Overrides parent to include semantic mask so that Mosaic/CopyPaste mix images
-        also have their masks loaded.
+        重写父类方法以包含语义掩码，使 Mosaic/CopyPaste 混合图像也能加载对应掩码。
 
-        Args:
-            index (int): Dataset index.
+        参数：
+            index (int): 数据集索引。
 
-        Returns:
-            (dict): Label dict with 'img', 'semantic_mask', and metadata.
+        返回：
+            (dict): 包含 'img'、'semantic_mask' 和元数据的标签字典。
         """
         label = super().get_image_and_label(index)
         h, w = label["img"].shape[:2]
         mask = self.load_mask(index, image_shape=(h, w))
-        if self.include_class is not None:  # keep only selected classes; remap the rest to the ignore label
+        if self.include_class is not None:  # 仅保留选定类别，其余映射为忽略标签
             mask[~np.isin(mask, self.include_class)] = 255
-        # Resize mask to match the resized image dimensions
+        # 调整掩码尺寸，使其匹配缩放后图像的尺寸
         if mask.shape[:2] != (h, w):
             mask = cv2.resize(mask, (w, h), interpolation=cv2.INTER_NEAREST)
         label["semantic_mask"] = mask
@@ -1074,29 +1066,28 @@ class SemanticDataset(YOLODataset):
 
 
 class PolygonSemanticDataset(SemanticDataset, YOLODataset):
-    """Semantic segmentation dataset that rasterizes YOLO polygon labels into masks on the fly.
+    """将 YOLO 多边形标签即时栅格化为掩码的语义分割数据集。
 
-    Used when the dataset YAML lacks 'masks_dir'. Pixels not covered by any polygon become a dedicated background class.
-    Requires `add_polygon_background(data)` to be called first: for nc > 1 it bumps `data['nc']` to user_nc + 1 with
-    background at `nc - 1`; for nc == 1 it keeps nc=1 and rasterizes a {0=bg, 1=fg} binary mask for use with
-    BCEWithLogitsLoss.
+        当数据集 YAML 缺少 'masks_dir' 时使用。未被任何多边形覆盖的像素会成为独立的背景类别。
+    使用前必须先调用 `add_polygon_background(data)`：当 nc > 1 时，将 `data['nc']` 增加到 user_nc + 1，
+    并将背景类别放在 `nc - 1`；当 nc == 1 时保持 nc=1，并栅格化为 {0=背景，1=前景} 二值掩码供
+    BCEWithLogitsLoss 使用。
     """
 
     def __init__(self, *args, data: dict | None = None, **kwargs):
-        """Initialize PolygonSemanticDataset.
+        """初始化 PolygonSemanticDataset.
 
-        Args:
-            *args (Any): Additional positional arguments for the parent class.
-            data (dict): Dataset configuration dictionary.
-            **kwargs (Any): Additional keyword arguments for the parent class.
+        参数：
+            *args (Any): 传递给父类的其他位置参数。
+            data (dict): 数据集配置字典。
+            **kwargs (Any): 传递给父类的其他关键字参数。
         """
         nc = (data or {}).get("nc") or len((data or {}).get("names", {}))
         self.bg_class_idx = data.get("bg_class_idx", max(int(nc) - 1, 0))
         super().__init__(*args, data=data, **kwargs)
 
-    # Rebind label scanning to YOLODataset's polygon .txt implementations; the MRO (SemanticDataset, YOLODataset)
-    # would otherwise resolve SemanticDataset's PNG-mask hooks and its get_labels, which syncs mask_files from
-    # label dicts that polygon labels do not have.
+    # 将标签扫描重新绑定到 YOLODataset 的多边形 .txt 实现；否则 MRO（SemanticDataset、YOLODataset）
+    # 会解析到 SemanticDataset 的 PNG 掩码钩子及其 get_labels，而多边形标签字典没有 mask_files。
     get_labels = YOLODataset.get_labels
     get_label_files = YOLODataset.get_label_files
     get_cache_hash = YOLODataset.get_cache_hash
@@ -1106,7 +1097,7 @@ class PolygonSemanticDataset(SemanticDataset, YOLODataset):
     verify_labels = YOLODataset.verify_labels
 
     def load_mask(self, index: int, image_shape: tuple[int, int] | None = None) -> np.ndarray:
-        """Rasterize this image's polygons into a (H, W) uint8 semantic mask, bg = self.bg_class_idx."""
+        """将当前图像的多边形栅格化为 (H, W) uint8 语义掩码，背景值为 self.bg_class_idx。"""
         h, w = image_shape
         label = self.labels[index]
         cls = label.get("cls")
@@ -1114,14 +1105,14 @@ class PolygonSemanticDataset(SemanticDataset, YOLODataset):
         if cls is None or len(cls) == 0 or len(segments) == 0:
             return np.full((h, w), self.bg_class_idx, dtype=np.uint8)
 
-        # Denormalize polygons (stored as normalized xy) to pixel coordinates at (h, w).
+        # 将多边形（以归一化 xy 保存）反归一化为 (h, w) 图像上的像素坐标。
         scale = np.array([w, h], dtype=np.float32)
         polys = [np.asarray(s, dtype=np.float32).reshape(-1, 2) * scale for s in segments]
-        # Returns (H, W) instance index map: 0 = no polygon, 1..N = sorted instance index.
+        # 返回 (H, W) 实例索引图：0 表示无多边形，1..N 表示排序后的实例索引。
         inst, sorted_idx = polygons2masks_overlap((h, w), polys, downsample_ratio=1)
         out = np.full((h, w), self.bg_class_idx, dtype=np.uint8)
         fg = inst > 0
-        if int(self.data.get("nc", 0)) == 1:  # binary: fg=1 regardless of label cls value
+        if int(self.data.get("nc", 0)) == 1:  # 二值模式下，无论标签 cls 值为何，前景均为 1
             out[fg] = 1
         else:
             cls_arr = np.asarray(cls).reshape(-1).astype(np.int32)[sorted_idx]
@@ -1130,42 +1121,39 @@ class PolygonSemanticDataset(SemanticDataset, YOLODataset):
 
 
 class ClassificationDataset:
-    """Dataset class for image classification tasks wrapping torchvision ImageFolder functionality.
+    """封装 torchvision ImageFolder 功能、用于图像分类任务的数据集类。
 
-    This class offers functionalities like image augmentation, caching, and verification. It's designed to efficiently
-    handle large datasets for training deep learning models, with optional image transformations and caching mechanisms
-    to speed up training.
+    此类提供图像增强、缓存和校验等功能，旨在高效处理用于深度学习模型训练的大型数据集，
+    并通过可选的图像变换和缓存机制加快训练。
 
-    Attributes:
-        cache_ram (bool): Indicates if caching in RAM is enabled.
-        cache_disk (bool): Indicates if caching on disk is enabled.
-        samples (list): A list of lists, each containing the path to an image, its class index, path to its .npy cache
-            file (if caching on disk), and optionally the loaded image array (if caching in RAM).
-        torch_transforms (callable): PyTorch transforms to be applied to the images.
-        root (str): Root directory of the dataset.
-        prefix (str): Prefix for logging and cache filenames.
+    属性：
+        cache_ram (bool): 是否启用内存缓存。
+        cache_disk (bool): 是否启用磁盘缓存。
+        samples (列表): 样本列表，每个元素包含图像路径、类别索引、.npy 缓存文件路径（磁盘缓存时），以及可选的已加载图像数组（内存缓存时）。
+        torch_transforms (callable): 应用于图像的 PyTorch 变换。
+        root (str): 数据集根目录。
+        prefix (str): 日志和缓存文件名使用的前缀。
 
-    Methods:
-        __getitem__: Return transformed image and class index for the given sample index.
-        __len__: Return the total number of samples in the dataset.
-        verify_images: Verify all images in dataset.
-        cache_images: Decode images into one contiguous RAM cache.
+    方法：
+        __getitem__: 返回给定样本索引对应的变换后图像和类别索引。
+        __len__: 返回数据集中的样本总数。
+        verify_images: 校验数据集中的所有图像。
+        cache_images: 将图像解码到连续的内存缓存中。
     """
 
     def __init__(self, root: str, args, augment: bool = False, prefix: str = ""):
-        """Initialize YOLO classification dataset with root directory, arguments, augmentations, and cache settings.
+        """使用根目录、参数、增强和缓存设置初始化 YOLO 分类数据集。
 
-        Args:
-            root (str): Path to the dataset directory where images are stored in a class-specific folder structure.
-            args (Namespace): Configuration containing dataset-related settings such as image size, augmentation
-                parameters, and cache settings.
-            augment (bool, optional): Whether to apply augmentations to the dataset.
-            prefix (str, optional): Prefix for logging and cache filenames, aiding in dataset identification.
+        参数：
+            root (str): 数据集目录路径，图像按类别存放在对应文件夹中。
+            args (Namespace): 包含数据集设置的配置，例如图像尺寸、增强参数和缓存设置。
+            augment (bool, 可选): 是否对数据集应用增强。
+            prefix (str, 可选): 日志和缓存文件名使用的前缀，便于识别数据集。
         """
-        import torchvision  # scope for faster 'import ultralytics'
+        import torchvision  # 局部导入以加快 'import ultralytics'
 
-        # Base class assigned as attribute rather than used as base class to allow for scoping slow torchvision import
-        if TORCHVISION_0_18:  # 'allow_empty' argument first introduced in torchvision 0.18
+        # 将基类作为属性而不是基类继承，以便局部导入速度较慢的 torchvision
+        if TORCHVISION_0_18:  # 'allow_empty' 参数首次在 torchvision 0.18 中引入
             self.base = torchvision.datasets.ImageFolder(root=root, allow_empty=True)
         else:
             self.base = torchvision.datasets.ImageFolder(root=root)
@@ -1173,18 +1161,18 @@ class ClassificationDataset:
         self.samples = self.base.samples
         self.root = self.base.root
 
-        # Initialize attributes
-        if augment and args.fraction < 1.0:  # reduce training fraction
+        # 初始化属性
+        if augment and args.fraction < 1.0:  # 减少训练数据比例
             self.samples = self.samples[: round(len(self.samples) * args.fraction)]
         self.prefix = colorstr(f"{prefix}: ") if prefix else ""
-        self.cache_ram = args.cache is True or str(args.cache).lower() == "ram"  # cache images into RAM
-        self.cache_disk = str(args.cache).lower() == "disk"  # cache images on hard drive as uncompressed *.npy files
-        self.samples = self.verify_images()  # filter out bad images
+        self.cache_ram = args.cache is True or str(args.cache).lower() == "ram"  # 将图像缓存到内存
+        self.cache_disk = str(args.cache).lower() == "disk"  # 将图像作为未压缩 *.npy 文件缓存到硬盘
+        self.samples = self.verify_images()  # 过滤损坏图像
         if is_ndjson:
             self.samples = [(f, int(Path(f).parent.name)) for f, _ in self.samples]
         if args.single_cls:
             self.samples = [(f, 0) for f, _ in self.samples]
-        self.samples = [[*list(x), Path(x[0]).with_suffix(".npy"), None] for x in self.samples]  # file, index, npy, im
+        self.samples = [[*list(x), Path(x[0]).with_suffix(".npy"), None] for x in self.samples]  # 文件、索引、npy、图像
         if self.cache_ram:
             self.cache_images()
         scale = (1.0 - args.scale, 1.0)  # (0.08, 1.0)
@@ -1205,38 +1193,38 @@ class ClassificationDataset:
         )
 
     def __getitem__(self, i: int) -> dict:
-        """Return transformed image and class index for the given sample index.
+        """返回给定样本索引对应的变换后图像和类别索引。
 
-        Args:
-            i (int): Index of the sample to retrieve.
+        参数：
+            i (int): 要获取的样本索引。
 
-        Returns:
-            (dict): Dictionary containing the image and its class index.
+        返回：
+            (dict): 包含图像及其类别索引的字典。
         """
-        f, j, fn, im = self.samples[i]  # filename, index, filename.with_suffix('.npy'), image
+        f, j, fn, im = self.samples[i]  # 文件名、索引、filename.with_suffix('.npy')、图像
         if self.cache_ram:
             im = self.img_cache[i]
         elif self.cache_disk:
-            if not fn.exists():  # load npy
+            if not fn.exists():  # 加载 npy
                 np.save(fn.as_posix(), cv2.imread(f), allow_pickle=False)
             im = np.load(fn)
-        else:  # read image
+        else:  # 读取图像
             im = cv2.imread(f)  # BGR
-        # Convert NumPy array to PIL image
+        # 将 NumPy 数组转换为 PIL 图像
         im = Image.fromarray(cv2.cvtColor(im, cv2.COLOR_BGR2RGB))
         sample = self.torch_transforms(im)
         return {"img": sample, "cls": j}
 
     def __len__(self) -> int:
-        """Return the total number of samples in the dataset."""
+        """返回数据集中的样本总数。"""
         return len(self.samples)
 
     def cache_images(self) -> None:
-        """Decode all images once into a single contiguous uint8 buffer before DataLoader workers fork.
+        """在 DataLoader 工作进程创建前，将所有图像一次性解码到连续的 uint8 缓冲区。
 
-        A Python list of per-image arrays is duplicated into every forked worker by copy-on-write refcounting
-        (https://github.com/ultralytics/ultralytics/issues/9824); one shared numpy buffer is read-only across
-        workers instead, so RAM stays flat. Original image sizes are preserved for the transforms.
+        按图像存储的 Python 数组列表会因写时复制的引用计数机制，被复制到每个派生工作进程中
+        （https://github.com/ultralytics/ultralytics/issues/9824）；因此改用一个供所有工作进程只读的共享 NumPy 缓冲区，
+        使内存占用保持稳定。变换所需的原始图像尺寸会被保留。
         """
         with ThreadPool(NUM_THREADS) as pool:
             ims = list(
@@ -1250,30 +1238,30 @@ class ClassificationDataset:
         self.img_cache = BaseDataset._ImageCache(ims)
 
     def verify_images(self) -> list[tuple]:
-        """Verify all images in dataset.
+        """验证数据集中的所有图像。
 
-        Returns:
-            (list[tuple]): List of valid samples after verification.
+        返回：
+            (列表[tuple]): 验证后有效样本的列表。
         """
         desc = f"{self.prefix}Scanning {self.root}..."
-        path = Path(self.root).with_suffix(".cache")  # *.cache file path
+        path = Path(self.root).with_suffix(".cache")  # *.cache 文件 路径
 
         try:
-            check_file_speeds([file for (file, _) in self.samples[:5]], prefix=self.prefix)  # check image read speeds
-            cache = load_dataset_cache_file(path)  # attempt to load a *.cache file
-            assert cache["version"] == DATASET_CACHE_VERSION  # matches current version
-            assert cache["hash"] == get_hash([x[0] for x in self.samples])  # identical hash
+            check_file_speeds([file for (file, _) in self.samples[:5]], prefix=self.prefix)  # 检查图像读取速度
+            cache = load_dataset_cache_file(path)  # 尝试加载 *.cache 文件
+            assert cache["version"] == DATASET_CACHE_VERSION  # 与当前版本匹配
+            assert cache["hash"] == get_hash([x[0] for x in self.samples])  # 哈希值相同
             nf, nc, n, samples = cache.pop("results")  # found, corrupt, total, samples
             if LOCAL_RANK in {-1, 0}:
                 d = f"{desc} {nf} images, {nc} corrupt"
                 TQDM(None, desc=d, total=n, initial=n)
                 if cache["msgs"]:
-                    LOGGER.info("\n".join(cache["msgs"]))  # display warnings
+                    LOGGER.info("\n".join(cache["msgs"]))  # 显示警告
             return samples
 
-        # NOTE: ModuleNotFoundError to prevent numpy version conflicts when loading cache files created with different numpy versions
+            # 注意：捕获 ModuleNotFoundError，防止加载由其他 NumPy 版本创建的缓存文件时发生版本冲突
         except (FileNotFoundError, AssertionError, AttributeError, ModuleNotFoundError):
-            # Run scan if *.cache retrieval failed
+            # *.cache 加载失败时执行扫描
             nf, nc, msgs, samples, x = 0, 0, [], [], {}
             with ThreadPool(NUM_THREADS) as pool:
                 results = pool.imap(func=verify_image, iterable=zip(self.samples, repeat(self.prefix)))

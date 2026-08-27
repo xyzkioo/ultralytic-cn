@@ -9,46 +9,45 @@ import numpy as np
 
 
 class TritonRemoteModel:
-    """Client for interacting with a remote Triton Inference Server model.
+    """与远程 Triton Inference Server 模型交互的客户端。
 
-    This class provides a convenient interface for sending inference requests to a Triton Inference Server and
-    processing the responses. Supports both HTTP and gRPC communication protocols.
+    此类提供向 Triton Inference Server 发送推理请求并处理响应的便捷接口，支持 HTTP 和 gRPC 通信协议。
 
-    Attributes:
-        endpoint (str): The name of the model on the Triton server.
-        url (str): The URL of the Triton server.
-        triton_client: The Triton client (either HTTP or gRPC).
-        InferInput: The input class for the Triton client.
-        InferRequestedOutput: The output request class for the Triton client.
-        input_formats (list[str]): The data types of the model inputs.
-        np_input_formats (list[type]): The numpy data types of the model inputs.
-        input_names (list[str]): The names of the model inputs.
-        output_names (list[str]): The names of the model outputs.
-        metadata: The metadata associated with the model.
+    属性：
+        endpoint (str): Triton 服务器上的模型名称。
+        url (str): Triton 服务器 URL。
+        triton_client: Triton 客户端（HTTP 或 gRPC）。
+        InferInput: Triton 客户端的输入类。
+        InferRequestedOutput: Triton 客户端的输出请求类。
+        input_formats (列表[str]): 模型输入的数据类型。
+        np_input_formats (列表[type]): 模型输入的 NumPy 数据类型。
+        input_names (列表[str]): 模型输入名称。
+        output_names (列表[str]): 模型输出名称。
+        metadata: 与模型关联的元数据。
 
-    Methods:
-        __call__: Call the model with the given inputs and return the outputs.
+    方法：
+        __call__: 使用给定输入调用模型并返回输出。
 
-    Examples:
-        Initialize a Triton client with HTTP
+    示例：
+        使用 HTTP 初始化 Triton 客户端
         >>> model = TritonRemoteModel(url="localhost:8000", endpoint="yolov8", scheme="http")
 
-        Make inference with numpy arrays
+        使用 NumPy 数组执行推理
         >>> outputs = model(np.random.rand(1, 3, 640, 640).astype(np.float32))
     """
 
     def __init__(self, url: str, endpoint: str = "", scheme: str = ""):
-        """Initialize the TritonRemoteModel for interacting with a remote Triton Inference Server.
+        """初始化 TritonRemoteModel，以便与远程 Triton Inference Server 交互。
 
-        Arguments may be provided individually or parsed from a collective 'url' argument of the form
+        参数可以单独提供，也可以从如下形式的完整 'url' 参数中解析：
         <scheme>://<netloc>/<endpoint>/<task_name>
 
-        Args:
-            url (str): The URL of the Triton server.
-            endpoint (str, optional): The name of the model on the Triton server.
-            scheme (str, optional): The communication scheme ('http' or 'grpc').
+        参数：
+            url (str): Triton 服务器 URL。
+            endpoint (str, 可选): Triton 服务器上的模型名称。
+            scheme (str, 可选): 通信协议（'http' 或 'grpc'）。
         """
-        if not endpoint and not scheme:  # Parse all args from URL string
+        if not endpoint and not scheme:  # 从 URL 字符串解析所有参数
             splits = urlsplit(url)
             endpoint = splits.path.strip("/").split("/", 1)[0]
             scheme = splits.scheme
@@ -57,7 +56,7 @@ class TritonRemoteModel:
         self.endpoint = endpoint
         self.url = url
 
-        # Choose the Triton client based on the communication scheme
+        # 根据通信协议选择 Triton 客户端
         if scheme == "http":
             import tritonclient.http as client
 
@@ -69,10 +68,10 @@ class TritonRemoteModel:
             self.triton_client = client.InferenceServerClient(url=self.url, verbose=False, ssl=False)
             config = self.triton_client.get_model_config(endpoint, as_json=True)["config"]
 
-        # Sort output names alphabetically, i.e. 'output0', 'output1', etc.
+        # 按字母顺序排列输出名称，例如 'output0'、'output1' 等
         config["output"] = sorted(config["output"], key=lambda x: x.get("name"))
 
-        # Define model attributes
+        # 定义模型属性
         type_map = {"TYPE_FP32": np.float32, "TYPE_FP16": np.float16, "TYPE_UINT8": np.uint8}
         self.InferRequestedOutput = client.InferRequestedOutput
         self.InferInput = client.InferInput
@@ -83,17 +82,15 @@ class TritonRemoteModel:
         self.metadata = ast.literal_eval(config.get("parameters", {}).get("metadata", {}).get("string_value", "None"))
 
     def __call__(self, *inputs: np.ndarray) -> list[np.ndarray]:
-        """Call the model with the given inputs and return inference results.
+        """使用给定输入调用模型并返回推理结果。
 
-        Args:
-            *inputs (np.ndarray): Input data to the model. Each array should match the expected shape and type for the
-                corresponding model input.
+        参数：
+            *inputs (np.ndarray): 输入模型的数据。每个数组都应符合对应模型输入的预期形状和类型。
 
-        Returns:
-            (list[np.ndarray]): Model outputs cast to the dtype of the first input. Each element in the list corresponds
-                to one of the model's output tensors.
+        返回：
+            (列表[np.ndarray]): 转换为第一个输入数据类型的模型输出。列表中的每个元素对应一个模型输出张量。
 
-        Examples:
+        示例：
             >>> model = TritonRemoteModel(url="localhost:8000", endpoint="yolov8", scheme="http")
             >>> outputs = model(np.random.rand(1, 3, 640, 640).astype(np.float32))
         """

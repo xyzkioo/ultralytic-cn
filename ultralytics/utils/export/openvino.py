@@ -20,30 +20,29 @@ def torch2openvino(
     int8_detect: bool = False,
     prefix: str = "",
 ) -> Any:
-    """Export a PyTorch model to OpenVINO format with optional INT8 quantization.
+    """将 PyTorch 模型导出为 OpenVINO 格式，并支持可选 INT8 量化。
 
-    Args:
-        model (torch.nn.Module): The model to export (may be NMS-wrapped).
-        im (torch.Tensor | list[torch.Tensor] | tuple[torch.Tensor, ...]): Example input tensor(s) for tracing.
-        output_dir (Path | str | None): Directory to save the exported OpenVINO model.
-        dynamic (bool): Whether to use dynamic input shapes.
-        quantize (int | str | None): Precision scheme, e.g. 16 for FP16 or 8 for INT8.
-        calibration_dataset (nncf.Dataset | None): Dataset for INT8 calibration (required when ``quantize=8``).
-        int8_detect (bool): Whether to keep the detection head in floating-point precision during INT8 quantization.
-        prefix (str): Prefix for log messages.
+    参数：
+        model (torch.nn.Module): 要导出的模型（可能已使用 NMS 包装）。
+        im (torch.Tensor | 列表[torch.Tensor] | tuple[torch.Tensor, ...]): 用于跟踪的示例输入张量。
+        output_dir (Path | str | None): 保存导出 OpenVINO 模型的目录。
+        dynamic (bool): 是否使用动态输入形状。
+        quantize (int | str | None): 精度方案，例如 16 表示 FP16，8 表示 INT8。
+        calibration_dataset (nncf.Dataset | None): INT8 校准数据集（``quantize=8`` 时必需）。
+        int8_detect (bool): INT8 量化期间是否让检测头保持浮点精度。
+        prefix (str): 日志消息前缀。
 
-    Returns:
-        (ov.Model): The converted OpenVINO model.
+    返回：
+        (ov.Model): 转换后的 OpenVINO 模型。
     """
     import openvino as ov
 
     LOGGER.info(f"\n{prefix} starting export with openvino {ov.__version__}...")
 
     input_shape = [i.shape for i in im] if isinstance(im, (list, tuple)) else im.shape
-    # Hand OpenVINO an already-traced ScriptModule (torchscript/coreml exports trace the same way), not a raw
-    # nn.Module, so it doesn't re-trace internally with check_trace=True - that re-trace-and-diff sanity check is
-    # non-deterministic on NMS models and fails with "Graphs differed across invocations!". check_trace=False skips
-    # the same check on our own trace.
+    # 向 OpenVINO 传入已经完成跟踪的 ScriptModule（torchscript/coreml 导出采用相同的跟踪方式），而不是原始
+    # nn.Module，这样它就不会在内部使用 check_trace=True 再次跟踪；该跟踪并比较的健全性检查在 NMS 模型上
+    # 具有非确定性，并会失败并提示“Graphs differed across invocations!”。check_trace=False 会跳过我们自己的相同检查。
     ts = torch.jit.trace(model, im, strict=False, check_trace=False)
     ov_model = ov.convert_model(ts, input=None if dynamic else input_shape, example_input=im)
     if quantize == 8:
@@ -66,7 +65,7 @@ def torch2openvino(
             model=ov_model,
             calibration_dataset=calibration_dataset,
             preset=nncf.QuantizationPreset.MIXED,
-            # Calibrate on the full dataset like other INT8 backends, not nncf's 300-batch default
+            # 与其他 INT8 后端一样使用完整数据集进行校准，而不是采用 nncf 默认的 300 个批次。
             subset_size=calibration_dataset.get_length() or 300,
             ignored_scope=ignored_scope,
         )

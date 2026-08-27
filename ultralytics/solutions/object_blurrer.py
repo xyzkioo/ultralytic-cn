@@ -10,22 +10,22 @@ from ultralytics.utils.plotting import colors
 
 
 class ObjectBlurrer(BaseSolution):
-    """A class to manage the blurring of detected objects in a real-time video stream.
+    """管理实时视频流中检测对象模糊处理的类。
 
-    This class extends the BaseSolution class and provides functionality for blurring objects based on detected bounding
-    boxes. The blurred areas are updated directly in the input image, allowing for privacy preservation or other effects.
+    此类扩展 BaseSolution，根据检测到的边界框对对象进行模糊处理。模糊区域会直接更新到输入图像中，
+    可用于保护隐私或实现其他视觉效果。
 
-    Attributes:
-        blur_ratio (int): The intensity of the blur effect applied to detected objects (higher values create more blur).
-        iou (float): Intersection over Union threshold for object detection.
-        conf (float): Confidence threshold for object detection.
+    属性：
+        blur_ratio (int): 应用于检测对象的模糊强度（值越大，模糊越明显）。
+        iou (float): 对象检测的交并比阈值。
+        conf (float): 对象检测的置信度阈值。
 
-    Methods:
-        process: Apply a blurring effect to detected objects in the input image.
-        extract_tracks: Extract tracking information from detected objects.
-        display_output: Display the processed output image.
+    方法：
+        process: 对输入图像中的检测对象应用模糊效果。
+        extract_tracks: 从检测对象中提取跟踪信息。
+        display_output: 显示处理后的输出图像。
 
-    Examples:
+    示例：
         >>> blurrer = ObjectBlurrer()
         >>> frame = cv2.imread("frame.jpg")
         >>> processed_results = blurrer.process(frame)
@@ -33,11 +33,11 @@ class ObjectBlurrer(BaseSolution):
     """
 
     def __init__(self, **kwargs: Any) -> None:
-        """Initialize the ObjectBlurrer class for applying a blur effect to objects detected in video streams or images.
+        """初始化 ObjectBlurrer 类，用于对视频流或图像中的检测对象应用模糊效果。
 
-        Args:
-            **kwargs (Any): Keyword arguments passed to the parent class and for configuration including:
-                - blur_ratio (float): Intensity of the blur effect (0.1-1.0, default=0.5).
+        参数：
+            **kwargs (Any): 传递给父类并用于配置的关键字参数，包括：
+                - blur_ratio (float): 模糊效果强度（0.1-1.0，默认为 0.5）。
         """
         super().__init__(**kwargs)
         blur_ratio = self.CFG["blur_ratio"]
@@ -47,45 +47,44 @@ class ObjectBlurrer(BaseSolution):
         self.blur_ratio = int(blur_ratio * 100)
 
     def process(self, im0) -> SolutionResults:
-        """Apply a blurring effect to detected objects in the input image.
+        """对输入图像中的检测对象应用模糊效果。
 
-        This method extracts tracking information, applies blur to regions corresponding to detected objects, and
-        annotates the image with bounding boxes.
+        此方法提取跟踪信息，对应检测对象所在区域应用模糊，并使用边界框标注图像。
 
-        Args:
-            im0 (np.ndarray): The input image containing detected objects.
+        参数：
+            im0 (np.ndarray): 包含检测对象的输入图像。
 
-        Returns:
-            (SolutionResults): Object containing the processed image and number of tracked objects.
-                - plot_im (np.ndarray): The annotated output image with blurred objects.
-                - total_tracks (int): The total number of tracked objects in the frame.
+        返回：
+            (SolutionResults): 包含处理后图像和跟踪对象数量的对象。
+                - plot_im (np.ndarray): 包含模糊对象标注的输出图像。
+                - total_tracks (int): 当前帧中的跟踪对象总数。
 
-        Examples:
+        示例：
             >>> blurrer = ObjectBlurrer()
             >>> frame = cv2.imread("image.jpg")
             >>> results = blurrer.process(frame)
             >>> print(f"Blurred {results.total_tracks} objects")
         """
-        self.extract_tracks(im0)  # Extract tracks
+        self.extract_tracks(im0)  # 提取跟踪结果
         annotator = SolutionAnnotator(im0, self.line_width)
 
-        # Iterate over bounding boxes and classes
+        # 遍历边界框和类别
         h, w = im0.shape[:2]
         for box, cls, conf in zip(self.boxes, self.clss, self.confs):
             x0, y0, x1, y1 = map(int, self.get_enclosing_box(box))
-            x0, y0, x1, y1 = max(x0, 0), max(y0, 0), min(x1, w), min(y1, h)  # clip OBB corners to image bounds
-            if x0 >= x1 or y0 >= y1:  # box fully outside the frame clips to an empty ROI, cv2.blur would assert
+            x0, y0, x1, y1 = max(x0, 0), max(y0, 0), min(x1, w), min(y1, h)  # 将 OBB 角点裁剪到图像边界内
+            if x0 >= x1 or y0 >= y1:  # 边界框完全位于画面外，裁剪后 ROI 为空，cv2.blur 会触发断言
                 continue
-            # Crop and blur the detected object
+            # 裁剪并模糊检测对象
             blur_obj = cv2.blur(im0[y0:y1, x0:x1], (self.blur_ratio, self.blur_ratio))
-            # Update the blurred area in the original image
+            # 更新原图像中的模糊区域
             im0[y0:y1, x0:x1] = blur_obj
             annotator.box_label(
                 box, label=self.adjust_box_label(cls, conf), color=colors(cls, True)
-            )  # Annotate bounding box
+            )  # 标注边界框
 
         plot_im = annotator.result()
-        self.display_output(plot_im)  # Display the output using the base class function
+        self.display_output(plot_im)  # 使用基类函数显示输出
 
-        # Return a SolutionResults
+        # 返回 SolutionResults
         return SolutionResults(plot_im=plot_im, total_tracks=len(self.track_ids))

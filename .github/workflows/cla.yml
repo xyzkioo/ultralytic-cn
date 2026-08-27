@@ -1,7 +1,7 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
-# Ultralytics Contributor License Agreement (CLA) action https://docs.ultralytics.com/help/CLA
-# This workflow automatically requests Pull Requests (PR) authors to sign the Ultralytics CLA before PRs can be merged
+# Ultralytics 贡献者许可协议（CLA）操作：https://docs.ultralytics.com/help/CLA
+# 此工作流会自动要求 Pull Request（PR）作者在合并前签署 Ultralytics CLA
 
 name: CLA
 on:

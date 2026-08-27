@@ -12,16 +12,16 @@ from .base import BaseBackend
 
 
 class AxeleraBackend(BaseBackend):
-    """Axelera AI inference backend for Axelera Metis AI accelerators.
+    """用于 Axelera Metis AI 加速器的 Axelera AI 推理后端。
 
-    Loads compiled Axelera models (.axm files) and runs inference using the Axelera AI runtime SDK.
+    加载已编译的 Axelera 模型（.axm 文件），并使用 Axelera AI 运行时 SDK 执行推理。
     """
 
     def load_model(self, weight: str | Path) -> None:
-        """Load an Axelera model from a directory containing a .axm file.
+        """从包含 .axm 文件的目录加载 Axelera 模型。
 
-        Args:
-            weight (str | Path): Path to the Axelera model directory containing the .axm binary.
+        参数：
+            weight (str | Path): 包含 .axm 二进制文件的 Axelera 模型目录路径。
         """
         try:
             from axelera.runtime import op
@@ -43,12 +43,12 @@ class AxeleraBackend(BaseBackend):
         self.apply_metadata(self.read_metadata(found))
 
     def forward(self, im: torch.Tensor) -> list:
-        """Run inference on the Axelera hardware accelerator.
+        """在 Axelera 硬件加速器上执行推理。
 
-        Args:
-            im (torch.Tensor): Input image tensor in BCHW format, normalized to [0, 1].
+        参数：
+            im (torch.Tensor): 输入图像 张量 in BCHW format, normalized to [0, 1].
 
-        Returns:
-            (list): Model predictions as a list of output arrays.
+        返回：
+            (列表): 输出数组列表形式的模型预测结果。
         """
         return self.model(im.cpu())

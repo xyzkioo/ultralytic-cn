@@ -36,7 +36,7 @@ import cv2
 import numpy as np
 from axelera.runtime import op
 
-# COCO skeleton: 19 limb connections (1-indexed keypoint pairs)
+# COCO 骨架：19 条肢体连接（从 1 开始编号的关键点对）
 COCO_SKELETON = [
     [16, 14], [14, 12], [17, 15], [15, 13], [12, 13],
     [6, 12], [7, 13], [6, 7], [6, 8], [7, 9],
@@ -44,7 +44,7 @@ COCO_SKELETON = [
     [2, 4], [3, 5], [4, 6], [5, 7],
 ]  # fmt: skip
 
-# Pose color palette (RGB) from Ultralytics
+# 来自 Ultralytics 的姿态颜色调色板（RGB）
 POSE_PALETTE = np.array(
     [
         [255, 128, 0],
@@ -71,11 +71,11 @@ POSE_PALETTE = np.array(
     dtype=np.uint8,
 )
 
-# Per-keypoint colors (17 keypoints, palette indices) — RGB for no-tracker, BGR for tracker
+# 每个关键点的颜色（17 个关键点，调色板索引）——无跟踪器时使用 RGB，跟踪器时使用 BGR
 KPT_COLORS = POSE_PALETTE[[16, 16, 16, 16, 16, 0, 0, 0, 0, 0, 0, 9, 9, 9, 9, 9, 9]]
 # Per-limb colors (19 limbs, palette indices)
 LIMB_COLORS = POSE_PALETTE[[9, 9, 9, 9, 7, 7, 7, 0, 0, 0, 0, 0, 16, 16, 16, 16, 16, 16, 16]]
-# Golden ratio conjugate for well-distributed track colors
+# 黄金比例共轭数，用于生成分布均匀的轨迹颜色
 GOLDEN_RATIO_CONJUGATE = 0.618033988749895
 
 
@@ -140,7 +140,7 @@ def draw_pose(image: np.ndarray, detections: np.ndarray, conf: float = 0.25) -> 
         if score < conf:
             continue
 
-        # Bounding box (denormalize)
+        # 边界框（反归一化）
         x0, y0 = int(det[0] * w), int(det[1] * h)
         x1, y1 = int(det[2] * w), int(det[3] * h)
         cv2.rectangle(image, (x0, y0), (x1, y1), (0, 255, 0), 2)
@@ -148,7 +148,7 @@ def draw_pose(image: np.ndarray, detections: np.ndarray, conf: float = 0.25) -> 
 
         kpts = det[6:].reshape(-1, 3)  # 17 x (x, y, confidence); x/y normalized, conf raw
 
-        # Draw skeleton limbs
+        # 绘制骨架肢体
         for i, (a, b) in enumerate(COCO_SKELETON):
             kp_a, kp_b = kpts[a - 1], kpts[b - 1]
             if kp_a[2] > 0.5 and kp_b[2] > 0.5:
@@ -157,7 +157,7 @@ def draw_pose(image: np.ndarray, detections: np.ndarray, conf: float = 0.25) -> 
                 pt_b = (int(kp_b[0] * w), int(kp_b[1] * h))
                 cv2.line(image, pt_a, pt_b, color, 2)
 
-        # Draw keypoints
+        # 绘制关键点
         for j, kp in enumerate(kpts):
             if kp[2] > 0.5:
                 color = tuple(int(c) for c in KPT_COLORS[j][::-1])  # RGB -> BGR
@@ -177,21 +177,21 @@ def draw_tracked_poses(image: np.ndarray, tracked_poses: list) -> np.ndarray:
     for tracked in tracked_poses:
         color = get_track_color(tracked.track_id)
 
-        # Bounding box (denormalize)
+        # 边界框（反归一化）
         bbox = tracked.predicted_bbox
         x0, y0 = int(bbox.x0 * w), int(bbox.y0 * h)
         x1, y1 = int(bbox.x1 * w), int(bbox.y1 * h)
         cv2.rectangle(image, (x0, y0), (x1, y1), color, 2)
         cv2.putText(image, f"ID {tracked.track_id}", (x0, y0 - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
 
-        # Access keypoints from the original PoseObject via tracked.tracked
+        # 通过 tracked.tracked 访问原始 PoseObject 中的关键点
         pose = tracked.tracked
         if not hasattr(pose, "keypoints") or not pose.keypoints:
             continue
 
         kpts = pose.keypoints
 
-        # Draw skeleton limbs in track color (links skeleton to its box visually)
+        # 使用轨迹颜色绘制骨架肢体（在视觉上将骨架与边界框连接）
         for i, (a, b) in enumerate(COCO_SKELETON):
             kp_a, kp_b = kpts[a - 1], kpts[b - 1]
             if kp_a.confidence > 0.5 and kp_b.confidence > 0.5:
@@ -199,7 +199,7 @@ def draw_tracked_poses(image: np.ndarray, tracked_poses: list) -> np.ndarray:
                 pt_b = (int(kp_b.x * w), int(kp_b.y * h))
                 cv2.line(image, pt_a, pt_b, color, 2)
 
-        # Draw keypoints
+        # 绘制关键点
         for j, kp in enumerate(kpts):
             if kp.confidence > 0.5:
                 cv2.circle(

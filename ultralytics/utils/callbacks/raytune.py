@@ -3,7 +3,7 @@
 from ultralytics.utils import SETTINGS
 
 try:
-    assert SETTINGS["raytune"] is True  # verify integration is enabled
+    assert SETTINGS["raytune"] is True  # 验证集成已启用
     import ray
     from ray import tune
     from ray.air import session
@@ -13,22 +13,22 @@ except (ImportError, AssertionError):
 
 
 def on_fit_epoch_end(trainer):
-    """Report training metrics to Ray Tune at epoch end when a Ray session is active.
+    """Ray 会话处于活动状态时，在周期结束向 Ray Tune 报告训练指标。
 
-    Captures metrics from the trainer object and sends them to Ray Tune with the current epoch number, enabling
-    hyperparameter tuning optimization. Only executes when within an active Ray Tune session.
+    从训练器对象获取指标，并将其与当前周期编号一起发送给 Ray Tune，以支持超参数优化。
+    仅在活动的 Ray Tune 会话中执行。
 
-    Args:
-        trainer (ultralytics.engine.trainer.BaseTrainer): The Ultralytics trainer object containing metrics and epochs.
+    参数：
+        trainer (ultralytics.engine.trainer.BaseTrainer): 包含指标和周期信息的 Ultralytics 训练器对象。
 
-    Examples:
-        >>> # Called automatically by the Ultralytics training loop
+    示例：
+        >>> # 由 Ultralytics 训练循环自动调用
         >>> on_fit_epoch_end(trainer)
 
-    References:
+    参考：
         Ray Tune docs: https://docs.ray.io/en/latest/tune/index.html
     """
-    if ray.train._internal.session.get_session():  # check if Ray Tune session is active
+    if ray.train._internal.session.get_session():  # 检查 Ray Tune 会话是否处于活动状态
         metrics = trainer.metrics
         session.report({**metrics, "epoch": trainer.epoch + 1})
 

@@ -81,7 +81,7 @@ For alternative installation methods, including [Conda](https://anaconda.org/con
 You can use Ultralytics YOLO directly from the Command Line Interface (CLI) with the `yolo` command:
 
 ```bash
-# Predict using a pretrained YOLO model (e.g., YOLO26n) on an image
+# 使用预训练的 YOLO 模型（例如 YOLO26n）对图像进行预测
 yolo predict model=yolo26n.pt source='https://ultralytics.com/images/bus.jpg'
 ```
 
@@ -94,26 +94,26 @@ Ultralytics YOLO can also be integrated directly into your Python projects. It a
 ```python
 from ultralytics import YOLO
 
-# Load a pretrained YOLO26n model
+# 加载预训练的 YOLO26n 模型
 model = YOLO("yolo26n.pt")
 
-# Train the model on the COCO8 dataset for 100 epochs
+# 在 COCO8 数据集上训练模型 100 个周期
 train_results = model.train(
-    data="coco8.yaml",  # Path to dataset configuration file
-    epochs=100,  # Number of training epochs
-    imgsz=640,  # Image size for training
-    device="cpu",  # Device to run on (e.g., 'cpu', 0, [0,1,2,3])
+    data="coco8.yaml",  # 数据集配置文件路径
+    epochs=100,  # 训练周期数
+    imgsz=640,  # 训练图像尺寸
+    device="cpu",  # 运行设备（例如 'cpu'、0、[0,1,2,3]）
 )
 
-# Evaluate the model's performance on the validation set
+# 在验证集上评估模型性能
 metrics = model.val()
 
-# Perform object detection on an image
-results = model("path/to/image.jpg")  # Predict on an image
-results[0].show()  # Display results
+# 对图像执行目标检测
+results = model("path/to/image.jpg")  # 对图像进行预测
+results[0].show()  # 显示结果
 
-# Export the model to ONNX format for deployment
-path = model.export(format="onnx")  # Returns the path to the exported model
+# 将模型导出为 ONNX 格式以进行部署
+path = model.export(format="onnx")  # 返回导出模型的路径
 ```
 
 Discover more examples in the YOLO [Python Docs](https://docs.ultralytics.com/usage/python).

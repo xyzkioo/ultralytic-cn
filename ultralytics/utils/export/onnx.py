@@ -6,29 +6,29 @@ from ultralytics.utils import LOGGER
 
 
 def onnx_calibration_reader(dataset, transform_fn, input_name: str = "images", batch: int = 0):
-    """Create an ONNX Runtime calibration data reader from an Ultralytics calibration dataloader.
+    """根据 Ultralytics 校准数据加载器创建 ONNX Runtime 校准数据读取器。
 
-    `batch` is the graph's static batch dimension (0 for dynamic-batch models): calibration datasets smaller than the
-    export batch yield undersized batches that static graphs reject, so samples are tiled up to exactly `batch`.
+    ``batch`` 是图的静态批次维度（动态批次模型为 0）：小于导出批次的数据集会产生静态图无法接受的较小批次，
+    因此会复制样本，直到批次大小恰好达到 ``batch``。
     """
     from onnxruntime.quantization import CalibrationDataReader
 
     class _CalibrationReader(CalibrationDataReader):
         def __init__(self):
-            """Initialize calibration dataset iteration."""
+            """初始化校准数据集迭代。"""
             self.iterator = iter(dataset)
 
         def get_next(self):
-            """Return the next calibration sample, or None when exhausted."""
+            """返回下一个校准样本；数据耗尽时返回 None。"""
             if (b := next(self.iterator, None)) is None:
                 return None
             im = transform_fn(b)
-            if batch and im.shape[0] != batch:  # tile up to the static batch dimension
+            if batch and im.shape[0] != batch:  # 复制样本，直到达到静态批次维度
                 im = np.tile(im, (-(-batch // im.shape[0]), 1, 1, 1))[:batch]
             return {input_name: im}
 
         def rewind(self):
-            """Reset the iterator for an additional calibration pass."""
+            """重置迭代器，以便再次执行校准。"""
             self.iterator = iter(dataset)
 
     return _CalibrationReader()
@@ -43,13 +43,13 @@ def onnx_int8_quantize(
     batch: int = 0,
     prefix: str = "",
 ) -> str:
-    """Quantize an ONNX model to INT8 using ONNX Runtime static quantization."""
+    """使用 ONNX Runtime 静态量化将 ONNX 模型量化为 INT8。"""
     import onnx
     from onnxruntime.quantization import quantize_static
 
-    # Quantize only weighted ops so the head decode stays float: one INT8 scale spanning box pixels (~0-640) and class
-    # probs (0-1) rounds every score to 0. Excluding by node (not op_types) still calibrates all tensors, avoiding an
-    # ONNX Runtime crash on the uncalibrated attention Softmax.
+    # 仅量化带权算子，使检测头解码保持浮点：一个覆盖边界框像素（约 0-640）和类别概率（0-1）的 INT8 标度
+    # 会将所有分数舍入为 0。按节点而非算子类型排除，仍可校准所有张量，避免出现
+    # 避免 ONNX Runtime 在未校准的注意力 Softmax 上崩溃。
     graph = onnx.load(onnx_file).graph
     exclude = [n.name for n in graph.node if n.op_type not in {"Conv", "Gemm", "MatMul"}]
     del graph

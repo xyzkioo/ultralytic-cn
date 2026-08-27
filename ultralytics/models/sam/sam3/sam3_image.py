@@ -17,7 +17,7 @@ from .vl_combiner import SAM3VLBackbone
 
 
 def _update_out(out, out_name, out_value, auxiliary=True, update_aux=True):
-    """Helper function to update output dictionary with main and auxiliary outputs."""
+    """使用主要输出和辅助输出更新输出字典的辅助函数。"""
     out[out_name] = out_value[-1] if auxiliary else out_value
     if auxiliary and update_aux:
         if "aux_outputs" not in out:
@@ -28,7 +28,7 @@ def _update_out(out, out_name, out_value, auxiliary=True, update_aux=True):
 
 
 class SAM3SemanticModel(torch.nn.Module):
-    """SAM3 model for semantic segmentation with vision-language backbone."""
+    """使用视觉-语言骨干网络执行语义分割的 SAM3 模型。"""
 
     mask_threshold: float = 0.0
 
@@ -46,12 +46,12 @@ class SAM3SemanticModel(torch.nn.Module):
         use_act_checkpoint_seg_head: bool = True,
         matcher=None,
         use_dot_prod_scoring=True,
-        supervise_joint_box_scores: bool = False,  # only relevant if using presence token/score
-        detach_presence_in_joint_score: bool = False,  # only relevant if using presence token/score
+        supervise_joint_box_scores: bool = False,  # 仅在使用存在性词元/分数时有效
+        detach_presence_in_joint_score: bool = False,  # 仅在使用存在性词元/分数时有效
         separate_scorer_for_instance: bool = False,
         num_interactive_steps_val: int = 0,
     ):
-        """Initialize the SAM3SemanticModel."""
+        """初始化 SAM3SemanticModel。"""
         super().__init__()
         self.backbone = backbone
         self.geometry_encoder = input_geometry_encoder
@@ -84,7 +84,7 @@ class SAM3SemanticModel(torch.nn.Module):
         self.supervise_joint_box_scores = supervise_joint_box_scores
         self.detach_presence_in_joint_score = detach_presence_in_joint_score
 
-        # verify the number of queries for O2O and O2M
+        # 验证 O2O 和 O2M 查询的数量
         num_o2o_static = self.transformer.decoder.num_queries
         num_o2m_static = self.transformer.decoder.num_o2m_queries
         assert num_o2m_static == (num_o2o_static if self.transformer.decoder.dac else 0)
@@ -106,10 +106,10 @@ class SAM3SemanticModel(torch.nn.Module):
         visual_prompt_mask=None,
         prev_mask_pred=None,
     ):
-        """Encode the geometric and visual prompts."""
+        """编码几何提示和视觉提示。"""
         if prev_mask_pred is not None:
             img_feats = [img_feats[-1] + prev_mask_pred]
-        # Encode geometry
+        # 编码几何信息
         geo_feats, geo_masks = self.geometry_encoder(
             geo_prompt=geometric_prompt,
             img_feats=img_feats,
@@ -136,9 +136,9 @@ class SAM3SemanticModel(torch.nn.Module):
         prompt_mask,
         encoder_extra_kwargs: dict | None = None,
     ):
-        """Run the transformer encoder."""
-        # Run the encoder
-        # make a copy of the image feature lists since the encoder may modify these lists in-place
+        """运行 Transformer 编码器。"""
+        # 运行编码器
+        # 复制图像特征列表，因为编码器可能会原地修改该列表
         memory = self.transformer.encoder(
             src=img_feats.copy(),
             src_key_padding_mask=None,
@@ -149,14 +149,14 @@ class SAM3SemanticModel(torch.nn.Module):
             encoder_extra_kwargs=encoder_extra_kwargs,
         )
         encoder_out = {
-            # encoded image features
+            # encoded 图像 特征
             "encoder_hidden_states": memory["memory"],
             "pos_embed": memory["pos_embed"],
             "padding_mask": memory["padding_mask"],
             "spatial_shapes": memory["spatial_shapes"],
             "valid_ratios": memory["valid_ratios"],
             "vis_feat_sizes": vis_feat_sizes,
-            # encoded text features (or other prompts)
+            # 编码后的文本特征（或其他提示）
             "prompt_before_enc": prompt,
             "prompt_after_enc": memory.get("memory_text", prompt),
             "prompt_mask": prompt_mask,
@@ -173,7 +173,7 @@ class SAM3SemanticModel(torch.nn.Module):
         prompt_mask,
         encoder_out,
     ):
-        """Run the transformer decoder."""
+        """运行 Transformer 解码器。"""
         bs = memory.shape[1]
         query_embed = self.transformer.decoder.query_embed.weight
         tgt = query_embed.unsqueeze(1).repeat(1, bs, 1)
@@ -194,7 +194,7 @@ class SAM3SemanticModel(torch.nn.Module):
         hs = hs.transpose(1, 2)  # seq-first to batch-first
         reference_boxes = reference_boxes.transpose(1, 2)  # seq-first to batch-first
         if dec_presence_out is not None:
-            # seq-first to batch-first
+            # 从序列优先转换为批次优先
             dec_presence_out = dec_presence_out.transpose(1, 2)
         self._update_scores_and_boxes(
             out,
@@ -216,9 +216,9 @@ class SAM3SemanticModel(torch.nn.Module):
         dec_presence_out=None,
         is_instance_prompt=False,
     ):
-        """Update output dict with class scores and box predictions."""
+        """使用类别分数和边界框预测结果更新输出字典。"""
         num_o2o = hs.size(2)
-        # score prediction
+        # 分数 预测
         if self.use_dot_prod_scoring:
             dot_prod_scoring_head = self.dot_prod_scoring
             if is_instance_prompt and self.instance_dot_prod_scoring is not None:
@@ -230,7 +230,7 @@ class SAM3SemanticModel(torch.nn.Module):
                 class_embed_head = self.instance_class_embed
             outputs_class = class_embed_head(hs)
 
-        # box prediction
+        # 边界框 预测
         box_head = self.transformer.decoder.bbox_embed
         if is_instance_prompt and self.transformer.decoder.instance_bbox_embed is not None:
             box_head = self.transformer.decoder.instance_bbox_embed
@@ -265,7 +265,7 @@ class SAM3SemanticModel(torch.nn.Module):
         prompt_mask,
         hs,
     ):
-        """Run segmentation heads and get masks."""
+        """运行分割头并获取掩码。"""
         if self.segmentation_head is not None:
             num_o2o = hs.size(2)
             obj_queries = hs if self.o2m_mask_predict else hs[:, :, :num_o2o]
@@ -287,13 +287,12 @@ class SAM3SemanticModel(torch.nn.Module):
     def forward_grounding(
         self, backbone_out: dict[str, torch.Tensor], text_ids: torch.Tensor, geometric_prompt: Prompt = None
     ):
-        """Forward pass for grounding (detection + segmentation) given input images and text."""
+        """根据输入图像和文本执行 grounding 前向传播（检测和分割）。"""
         backbone_out, img_feats, img_pos_embeds, vis_feat_sizes = SAM2Model._prepare_backbone_features(
             self, backbone_out, batch=len(text_ids)
         )
         backbone_out.update({k: v for k, v in self.text_embeddings.items()})
-        # index text features (note that regardless of early or late fusion, the batch size of
-        # `txt_feats` is always the number of *prompts* in the encoder)
+        # 索引文本特征（注意，无论早期融合还是后期融合，`txt_feats` 的批次大小始终是编码器中的提示数量）
         txt_feats = backbone_out["language_features"][:, text_ids]
         txt_masks = backbone_out["language_mask"][text_ids]
         if geometric_prompt is not None:
@@ -305,12 +304,12 @@ class SAM3SemanticModel(torch.nn.Module):
             prompt = txt_feats
             prompt_mask = txt_masks
 
-        # Run the encoder
+        # 运行编码器
         with torch.profiler.record_function("SAM3Image._run_encoder"):
             encoder_out = self._run_encoder(img_feats, img_pos_embeds, vis_feat_sizes, prompt, prompt_mask)
         out = {"backbone_out": backbone_out}
 
-        # Run the decoder
+        # 运行解码器
         with torch.profiler.record_function("SAM3Image._run_decoder"):
             out, hs = self._run_decoder(
                 memory=encoder_out["encoder_hidden_states"],
@@ -322,7 +321,7 @@ class SAM3SemanticModel(torch.nn.Module):
                 encoder_out=encoder_out,
             )
 
-        # Run segmentation heads
+        # 运行分割头
         with torch.profiler.record_function("SAM3Image._run_segmentation_heads"):
             self._run_segmentation_heads(
                 out=out,
@@ -335,10 +334,10 @@ class SAM3SemanticModel(torch.nn.Module):
         return out
 
     def set_classes(self, text: list[str]):
-        """Set the text embeddings for the given class names."""
+        """为给定类别名称设置文本嵌入。"""
         self.text_embeddings = self.backbone.forward_text(text)
         self.names = text
 
     def set_imgsz(self, imgsz: tuple[int, int]):
-        """Set the image size for the model."""
+        """设置模型的图像尺寸。"""
         self.backbone.set_imgsz(imgsz)

@@ -21,59 +21,57 @@ from ultralytics.utils.patches import imread
 
 
 class BaseDataset(Dataset):
-    """Base dataset class for loading and processing image data.
+    """用于加载和处理图像数据的基础数据集类。
 
-    This class provides core functionality for loading images, caching, and preparing data for training and inference in
-    object detection tasks.
+    此类提供加载图像、缓存图像以及为目标检测任务准备训练和推理数据的核心功能。
 
-    Attributes:
-        img_path (str | list[str]): Path to the folder containing images.
-        imgsz (int): Target image size for resizing.
-        augment (bool): Whether to apply data augmentation.
-        single_cls (bool): Whether to treat all objects as a single class.
-        prefix (str): Prefix to print in log messages.
-        fraction (float): Fraction of dataset to utilize.
-        channels (int): Number of channels in the images (1 for grayscale, 3 for color). Color images loaded with OpenCV
-            are in BGR channel order.
-        cv2_flag (int): OpenCV flag for reading images.
-        im_files (list[str]): List of image file paths.
-        labels (list[dict]): List of label data dictionaries.
-        ni (int): Number of images in the dataset.
-        rect (bool): Whether to use rectangular training.
-        batch_size (int): Size of batches.
-        stride (int): Stride used in the model.
-        pad (float): Padding value.
-        buffer (list): Buffer for mosaic images.
-        max_buffer_length (int): Maximum buffer size.
-        ims (list): List of loaded images.
-        im_hw0 (list): List of original image dimensions (h, w).
-        im_hw (list): List of resized image dimensions (h, w).
-        npy_files (list[Path]): List of numpy file paths.
-        cache (str | None): Cache setting ('ram', 'disk', or None for no caching).
-        transforms (callable): Image transformation function.
-        batch_shapes (np.ndarray): Batch shapes for rectangular training.
-        batch (np.ndarray): Batch index of each image.
+    属性：
+        img_path (str | 列表[str]): 包含图像的文件夹路径。
+        imgsz (int): 调整图像尺寸时使用的目标尺寸。
+        augment (bool): 是否应用数据增强。
+        single_cls (bool): 是否将所有目标视为同一类别。
+        prefix (str): 日志消息的打印前缀。
+        fraction (float): 使用的数据集比例。
+        channels (int): 图像通道数（灰度图为 1，彩色图为 3）。OpenCV 加载的彩色图像通道顺序为 BGR。
+        cv2_flag (int): 读取图像时使用的 OpenCV 标志。
+        im_files (列表[str]): 图像文件路径列表。
+        labels (列表[dict]): 标签数据字典列表。
+        ni (int): 数据集中的图像数量。
+        rect (bool): 是否使用矩形训练。
+        batch_size (int): 批次大小。
+        stride (int): 模型使用的步长。
+        pad (float): 填充值。
+        buffer (列表): 马赛克图像缓冲区。
+        max_buffer_length (int): 缓冲区最大尺寸。
+        ims (列表): 已加载图像列表。
+        im_hw0 (列表): 原始图像尺寸 (h, w) 列表。
+        im_hw (列表): 调整后图像尺寸 (h, w) 列表。
+        npy_files (列表[Path]): numpy 文件路径列表。
+        cache (str | None): 缓存设置（'ram'、'disk' 或 None 表示不缓存）。
+        transforms (callable): 图像变换函数。
+        batch_shapes (np.ndarray): 矩形训练使用的批次形状。
+        batch (np.ndarray): 每张图像对应的批次索引。
 
-    Methods:
-        get_img_files: Read image files from the specified path.
-        update_labels: Update labels to include only specified classes.
-        load_image: Load an image from the dataset.
-        cache_images: Cache images to memory or disk.
-        cache_images_to_disk: Save an image as an *.npy file for faster loading.
-        check_cache_disk: Check image caching requirements vs available disk space.
-        check_cache_ram: Check image caching requirements vs available memory.
-        set_rectangle: Sort images by aspect ratio and set batch shapes for rectangular training.
-        get_image_and_label: Get and return label information from the dataset.
-        update_labels_info: Custom label format method to be implemented by subclasses.
-        build_transforms: Build transformation pipeline to be implemented by subclasses.
-        get_labels: Get labels method to be implemented by subclasses.
+    方法：
+        get_img_files: 从指定路径读取图像文件。
+        update_labels: 更新标签，仅保留指定类别。
+        load_image: 从数据集中加载图像。
+        cache_images: 将图像缓存到内存或磁盘。
+        cache_images_to_disk: 将图像保存为 *.npy 文件以便快速加载。
+        check_cache_disk: 检查图像缓存需求与可用磁盘空间。
+        check_cache_ram: 检查图像缓存需求与可用内存。
+        set_rectangle: 按宽高比对图像排序，并设置矩形训练的批次形状。
+        get_image_and_label: 获取并返回数据集中的标签信息。
+        update_labels_info: 由子类实现的自定义标签格式方法。
+        build_transforms: 由子类实现的变换流水线构建方法。
+        get_labels: 由子类实现的标签获取方法。
     """
 
     class _ImageCache:
-        """Store images in one contiguous array to preserve copy-on-write sharing between workers."""
+        """将图像存储在连续数组中，以保留工作进程之间的写时复制共享。"""
 
         def __init__(self, images: list[np.ndarray]):
-            """Pack images and their layouts into contiguous NumPy arrays."""
+            """将图像及其布局打包为连续的 NumPy 数组。"""
             self.shapes = np.array([im.shape for im in images])
             self.dtypes = np.array([im.dtype.str for im in images])
             self.offsets = np.concatenate(([0], np.cumsum([im.nbytes for im in images])))
@@ -83,7 +81,7 @@ class BaseDataset(Dataset):
                 images[i] = None
 
         def __getitem__(self, i: int) -> np.ndarray:
-            """Return an image view by index."""
+            """根据索引返回图像视图。"""
             i = range(len(self.shapes))[i]
             return self.buffer[self.offsets[i] : self.offsets[i + 1]].view(self.dtypes[i]).reshape(self.shapes[i])
 
@@ -104,24 +102,23 @@ class BaseDataset(Dataset):
         fraction: float = 1.0,
         channels: int = 3,
     ):
-        """Initialize BaseDataset with given configuration and options.
+        """使用给定配置和选项初始化 BaseDataset。
 
-        Args:
-            img_path (str | list[str]): Path to the folder containing images or list of image paths.
-            imgsz (int): Image size for resizing.
-            cache (bool | str): Cache images to RAM or disk during training.
-            augment (bool): If True, data augmentation is applied.
-            hyp (dict[str, Any]): Hyperparameters to apply data augmentation.
-            prefix (str): Prefix to print in log messages.
-            rect (bool): If True, rectangular training is used.
-            batch_size (int): Size of batches.
-            stride (int): Stride used in the model.
-            pad (float): Padding value.
-            single_cls (bool): If True, single class training is used.
-            classes (list[int], optional): List of included classes.
-            fraction (float): Fraction of dataset to utilize.
-            channels (int): Number of channels in the images (1 for grayscale, 3 for color). Color images loaded with
-                OpenCV are in BGR channel order.
+        参数：
+            img_path (str | 列表[str]): 包含图像的文件夹路径，或图像路径列表。
+            imgsz (int): 调整图像尺寸时使用的目标尺寸。
+            cache (bool | str): 训练期间将图像缓存到内存或磁盘。
+            augment (bool): 为 True 时应用数据增强。
+            hyp (dict[str, Any]): 用于数据增强的超参数。
+            prefix (str): 日志消息的打印前缀。
+            rect (bool): 为 True 时使用矩形训练。
+            batch_size (int): 批次大小。
+            stride (int): 模型使用的步长。
+            pad (float): 填充值。
+            single_cls (bool): 为 True 时使用单类别训练。
+            classes (列表[int], 可选): 要包含的类别列表。
+            fraction (float): 要使用的数据集比例。
+            channels (int): 图像通道数（灰度图为 1，彩色图为 3）。使用 OpenCV 加载的彩色图像采用 BGR 通道顺序。
         """
         super().__init__()
         self.img_path = img_path
@@ -134,8 +131,8 @@ class BaseDataset(Dataset):
         self.cv2_flag = cv2.IMREAD_GRAYSCALE if channels == 1 else cv2.IMREAD_COLOR
         self.im_files = self.get_img_files(self.img_path)
         self.labels = self.get_labels()
-        self.update_labels(include_class=classes)  # single_cls and include_class
-        self.ni = len(self.labels)  # number of images
+        self.update_labels(include_class=classes)  # 单类别过滤和类别筛选
+        self.ni = len(self.labels)  # 图像数量
         self.rect = rect
         self.batch_size = batch_size
         self.stride = stride
@@ -144,69 +141,69 @@ class BaseDataset(Dataset):
             assert self.batch_size is not None
             self.set_rectangle()
 
-        # Buffer thread for mosaic images
-        self.buffer = []  # buffer size = batch size
+        # 用于马赛克图像的缓冲线程
+        self.buffer = []  # 缓冲区大小等于批次大小
         self.max_buffer_length = min((self.ni, self.batch_size * 8, 1000)) if self.augment else 0
 
-        # Cache images (options are cache = True, False, None, "ram", "disk")
+        # 缓存图像（选项可以是 cache = True、False、None、"ram" 或 "disk"）
         self.ims, self.im_hw0, self.im_hw = [None] * self.ni, [None] * self.ni, [None] * self.ni
         self.npy_files = [Path(f).with_suffix(".npy") for f in self.im_files]
         self.cache = cache.lower() if isinstance(cache, str) else "ram" if cache is True else None
         if self.cache == "ram" and self.check_cache_ram():
             if hyp.deterministic:
                 LOGGER.warning(
-                    "cache='ram' may produce non-deterministic training results. "
-                    "Consider cache='disk' as a deterministic alternative if your disk space allows."
+                        "cache='ram' 可能产生非确定性的训练结果。"
+                        "如果磁盘空间允许，可使用 cache='disk' 作为确定性替代方案。"
                 )
             self.cache_images()
         elif self.cache == "disk" and self.check_cache_disk():
             self.cache_images()
 
-        # Transforms
+        # 变换
         self.transforms = self.build_transforms(hyp=hyp)
 
     def get_img_files(self, img_path: str | list[str]) -> list[str]:
-        """Read image files from the specified path.
+        """从指定路径读取图像文件。
 
-        Args:
-            img_path (str | list[str]): Path or list of paths to image directories or files.
+        参数：
+            img_path (str | 列表[str]): 图像目录或文件的路径，或由这些路径组成的列表。
 
-        Returns:
-            (list[str]): List of image file paths.
+        返回：
+            (列表[str]): 图像文件路径列表。
 
-        Raises:
-            FileNotFoundError: If no images are found or the path doesn't exist.
+        异常：
+            FileNotFoundError: 找不到图像或指定路径不存在时抛出。
         """
         try:
-            f = []  # image files
+            f = []  # 图像 文件
             for p in img_path if isinstance(img_path, list) else [img_path]:
                 p = Path(p)  # os-agnostic
-                if p.is_dir():  # dir
+                if p.is_dir():  # 目录
                     f += glob.glob(str(Path(glob.escape(p)) / "**" / "*.*"), recursive=True)
-                    # F = list(p.rglob('*.*'))  # pathlib
-                elif p.is_file():  # file
+                    # F = list(p.rglob('*.*'))  # pathlib 路径处理方式
+                elif p.is_file():  # 文件
                     with open(p, encoding="utf-8") as t:
                         t = t.read().strip().splitlines()
                         parent = str(p.parent) + os.sep
-                        f += [x.replace("./", parent, 1) if x.startswith("./") else x for x in t]  # local to global
-                        # F += [p.parent / x.lstrip(os.sep) for x in t]  # local to global (pathlib)
+                        f += [x.replace("./", parent, 1) if x.startswith("./") else x for x in t]  # 将本地路径转换为全局路径
+                        # F += [p.parent / x.lstrip(os.sep) for x in t]  # 从本地路径转换为全局路径（pathlib）
                 else:
                     raise FileNotFoundError(f"{self.prefix}{p} does not exist")
             im_files = sorted(x.replace("/", os.sep) for x in f if x.rpartition(".")[-1].lower() in IMG_FORMATS)
-            # self.img_files = sorted([x for x in f if x.suffix[1:].lower() in IMG_FORMATS])  # pathlib
+            # self.img_files = sorted([x for x in f if x.suffix[1:].lower() in IMG_FORMATS])  # pathlib 路径处理方式
             assert im_files, f"{self.prefix}No images found in {img_path}. {FORMATS_HELP_MSG}"
         except Exception as e:
             raise FileNotFoundError(f"{self.prefix}Error loading data from {img_path}\n{HELP_URL}") from e
         if self.fraction < 1:
-            im_files = im_files[: round(len(im_files) * self.fraction)]  # retain a fraction of the dataset
-        check_file_speeds(im_files, prefix=self.prefix)  # check image read speeds
+            im_files = im_files[: round(len(im_files) * self.fraction)]  # 保留部分数据集
+        check_file_speeds(im_files, prefix=self.prefix)  # 检查图像读取速度
         return im_files
 
     def update_labels(self, include_class: list[int] | None) -> None:
-        """Update labels to include only specified classes.
+        """更新标签，仅保留指定类别。
 
-        Args:
-            include_class (list[int], optional): List of classes to include. If None, all classes are included.
+        参数：
+            include_class (列表[int], 可选): 要包含的类别列表。为 None 时包含所有类别。
         """
         include_class_array = np.array(include_class).reshape(1, -1)
         for i in range(len(self.labels)):
@@ -228,25 +225,24 @@ class BaseDataset(Dataset):
     def load_image(
         self, i: int, rect_mode: bool = True, resize_short: bool = False
     ) -> tuple[np.ndarray, tuple[int, int], tuple[int, int]]:
-        """Load an image from dataset index 'i'.
+        """从数据集索引 'i' 加载图像。
 
-        Args:
-            i (int): Index of the image to load.
-            rect_mode (bool): Whether to use rectangular resizing (long side to imgsz).
-            resize_short (bool): Whether to resize the shorter side to imgsz while maintaining aspect ratio. Overrides
-                rect_mode when True.
+        参数：
+            i (int): 要加载的图像索引。
+            rect_mode (bool): 是否使用矩形缩放（将长边缩放到 imgsz）。
+            resize_short (bool): 是否在保持宽高比的同时将短边缩放到 imgsz。为 True 时覆盖 rect_mode。
 
-        Returns:
-            im (np.ndarray): Loaded image as a NumPy array.
-            hw_original (tuple[int, int]): Original image dimensions in (height, width) format.
-            hw_resized (tuple[int, int]): Resized image dimensions in (height, width) format.
+        返回：
+            im (np.ndarray): 加载后的图像 NumPy 数组。
+            hw_original (tuple[int, int]): 原始图像尺寸，格式为 (高度, 宽度)。
+            hw_resized (tuple[int, int]): 缩放后图像尺寸，格式为 (高度, 宽度)。
 
-        Raises:
-            FileNotFoundError: If the image file is not found.
+        异常：
+            FileNotFoundError: 找不到图像文件时抛出。
         """
         im, f, fn = self.ims[i], self.im_files[i], self.npy_files[i]
-        if im is None:  # not cached in RAM
-            if fn.exists():  # load npy
+        if im is None:  # 未缓存到内存
+            if fn.exists():  # 加载 npy
                 try:
                     im = np.load(fn)
                     npy_channels = im.shape[-1] if im.ndim >= 3 else 1
@@ -260,33 +256,33 @@ class BaseDataset(Dataset):
                     LOGGER.warning(f"{self.prefix}Removing corrupt *.npy image file {fn} due to: {e}")
                     Path(fn).unlink(missing_ok=True)
                     im = imread(f, flags=self.cv2_flag)  # BGR
-            else:  # read image
+            else:  # read 图像
                 im = imread(f, flags=self.cv2_flag)  # BGR
             if im is None:
                 raise FileNotFoundError(f"Image Not Found {f}")
 
             h0, w0 = im.shape[:2]  # orig hw
-            if rect_mode:  # resize long side to imgsz while maintaining aspect ratio
-                if resize_short:  # resize short side to imgsz while maintaining aspect ratio
+            if rect_mode:  # 保持宽高比，将长边缩放到 imgsz
+                if resize_short:  # 保持宽高比，将短边缩放到 imgsz
                     r = self.imgsz / min(h0, w0)  # ratio
-                    if r != 1:  # if sizes are not equal
+                    if r != 1:  # 尺寸不相等时调整大小
                         w, h = (math.ceil(w0 * r), self.imgsz) if h0 < w0 else (self.imgsz, math.ceil(h0 * r))
                         im = cv2.resize(im, (w, h), interpolation=cv2.INTER_LINEAR)
                 else:
                     r = self.imgsz / max(h0, w0)  # ratio
-                    if r != 1:  # if sizes are not equal
+                    if r != 1:  # 尺寸不相等时调整大小
                         w, h = (min(math.ceil(w0 * r), self.imgsz), min(math.ceil(h0 * r), self.imgsz))
                         im = cv2.resize(im, (w, h), interpolation=cv2.INTER_LINEAR)
-            elif not (h0 == w0 == self.imgsz):  # resize by stretching image to square imgsz
+            elif not (h0 == w0 == self.imgsz):  # 通过拉伸图像调整为正方形 imgsz
                 im = cv2.resize(im, (self.imgsz, self.imgsz), interpolation=cv2.INTER_LINEAR)
             if im.ndim == 2:
                 im = im[..., None]
 
-            # Add to buffer if training with augmentations
+            # 训练时使用数据增强则添加到缓冲区
             if self.augment and self.cache != "ram":
                 self.ims[i], self.im_hw0[i], self.im_hw[i] = im, (h0, w0), im.shape[:2]  # im, hw_original, hw_resized
                 self.buffer.append(i)
-                if 1 < len(self.buffer) >= self.max_buffer_length:  # prevent empty buffer
+                if 1 < len(self.buffer) >= self.max_buffer_length:  # 防止缓冲区为空
                     j = self.buffer.pop(0)
                     if self.cache != "ram":
                         self.ims[j], self.im_hw0[j], self.im_hw[j] = None, None, None
@@ -296,8 +292,8 @@ class BaseDataset(Dataset):
         return self.ims[i], self.im_hw0[i], self.im_hw[i]
 
     def cache_images(self) -> None:
-        """Cache images to memory or disk for faster training."""
-        b, gb = 0, 1 << 30  # bytes of cached images, bytes per gigabytes
+        """将图像缓存到内存或磁盘，以加快训练速度。"""
+        b, gb = 0, 1 << 30  # 缓存图像的字节数，每 GB 对应的字节数
         fcn, storage = (self.cache_images_to_disk, "Disk") if self.cache == "disk" else (self.load_image, "RAM")
         with ThreadPool(NUM_THREADS) as pool:
             results = pool.imap(fcn, range(self.ni))
@@ -314,7 +310,7 @@ class BaseDataset(Dataset):
             self.ims = self._ImageCache(self.ims)
 
     def cache_images_to_disk(self, i: int) -> None:
-        """Save an image as an *.npy file for faster loading."""
+        """将图像保存为 *.npy 文件，以加快加载速度。"""
         f = self.npy_files[i]
         if not f.exists():
             try:
@@ -324,18 +320,18 @@ class BaseDataset(Dataset):
                 LOGGER.warning(f"{self.prefix}WARNING ⚠️ Failed to cache image {f}: {e}")
 
     def check_cache_disk(self, safety_margin: float = 0.5) -> bool:
-        """Check if there's enough disk space for caching images.
+        """检查磁盘空间是否足够缓存图像。
 
-        Args:
+        参数：
             safety_margin (float): Safety margin factor for disk space calculation.
 
-        Returns:
+        返回：
             (bool): True if there's enough disk space, False otherwise.
         """
         import shutil
 
-        b, gb = 0, 1 << 30  # bytes of cached images, bytes per gigabytes
-        n = min(self.ni, 30)  # extrapolate from 30 random images
+        b, gb = 0, 1 << 30  # 缓存图像的字节数，每 GB 对应的字节数
+        n = min(self.ni, 30)  # 根据最多 30 张随机图像估算
         for _ in range(n):
             im_file = random.choice(self.im_files)
             im = imread(im_file)
@@ -346,7 +342,7 @@ class BaseDataset(Dataset):
                 self.cache = None
                 LOGGER.warning(f"{self.prefix}Skipping caching images to disk, directory not writable")
                 return False
-        disk_required = b * self.ni / n * (1 + safety_margin)  # bytes required to cache dataset to disk
+        disk_required = b * self.ni / n * (1 + safety_margin)  # 将数据集缓存到磁盘所需的字节数
         total, _used, free = shutil.disk_usage(Path(self.im_files[0]).parent)
         if disk_required > free:
             self.cache = None
@@ -359,19 +355,19 @@ class BaseDataset(Dataset):
         return True
 
     def check_cache_ram(self, safety_margin: float = 1.0) -> bool:
-        """Check if there's enough RAM for caching images.
+        """检查内存是否足够缓存图像。
 
-        Args:
+        参数：
             safety_margin (float): Safety margin factor for RAM calculation.
 
-        Returns:
+        返回：
             (bool): True if there's enough RAM, False otherwise.
         """
-        b, gb = 0, 1 << 30  # bytes of cached images, bytes per gigabytes
-        n = min(self.ni, 30)  # extrapolate from 30 random images
+        b, gb = 0, 1 << 30  # 缓存图像的字节数，每 GB 对应的字节数
+        n = min(self.ni, 30)  # 根据最多 30 张随机图像估算
         for _ in range(n):
             b += self.load_image(random.randrange(self.ni))[0].nbytes
-        mem_required = b * self.ni / n * (1 + safety_margin)  # GB required to cache dataset into RAM
+        mem_required = b * self.ni / n * (1 + safety_margin)  # 将数据集缓存到 RAM 所需的 GB 数
         mem = __import__("psutil").virtual_memory()
         if mem_required > mem.available:
             self.cache = None
@@ -384,9 +380,9 @@ class BaseDataset(Dataset):
         return True
 
     def set_rectangle(self) -> None:
-        """Sort images by aspect ratio and set batch shapes for rectangular training."""
-        bi = np.floor(np.arange(self.ni) / self.batch_size).astype(int)  # batch index
-        nb = bi[-1] + 1  # number of batches
+        """按宽高比对图像排序，并为矩形训练设置批次形状。"""
+        bi = np.floor(np.arange(self.ni) / self.batch_size).astype(int)  # batch 索引
+        nb = bi[-1] + 1  # 批次数量
 
         s = np.array([x.pop("shape") for x in self.labels])  # hw
         ar = s[:, 0] / s[:, 1]  # aspect ratio
@@ -395,7 +391,7 @@ class BaseDataset(Dataset):
         self.labels = [self.labels[i] for i in irect]
         ar = ar[irect]
 
-        # Set training image shapes
+        # 设置 训练 图像 shapes
         shapes = [[1, 1]] * nb
         for i in range(nb):
             ari = ar[bi == i]
@@ -406,67 +402,67 @@ class BaseDataset(Dataset):
                 shapes[i] = [1, 1 / mini]
 
         self.batch_shapes = np.ceil(np.array(shapes) * self.imgsz / self.stride + self.pad).astype(int) * self.stride
-        self.batch = bi  # batch index of image
+        self.batch = bi  # 图像的批次索引
 
     def __getitem__(self, index: int) -> dict[str, Any]:
-        """Return transformed label information for given index."""
+        """返回给定索引对应的变换后标签信息。"""
         return self.transforms(self.get_image_and_label(index))
 
     def get_image_and_label(self, index: int) -> dict[str, Any]:
-        """Get and return label information from the dataset.
+        """获取并返回数据集中的标签信息。
 
-        Args:
-            index (int): Index of the image to retrieve.
+        参数：
+            索引 (int): Index of 图像 to retrieve.
 
-        Returns:
-            (dict[str, Any]): Label dictionary with image and metadata.
+        返回：
+            (dict[str, Any]): 包含图像和元数据的标签字典。
         """
-        label = deepcopy(self.labels[index])  # requires deepcopy() https://github.com/ultralytics/ultralytics/pull/1948
-        label.pop("shape", None)  # shape is for rect, remove it
+        label = deepcopy(self.labels[index])  # 需要 deepcopy() https://github.com/ultralytics/ultralytics/pull/1948
+        label.pop("shape", None)  # 形状仅用于矩形训练，删除它
         label["img"], label["ori_shape"], label["resized_shape"] = self.load_image(index)
         label["ratio_pad"] = (
             label["resized_shape"][0] / label["ori_shape"][0],
             label["resized_shape"][1] / label["ori_shape"][1],
-        )  # for evaluation
+        )  # 用于评估
         if self.rect:
             label["rect_shape"] = self.batch_shapes[self.batch[index]]
         return self.update_labels_info(label)
 
     def __len__(self) -> int:
-        """Return the length of the labels list for the dataset."""
+        """返回数据集标签列表的长度。"""
         return len(self.labels)
 
     def update_labels_info(self, label: dict[str, Any]) -> dict[str, Any]:
-        """Customize your label format here."""
+        """在此处自定义标签格式。"""
         return label
 
     def build_transforms(self, hyp: dict[str, Any] | None = None):
-        """Users can customize augmentations here.
+        """用户可以在此处自定义数据增强。
 
-        Examples:
+        示例：
             >>> if self.augment:
-            ...     # Training transforms
+            ...     # 训练变换
             ...     return Compose([])
             >>> else:
-            ...    # Val transforms
+            ...    # 验证变换
             ...    return Compose([])
         """
         raise NotImplementedError
 
     def get_labels(self) -> list[dict[str, Any]]:
-        """Users can customize their own format here.
+        """用户可以在此处自定义自己的格式。
 
-        Examples:
-            Ensure output is a dictionary with the following keys:
+        示例：
+            确保输出是包含以下键的字典：
             >>> dict(
             ...     im_file=im_file,
-            ...     shape=shape,  # format: (height, width)
+            ...     shape=shape,  # 格式：(height, width)
             ...     cls=cls,
             ...     bboxes=bboxes,  # xywh
             ...     segments=segments,  # xy
             ...     keypoints=keypoints,  # xy
-            ...     normalized=True,  # or False
-            ...     bbox_format="xyxy",  # or xywh, ltwh
+            ...     normalized=True,  # 或 False
+            ...     bbox_format="xyxy",  # 或 xywh、ltwh
             ... )
         """
         raise NotImplementedError

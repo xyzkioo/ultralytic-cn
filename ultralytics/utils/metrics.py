@@ -1,5 +1,5 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
-"""Model validation metrics."""
+"""模型验证指标。"""
 
 from __future__ import annotations
 
@@ -49,51 +49,51 @@ CITYSCAPES_WEIGHT = np.array(
 
 
 def bbox_ioa(box1: np.ndarray, box2: np.ndarray, iou: bool = False, eps: float = 1e-7) -> np.ndarray:
-    """Calculate the intersection over box2 area given box1 and box2.
+    """给定 box1 和 box2，计算交集面积与 box2 面积之比。
 
-    Args:
-        box1 (np.ndarray): A numpy array of shape (N, 4) representing N bounding boxes in x1y1x2y2 format.
-        box2 (np.ndarray): A numpy array of shape (M, 4) representing M bounding boxes in x1y1x2y2 format.
-        iou (bool, optional): Calculate the standard IoU if True else return inter_area/box2_area.
-        eps (float, optional): A small value to avoid division by zero.
+    参数：
+        box1 (np.ndarray): 形状为 (N, 4) 的 NumPy 数组，表示 x1y1x2y2 格式的 N 个边界框。
+        box2 (np.ndarray): 形状为 (M, 4) 的 NumPy 数组，表示 x1y1x2y2 格式的 M 个边界框。
+        iou (bool, 可选): 为 True 时计算标准 IoU，否则返回 inter_area/box2_area。
+        eps (float, 可选): 用于避免除零的小数值。
 
-    Returns:
-        (np.ndarray): A numpy array of shape (N, M) representing the intersection over box2 area.
+    返回：
+        (np.ndarray): 形状为 (N, M) 的 NumPy 数组，表示交集面积与 box2 面积之比。
     """
-    # Get the coordinates of bounding boxes
+    # 获取边界框坐标
     b1_x1, b1_y1, b1_x2, b1_y2 = box1.T
     b2_x1, b2_y1, b2_x2, b2_y2 = box2.T
 
-    # Intersection area
+    # 交集面积
     inter_area = (np.minimum(b1_x2[:, None], b2_x2) - np.maximum(b1_x1[:, None], b2_x1)).clip(0) * (
         np.minimum(b1_y2[:, None], b2_y2) - np.maximum(b1_y1[:, None], b2_y1)
     ).clip(0)
 
-    # Box2 area
+    # box2 面积
     area = (b2_x2 - b2_x1) * (b2_y2 - b2_y1)
     if iou:
         box1_area = (b1_x2 - b1_x1) * (b1_y2 - b1_y1)
         area = area + box1_area[:, None] - inter_area
 
-    # Intersection over box2 area
+    # 交集面积与 box2 面积之比
     return inter_area / (area + eps)
 
 
 def box_iou(box1: torch.Tensor, box2: torch.Tensor, eps: float = 1e-7) -> torch.Tensor:
-    """Calculate intersection-over-union (IoU) of boxes.
+    """计算边界框的交并比（IoU）。
 
-    Args:
-        box1 (torch.Tensor): A tensor of shape (N, 4) representing N bounding boxes in (x1, y1, x2, y2) format.
-        box2 (torch.Tensor): A tensor of shape (M, 4) representing M bounding boxes in (x1, y1, x2, y2) format.
-        eps (float, optional): A small value to avoid division by zero.
+    参数：
+        box1 (torch.Tensor): 形状为 (N, 4) 的张量，表示 (x1, y1, x2, y2) 格式的 N 个边界框。
+        box2 (torch.Tensor): 形状为 (M, 4) 的张量，表示 (x1, y1, x2, y2) 格式的 M 个边界框。
+        eps (float, optional): 用于避免除零的小数值。
 
-    Returns:
-        (torch.Tensor): An NxM tensor containing the pairwise IoU values for every element in box1 and box2.
+    返回：
+        (torch.Tensor): 形状为 N×M 的张量，包含 box1 和 box2 中每个边界框对的 IoU 值。
 
-    References:
+    参考：
         https://github.com/pytorch/vision/blob/main/torchvision/ops/boxes.py
     """
-    # NOTE: Need .float() to get accurate iou values
+    # 注意：需要使用 .float() 才能得到准确的 IoU 值
     # inter(N,M) = (rb(N,M,2) - lt(N,M,2)).clamp(0).prod(2)
     (a1, a2), (b1, b2) = box1.float().unsqueeze(1).chunk(2, 2), box2.float().unsqueeze(0).chunk(2, 2)
     inter = (torch.min(a2, b2) - torch.max(a1, b1)).clamp_(0).prod(2)
@@ -111,27 +111,25 @@ def bbox_iou(
     CIoU: bool = False,
     eps: float = 1e-7,
 ) -> torch.Tensor:
-    """Calculate the Intersection over Union (IoU) between bounding boxes.
+    """计算边界框之间的交并比（IoU）。
 
-    This function supports various shapes for `box1` and `box2` as long as the last dimension is 4. For instance, you
-    may pass tensors shaped like (4,), (N, 4), (B, N, 4), or (B, N, 1, 4). Internally, the code will split the last
-    dimension into (x, y, w, h) if `xywh=True`, or (x1, y1, x2, y2) if `xywh=False`.
+    只要最后一个维度为 4，此函数就支持 `box1` 和 `box2` 的多种形状，例如 (4,)、(N, 4)、(B, N, 4) 或 (B, N, 1, 4)。
+    当 `xywh=True` 时，内部将最后一个维度解析为 (x, y, w, h)；当 `xywh=False` 时解析为 (x1, y1, x2, y2)。
 
-    Args:
-        box1 (torch.Tensor): A tensor representing one or more bounding boxes, with the last dimension being 4.
-        box2 (torch.Tensor): A tensor representing one or more bounding boxes, with the last dimension being 4.
-        xywh (bool, optional): If True, input boxes are in (x, y, w, h) format. If False, input boxes are in (x1, y1,
-            x2, y2) format.
-        GIoU (bool, optional): If True, calculate Generalized IoU.
-        DIoU (bool, optional): If True, calculate Distance IoU.
-        CIoU (bool, optional): If True, calculate Complete IoU.
-        eps (float, optional): A small value to avoid division by zero.
+    参数：
+        box1 (torch.Tensor): 表示一个或多个边界框的张量，最后一个维度为 4。
+        box2 (torch.Tensor): 表示一个或多个边界框的张量，最后一个维度为 4。
+        xywh (bool, 可选): 为 True 时输入边界框使用 (x, y, w, h) 格式，否则使用 (x1, y1, x2, y2) 格式。
+        GIoU (bool, 可选): 是否计算广义 IoU。
+        DIoU (bool, 可选): 是否计算距离 IoU。
+        CIoU (bool, 可选): 是否计算完全 IoU。
+        eps (float, 可选): 用于避免除零的小数值。
 
-    Returns:
-        (torch.Tensor): IoU, GIoU, DIoU, or CIoU values depending on the specified flags.
+    返回：
+        (torch.Tensor): 根据指定标志返回 IoU、GIoU、DIoU 或 CIoU 值。
     """
-    # Get the coordinates of bounding boxes
-    if xywh:  # transform from xywh to xyxy
+    # 获取边界框坐标
+    if xywh:  # 从 xywh 转换为 xyxy
         (x1, y1, w1, h1), (x2, y2, w2, h2) = box1.chunk(4, -1), box2.chunk(4, -1)
         w1_, h1_, w2_, h2_ = w1 / 2, h1 / 2, w2 / 2, h2 / 2
         b1_x1, b1_x2, b1_y1, b1_y2 = x1 - w1_, x1 + w1_, y1 - h1_, y1 + h1_
@@ -142,20 +140,20 @@ def bbox_iou(
         w1, h1 = b1_x2 - b1_x1, b1_y2 - b1_y1 + eps
         w2, h2 = b2_x2 - b2_x1, b2_y2 - b2_y1 + eps
 
-    # Intersection area
+    # 交集面积
     inter = (b1_x2.minimum(b2_x2) - b1_x1.maximum(b2_x1)).clamp_(0) * (
         b1_y2.minimum(b2_y2) - b1_y1.maximum(b2_y1)
     ).clamp_(0)
 
-    # Union Area
+    # 并集面积
     union = w1 * h1 + w2 * h2 - inter + eps
 
     # IoU
     iou = inter / union
     if CIoU or DIoU or GIoU:
-        cw = b1_x2.maximum(b2_x2) - b1_x1.minimum(b2_x1)  # convex (smallest enclosing box) width
-        ch = b1_y2.maximum(b2_y2) - b1_y1.minimum(b2_y1)  # convex height
-        if CIoU or DIoU:  # Distance or Complete IoU https://arxiv.org/abs/1911.08287v1
+        cw = b1_x2.maximum(b2_x2) - b1_x1.minimum(b2_x1)  # convex (smallest enclosing 边界框) 宽度
+        ch = b1_y2.maximum(b2_y2) - b1_y1.minimum(b2_y1)  # convex 高度
+        if CIoU or DIoU:  # Distance IoU 或 Complete IoU https://arxiv.org/abs/1911.08287v1
             c2 = cw.pow(2) + ch.pow(2) + eps  # convex diagonal squared
             rho2 = (
                 (b2_x1 + b2_x2 - b1_x1 - b1_x2).pow(2) + (b2_y1 + b2_y2 - b1_y1 - b1_y2).pow(2)
@@ -172,17 +170,15 @@ def bbox_iou(
 
 
 def mask_iou(mask1: torch.Tensor, mask2: torch.Tensor, eps: float = 1e-7) -> torch.Tensor:
-    """Calculate masks IoU.
+    """计算掩码 IoU。
 
-    Args:
-        mask1 (torch.Tensor): A tensor of shape (N, n) where N is the number of ground truth objects and n is the
-            product of image width and height.
-        mask2 (torch.Tensor): A tensor of shape (M, n) where M is the number of predicted objects and n is the product
-            of image width and height.
-        eps (float, optional): A small value to avoid division by zero.
+    参数：
+        mask1 (torch.Tensor): 形状为 (N, n) 的张量，其中 N 是真实目标数量，n 是图像宽度与高度的乘积。
+        mask2 (torch.Tensor): 形状为 (M, n) 的张量，其中 M 是预测目标数量，n 是图像宽度与高度的乘积。
+        eps (float, 可选): 用于避免除零的小数值。
 
-    Returns:
-        (torch.Tensor): A tensor of shape (N, M) representing masks IoU.
+    返回：
+        (torch.Tensor): 形状为 (N, M) 的张量，表示掩码 IoU。
     """
     intersection = torch.matmul(mask1, mask2.T).clamp_(0)
     union = (mask1.sum(1)[:, None] + mask2.sum(1)[None]) - intersection  # (area1 + area2) - intersection
@@ -192,38 +188,38 @@ def mask_iou(mask1: torch.Tensor, mask2: torch.Tensor, eps: float = 1e-7) -> tor
 def kpt_iou(
     kpt1: torch.Tensor, kpt2: torch.Tensor, area: torch.Tensor, sigma: list[float], eps: float = 1e-7
 ) -> torch.Tensor:
-    """Calculate Object Keypoint Similarity (OKS).
+    """计算目标关键点相似度（OKS）。
 
-    Args:
-        kpt1 (torch.Tensor): A tensor of shape (N, 17, 3) representing ground truth keypoints.
-        kpt2 (torch.Tensor): A tensor of shape (M, 17, 3) representing predicted keypoints.
-        area (torch.Tensor): A tensor of shape (N,) representing areas from ground truth.
-        sigma (list[float]): A list containing 17 values representing keypoint scales.
-        eps (float, optional): A small value to avoid division by zero.
+    参数：
+        kpt1 (torch.Tensor): 形状为 (N, 17, 3) 的张量，表示真实关键点。
+        kpt2 (torch.Tensor): 形状为 (M, 17, 3) 的张量，表示预测关键点。
+        area (torch.Tensor): 形状为 (N,) 的张量，表示真实目标面积。
+        sigma (列表[float]): 包含 17 个关键点尺度值的列表。
+        eps (float, 可选): 用于避免除零的小数值。
 
-    Returns:
-        (torch.Tensor): A tensor of shape (N, M) representing keypoint similarities.
+    返回：
+        (torch.Tensor): 形状为 (N, M) 的张量，表示关键点相似度。
     """
     d = (kpt1[:, None, :, 0] - kpt2[..., 0]).pow(2) + (kpt1[:, None, :, 1] - kpt2[..., 1]).pow(2)  # (N, M, 17)
     sigma = torch.tensor(sigma, device=kpt1.device, dtype=kpt1.dtype)  # (17, )
     kpt_mask = kpt1[..., 2] != 0  # (N, 17)
-    e = d / ((2 * sigma).pow(2) * (area[:, None, None] + eps) * 2)  # from cocoeval
-    # e = d / ((area[None, :, None] + eps) * sigma) ** 2 / 2  # from formula
+    e = d / ((2 * sigma).pow(2) * (area[:, None, None] + eps) * 2)  # 来自 cocoeval
+    # e = d / ((area[None, :, None] + eps) * sigma) ** 2 / 2  # 公式形式
     return ((-e).exp() * kpt_mask[:, None]).sum(-1) / (kpt_mask.sum(-1)[:, None] + eps)
 
 
 def _get_covariance_matrix(boxes: torch.Tensor, floor: float = 0.0) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-    """Generate covariance matrix from oriented bounding boxes.
+    """根据旋转边界框生成协方差矩阵。
 
-    Args:
-        boxes (torch.Tensor): A tensor of shape (N, 5) representing rotated bounding boxes, with xywhr format.
-        floor (float, optional): Small value added to width/height to bound gradients for sub-stride boxes.
+    参数：
+        boxes (torch.Tensor): 形状为 (N, 5) 的张量，表示 xywhr 格式的旋转边界框。
+        floor (float, 可选): 添加到宽度和高度的较小值，用于限制小于步长边界框的梯度。
 
-    Returns:
-        (tuple[torch.Tensor, torch.Tensor, torch.Tensor]): Covariance matrix components (a, b, c) where the covariance
-            matrix is [[a, c], [c, b]], each of shape (N, 1).
+    返回：
+        (tuple[torch.Tensor, torch.Tensor, torch.Tensor]): 协方差矩阵分量 (a, b, c)，矩阵为 [[a, c], [c, b]]，
+            每个分量的形状为 (N, 1)。
     """
-    # Gaussian bounding boxes, ignore the center points (the first two columns) because they are not needed here.
+    # 高斯边界框；忽略中心点（前两列），因为这里不需要它们。
     gbbs = torch.cat((boxes[:, 2:4].pow(2) / 12 + floor, boxes[:, 4:]), dim=-1)
     a, b, c = gbbs.split(1, dim=-1)
     cos = c.cos()
@@ -236,22 +232,22 @@ def _get_covariance_matrix(boxes: torch.Tensor, floor: float = 0.0) -> tuple[tor
 def probiou(
     obb1: torch.Tensor, obb2: torch.Tensor, CIoU: bool = False, eps: float = 1e-7, floor: float = 0.0
 ) -> torch.Tensor:
-    """Calculate probabilistic IoU between oriented bounding boxes.
+    """计算旋转边界框之间的概率 IoU。
 
-    Args:
-        obb1 (torch.Tensor): Ground truth OBBs, shape (N, 5), format xywhr.
-        obb2 (torch.Tensor): Predicted OBBs, shape (N, 5), format xywhr.
-        CIoU (bool, optional): If True, calculate CIoU.
-        eps (float, optional): Small value to avoid division by zero.
-        floor (float, optional): Small value passed to `_get_covariance_matrix` to bound gradients for sub-stride boxes.
+    参数：
+        obb1 (torch.Tensor): 真实 OBB，形状为 (N, 5)，格式为 xywhr。
+        obb2 (torch.Tensor): 预测 OBB，形状为 (N, 5)，格式为 xywhr。
+        CIoU (bool, optional): 是否计算 CIoU。
+        eps (float, optional): 用于避免除零的小数值。
+        floor (float, optional): 传递给 `_get_covariance_matrix` 的小数值，用于限制小于步长边界框的梯度。
 
-    Returns:
-        (torch.Tensor): OBB similarities, shape (N,).
+    返回：
+        (torch.Tensor): OBB 相似度，形状为 (N,)。
 
-    Notes:
-        OBB format: [center_x, center_y, width, height, rotation_angle].
+    注意：
+        OBB 格式：[center_x, center_y, width, height, rotation_angle]。
 
-    References:
+    参考：
         https://arxiv.org/pdf/2106.06072v1.pdf
     """
     x1, y1 = obb1[..., :2].split(1, dim=-1)
@@ -271,7 +267,7 @@ def probiou(
     bd = (t1 + t2 + t3).clamp(eps, 100.0)
     hd = (1.0 - (-bd).exp() + eps).sqrt()
     iou = 1 - hd
-    if CIoU:  # only include the wh aspect ratio part
+    if CIoU:  # 仅包含宽高比部分
         w1, h1 = obb1[..., 2:4].split(1, dim=-1)
         w2, h2 = obb2[..., 2:4].split(1, dim=-1)
         v = (4 / math.pi**2) * ((w2 / h2).atan() - (w1 / h1).atan()).pow(2)
@@ -282,17 +278,17 @@ def probiou(
 
 
 def batch_probiou(obb1: torch.Tensor | np.ndarray, obb2: torch.Tensor | np.ndarray, eps: float = 1e-7) -> torch.Tensor:
-    """Calculate the probabilistic IoU between oriented bounding boxes.
+    """计算旋转边界框之间的概率 IoU。
 
-    Args:
-        obb1 (torch.Tensor | np.ndarray): A tensor of shape (N, 5) representing ground truth obbs, with xywhr format.
-        obb2 (torch.Tensor | np.ndarray): A tensor of shape (M, 5) representing predicted obbs, with xywhr format.
-        eps (float, optional): A small value to avoid division by zero.
+    参数：
+        obb1 (torch.Tensor | np.ndarray): 形状为 (N, 5) 的张量，表示 xywhr 格式的真实 OBB。
+        obb2 (torch.Tensor | np.ndarray): 形状为 (M, 5) 的张量，表示 xywhr 格式的预测 OBB。
+        eps (float, optional): 用于避免除零的小数值。
 
-    Returns:
-        (torch.Tensor): A tensor of shape (N, M) representing obb similarities.
+    返回：
+        (torch.Tensor): 形状为 (N, M) 的张量，表示 OBB 相似度。
 
-    References:
+    参考：
         https://arxiv.org/pdf/2106.06072v1.pdf
     """
     obb1 = torch.from_numpy(obb1) if isinstance(obb1, np.ndarray) else obb1
@@ -318,66 +314,64 @@ def batch_probiou(obb1: torch.Tensor | np.ndarray, obb2: torch.Tensor | np.ndarr
 
 
 def smooth_bce(eps: float = 0.1) -> tuple[float, float]:
-    """Compute smoothed positive and negative Binary Cross-Entropy targets.
+    """计算平滑后的正、负二元交叉熵目标值。
 
-    Args:
-        eps (float, optional): The epsilon value for label smoothing.
+    参数：
+        eps (float, optional): 标签平滑使用的 epsilon 值。
 
-    Returns:
+    返回：
         pos (float): Positive label smoothing BCE target.
         neg (float): Negative label smoothing BCE target.
 
-    References:
+    参考：
         https://github.com/ultralytics/yolov3/issues/238#issuecomment-598028441
     """
     return 1.0 - 0.5 * eps, 0.5 * eps
 
 
 class ConfusionMatrix(DataExportMixin):
-    """A class for calculating and updating a confusion matrix for object detection and classification tasks.
+    """计算和更新目标检测、分类等任务混淆矩阵的类。
 
-    Attributes:
-        task (str): The type of task, one of 'detect', 'classify', 'semantic', or 'obb'.
-        matrix (np.ndarray): The confusion matrix, with dimensions depending on the task.
-        nc (int): The number of classes.
-        names (dict[int, str]): The names of the classes, used as labels on the plot.
-        matches (dict | None): Contains the indices of ground truths and predictions categorized into TP, FP and FN.
+    属性：
+        task (str): 任务类型，可选 'detect'、'classify'、'semantic' 或 'obb'。
+        matrix (np.ndarray): 混淆矩阵，维度取决于任务类型。
+        nc (int): 类别数量。
+        names (dict[int, str]): 类别名称，用作绘图标签。
+        matches (dict | None): 包含按 TP、FP 和 FN 分类的真实标注与预测结果索引。
     """
 
     def __init__(self, names: dict[int, str] | None = None, task: str = "detect", save_matches: bool = False):
-        """Initialize a ConfusionMatrix instance.
+        """初始化 ConfusionMatrix 实例。
 
-        Args:
-            names (dict[int, str], optional): Names of classes, used as labels on the plot.
-            task (str, optional): Type of task, one of 'detect', 'classify', 'semantic', or 'obb'.
-            save_matches (bool, optional): Save the indices of GTs, TPs, FPs, FNs for visualization.
+        参数：
+            names (dict[int, str], 可选): 类别名称，用作绘图标签。
+            task (str, 可选): 任务类型，可选 'detect'、'classify'、'semantic' 或 'obb'。
+            save_matches (bool, 可选): 是否保存 GT、TP、FP 和 FN 的索引以供可视化。
         """
         names = names if names is not None else {}
         self.task = task
-        self.nc = len(names)  # number of classes
+        self.nc = len(names)  # 类别数量
         self.matrix = (
             np.zeros((self.nc, self.nc))
             if self.task in {"classify", "semantic"}
             else np.zeros((self.nc + 1, self.nc + 1))
         )
-        self.names = names  # name of classes
+        self.names = names  # 类别名称
         self.matches = {} if save_matches else None
 
     def _append_matches(self, mtype: str, batch: dict[str, Any], idx: int) -> None:
-        """Append the matches to TP, FP, FN or GT list for the last batch.
+        """将上一批次的匹配结果追加到 TP、FP、FN 或 GT 列表。
 
-        This method updates the matches dictionary by appending specific batch data to the appropriate match type (True
-        Positive, False Positive, or False Negative).
+        此方法将批次数据追加到 matches 字典中对应的匹配类型（真正例、假正例或假负例）。
 
-        Args:
-            mtype (str): Match type identifier ('TP', 'FP', 'FN' or 'GT').
-            batch (dict[str, Any]): Batch data containing detection results with keys like 'bboxes', 'cls', 'conf',
-                'keypoints', 'masks'.
-            idx (int): Index of the specific detection to append from the batch.
+        参数：
+            mtype (str): 匹配类型标识符（'TP'、'FP'、'FN' 或 'GT'）。
+            batch (dict[str, Any]): 包含检测结果的批次数据，键包括 'bboxes'、'cls'、'conf'、'keypoints' 和 'masks'。
+            idx (int): 要从批次中追加的具体检测索引。
 
-        Notes:
-            For masks, handles both overlap and non-overlap cases. When masks.max() > 1.0, it indicates
-            overlap_mask=True with shape (1, H, W), otherwise uses direct indexing.
+        注意：
+            对掩码同时处理重叠和非重叠情况。当 masks.max() > 1.0 时，表示 overlap_mask=True 且形状为 (1, H, W)，
+            否则直接使用索引。
         """
         if self.matches is None:
             return
@@ -385,15 +379,15 @@ class ConfusionMatrix(DataExportMixin):
             if k in {"bboxes", "cls", "conf", "keypoints"}:
                 self.matches[mtype][k] += v[[idx]]
             elif k == "masks":
-                # NOTE: masks.max() > 1.0 means overlap_mask=True with (1, H, W) shape
+                # 注意：masks.max() > 1.0 表示 overlap_mask=True，形状为 (1, H, W)
                 self.matches[mtype][k] += [v[0] == idx + 1] if v.max() > 1.0 else [v[idx]]
 
     def process_cls_preds(self, preds: list[torch.Tensor], targets: list[torch.Tensor]) -> None:
-        """Update confusion matrix for classification task.
+        """更新分类任务的混淆矩阵。
 
-        Args:
-            preds (list[torch.Tensor]): Predicted class labels.
-            targets (list[torch.Tensor]): Ground truth class labels.
+        参数：
+            preds (列表[torch.Tensor]): 预测类别标签。
+            targets (列表[torch.Tensor]): 真实类别标签。
         """
         preds, targets = torch.cat(preds)[:, 0], torch.cat(targets)
         for p, t in zip(preds.cpu().numpy(), targets.cpu().numpy()):
@@ -406,25 +400,24 @@ class ConfusionMatrix(DataExportMixin):
         conf: float = 0.25,
         iou_thres: float = 0.45,
     ) -> None:
-        """Update confusion matrix for object detection task.
+        """更新目标检测任务的混淆矩阵。
 
-        Args:
-            detections (dict[str, torch.Tensor]): Dictionary containing detected bounding boxes and their associated
-                information. Should contain 'cls', 'conf', and 'bboxes' keys, where 'bboxes' can be Array[N, 4] for
-                regular boxes or Array[N, 5] for OBB with angle.
-            batch (dict[str, Any]): Batch dictionary containing ground truth data with 'bboxes' (Array[M, 4]| Array[M,
-                5]) and 'cls' (Array[M]) keys, where M is the number of ground truth objects.
-            conf (float, optional): Confidence threshold for detections.
-            iou_thres (float, optional): IoU threshold for matching detections to ground truth.
+        参数：
+            detections (dict[str, torch.Tensor]): 包含检测边界框及其相关信息的字典。应包含 'cls'、'conf' 和 'bboxes' 键，
+                其中 'bboxes' 对普通边界框可为 Array[N, 4]，对带角度的 OBB 可为 Array[N, 5]。
+            batch (dict[str, Any]): 包含真实数据的批次字典，含有 'bboxes'（Array[M, 4] 或 Array[M, 5]）和 'cls'（Array[M]）键，
+                其中 M 是真实目标数量。
+            conf (float, 可选): 检测置信度阈值。
+            iou_thres (float, 可选): 将检测结果与真实标注匹配时使用的 IoU 阈值。
         """
         gt_cls, gt_bboxes = batch["cls"], batch["bboxes"]
-        if self.matches is not None:  # only if visualization is enabled
+        if self.matches is not None:  # 仅在启用可视化时执行
             self.matches = {k: defaultdict(list) for k in ("TP", "FP", "FN", "GT")}
             for i in range(gt_cls.shape[0]):
-                self._append_matches("GT", batch, i)  # store GT
-        is_obb = gt_bboxes.shape[1] == 5  # check if boxes contains angle for OBB
+                self._append_matches("GT", batch, i)  # 保存 GT
+        is_obb = gt_bboxes.shape[1] == 5  # 检查边界框是否包含 OBB 角度
         no_pred = detections["cls"].shape[0] == 0
-        if gt_cls.shape[0] == 0:  # Check if labels is empty
+        if gt_cls.shape[0] == 0:  # 检查标签是否为空
             if not no_pred:
                 detections = {k: detections[k][detections["conf"] > conf] for k in detections}
                 detection_classes = detections["cls"].int().tolist()
@@ -457,14 +450,14 @@ class ConfusionMatrix(DataExportMixin):
             matches = np.zeros((0, 3))
 
         m0, m1, _ = matches.transpose().astype(int)
-        # matches is deduplicated on both columns, so each gt and each detection appears at most once
+        # matches 的两列均已去重，因此每个 gt 和每个检测结果最多出现一次
         gt_match = np.full(len(gt_classes), -1)
         gt_match[m0] = m1
         matched_det = set(m1.tolist())
         for i, gc in enumerate(gt_classes):
             if (di := gt_match[i].item()) >= 0:
                 dc = detection_classes[di]
-                self.matrix[dc, gc] += 1  # TP if class is correct else both an FP and an FN
+                self.matrix[dc, gc] += 1  # 类别正确时为 TP，否则同时计为 FP 和 FN
                 if dc == gc:
                     self._append_matches("TP", detections, di)
                 else:
@@ -480,35 +473,35 @@ class ConfusionMatrix(DataExportMixin):
                 self._append_matches("FP", detections, i)
 
     def tp_fp(self) -> tuple[np.ndarray, np.ndarray]:
-        """Return true positives and false positives.
+        """返回真正例和假正例。
 
-        Returns:
-            tp (np.ndarray): True positives.
-            fp (np.ndarray): False positives.
+        返回：
+            tp (np.ndarray): 真正例。
+            fp (np.ndarray): 假正例。
         """
-        tp = self.matrix.diagonal()  # true positives
-        fp = self.matrix.sum(1) - tp  # false positives
-        # fn = self.matrix.sum(0) - tp  # false negatives (missed detections)
-        return (tp, fp) if self.task in {"classify", "semantic"} else (tp[:-1], fp[:-1])  # remove background row/col
+        tp = self.matrix.diagonal()  # 真正例
+        fp = self.matrix.sum(1) - tp  # 假正例
+        # fn = self.matrix.sum(0) - tp  # 假负例（漏检）
+        return (tp, fp) if self.task in {"classify", "semantic"} else (tp[:-1], fp[:-1])  # 移除背景行和列
 
     def plot_matches(
         self, img: torch.Tensor, im_file: str, save_dir: Path, show_labels: bool = True, show_conf: bool = True
     ) -> None:
-        """Plot grid of GT, TP, FP, FN for each image.
+        """为每张图像绘制 GT、TP、FP、FN 网格。
 
-        Args:
-            img (torch.Tensor): Image to plot onto.
-            im_file (str): Image filename to save visualizations.
-            save_dir (Path): Location to save the visualizations to.
-            show_labels (bool): Whether to display class labels in the visualization.
-            show_conf (bool): Whether to display confidence values in the visualization.
+        参数：
+            img (torch.Tensor): 要绘制的图像。
+            im_file (str): 用于保存可视化结果的图像文件名。
+            save_dir (Path): 可视化结果保存位置。
+            show_labels (bool): 是否在可视化结果中显示类别标签。
+            show_conf (bool): 是否显示置信度值。
         """
         if not self.matches:
             return
         from .ops import xyxy2xywh
         from .plotting import plot_images
 
-        # Create batch of 4 (GT, TP, FP, FN)
+        # 创建包含 4 组结果的批次（GT、TP、FP、FN）
         labels = defaultdict(list)
         for i, mtype in enumerate(["GT", "FP", "TP", "FN"]):
             mbatch = self.matches[mtype]
@@ -537,41 +530,41 @@ class ConfusionMatrix(DataExportMixin):
     @TryExcept(msg="ConfusionMatrix plot failure")
     @plt_settings()
     def plot(self, normalize: bool = True, save_dir: str = "", on_plot=None):
-        """Plot the confusion matrix using matplotlib and save it to a file.
+        """使用 matplotlib 绘制混淆矩阵并保存到文件。
 
-        Args:
-            normalize (bool, optional): Whether to normalize the confusion matrix.
-            save_dir (str, optional): Directory where the plot will be saved.
-            on_plot (callable, optional): An optional callback to pass plots path and data when they are rendered.
+        参数：
+            normalize (bool, 可选): 是否对混淆矩阵进行归一化。
+            save_dir (str, 可选): 绘图保存目录。
+            on_plot (callable, 可选): 绘图完成后调用的回调函数，可接收绘图路径和数据。
         """
         import matplotlib.pyplot as plt  # scope for faster 'import ultralytics'
 
-        array = self.matrix / ((self.matrix.sum(0).reshape(1, -1) + 1e-9) if normalize else 1)  # normalize columns
-        array[array < 0.005] = np.nan  # don't annotate (would appear as 0.00)
+        array = self.matrix / ((self.matrix.sum(0).reshape(1, -1) + 1e-9) if normalize else 1)  # 归一化列
+        array[array < 0.005] = np.nan  # 不标注这些值（否则会显示为 0.00）
 
         fig, ax = plt.subplots(1, 1, figsize=(12, 9))
         names, n = list(self.names.values()), self.nc
-        if self.nc >= 100:  # downsample for large class count
-            k = max(2, self.nc // 60)  # step size for downsampling, always > 1
-            keep_idx = slice(None, None, k)  # create slice instead of array
-            names = names[keep_idx]  # slice class names
-            array = array[keep_idx, :][:, keep_idx]  # slice matrix rows and cols
-            n = (self.nc + k - 1) // k  # number of retained classes
-        nc = n if self.task in {"classify", "semantic"} else n + 1  # adjust for background if needed
+        if self.nc >= 100:  # 类别数量较大时进行下采样
+            k = max(2, self.nc // 60)  # 下采样步长，始终大于 1
+            keep_idx = slice(None, None, k)  # 创建切片而不是数组
+            names = names[keep_idx]  # 切分类别名称
+            array = array[keep_idx, :][:, keep_idx]  # 切分矩阵的行和列
+            n = (self.nc + k - 1) // k  # 保留的类别数量
+        nc = n if self.task in {"classify", "semantic"} else n + 1  # 必要时为背景调整数量
         ticklabels = "auto"
         if 0 < nc < 99:
             ticklabels = names if self.task in {"classify", "semantic"} else [*names, "background"]
         xy_ticks = np.arange(len(ticklabels)) if ticklabels != "auto" else np.arange(nc)
-        tick_fontsize = max(6, 15 - 0.1 * nc)  # Minimum size is 6
+        tick_fontsize = max(6, 15 - 0.1 * nc)  # 最小尺寸为 6
         label_fontsize = max(6, 12 - 0.1 * nc)
         title_fontsize = max(6, 12 - 0.1 * nc)
-        btm = max(0.1, 0.25 - 0.001 * nc)  # Minimum value is 0.1
+        btm = max(0.1, 0.25 - 0.001 * nc)  # 最小值为 0.1
         with warnings.catch_warnings():
-            warnings.simplefilter("ignore")  # suppress empty matrix RuntimeWarning: All-NaN slice encountered
+            warnings.simplefilter("ignore")  # 抑制空矩阵产生的 RuntimeWarning：All-NaN slice encountered
             im = ax.imshow(array, cmap="Blues", vmin=0.0, interpolation="none")
             ax.xaxis.set_label_position("bottom")
-            if nc < 30:  # Add score for each cell of confusion matrix
-                color_threshold = 0.45 * (1 if normalize else np.nanmax(array))  # text color threshold
+            if nc < 30:  # 为混淆矩阵的每个单元格添加数值
+                color_threshold = 0.45 * (1 if normalize else np.nanmax(array))  # text color 阈值
                 for i, row in enumerate(array[:nc]):
                     for j, val in enumerate(row[:nc]):
                         val = array[i, j]
@@ -587,9 +580,9 @@ class ConfusionMatrix(DataExportMixin):
                             color="white" if val > color_threshold else "black",
                         )
             cbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.05)
-        title = "Confusion Matrix" + " Normalized" * normalize
-        ax.set_xlabel("True", fontsize=label_fontsize, labelpad=10)
-        ax.set_ylabel("Predicted", fontsize=label_fontsize, labelpad=10)
+        title = "混淆矩阵" + "（归一化）" * normalize
+        ax.set_xlabel("真实类别", fontsize=label_fontsize, labelpad=10)
+        ax.set_ylabel("预测类别", fontsize=label_fontsize, labelpad=10)
         ax.set_title(title, fontsize=title_fontsize, pad=20)
         ax.set_xticks(xy_ticks)
         ax.set_yticks(xy_ticks)
@@ -600,9 +593,9 @@ class ConfusionMatrix(DataExportMixin):
             ax.set_yticklabels(ticklabels, fontsize=tick_fontsize)
         for s in ("left", "right", "bottom", "top", "outline"):
             if s != "outline":
-                ax.spines[s].set_visible(False)  # Confusion matrix plot don't have outline
+                ax.spines[s].set_visible(False)  # 混淆矩阵图不显示外框
             cbar.ax.spines[s].set_visible(False)
-        fig.subplots_adjust(left=0, right=0.84, top=0.94, bottom=btm)  # Adjust layout to ensure equal margins
+        fig.subplots_adjust(left=0, right=0.84, top=0.94, bottom=btm)  # 调整布局以保持边距一致
         plot_fname = Path(save_dir) / f"{title.lower().replace(' ', '_')}.png"
         fig.savefig(plot_fname, dpi=250)
         plt.close(fig)
@@ -610,24 +603,23 @@ class ConfusionMatrix(DataExportMixin):
             on_plot(plot_fname, {"type": "confusion_matrix", "matrix": self.matrix.tolist()})
 
     def print(self):
-        """Print the confusion matrix to the console."""
+        """将混淆矩阵打印到控制台。"""
         for i in range(self.matrix.shape[0]):
             LOGGER.info(" ".join(map(str, self.matrix[i])))
 
     def summary(self, normalize: bool = False, decimals: int = 5) -> list[dict[str, float]]:
-        """Generate a summarized representation of the confusion matrix as a list of dictionaries, with optional
-        normalization. This is useful for exporting the matrix to various formats such as CSV, XML, HTML, JSON,
-        or SQL.
+        """将混淆矩阵汇总为字典列表，并可选择进行归一化。
 
-        Args:
-            normalize (bool): Whether to normalize the confusion matrix values.
-            decimals (int): Number of decimal places to round the output values to.
+        该表示形式便于将矩阵导出为 CSV、XML、HTML、JSON 或 SQL 等多种格式。
 
-        Returns:
-            (list[dict[str, float]]): A list of dictionaries, each representing one predicted class with corresponding
-                values for all actual classes.
+        参数：
+            normalize (bool): 是否对混淆矩阵值进行归一化。
+            decimals (int): 输出值保留的小数位数。
 
-        Examples:
+        返回：
+            (列表[dict[str, float]]): 字典列表，每个字典表示一个预测类别及其对应的所有真实类别值。
+
+        示例：
             >>> results = model.val(data="coco8.yaml", plots=True)
             >>> cm_dict = results.confusion_matrix.summary(normalize=True, decimals=5)
             >>> print(cm_dict)
@@ -657,11 +649,11 @@ class ConfusionMatrix(DataExportMixin):
 
 
 def smooth(y: np.ndarray, f: float = 0.05) -> np.ndarray:
-    """Box filter of fraction f."""
-    nf = round(len(y) * f * 2) // 2 + 1  # number of filter elements (must be odd)
-    p = np.ones(nf // 2)  # ones padding
-    yp = np.concatenate((p * y[0], y, p * y[-1]), 0)  # y padded
-    return np.convolve(yp, np.ones(nf) / nf, mode="valid")  # y-smoothed
+    """使用比例 f 的盒式滤波器平滑数组。"""
+    nf = round(len(y) * f * 2) // 2 + 1  # 滤波器元素数量（必须为奇数）
+    p = np.ones(nf // 2)  # 全 1 填充
+    yp = np.concatenate((p * y[0], y, p * y[-1]), 0)  # 填充后的 y
+    return np.convolve(yp, np.ones(nf) / nf, mode="valid")  # 平滑后的 y
 
 
 @plt_settings()
@@ -673,15 +665,15 @@ def plot_pr_curve(
     names: dict[int, str] | None = None,
     on_plot=None,
 ):
-    """Plot precision-recall curve.
+    """绘制精确率-召回率曲线。
 
-    Args:
-        px (np.ndarray): X values for the PR curve.
-        py (np.ndarray): Y values for the PR curve.
-        ap (np.ndarray): Average precision values.
-        save_dir (Path, optional): Path to save the plot.
-        names (dict[int, str], optional): Dictionary mapping class indices to class names.
-        on_plot (callable, optional): Function to call after plot is saved.
+    参数：
+        px (np.ndarray): PR 曲线的 X 值。
+        py (np.ndarray): PR 曲线的 Y 值。
+        ap (np.ndarray): 平均精确率值。
+        save_dir (Path, 可选): 绘图保存路径。
+        names (dict[int, str], 可选): 类别索引到类别名称的映射字典。
+        on_plot (callable, 可选): 绘图保存后调用的回调函数。
     """
     import matplotlib.pyplot as plt  # scope for faster 'import ultralytics'
 
@@ -689,7 +681,7 @@ def plot_pr_curve(
     fig, ax = plt.subplots(1, 1, figsize=(9, 6), tight_layout=True)
     py = np.stack(py, axis=1)
 
-    if 0 < len(names) < 21:  # display per-class legend if < 21 classes
+    if 0 < len(names) < 21:  # 类别数小于 21 时显示逐类别图例
         for i, y in enumerate(py.T):
             ax.plot(px, y, linewidth=1, label=f"{names[i]} {ap[i, 0]:.3f}")  # plot(recall, precision)
     else:
@@ -705,8 +697,8 @@ def plot_pr_curve(
     fig.savefig(save_dir, dpi=250)
     plt.close(fig)
     if on_plot:
-        # Pass PR curve data for interactive plotting (class names stored at model level)
-        # Transpose py to match other curves: y[class][point] format
+        # 传递 PR 曲线数据用于交互式绘图（类别名称保存在模型层级）
+        # 转置 py 以匹配其他曲线的 y[类别][点] 格式
         on_plot(save_dir, {"type": "pr_curve", "x": px.tolist(), "y": py.T.tolist(), "ap": ap.tolist()})
 
 
@@ -720,27 +712,27 @@ def plot_mc_curve(
     ylabel: str = "Metric",
     on_plot=None,
 ):
-    """Plot metric-confidence curve.
+    """绘制指标-置信度曲线。
 
-    Args:
-        px (np.ndarray): X values for the metric-confidence curve.
-        py (np.ndarray): Y values for the metric-confidence curve.
-        save_dir (Path, optional): Path to save the plot.
-        names (dict[int, str], optional): Dictionary mapping class indices to class names.
-        xlabel (str, optional): X-axis label.
-        ylabel (str, optional): Y-axis label.
-        on_plot (callable, optional): Function to call after plot is saved.
+    参数：
+        px (np.ndarray): 指标-置信度曲线的 X 值。
+        py (np.ndarray): 指标-置信度曲线的 Y 值。
+        save_dir (Path, 可选): 绘图保存路径。
+        names (dict[int, str], 可选): 类别索引到类别名称的映射字典。
+        xlabel (str, 可选): X 轴标签。
+        ylabel (str, 可选): Y 轴标签。
+        on_plot (callable, 可选): 绘图保存后调用的回调函数。
     """
     import matplotlib.pyplot as plt  # scope for faster 'import ultralytics'
 
     names = names if names is not None else {}
     fig, ax = plt.subplots(1, 1, figsize=(9, 6), tight_layout=True)
 
-    if 0 < len(names) < 21:  # display per-class legend if < 21 classes
+    if 0 < len(names) < 21:  # 类别数小于 21 时显示逐类别图例
         for i, y in enumerate(py):
-            ax.plot(px, y, linewidth=1, label=f"{names[i]}")  # plot(confidence, metric)
+            ax.plot(px, y, linewidth=1, label=f"{names[i]}")  # plot(置信度, metric)
     else:
-        ax.plot(px, py.T, linewidth=1, color="gray")  # plot(confidence, metric)
+        ax.plot(px, py.T, linewidth=1, color="gray")  # plot(置信度, metric)
 
     y = smooth(py.mean(0), 0.1)
     ax.plot(px, y, linewidth=3, color="blue", label=f"all classes {y.max():.2f} at {px[y.argmax()]:.3f}")
@@ -753,38 +745,38 @@ def plot_mc_curve(
     fig.savefig(save_dir, dpi=250)
     plt.close(fig)
     if on_plot:
-        # Pass metric-confidence curve data for interactive plotting (class names stored at model level)
+        # 传递指标-置信度曲线数据用于交互式绘图（类别名称保存在模型层级）
         on_plot(save_dir, {"type": f"{ylabel.lower()}_curve", "x": px.tolist(), "y": py.tolist()})
 
 
 def compute_ap(recall: list[float], precision: list[float]) -> tuple[float, np.ndarray, np.ndarray]:
-    """Compute the average precision (AP) given the recall and precision curves.
+    """根据召回率和精确率曲线计算平均精度（AP）。
 
-    Args:
-        recall (list[float]): The recall curve.
-        precision (list[float]): The precision curve.
+    参数：
+        recall (列表[float]): 召回率曲线。
+        precision (列表[float]): 精确率曲线。
 
-    Returns:
-        ap (float): Average precision.
-        mpre (np.ndarray): Precision envelope curve.
-        mrec (np.ndarray): Modified recall curve with sentinel values added at the beginning and end.
+    返回：
+        ap (float): 平均精度。
+        mpre (np.ndarray): 精确率包络线曲线。
+        mrec (np.ndarray): 修改后的召回率曲线，开头和结尾添加了哨兵值。
     """
-    # Append sentinel values to beginning and end
+    # 在开头和结尾追加哨兵值
     mrec = np.concatenate(([0.0], recall, [recall[-1] if len(recall) else 1.0], [1.0]))
     mpre = np.concatenate(([1.0], precision, [0.0], [0.0]))
 
-    # Compute the precision envelope
+    # 计算精确率包络线
     mpre = np.flip(np.maximum.accumulate(np.flip(mpre)))
 
-    # Integrate area under curve
-    method = "interp"  # methods: 'continuous', 'interp'
+    # 对曲线下方面积进行积分
+    method = "interp"  # 方法：'continuous'、'interp'
     if method == "interp":
-        x = np.linspace(0, 1, 101)  # 101-point interp (COCO)
-        func = np.trapezoid if checks.check_version(np.__version__, ">=2.0") else np.trapz  # np.trapz deprecated
-        ap = func(np.interp(x, mrec, mpre), x)  # integrate
+        x = np.linspace(0, 1, 101)  # 101 个插值点（COCO）
+        func = np.trapezoid if checks.check_version(np.__version__, ">=2.0") else np.trapz  # np.trapz 已弃用
+        ap = func(np.interp(x, mrec, mpre), x)  # 积分
     else:  # 'continuous'
-        i = np.where(mrec[1:] != mrec[:-1])[0]  # points where x-axis (recall) changes
-        ap = np.sum((mrec[i + 1] - mrec[i]) * mpre[i + 1])  # area under curve
+        i = np.where(mrec[1:] != mrec[:-1])[0]  # x 轴（召回率）发生变化的点
+        ap = np.sum((mrec[i + 1] - mrec[i]) * mpre[i + 1])  # 曲线下面积
 
     return ap, mpre, mrec
 
@@ -801,69 +793,69 @@ def ap_per_class(
     eps: float = 1e-16,
     prefix: str = "",
 ) -> tuple:
-    """Compute the average precision per class for object detection evaluation.
+    """计算目标检测评估中每个类别的平均精度。
 
-    Args:
-        tp (np.ndarray): Binary array indicating whether the detection is correct (True) or not (False).
-        conf (np.ndarray): Array of confidence scores of the detections.
-        pred_cls (np.ndarray): Array of predicted classes of the detections.
-        target_cls (np.ndarray): Array of true classes of the targets.
-        plot (bool, optional): Whether to plot PR curves or not.
-        on_plot (callable, optional): A callback to pass plots path and data when they are rendered.
-        save_dir (Path, optional): Directory to save the PR curves.
-        names (dict[int, str], optional): Dictionary of class names to plot PR curves.
-        eps (float, optional): A small value to avoid division by zero.
-        prefix (str, optional): A prefix string for saving the plot files.
+    参数：
+        tp (np.ndarray): 指示检测是否正确（True 或 False）的二值数组。
+        conf (np.ndarray): 检测结果的置信度分数数组。
+        pred_cls (np.ndarray): 检测结果的预测类别数组。
+        target_cls (np.ndarray): 目标的真实类别数组。
+        plot (bool, 可选): 是否绘制 PR 曲线。
+        on_plot (callable, 可选): 图表渲染后接收图表路径和数据的回调函数。
+        save_dir (Path, 可选): 保存 PR 曲线的目录。
+        names (dict[int, str], 可选): 用于绘制 PR 曲线的类别名称字典。
+        eps (float, 可选): 用于防止除零的小值。
+        prefix (str, 可选): 保存绘图文件时使用的前缀字符串。
 
-    Returns:
-        tp (np.ndarray): True positive counts at threshold given by max F1 metric for each class.
-        fp (np.ndarray): False positive counts at threshold given by max F1 metric for each class.
-        p (np.ndarray): Precision values at threshold given by max F1 metric for each class.
-        r (np.ndarray): Recall values at threshold given by max F1 metric for each class.
-        f1 (np.ndarray): F1-score values at threshold given by max F1 metric for each class.
-        ap (np.ndarray): Average precision for each class at different IoU thresholds.
-        unique_classes (np.ndarray): An array of unique classes that have data.
-        p_curve (np.ndarray): Precision curves for each class.
-        r_curve (np.ndarray): Recall curves for each class.
-        f1_curve (np.ndarray): F1-score curves for each class.
-        x (np.ndarray): X-axis values for the curves.
-        prec_values (np.ndarray): Precision values at mAP@0.5 for each class.
+    返回：
+        tp (np.ndarray): 最大 F1 指标阈值处每个类别的真正例数量。
+        fp (np.ndarray): 最大 F1 指标阈值处每个类别的假正例数量。
+        p (np.ndarray): 最大 F1 指标阈值处每个类别的精确率。
+        r (np.ndarray): 最大 F1 指标阈值处每个类别的召回率。
+        f1 (np.ndarray): 最大 F1 指标阈值处每个类别的 F1 分数。
+        ap (np.ndarray): 不同 IoU 阈值下每个类别的平均精度。
+        unique_classes (np.ndarray): 包含数据的唯一类别数组。
+        p_curve (np.ndarray): 每个类别的精确率曲线。
+        r_curve (np.ndarray): 每个类别的召回率曲线。
+        f1_curve (np.ndarray): 每个类别的 F1 分数曲线。
+        x (np.ndarray): 曲线的 x 轴值。
+        prec_values (np.ndarray): mAP@0.5 处每个类别的精确率值。
     """
     names = names if names is not None else {}
-    # Sort by objectness
+    # 按目标置信度排序
     i = np.argsort(-conf)
     tp, conf, pred_cls = tp[i], conf[i], pred_cls[i]
 
-    # Find unique classes
+    # 查找唯一类别
     unique_classes, nt = np.unique(target_cls, return_counts=True)
-    nc = unique_classes.shape[0]  # number of classes, number of detections
+    nc = unique_classes.shape[0]  # 类别数量、检测数量
 
-    # Create Precision-Recall curve and compute AP for each class
+    # 创建精确率-召回率曲线，并计算每个类别的 AP
     x, prec_values = np.linspace(0, 1, 1000), []
 
-    # Average precision, precision and recall curves
+    # 平均精度、精确率和召回率曲线
     ap, p_curve, r_curve = np.zeros((nc, tp.shape[1])), np.zeros((nc, 1000)), np.zeros((nc, 1000))
     for ci, c in enumerate(unique_classes):
         i = pred_cls == c
-        n_l = nt[ci]  # number of labels
-        n_p = i.sum()  # number of predictions
+        n_l = nt[ci]  # 标签数量
+        n_p = i.sum()  # 预测结果数量
         if n_p == 0 or n_l == 0:
-            prec_values.append(np.zeros_like(x))  # keep one row per class, aligned with `ap` and `names`
+            prec_values.append(np.zeros_like(x))  # 每个类别保留一行，与 `ap` 和 `names` 对齐
             continue
 
-        # Accumulate FPs and TPs
+        # 累积假正例和真正例
         fpc = (1 - tp[i]).cumsum(0)
         tpc = tp[i].cumsum(0)
 
-        # Recall
+        # 召回率
         recall = tpc / (n_l + eps)  # recall curve
         r_curve[ci] = np.interp(-x, -conf[i], recall[:, 0], left=0)  # negative x, xp because xp decreases
 
-        # Precision
+        # 精确率
         precision = tpc / (tpc + fpc)  # precision curve
         p_curve[ci] = np.interp(-x, -conf[i], precision[:, 0], left=1)  # p at pr_score
 
-        # AP from recall-precision curve
+        # 根据召回率-精确率曲线计算 AP
         for j in range(tp.shape[1]):
             ap[ci, j], mpre, mrec = compute_ap(recall[:, j], precision[:, j])
             if j == 0:
@@ -871,52 +863,52 @@ def ap_per_class(
 
     prec_values = np.array(prec_values) if prec_values else np.zeros((1, 1000))  # (nc, 1000)
 
-    # Compute F1 (harmonic mean of precision and recall)
+    # 计算 F1（精确率和召回率的调和平均值）
     f1_curve = 2 * p_curve * r_curve / (p_curve + r_curve + eps)
-    names = {i: names[k] for i, k in enumerate(unique_classes) if k in names}  # dict: only classes that have data
+    names = {i: names[k] for i, k in enumerate(unique_classes) if k in names}  # 字典：仅保留有数据的类别
     if plot:
         plot_pr_curve(x, prec_values, ap, save_dir / f"{prefix}PR_curve.png", names, on_plot=on_plot)
         plot_mc_curve(x, f1_curve, save_dir / f"{prefix}F1_curve.png", names, ylabel="F1", on_plot=on_plot)
         plot_mc_curve(x, p_curve, save_dir / f"{prefix}P_curve.png", names, ylabel="Precision", on_plot=on_plot)
         plot_mc_curve(x, r_curve, save_dir / f"{prefix}R_curve.png", names, ylabel="Recall", on_plot=on_plot)
 
-    i = smooth(f1_curve.mean(0), 0.1).argmax()  # max F1 index
-    p, r, f1 = p_curve[:, i], r_curve[:, i], f1_curve[:, i]  # max-F1 precision, recall, F1 values
+    i = smooth(f1_curve.mean(0), 0.1).argmax()  # max F1 索引
+    p, r, f1 = p_curve[:, i], r_curve[:, i], f1_curve[:, i]  # max-F1 precision, recall, F1 值
     tp = (r * nt).round()  # true positives
     fp = (tp / (p + eps) - tp).round()  # false positives
     return tp, fp, p, r, f1, ap, unique_classes.astype(int), p_curve, r_curve, f1_curve, x, prec_values
 
 
 class Metric(SimpleClass):
-    """Class for computing evaluation metrics for Ultralytics YOLO models.
+    """用于计算 Ultralytics YOLO 模型评估指标的类。
 
-    Attributes:
-        p (list): Precision for each class. Shape: (nc,).
-        r (list): Recall for each class. Shape: (nc,).
-        f1 (list): F1 score for each class. Shape: (nc,).
-        all_ap (list): AP scores for all classes and all IoU thresholds. Shape: (nc, 10).
-        ap_class_index (list): Index of class for each AP score. Shape: (nc,).
-        nc (int): Number of classes.
+    属性：
+        p (列表): 每个类别的精确率，形状为 (nc,)。
+        r (列表): 每个类别的召回率，形状为 (nc,)。
+        f1 (列表): 每个类别的 F1 分数，形状为 (nc,)。
+        all_ap (列表): 所有类别和所有 IoU 阈值下的 AP 分数，形状为 (nc, 10)。
+        ap_class_index (列表): 每个 AP 分数对应的类别索引，形状为 (nc,)。
+        nc (int): 类别数量。
 
-    Methods:
-        ap50: AP at IoU threshold of 0.5 for all classes.
-        ap: AP at IoU thresholds from 0.5 to 0.95 for all classes.
-        mp: Mean precision of all classes.
-        mr: Mean recall of all classes.
-        map50: Mean AP at IoU threshold of 0.5 for all classes.
-        map75: Mean AP at IoU threshold of 0.75 for all classes.
-        map: Mean AP at IoU thresholds from 0.5 to 0.95 for all classes.
-        mean_results: Mean of results, returns mp, mr, map50, map.
-        class_result: Class-aware result, returns p[i], r[i], ap50[i], ap[i].
-        maps: mAP of each class.
-        fitness: Model fitness as a weighted combination of metrics.
-        update: Update metric attributes with new evaluation results.
-        curves: Provides a list of curves for accessing specific metrics like precision, recall, F1, etc.
-        curves_results: Provide a list of results for accessing specific metrics like precision, recall, F1, etc.
+    方法：
+        ap50: 所有类别在 IoU 阈值 0.5 下的 AP。
+        ap: 所有类别在 0.5 到 0.95 IoU 阈值范围内的 AP。
+        mp: 所有类别的平均精确率。
+        mr: 所有类别的平均召回率。
+        map50: 所有类别在 IoU 阈值 0.5 下的平均 AP。
+        map75: 所有类别在 IoU 阈值 0.75 下的平均 AP。
+        map: 所有类别在 0.5 到 0.95 IoU 阈值范围内的平均 AP。
+        mean_results: 结果平均值，返回 mp、mr、map50 和 map。
+        class_result: 类别相关结果，返回 p[i]、r[i]、ap50[i] 和 ap[i]。
+        maps: 每个类别的 mAP。
+        fitness: 指标的加权组合，即模型适应度。
+        update: 使用新的评估结果更新指标属性。
+        curves: 返回用于访问精确率、召回率和 F1 等特定指标的曲线列表。
+        curves_results: 返回用于访问精确率、召回率和 F1 等特定指标的结果列表。
     """
 
     def __init__(self) -> None:
-        """Initialize a Metric instance for computing evaluation metrics for the YOLO model."""
+        """初始化用于计算 YOLO 模型评估指标的 Metric 实例。"""
         self.p = []  # (nc, )
         self.r = []  # (nc, )
         self.f1 = []  # (nc, )
@@ -927,103 +919,103 @@ class Metric(SimpleClass):
 
     @property
     def ap50(self) -> np.ndarray | list:
-        """Return the Average Precision (AP) at an IoU threshold of 0.5 for all classes.
+        """返回所有类别在 IoU 阈值 0.5 下的平均精度（AP）。
 
-        Returns:
-            (np.ndarray | list): Array of shape (nc,) with AP50 values per class, or an empty list if not available.
+        返回：
+            (np.ndarray | 列表): 形状为 (nc,) 的数组，包含每个类别的 AP50 值；没有数据时返回空列表。
         """
         return self.all_ap[:, 0] if len(self.all_ap) else []
 
     @property
     def ap(self) -> np.ndarray | list:
-        """Return the Average Precision (AP) at an IoU threshold of 0.5-0.95 for all classes.
+        """返回所有类别在 IoU 阈值 0.5 到 0.95 下的平均精度（AP）。
 
-        Returns:
-            (np.ndarray | list): Array of shape (nc,) with AP50-95 values per class, or an empty list if not available.
+        返回：
+            (np.ndarray | 列表): 形状为 (nc,) 的数组，包含每个类别的 AP50-95 值；没有数据时返回空列表。
         """
         return self.all_ap.mean(1) if len(self.all_ap) else []
 
     @property
     def mp(self) -> float:
-        """Return the Mean Precision of all classes.
+        """返回所有类别的平均精确率。
 
-        Returns:
-            (float): The mean precision of all classes.
+        返回：
+            (float): 所有类别的平均精确率。
         """
         return self.p.mean() if len(self.p) else 0.0
 
     @property
     def mr(self) -> float:
-        """Return the Mean Recall of all classes.
+        """返回所有类别的平均召回率。
 
-        Returns:
-            (float): The mean recall of all classes.
+        返回：
+            (float): 所有类别的平均召回率。
         """
         return self.r.mean() if len(self.r) else 0.0
 
     @property
     def map50(self) -> float:
-        """Return the mean Average Precision (mAP) at an IoU threshold of 0.5.
+        """返回 IoU 阈值为 0.5 时的平均精度（mAP）。
 
-        Returns:
-            (float): The mAP at an IoU threshold of 0.5.
+        返回：
+            (float): IoU 阈值为 0.5 时的 mAP。
         """
         return self.all_ap[:, 0].mean() if len(self.all_ap) else 0.0
 
     @property
     def map75(self) -> float:
-        """Return the mean Average Precision (mAP) at an IoU threshold of 0.75.
+        """返回 IoU 阈值为 0.75 时的平均精度（mAP）。
 
-        Returns:
-            (float): The mAP at an IoU threshold of 0.75.
+        返回：
+            (float): IoU 阈值为 0.75 时的 mAP。
         """
         return self.all_ap[:, 5].mean() if len(self.all_ap) else 0.0
 
     @property
     def map(self) -> float:
-        """Return the mean Average Precision (mAP) over IoU thresholds of 0.5 - 0.95 in steps of 0.05.
+        """返回 IoU 阈值 0.5 到 0.95（步长 0.05）范围内的平均精度（mAP）。
 
-        Returns:
-            (float): The mAP over IoU thresholds of 0.5 - 0.95 in steps of 0.05.
+        返回：
+            (float): IoU 阈值 0.5 到 0.95（步长 0.05）范围内的 mAP。
         """
         return self.all_ap.mean() if len(self.all_ap) else 0.0
 
     def mean_results(self) -> list[float]:
-        """Return mean of results, mp, mr, map50, map."""
+        """返回结果、mp、mr、map50 和 map 的平均值。"""
         return [self.mp, self.mr, self.map50, self.map]
 
     def class_result(self, i: int) -> tuple[float, float, float, float]:
-        """Return class-aware result, p[i], r[i], ap50[i], ap[i]."""
+        """返回类别相关结果 p[i]、r[i]、ap50[i] 和 ap[i]。"""
         return self.p[i], self.r[i], self.ap50[i], self.ap[i]
 
     @property
     def maps(self) -> np.ndarray:
-        """Return mAP of each class."""
+        """返回每个类别的 mAP。"""
         maps = np.zeros(self.nc) + self.map
         for i, c in enumerate(self.ap_class_index):
             maps[c] = self.ap[i]
         return maps
 
     def fitness(self) -> float:
-        """Return model fitness as a weighted combination of metrics."""
-        w = [0.0, 0.0, 0.0, 1.0]  # weights for [P, R, mAP@0.5, mAP@0.5:0.95]
+        """返回指标加权组合作为模型适应度分数。"""
+        w = [0.0, 0.0, 0.0, 1.0]  # [P、R、mAP@0.5、mAP@0.5:0.95] 的权重
         return float((np.nan_to_num(np.array(self.mean_results())) * w).sum())
 
     def update(self, results: tuple):
-        """Update the evaluation metrics with a new set of results.
+        """使用一组新的结果更新评估指标。
 
-        Args:
-            results (tuple): A tuple containing evaluation metrics:
-                - p (list): Precision for each class.
-                - r (list): Recall for each class.
-                - f1 (list): F1 score for each class.
-                - all_ap (list): AP scores for all classes and all IoU thresholds.
-                - ap_class_index (list): Index of class for each AP score.
-                - p_curve (list): Precision curve for each class.
-                - r_curve (list): Recall curve for each class.
-                - f1_curve (list): F1 curve for each class.
-                - px (list): X values for the curves.
-                - prec_values (list): Precision values for each class.
+        参数：
+            results (tuple): 包含以下评估指标的元组：
+                - p (列表)：每个类别的精确率。
+                - r (列表)：每个类别的召回率。
+                - f1 (列表)：每个类别的 F1 分数。
+                - all_ap (列表)：所有类别和所有 IoU 阈值下的 AP 分数。
+                - ap_class_index (列表)：每个 AP 分数对应的类别索引。
+                - p_curve (列表)：每个类别的精确率曲线。
+                - r_curve (列表)：每个类别的召回率曲线。
+                - f1_curve (列表)：每个类别的 F1 曲线。
+                - px (列表)：曲线的 X 值。
+                - prec_values (列表)：每个类别的精确率值。
         """
         (
             self.p,
@@ -1039,17 +1031,17 @@ class Metric(SimpleClass):
         ) = results
 
     def clear_image_metrics(self) -> None:
-        """Clear stored per-image metrics from the current validation run."""
+        """清除当前验证运行中保存的逐图像指标。"""
         self.image_metrics.clear()
 
     @property
     def curves(self) -> list:
-        """Return a list of curves for accessing specific metrics curves."""
+        """返回用于访问特定指标曲线的曲线列表。"""
         return []
 
     @property
     def curves_results(self) -> list[list]:
-        """Return a list of curves results for accessing specific metrics curves."""
+        """返回用于访问特定指标曲线的曲线结果列表。"""
         return [
             [self.px, self.prec_values, "Recall", "Precision"],
             [self.px, self.f1_curve, "Confidence", "F1"],
@@ -1058,24 +1050,23 @@ class Metric(SimpleClass):
         ]
 
     def update_image_metrics(self, tp: np.ndarray, target_cls: np.ndarray, pred_cls: np.ndarray, im_name: str) -> None:
-        """Update per-image precision, recall, F1, TP, FP, and FN at IoU threshold 0.5.
+        """更新 IoU 阈值为 0.5 时的逐图像精确率、召回率、F1、TP、FP 和 FN。
 
-        Args:
-            tp (np.ndarray): True positive array of shape (num_preds, num_iou_thresholds), where the first column (IoU
-                >= 0.5) is used.
-            target_cls (np.ndarray): Ground truth class labels for the image.
-            pred_cls (np.ndarray): Predicted class labels for the image.
-            im_name (str): The image filename used as the per-image key.
+        参数：
+            tp (np.ndarray): 形状为 (num_preds, num_iou_thresholds) 的真正例数组，使用第一列（IoU >= 0.5）。
+            target_cls (np.ndarray): 图像的真实类别标签。
+            pred_cls (np.ndarray): 图像的预测类别标签。
+            im_name (str): 用作逐图像键的图像文件名。
         """
-        # Use the default IoU=0.5 column to match the validator's image-level matching policy.
+        # 使用默认 IoU=0.5 列，以匹配验证器的逐图像匹配策略。
         tp = int(tp[:, 0].sum())
         num_preds = pred_cls.shape[0]
         num_targets = target_cls.shape[0]
         fp = num_preds - tp
         fn = num_targets - tp
         if num_preds == 0 and num_targets == 0:
-            # Empty-GT image with no predictions is a trivially correct call, so report a perfect score rather than
-            # zeroing out P/R/F1 by the standard 0/0 fallback below.
+            # 没有预测结果且没有 GT 的图像属于显然正确的情况，因此报告满分，
+            # 不使用下方标准 0/0 回退逻辑将 P/R/F1 置零。
             precision = recall = f1 = 1.0
         else:
             precision = tp / num_preds if num_preds else 0.0
@@ -1093,38 +1084,37 @@ class Metric(SimpleClass):
 
 
 class DetMetrics(SimpleClass, DataExportMixin):
-    """Utility class for computing detection metrics such as precision, recall, and mean average precision (mAP).
+    """用于计算精确率、召回率和平均精度（mAP）等检测指标的工具类。
 
-    Attributes:
-        names (dict[int, str]): A dictionary of class names.
-        box (Metric): An instance of the Metric class for storing detection results.
-        speed (dict[str, float]): A dictionary for storing execution times of different parts of the detection process.
-        stats (dict[str, list]): A dictionary containing lists for true positives, confidence scores, predicted classes,
-            target classes, and target images.
-        nt_per_class: Number of targets per class.
-        nt_per_image: Number of targets per image.
+    属性：
+        names (dict[int, str]): 类别名称字典。
+        box (Metric): 保存检测结果的 Metric 实例。
+        speed (dict[str, float]): 保存检测流程各部分执行时间的字典。
+        stats (dict[str, list]): 包含真正例、置信度分数、预测类别、目标类别和目标图像列表的字典。
+        nt_per_class：每个类别的目标数量。
+        nt_per_image：每张图像的目标数量。
 
-    Methods:
-        update_stats: Update statistics by appending new values to existing stat collections.
-        process: Process predicted results for object detection and update metrics.
-        clear_stats: Clear the stored statistics.
-        keys: Return a list of keys for accessing specific metrics.
-        mean_results: Calculate mean of detected objects & return precision, recall, mAP50, and mAP50-95.
-        class_result: Return the result of evaluating the performance of an object detection model on a specific class.
-        maps: Return mean Average Precision (mAP) scores per class.
-        fitness: Return the fitness of box object.
-        ap_class_index: Return the average precision index per class.
-        results_dict: Return dictionary of computed performance metrics and statistics.
-        curves: Return a list of curves for accessing specific metrics curves.
-        curves_results: Return a list of computed performance metrics and statistics.
-        summary: Generate a summarized representation of per-class detection metrics as a list of dictionaries.
+    方法：
+        update_stats：将新值追加到现有统计集合中。
+        process：处理目标检测预测结果并更新指标。
+        clear_stats：清除已保存的统计信息。
+        keys：返回用于访问特定指标的键列表。
+        mean_results：计算检测目标的平均结果，并返回精确率、召回率、mAP50 和 mAP50-95。
+        class_result：返回目标检测模型在指定类别上的评估结果。
+        maps：返回每个类别的平均精度（mAP）分数。
+        fitness：返回边界框目标的适应度。
+        ap_class_index：返回每个类别的平均精度索引。
+        results_dict：返回包含计算后性能指标和统计信息的字典。
+        curves：返回用于访问特定指标曲线的曲线列表。
+        curves_results：返回计算后的性能指标和统计信息列表。
+        summary：将逐类别检测指标汇总为字典列表。
     """
 
     def __init__(self, names: dict[int, str] | None = None) -> None:
-        """Initialize a DetMetrics instance with class names.
+        """使用类别名称初始化 DetMetrics 实例。
 
-        Args:
-            names (dict[int, str], optional): Dictionary of class names.
+        参数：
+            names (dict[int, str], 可选): 类别名称字典。
         """
         self.names = names if names is not None else {}
         self.box = Metric()
@@ -1134,28 +1124,27 @@ class DetMetrics(SimpleClass, DataExportMixin):
         self.nt_per_image = None
 
     def update_stats(self, stat: dict[str, Any]) -> None:
-        """Update statistics by appending new values to existing stat collections.
+        """将新值追加到现有统计集合中。
 
-        Args:
-            stat (dict[str, Any]): Dictionary containing new statistical values to append. Keys should match existing
-                keys in self.stats.
+        参数：
+            stat (dict[str, Any]): 包含待追加统计值的字典，键应与 self.stats 中的现有键匹配。
         """
         for k in self.stats:
             self.stats[k].append(stat[k])
         self.box.update_image_metrics(stat["tp"], stat["target_cls"], stat["pred_cls"], stat["im_name"])
 
     def process(self, save_dir: Path = Path("."), plot: bool = False, on_plot=None) -> dict[str, np.ndarray]:
-        """Process predicted results for object detection and update metrics.
+        """处理目标检测预测结果并更新指标。
 
-        Args:
-            save_dir (Path): Directory to save plots. Defaults to Path(".").
-            plot (bool): Whether to plot precision-recall curves. Defaults to False.
-            on_plot (callable, optional): Function to call after plots are generated. Defaults to None.
+        参数：
+            save_dir (Path): 绘图保存目录，默认为 Path(".")。
+            plot (bool): 是否绘制精确率-召回率曲线，默认为 False。
+            on_plot (callable, 可选): 绘图生成后调用的回调函数，默认为 None。
 
-        Returns:
-            (dict[str, np.ndarray]): Dictionary containing concatenated statistics arrays.
+        返回：
+            (dict[str, np.ndarray]): 包含拼接后统计数组的字典。
         """
-        stats = {k: np.concatenate(v, 0) for k, v in self.stats.items()}  # to numpy
+        stats = {k: np.concatenate(v, 0) for k, v in self.stats.items()}  # 拼接为 NumPy 数组
         if not stats:
             return stats
         results = ap_per_class(
@@ -1176,72 +1165,72 @@ class DetMetrics(SimpleClass, DataExportMixin):
         return stats
 
     def clear_stats(self):
-        """Clear the stored statistics."""
+        """清除已保存的统计信息。"""
         for v in self.stats.values():
             v.clear()
 
     def clear_image_metrics(self) -> None:
-        """Clear stored per-image metrics."""
+        """清除已保存的逐图像指标。"""
         self.box.clear_image_metrics()
 
     @property
     def keys(self) -> list[str]:
-        """Return a list of keys for accessing specific metrics."""
+        """返回用于访问特定指标的键列表。"""
         return ["metrics/precision(B)", "metrics/recall(B)", "metrics/mAP50(B)", "metrics/mAP50-95(B)"]
 
     def mean_results(self) -> list[float]:
-        """Calculate mean of detected objects & return precision, recall, mAP50, and mAP50-95."""
+        """计算检测目标的平均结果，并返回精确率、召回率、mAP50 和 mAP50-95。"""
         return self.box.mean_results()
 
     def class_result(self, i: int) -> tuple[float, float, float, float]:
-        """Return the result of evaluating the performance of an object detection model on a specific class."""
+        """返回目标检测模型在指定类别上的评估结果。"""
         return self.box.class_result(i)
 
     @property
     def maps(self) -> np.ndarray:
-        """Return mean Average Precision (mAP) scores per class."""
+        """返回每个类别的平均精度（mAP）分数。"""
         return self.box.maps
 
     @property
     def fitness(self) -> float:
-        """Return the fitness of box object."""
+        """返回边界框目标的适应度。"""
         return self.box.fitness()
 
     @property
     def ap_class_index(self) -> list:
-        """Return the average precision index per class."""
+        """返回每个类别的平均精度索引。"""
         return self.box.ap_class_index
 
     @property
     def results_dict(self) -> dict[str, float]:
-        """Return dictionary of computed performance metrics and statistics."""
+        """返回包含计算后性能指标和统计信息的字典。"""
         keys = [*self.keys, "fitness"]
         values = ((float(x) if hasattr(x, "item") else x) for x in ([*self.mean_results(), self.fitness]))
         return dict(zip(keys, values))
 
     @property
     def curves(self) -> list[str]:
-        """Return a list of curves for accessing specific metrics curves."""
+        """返回用于访问特定指标曲线的曲线列表。"""
         return ["Precision-Recall(B)", "F1-Confidence(B)", "Precision-Confidence(B)", "Recall-Confidence(B)"]
 
     @property
     def curves_results(self) -> list[list]:
-        """Return a list of computed performance metrics and statistics."""
+        """返回计算后的性能指标和统计信息列表。"""
         return self.box.curves_results
 
     def summary(self, normalize: bool = True, decimals: int = 5) -> list[dict[str, Any]]:
-        """Generate a summarized representation of per-class detection metrics as a list of dictionaries. Includes
-        shared scalar metrics (mAP, mAP50, mAP75) alongside precision, recall, and F1-score for each class.
+        """将逐类别检测指标汇总为字典列表。
 
-        Args:
-            normalize (bool): For Detect metrics, everything is normalized by default [0-1].
-            decimals (int): Number of decimal places to round the metrics values to.
+        对每个类别同时包含共享标量指标（mAP、mAP50、mAP75）、精确率、召回率和 F1 分数。
 
-        Returns:
-            (list[dict[str, Any]]): A list of dictionaries, each representing one class with corresponding metric
-                values.
+        参数：
+            normalize (bool): 对于 Detect 指标，是否将所有值归一化到 [0-1]，默认为 True。
+            decimals (int): 指标值保留的小数位数。
 
-        Examples:
+        返回：
+            (列表[dict[str, Any]]): 字典列表，每个字典表示一个类别及其对应指标值。
+
+        示例：
            >>> results = model.val(data="coco8.yaml")
            >>> detection_summary = results.summary()
            >>> print(detection_summary)
@@ -1265,67 +1254,65 @@ class DetMetrics(SimpleClass, DataExportMixin):
 
 
 class SegmentMetrics(DetMetrics):
-    """Calculate and aggregate detection and segmentation metrics over a given set of classes.
+    """计算并汇总给定类别集合上的检测和分割指标。
 
-    Attributes:
-        names (dict[int, str]): Dictionary of class names.
-        box (Metric): An instance of the Metric class for storing detection results.
-        seg (Metric): An instance of the Metric class to calculate mask segmentation metrics.
-        speed (dict[str, float]): A dictionary for storing execution times of different parts of the detection process.
-        stats (dict[str, list]): A dictionary containing lists for true positives, confidence scores, predicted classes,
-            target classes, and target images.
-        nt_per_class: Number of targets per class.
-        nt_per_image: Number of targets per image.
+    属性：
+        names (dict[int, str]): 类别名称字典。
+        box (Metric): 保存检测结果的 Metric 实例。
+        seg (Metric): 用于计算掩码分割指标的 Metric 实例。
+        speed (dict[str, float]): 保存检测流程各部分执行时间的字典。
+        stats (dict[str, list]): 包含真正例、置信度分数、预测类别、目标类别和目标图像列表的字典。
+        nt_per_class：每个类别的目标数量。
+        nt_per_image：每张图像的目标数量。
 
-    Methods:
-        process: Process the detection and segmentation metrics over the given set of predictions.
-        keys: Return a list of keys for accessing metrics.
-        mean_results: Return the mean metrics for bounding box and segmentation results.
-        class_result: Return classification results for a specified class index.
-        maps: Return mAP scores for object detection and segmentation models.
-        fitness: Return the fitness score for both segmentation and bounding box models.
-        curves: Return a list of curves for accessing specific metrics curves.
-        curves_results: Provide a list of computed performance metrics and statistics.
-        summary: Generate a summarized representation of per-class segmentation metrics as a list of dictionaries.
+    方法：
+        process：处理给定预测结果集合上的检测和分割指标。
+        keys：返回用于访问指标的键列表。
+        mean_results：返回边界框和分割结果的平均指标。
+        class_result：返回指定类别索引的分类结果。
+        maps：返回目标检测和分割模型的 mAP 分数。
+        fitness：返回分割模型和边界框模型的适应度分数。
+        curves：返回用于访问特定指标曲线的曲线列表。
+        curves_results：提供计算后的性能指标和统计信息列表。
+        summary：将逐类别分割指标汇总为字典列表。
     """
 
     def __init__(self, names: dict[int, str] | None = None) -> None:
-        """Initialize a SegmentMetrics instance with class names.
+        """使用类别名称初始化 SegmentMetrics 实例。
 
-        Args:
-            names (dict[int, str], optional): Dictionary of class names.
+        参数：
+            names (dict[int, str], 可选): 类别名称字典。
         """
         DetMetrics.__init__(self, names)
         self.seg = Metric()
-        self.stats["tp_m"] = []  # add additional stats for masks
+        self.stats["tp_m"] = []  # 添加掩码的额外统计信息
 
     def update_stats(self, stat: dict[str, Any]) -> None:
-        """Update statistics by appending new values to existing stat collections.
+        """将新值追加到现有统计集合中。
 
-        Args:
-            stat (dict[str, Any]): Dictionary containing new statistical values to append. Keys should match existing
-                keys in self.stats.
+        参数：
+            stat (dict[str, Any]): 包含待追加统计值的字典，键应与 self.stats 中的现有键匹配。
         """
-        super().update_stats(stat)  # update box stats
+        super().update_stats(stat)  # 更新边界框统计信息
         self.seg.update_image_metrics(stat["tp_m"], stat["target_cls"], stat["pred_cls"], stat["im_name"])
 
     def clear_image_metrics(self) -> None:
-        """Clear stored per-image metrics."""
+        """清除已保存的逐图像指标。"""
         super().clear_image_metrics()
         self.seg.clear_image_metrics()
 
     def process(self, save_dir: Path = Path("."), plot: bool = False, on_plot=None) -> dict[str, np.ndarray]:
-        """Process the detection and segmentation metrics over the given set of predictions.
+        """处理给定预测结果集合上的检测和分割指标。
 
-        Args:
-            save_dir (Path): Directory to save plots. Defaults to Path(".").
-            plot (bool): Whether to plot precision-recall curves. Defaults to False.
-            on_plot (callable, optional): Function to call after plots are generated. Defaults to None.
+        参数：
+            save_dir (Path): 绘图保存目录，默认为 Path(".")。
+            plot (bool): 是否绘制精确率-召回率曲线，默认为 False。
+            on_plot (callable, 可选): 绘图生成后调用的回调函数，默认为 None。
 
-        Returns:
-            (dict[str, np.ndarray]): Dictionary containing concatenated statistics arrays.
+        返回：
+            (dict[str, np.ndarray]): 包含拼接后统计数组的字典。
         """
-        stats = DetMetrics.process(self, save_dir, plot, on_plot=on_plot)  # process box stats
+        stats = DetMetrics.process(self, save_dir, plot, on_plot=on_plot)  # 处理边界框统计信息
         results_mask = ap_per_class(
             stats["tp_m"],
             stats["conf"],
@@ -1343,7 +1330,7 @@ class SegmentMetrics(DetMetrics):
 
     @property
     def keys(self) -> list[str]:
-        """Return a list of keys for accessing metrics."""
+        """返回用于访问指标的键列表。"""
         return [
             *DetMetrics.keys.fget(self),
             "metrics/precision(M)",
@@ -1353,26 +1340,26 @@ class SegmentMetrics(DetMetrics):
         ]
 
     def mean_results(self) -> list[float]:
-        """Return the mean metrics for bounding box and segmentation results."""
+        """返回边界框和分割结果的平均指标。"""
         return DetMetrics.mean_results(self) + self.seg.mean_results()
 
     def class_result(self, i: int) -> list[float]:
-        """Return classification results for a specified class index."""
+        """返回指定类别索引的分类结果。"""
         return DetMetrics.class_result(self, i) + self.seg.class_result(i)
 
     @property
     def maps(self) -> np.ndarray:
-        """Return mAP scores for object detection and segmentation models."""
+        """返回目标检测和分割模型的 mAP 分数。"""
         return DetMetrics.maps.fget(self) + self.seg.maps
 
     @property
     def fitness(self) -> float:
-        """Return the fitness score for both segmentation and bounding box models."""
+        """返回分割模型和边界框模型的适应度分数。"""
         return self.seg.fitness() + DetMetrics.fitness.fget(self)
 
     @property
     def curves(self) -> list[str]:
-        """Return a list of curves for accessing specific metrics curves."""
+        """返回用于访问特定指标曲线的曲线名称列表。"""
         return [
             *DetMetrics.curves.fget(self),
             "Precision-Recall(M)",
@@ -1383,23 +1370,21 @@ class SegmentMetrics(DetMetrics):
 
     @property
     def curves_results(self) -> list[list]:
-        """Return a list of computed performance metrics and statistics."""
+        """返回计算得到的性能指标和统计信息列表。"""
         return DetMetrics.curves_results.fget(self) + self.seg.curves_results
 
     def summary(self, normalize: bool = True, decimals: int = 5) -> list[dict[str, Any]]:
-        """Generate a summarized representation of per-class segmentation metrics as a list of dictionaries. Includes
-        both box and mask scalar metrics (mAP, mAP50, mAP75) alongside precision, recall, and F1-score for
-        each class.
+        """生成每个类别分割指标的摘要字典列表。
+        摘要包含边界框和掩码的标量指标（mAP、mAP50、mAP75），以及每个类别的精确率、召回率和 F1 分数。
 
-        Args:
-            normalize (bool): For Segment metrics, everything is normalized by default [0-1].
-            decimals (int): Number of decimal places to round the metrics values to.
+        参数：
+            normalize (bool): 对 Segment 指标，是否默认将所有数值归一化到 [0, 1]。
+            decimals (int): 指标数值保留的小数位数。
 
-        Returns:
-            (list[dict[str, Any]]): A list of dictionaries, each representing one class with corresponding metric
-                values.
+        返回：
+            (列表[dict[str, Any]]): 字典列表，每个字典表示一个类别及其对应的指标值。
 
-        Examples:
+        示例：
             >>> results = model.val(data="coco8-seg.yaml")
             >>> seg_summary = results.summary(decimals=4)
             >>> print(seg_summary)
@@ -1409,74 +1394,72 @@ class SegmentMetrics(DetMetrics):
             "Mask-R": self.seg.r,
             "Mask-F1": self.seg.f1,
         }
-        summary = DetMetrics.summary(self, normalize, decimals)  # get box summary
+        summary = DetMetrics.summary(self, normalize, decimals)  # 获取边界框摘要
         for i, s in enumerate(summary):
             s.update({**{k: round(v[i], decimals) for k, v in per_class.items()}})
         return summary
 
 
 class PoseMetrics(DetMetrics):
-    """Calculate and aggregate detection and pose metrics over a given set of classes.
+    """计算并汇总给定类别集合上的检测和姿态指标。
 
-    Attributes:
-        names (dict[int, str]): Dictionary of class names.
-        pose (Metric): An instance of the Metric class to calculate pose metrics.
-        box (Metric): An instance of the Metric class for storing detection results.
-        speed (dict[str, float]): A dictionary for storing execution times of different parts of the detection process.
-        stats (dict[str, list]): A dictionary containing lists for true positives, confidence scores, predicted classes,
-            target classes, and target images.
-        nt_per_class: Number of targets per class.
-        nt_per_image: Number of targets per image.
+    属性：
+        names (dict[int, str]): 类别名称字典。
+        pose (Metric): 用于计算姿态指标的 Metric 实例。
+        box (Metric): 用于保存检测结果的 Metric 实例。
+        speed (dict[str, float]): 保存检测流程各部分执行时间的字典。
+        stats (dict[str, list]): 包含真正例、置信度分数、预测类别、目标类别和目标图像列表的字典。
+        nt_per_class: 每个类别的目标数量。
+        nt_per_image: 每张图像的目标数量。
 
-    Methods:
-        process: Process the detection and pose metrics over the given set of predictions.
-        keys: Return a list of keys for accessing metrics.
-        mean_results: Return the mean results of box and pose.
-        class_result: Return the class-wise detection results for a specific class i.
-        maps: Return the mean average precision (mAP) per class for both box and pose detections.
-        fitness: Return combined fitness score for pose and box detection.
-        curves: Return a list of curves for accessing specific metrics curves.
-        curves_results: Provide a list of computed performance metrics and statistics.
-        summary: Generate a summarized representation of per-class pose metrics as a list of dictionaries.
+    方法：
+        process: 处理给定预测结果中的检测和姿态指标。
+        keys: 返回用于访问指标的键列表。
+        mean_results: 返回边界框和姿态的平均结果。
+        class_result: 返回指定类别 i 的类别级检测结果。
+        maps: 返回每个类别的边界框和姿态检测平均精度（mAP）。
+        fitness: 返回姿态和边界框检测的组合适应度分数。
+        curves: 返回用于访问特定指标曲线的曲线名称列表。
+        curves_results: 返回计算得到的性能指标和统计信息列表。
+        summary: 生成每个类别姿态指标的摘要字典列表。
     """
 
     def __init__(self, names: dict[int, str] | None = None) -> None:
-        """Initialize the PoseMetrics class with class names.
+        """使用类别名称初始化 PoseMetrics 实例。
 
-        Args:
-            names (dict[int, str], optional): Dictionary of class names.
+        参数：
+            names (dict[int, str], 可选): 类别名称字典。
         """
         super().__init__(names)
         self.pose = Metric()
-        self.stats["tp_p"] = []  # add additional stats for pose
+        self.stats["tp_p"] = []  # 添加姿态任务的额外统计信息
 
     def update_stats(self, stat: dict[str, Any]) -> None:
-        """Update statistics by appending new values to existing stat collections.
+        """将新值追加到现有统计数据集合中，以更新统计信息。
 
-        Args:
-            stat (dict[str, Any]): Dictionary containing new statistical values to append. Keys should match existing
-                keys in self.stats.
+        参数：
+            stat (dict[str, Any]): 包含待追加统计值的字典。键应与 self.stats 中的现有键一致。
         """
-        super().update_stats(stat)  # update box stats
+        super().update_stats(stat)  # 更新边界框统计信息
         self.pose.update_image_metrics(stat["tp_p"], stat["target_cls"], stat["pred_cls"], stat["im_name"])
 
     def clear_image_metrics(self) -> None:
-        """Clear stored per-image metrics."""
+        """清除已保存的逐图像指标。"""
         super().clear_image_metrics()
         self.pose.clear_image_metrics()
 
     def process(self, save_dir: Path = Path("."), plot: bool = False, on_plot=None) -> dict[str, np.ndarray]:
-        """Process the detection and pose metrics over the given set of predictions.
+        """根据给定的预测结果处理检测和姿态指标。
 
-        Args:
-            save_dir (Path): Directory to save plots. Defaults to Path(".").
-            plot (bool): Whether to plot precision-recall curves. Defaults to False.
-            on_plot (callable, optional): Function to call after plots are generated.
+        参数：
+            save_dir (Path): 保存绘图的目录，默认为 Path(".")。
+            plot (bool): 是否绘制精确率-召回率曲线，默认为 False。
+            on_plot (callable, 可选): 绘图生成后调用的函数。
 
-        Returns:
-            (dict[str, np.ndarray]): Dictionary containing concatenated statistics arrays.
+        返回：
+            (dict[str, np.ndarray]): 包含拼接统计数组的字典。
         """
-        stats = DetMetrics.process(self, save_dir, plot, on_plot=on_plot)  # process box stats
+        stats = DetMetrics.process(self, save_dir, plot, on_plot=on_plot)  # 处理边界框统计信息
         results_pose = ap_per_class(
             stats["tp_p"],
             stats["conf"],
@@ -1494,7 +1477,7 @@ class PoseMetrics(DetMetrics):
 
     @property
     def keys(self) -> list[str]:
-        """Return a list of evaluation metric keys."""
+        """返回评估指标键列表。"""
         return [
             *DetMetrics.keys.fget(self),
             "metrics/precision(P)",
@@ -1504,26 +1487,26 @@ class PoseMetrics(DetMetrics):
         ]
 
     def mean_results(self) -> list[float]:
-        """Return the mean results of box and pose."""
+        """返回边界框和姿态的平均结果。"""
         return DetMetrics.mean_results(self) + self.pose.mean_results()
 
     def class_result(self, i: int) -> list[float]:
-        """Return the class-wise detection results for a specific class i."""
+        """返回指定类别 i 的类别级检测结果。"""
         return DetMetrics.class_result(self, i) + self.pose.class_result(i)
 
     @property
     def maps(self) -> np.ndarray:
-        """Return the mean average precision (mAP) per class for both box and pose detections."""
+        """返回每个类别的边界框和姿态检测平均精度（mAP）。"""
         return DetMetrics.maps.fget(self) + self.pose.maps
 
     @property
     def fitness(self) -> float:
-        """Return combined fitness score for pose and box detection."""
+        """返回姿态和边界框检测的组合适应度分数。"""
         return self.pose.fitness() + DetMetrics.fitness.fget(self)
 
     @property
     def curves(self) -> list[str]:
-        """Return a list of curves for accessing specific metrics curves."""
+        """返回用于访问特定指标曲线的曲线名称列表。"""
         return [
             *DetMetrics.curves.fget(self),
             "Precision-Recall(P)",
@@ -1534,22 +1517,21 @@ class PoseMetrics(DetMetrics):
 
     @property
     def curves_results(self) -> list[list]:
-        """Return a list of computed performance metrics and statistics."""
+        """返回计算得到的性能指标和统计信息列表。"""
         return DetMetrics.curves_results.fget(self) + self.pose.curves_results
 
     def summary(self, normalize: bool = True, decimals: int = 5) -> list[dict[str, Any]]:
-        """Generate a summarized representation of per-class pose metrics as a list of dictionaries. Includes both box
-        and pose scalar metrics (mAP, mAP50, mAP75) alongside precision, recall, and F1-score for each class.
+        """生成每个类别姿态指标的摘要字典列表。
+        摘要包含边界框和姿态的标量指标（mAP、mAP50、mAP75），以及每个类别的精确率、召回率和 F1 分数。
 
-        Args:
-            normalize (bool): For Pose metrics, everything is normalized by default [0-1].
-            decimals (int): Number of decimal places to round the metrics values to.
+        参数：
+            normalize (bool): 对 Pose 指标，是否默认将所有数值归一化到 [0, 1]。
+            decimals (int): 指标数值保留的小数位数。
 
-        Returns:
-            (list[dict[str, Any]]): A list of dictionaries, each representing one class with corresponding metric
-                values.
+        返回：
+            (列表[dict[str, Any]]): 字典列表，每个字典表示一个类别及其对应的指标值。
 
-        Examples:
+        示例：
             >>> results = model.val(data="coco8-pose.yaml")
             >>> pose_summary = results.summary(decimals=4)
             >>> print(pose_summary)
@@ -1559,84 +1541,84 @@ class PoseMetrics(DetMetrics):
             "Pose-R": self.pose.r,
             "Pose-F1": self.pose.f1,
         }
-        summary = DetMetrics.summary(self, normalize, decimals)  # get box summary
+        summary = DetMetrics.summary(self, normalize, decimals)  # 获取边界框摘要
         for i, s in enumerate(summary):
             s.update({**{k: round(v[i], decimals) for k, v in per_class.items()}})
         return summary
 
 
 class ClassifyMetrics(SimpleClass, DataExportMixin):
-    """Class for computing classification metrics including top-1 and top-5 accuracy.
+    """计算分类指标的类，包括 Top-1 和 Top-5 准确率。
 
-    Attributes:
-        top1 (float): The top-1 accuracy.
-        top5 (float): The top-5 accuracy.
-        speed (dict[str, float]): A dictionary containing the time taken for each step in the pipeline.
+    属性：
+        top1 (float): Top-1 准确率。
+        top5 (float): Top-5 准确率。
+        speed (dict[str, float]): 包含流水线各步骤耗时的字典。
 
-    Methods:
-        process: Process target classes and predicted classes to compute metrics.
-        fitness: Return mean of top-1 and top-5 accuracies as fitness score.
-        results_dict: Return a dictionary with model's performance metrics and fitness score.
-        keys: Return a list of keys for the results_dict property.
-        curves: Return a list of curves for accessing specific metrics curves.
-        curves_results: Provide a list of computed performance metrics and statistics.
-        summary: Generate a single-row summary of classification metrics (Top-1 and Top-5 accuracy).
+    方法：
+        process: 处理目标类别和预测类别，并计算指标。
+        fitness: 返回 Top-1 和 Top-5 准确率的平均值，作为适应度分数。
+        results_dict: 返回包含模型性能指标和适应度分数的字典。
+        keys: 返回 results_dict 属性使用的键列表。
+        curves: 返回用于访问特定指标曲线的曲线名称列表。
+        curves_results: 返回计算得到的性能指标和统计信息列表。
+        summary: 生成分类指标的单行摘要（Top-1 和 Top-5 准确率）。
     """
 
     def __init__(self) -> None:
-        """Initialize a ClassifyMetrics instance."""
+        """初始化 ClassifyMetrics 实例。"""
         self.top1 = 0
         self.top5 = 0
         self.speed = {"preprocess": 0.0, "inference": 0.0, "loss": 0.0, "postprocess": 0.0}
 
     def process(self, targets: torch.Tensor, pred: torch.Tensor):
-        """Process target classes and predicted classes to compute metrics.
+        """处理目标类别和预测类别，并据此计算指标。
 
-        Args:
-            targets (torch.Tensor): Target classes.
-            pred (torch.Tensor): Predicted classes.
+        参数：
+            targets (torch.Tensor): 目标类别。
+            pred (torch.Tensor): 预测类别。
         """
         pred, targets = torch.cat(pred), torch.cat(targets)
         correct = (targets[:, None] == pred).float()
-        acc = torch.stack((correct[:, 0], correct.max(1).values), dim=1)  # (top1, top5) accuracy
+        acc = torch.stack((correct[:, 0], correct.max(1).values), dim=1)  # （Top-1、Top-5）准确率
         self.top1, self.top5 = acc.mean(0).tolist()
 
     @property
     def fitness(self) -> float:
-        """Return mean of top-1 and top-5 accuracies as fitness score."""
+        """返回 Top-1 和 Top-5 准确率的平均值，作为适应度分数。"""
         return (self.top1 + self.top5) / 2
 
     @property
     def results_dict(self) -> dict[str, float]:
-        """Return a dictionary with model's performance metrics and fitness score."""
+        """返回包含模型性能指标和适应度分数的字典。"""
         return dict(zip([*self.keys, "fitness"], [self.top1, self.top5, self.fitness]))
 
     @property
     def keys(self) -> list[str]:
-        """Return a list of keys for the results_dict property."""
+        """返回 results_dict 属性使用的键列表。"""
         return ["metrics/accuracy_top1", "metrics/accuracy_top5"]
 
     @property
     def curves(self) -> list:
-        """Return a list of curves for accessing specific metrics curves."""
+        """返回用于访问特定指标曲线的曲线名称列表。"""
         return []
 
     @property
     def curves_results(self) -> list:
-        """Return a list of curves results for accessing specific metrics curves."""
+        """返回用于访问特定指标曲线的曲线结果列表。"""
         return []
 
     def summary(self, normalize: bool = True, decimals: int = 5) -> list[dict[str, float]]:
-        """Generate a single-row summary of classification metrics (Top-1 and Top-5 accuracy).
+        """生成分类指标的单行摘要（Top-1 和 Top-5 准确率）。
 
-        Args:
-            normalize (bool): For Classify metrics, everything is normalized by default [0-1].
-            decimals (int): Number of decimal places to round the metrics values to.
+        参数：
+            normalize (bool): 对分类指标，是否默认将所有数值归一化到 [0, 1]。
+            decimals (int): 指标数值保留的小数位数。
 
-        Returns:
-            (list[dict[str, float]]): A list with one dictionary containing Top-1 and Top-5 classification accuracy.
+        返回：
+            (列表[dict[str, float]]): 只包含一个字典的列表，该字典记录 Top-1 和 Top-5 分类准确率。
 
-        Examples:
+        示例：
             >>> results = model.val(data="imagenet10")
             >>> classify_summary = results.summary(decimals=4)
             >>> print(classify_summary)
@@ -1645,53 +1627,52 @@ class ClassifyMetrics(SimpleClass, DataExportMixin):
 
 
 class OBBMetrics(DetMetrics):
-    """Metrics for evaluating oriented bounding box (OBB) detection.
+    """用于评估旋转边界框（OBB）检测的指标。
 
-    Attributes:
-        names (dict[int, str]): Dictionary of class names.
-        box (Metric): An instance of the Metric class for storing detection results.
-        speed (dict[str, float]): A dictionary for storing execution times of different parts of the detection process.
-        stats (dict[str, list]): A dictionary containing lists for true positives, confidence scores, predicted classes,
-            target classes, and target images.
-        nt_per_class: Number of targets per class.
-        nt_per_image: Number of targets per image.
+    属性：
+        names (dict[int, str]): 类别名称字典。
+        box (Metric): 保存检测结果的 Metric 实例。
+        speed (dict[str, float]): 保存检测流程各部分执行时间的字典。
+        stats (dict[str, list]): 包含真正例、置信度分数、预测类别、目标类别和目标图像列表的字典。
+        nt_per_class：每个类别的目标数量。
+        nt_per_image：每张图像的目标数量。
 
-    References:
+    参考：
         https://arxiv.org/pdf/2106.06072.pdf
     """
 
     def __init__(self, names: dict[int, str] | None = None) -> None:
-        """Initialize an OBBMetrics instance with class names.
+        """使用类别名称初始化 OBBMetrics 实例。
 
-        Args:
-            names (dict[int, str], optional): Dictionary of class names.
+        参数：
+            names (dict[int, str], 可选): 类别名称字典。
         """
         DetMetrics.__init__(self, names)
 
 
 class SemanticMetrics(SimpleClass, DataExportMixin):
-    """Metrics for semantic segmentation, including mIoU, pixel accuracy, and per-class IoU.
+    """用于语义分割的指标，包括 mIoU、像素准确率和逐类别 IoU。
 
-    Attributes:
-        names (dict): Class names mapping.
-        nc (int): Number of classes.
-        cm_nc (int): Confusion matrix side length (2 for binary segmentation, else nc).
-        device (torch.device | None): Device used for confusion matrix accumulation.
-        matrix (torch.Tensor | None): Accumulated confusion matrix of shape (cm_nc, cm_nc).
-        speed (dict): Processing speed statistics.
-        nt_per_image (np.ndarray): Number of images containing each class.
-        nt_per_class (np.ndarray): Number of pixels per class.
-        _miou (float): Cached mean IoU.
-        _pixel_accuracy (float): Cached pixel accuracy.
-        _per_class_iou (np.ndarray): Cached per-class IoU values.
-        _per_class_pixel_acc (np.ndarray): Cached per-class pixel accuracy.
+    属性：
+        names (dict): 类别名称映射。
+        nc (int): 类别数量.
+        cm_nc (int): 混淆矩阵边长（二分类分割为 2，否则为 nc）。
+        device (torch.device | None): 累计混淆矩阵所用的设备。
+        matrix (torch.Tensor | None): 累计混淆矩阵，形状为 (cm_nc, cm_nc)。
+        speed (dict): 处理速度统计信息。
+        nt_per_image (np.ndarray): 包含每个类别图像数量的数组。
+        nt_per_class (np.ndarray): 每个类别的像素数量。
+        _miou (float): 缓存的平均 IoU。
+        _pixel_accuracy (float): 缓存的像素准确率。
+        _per_class_iou (np.ndarray): 缓存的逐类别 IoU 值。
+        _per_class_pixel_acc (np.ndarray): 缓存的逐类别像素准确率。
     """
 
     def __init__(self, names: dict[int, str] | None = None) -> None:
-        """Initialize semantic segmentation metrics.
+        """初始化语义分割指标。
 
-        Args:
-            names (dict, optional): Dictionary mapping class indices to names.
+        参数：
+            names (dict, 可选): 类别索引到名称的映射字典。
         """
         self.names = names or {}
         self.nc = len(self.names)
@@ -1706,11 +1687,11 @@ class SemanticMetrics(SimpleClass, DataExportMixin):
         self.nt_per_class = np.zeros(self.nc, dtype=np.int32)
 
     def update_stats(self, preds: torch.Tensor, targets: torch.Tensor) -> None:
-        """Accumulate confusion matrix from predictions and targets.
+        """根据预测结果和目标累计混淆矩阵。
 
-        Args:
-            preds (torch.Tensor): Predicted class IDs [B, H, W].
-            targets (torch.Tensor): Ground truth class IDs [B, H, W].
+        参数：
+            preds (torch.Tensor): 预测类别 ID，形状为 [B, H, W]。
+            targets (torch.Tensor): 真实类别 ID，形状为 [B, H, W]。
         """
         if self.matrix is None:
             self.matrix = torch.zeros((self.cm_nc, self.cm_nc), device=preds.device, dtype=torch.float32)
@@ -1730,12 +1711,12 @@ class SemanticMetrics(SimpleClass, DataExportMixin):
             self.nt_per_image += present[:, : self.nc].sum(0).cpu().numpy()
 
     def process(self, save_dir: Path = Path("."), plot: bool = False, on_plot: callable | None = None) -> None:
-        """Compute final metrics from accumulated confusion matrix.
+        """根据累计的混淆矩阵计算最终指标。
 
-        Args:
-            save_dir (Path): Directory to save plots. Defaults to Path('.').
-            plot (bool): Whether to plot IoU bars and confusion matrix. Defaults to False.
-            on_plot (callable, optional): Function to call after plots are generated. Defaults to None.
+        参数：
+            save_dir (Path): 绘图保存目录，默认为 Path('.')。
+            plot (bool): 是否绘制 IoU 柱状图和混淆矩阵，默认为 False。
+            on_plot (callable, 可选): 绘图生成后调用的回调函数，默认为 None。
         """
         if self.matrix is None:
             return
@@ -1752,8 +1733,7 @@ class SemanticMetrics(SimpleClass, DataExportMixin):
             self._per_class_pixel_acc = pa[1:].cpu().numpy()
             self.nt_per_class = np.array([row_sum[1].item()], dtype=np.int32)
         else:
-            # Average IoU only over classes present in the ground truth; classes with no GT pixels (absent
-            # from the val set or removed by the `classes` filter) are excluded.
+            # 仅对真实标注中出现的类别计算平均 IoU；没有 GT 像素的类别（不在验证集或被 `classes` 过滤掉）会被排除。
             present = row_sum > 0
             self._miou = float(iou[present].mean().item()) if present.any() else 0.0
             self._per_class_iou = iou.cpu().numpy()
@@ -1766,17 +1746,17 @@ class SemanticMetrics(SimpleClass, DataExportMixin):
             self._plot_iou_bars(save_dir, on_plot)
 
     def clear_stats(self):
-        """Clear accumulated statistics."""
+        """清除已累积的统计信息。"""
         self.matrix = None
         self.nt_per_image.fill(0)
 
     @plt_settings()
     def _plot_iou_bars(self, save_dir, on_plot):
-        """Plot per-class IoU bar chart.
+        """绘制逐类别 IoU 柱状图。
 
-        Args:
-            save_dir (Path | str): Directory to save the plot.
-            on_plot (callable, optional): Function to call after plot is saved.
+        参数：
+            save_dir (Path | str): 绘图保存目录。
+            on_plot (callable, 可选): 绘图保存后调用的回调函数。
         """
         import matplotlib.pyplot as plt
 
@@ -1784,9 +1764,9 @@ class SemanticMetrics(SimpleClass, DataExportMixin):
         names = list(self.names.values()) if self.names else [str(i) for i in range(self.nc)]
         x = np.arange(self.nc)
         bars = ax.bar(x, self._per_class_iou, color=[[c / 255.0 for c in colors(i, False)] for i in range(self.nc)])
-        ax.set_xlabel("Class")
+        ax.set_xlabel("类别")
         ax.set_ylabel("IoU")
-        ax.set_title("Per-Class IoU")
+        ax.set_title("逐类别 IoU")
         ax.set_ylim(0, 1)
         if 0 < len(names) < 30:
             ax.set_xticks(x)
@@ -1802,40 +1782,40 @@ class SemanticMetrics(SimpleClass, DataExportMixin):
 
     @property
     def miou(self):
-        """Return mean IoU (foreground IoU only for binary segmentation)."""
+        """返回平均 IoU（二分类分割仅返回前景 IoU）。"""
         return self._miou
 
     @property
     def pixel_accuracy(self):
-        """Return overall pixel accuracy."""
+        """返回整体像素准确率。"""
         return self._pixel_accuracy
 
     @property
     def per_class_iou(self):
-        """Return per-class IoU values (foreground IoU only for binary segmentation)."""
+        """返回逐类别 IoU 值（二分类分割仅返回前景 IoU）。"""
         return self._per_class_iou
 
     @property
     def per_class_pixel_accuracy(self):
-        """Return per-class pixel accuracy (diagonal / row sum for each class)."""
+        """返回逐类别像素准确率（每个类别的对角线值除以行和）。"""
         return self._per_class_pixel_acc
 
     @property
     def fitness(self):
-        """Return model fitness as mean IoU."""
+        """返回模型适应度，即平均 IoU。"""
         return self.miou
 
     @property
     def keys(self):
-        """Return metric keys for logging."""
+        """返回用于日志记录的指标键。"""
         return ["metrics/mIoU", "metrics/pixel_acc"]
 
     def mean_results(self):
-        """Return mean results for logging."""
+        """返回用于日志记录的平均结果。"""
         return [self.miou, self.pixel_accuracy]
 
     def class_result(self, i: int) -> list[float]:
-        """Return the result of evaluating the performance on a specific class."""
+        """返回指定类别的性能评估结果。"""
         if self._per_class_iou is None or len(self._per_class_iou) == 0:
             return [0.0, 0.0]
         c = self.ap_class_index[i]
@@ -1843,34 +1823,33 @@ class SemanticMetrics(SimpleClass, DataExportMixin):
 
     @property
     def ap_class_index(self):
-        """Return the indices of classes present in the ground truth for per-class reporting."""
+        """返回真实标注中出现的类别索引，用于逐类别报告。"""
         return [i for i in range(self.nc) if self.nt_per_class[i] > 0]
 
     @property
     def results_dict(self):
-        """Return results dictionary."""
+        """返回 结果 字典."""
         return dict(zip([*self.keys, "fitness"], [*self.mean_results(), self.fitness]))
 
     @property
     def curves(self):
-        """Return an empty list because semantic segmentation has no PR curves."""
+        """返回空列表，因为语义分割没有 PR 曲线。"""
         return []
 
     @property
     def curves_results(self):
-        """Return empty list (no PR curve results)."""
+        """返回空列表（没有 PR 曲线结果）。"""
         return []
 
     def summary(self, normalize: bool = True, decimals: int = 5) -> list[dict]:
-        """Generate a per-class summary of semantic segmentation metrics, with global mIoU and pixel accuracy on each
-        row.
+        """生成逐类别语义分割指标汇总，每行包含全局 mIoU 和像素准确率。
 
-        Args:
-            normalize (bool): For semantic metrics, values are already in [0, 1].
-            decimals (int): Number of decimal places to round the metric values to.
+        参数：
+            normalize (bool): 语义指标值已处于 [0, 1] 范围，此参数仅为保持接口一致。
+            decimals (int): 指标值保留的小数位数。
 
-        Returns:
-            (list[dict]): A list of dictionaries, one per class, with per-class IoU and shared scalars.
+        返回：
+            (列表[dict]): 字典列表，每个类别对应一个字典，包含逐类别 IoU 和共享标量指标。
         """
         miou = round(self.miou, decimals)
         pixel_acc = round(self.pixel_accuracy, decimals)
@@ -1890,19 +1869,17 @@ class SemanticMetrics(SimpleClass, DataExportMixin):
 
 
 class DepthMetrics(SimpleClass, DataExportMixin):
-    """Monocular depth estimation metrics: delta1-3, abs_rel, rmse, silog.
+    """单目深度估计指标：delta1-3、abs_rel、rmse 和 silog。
 
-    Metrics are finalized per image, then averaged across the val set so every image weighs equally regardless of its
-    valid-pixel count, matching the per-sample averaging used by Depth Anything V2 and Monodepth2. Images with fewer
-    than 10 valid ground-truth pixels are skipped entirely, the same floor Depth Anything V2 applies to its own valid
-    mask. Non-finite predictions are scored at a depth bound rather than hiding the image from the average. Per-image
-    results are accumulated in float64 on CPU, so DDP reduction is still a plain sum-then-all_reduce. Following the
-    standard Eigen evaluation protocol, pixels with gt outside (min_depth, max_depth) are excluded and predictions are
-    clamped into that range.
+    指标按图像完成计算，再在验证集上求平均，使每张图像的权重相同，不受有效像素数量影响，
+    与 Depth Anything V2 和 Monodepth2 使用的逐样本平均方式一致。有效真实深度像素少于 10 个的图像会被完全跳过，
+    这与 Depth Anything V2 对其有效掩码采用的下限相同。非有限预测值会按深度边界计分，而不是从平均值中隐藏该图像。
+    逐图像结果在 CPU 上以 float64 累计，因此 DDP 归约仍是简单的求和再 all_reduce。按照标准 Eigen 评估协议，
+    gt 超出 (min_depth, max_depth) 的像素会被排除，预测结果会被限制在该范围内。
 
-    Attributes:
-        min_depth (float): Minimum valid depth in meters.
-        max_depth (float): Maximum valid depth in meters.
+    属性：
+        min_depth (float): 有效深度的最小值，单位为米。
+        max_depth (float): 有效深度的最大值，单位为米。
     """
 
     def __init__(
@@ -1911,15 +1888,14 @@ class DepthMetrics(SimpleClass, DataExportMixin):
         max_depth: float = 100.0,
         align: str = "median",
     ) -> None:
-        """Initialize depth metric accumulators.
+        """初始化深度指标累计器。
 
-        Args:
-            min_depth (float): Minimum valid depth in meters; pixels with gt <= min_depth are ignored.
-            max_depth (float): Maximum valid depth in meters; pixels with gt >= max_depth are ignored and predictions
-                are clamped to it.
-            align (str): Per-image scale alignment before scoring, following the Depth Anything eval protocol. "median"
-                rescales each prediction by median(gt)/median(pred) so affine-invariant (scale-ambiguous) outputs are
-                comparable to metric GT; "none" disables alignment and scores predictions in their raw output scale.
+        参数：
+            min_depth (float): 有效深度最小值，单位为米；gt <= min_depth 的像素会被忽略。
+            max_depth (float): 有效深度最大值，单位为米；gt >= max_depth 的像素会被忽略，预测结果会被限制为该值。
+            align (str): 按照 Depth Anything 评估协议，在评分前执行逐图像尺度对齐。
+                "median" 使用 median(gt)/median(pred) 重新缩放每个预测，使尺度存在歧义的输出可与真实深度比较；
+                "none" 禁用对齐，直接使用预测结果的原始输出尺度评分。
         """
         self.min_depth = min_depth
         self.max_depth = max_depth
@@ -1930,18 +1906,18 @@ class DepthMetrics(SimpleClass, DataExportMixin):
         self._results = {}
 
     def update_stats(self, preds: torch.Tensor, targets: torch.Tensor) -> None:
-        """Accumulate per-image metrics, with per-image scale alignment.
+        """累计逐图像指标，并执行逐图像尺度对齐。
 
-        Args:
-            preds (torch.Tensor): Predicted depth (B,1,H,W) or (B,H,W).
-            targets (torch.Tensor): Ground-truth depth in meters, same shape.
+        参数：
+            preds (torch.Tensor): 预测深度，形状为 (B,1,H,W) 或 (B,H,W)。
+            targets (torch.Tensor): 真实深度，单位为米，形状相同。
         """
         p = preds.squeeze(1) if preds.ndim == 4 else preds
         g = targets.squeeze(1) if targets.ndim == 4 else targets
-        if p.ndim == 2:  # single image (H,W) -> (1,H,W) so alignment is always per-image
+        if p.ndim == 2:  # single 图像 (H,W) -> (1,H,W) so alignment is always per-图像
             p, g = p[None], g[None]
         for pi, gi in zip(p, g):
-            # Eigen protocol: score only pixels with gt inside (min_depth, max_depth)
+            # Eigen 协议：仅对 gt 位于 (min_depth, max_depth) 内的像素评分
             mask = (gi > self.min_depth) & (gi < self.max_depth)
             if int(mask.sum()) < 10:  # Depth Anything V2 floor: aligning the median of a few pixels is meaningless
                 continue
@@ -1957,7 +1933,7 @@ class DepthMetrics(SimpleClass, DataExportMixin):
             )
             thresh = torch.maximum(pv / gv, gv / pv)
             log_diff = torch.log(pv) - torch.log(gv)
-            # λ=1 variance form (ZoeDepth/KITTI), finalized per image so silog also averages per-sample
+            # λ=1 方差形式（ZoeDepth/KITTI），按图像完成计算，使 silog 也按样本平均
             silog = (log_diff.pow(2).mean() - log_diff.mean().pow(2)).clamp_min(0.0).sqrt() * 100
             image_metrics = torch.stack(
                 [
@@ -1971,11 +1947,11 @@ class DepthMetrics(SimpleClass, DataExportMixin):
             )
             if self._totals is None:
                 self._totals = torch.zeros(6, dtype=torch.float64)
-            self._totals += image_metrics.cpu().double()  # float64 on CPU; MPS tensors cannot be float64
+            self._totals += image_metrics.cpu().double()  # float64 on CPU; MPS 张量 cannot be float64
             self._count += 1.0
 
     def process(self, *args, **kwargs) -> None:
-        """Finalize metrics by averaging the accumulated per-image results."""
+        """对累计的逐图像结果求平均，完成指标计算。"""
         if self._totals is None or self._count == 0:
             self._results = dict.fromkeys(self.keys, 0.0)
             return
@@ -1990,14 +1966,14 @@ class DepthMetrics(SimpleClass, DataExportMixin):
         }
 
     def clear_stats(self) -> None:
-        """Reset accumulators."""
+        """重置指标累计器。"""
         self._totals = None
         self._count = 0.0
         self._results = {}
 
     @property
     def keys(self) -> list[str]:
-        """Metric keys for logging."""
+        """用于日志记录的指标键。"""
         return [
             "metrics/delta1",
             "metrics/delta2",
@@ -2008,59 +1984,59 @@ class DepthMetrics(SimpleClass, DataExportMixin):
         ]
 
     def mean_results(self) -> list[float]:
-        """Return metric values in `keys` order."""
+        """按 `keys` 顺序返回指标值。"""
         return [self._results.get(k, 0.0) for k in self.keys]
 
     @property
     def delta1(self) -> float:
-        """Mean per-image fraction of pixels with max(p/g, g/p) < 1.25."""
+        """逐图像平均像素比例，其中 max(p/g, g/p) < 1.25。"""
         return self._results.get("metrics/delta1", 0.0)
 
     @property
     def delta2(self) -> float:
-        """Mean per-image fraction of pixels with max(p/g, g/p) < 1.25**2."""
+        """逐图像平均像素比例，其中 max(p/g, g/p) < 1.25**2。"""
         return self._results.get("metrics/delta2", 0.0)
 
     @property
     def delta3(self) -> float:
-        """Mean per-image fraction of pixels with max(p/g, g/p) < 1.25**3."""
+        """逐图像平均像素比例，其中 max(p/g, g/p) < 1.25**3。"""
         return self._results.get("metrics/delta3", 0.0)
 
     @property
     def abs_rel(self) -> float:
-        """Mean per-image absolute relative error."""
+        """逐图像平均绝对相对误差。"""
         return self._results.get("metrics/abs_rel", 0.0)
 
     @property
     def rmse(self) -> float:
-        """Mean per-image root mean squared error (meters)."""
+        """逐图像平均均方根误差（单位：米）。"""
         return self._results.get("metrics/rmse", 0.0)
 
     @property
     def silog(self) -> float:
-        """Mean per-image scale-invariant logarithmic error (x100)."""
+        """逐图像平均尺度不变对数误差（乘以 100）。"""
         return self._results.get("metrics/silog", 0.0)
 
     @property
     def fitness(self) -> float:
-        """Fitness = delta1 (higher is better)."""
+        """适应度 = delta1（越高越好）。"""
         return self._results.get("metrics/delta1", 0.0)
 
     @property
     def results_dict(self) -> dict[str, float]:
-        """Results dict including fitness."""
+        """返回包含适应度的结果字典。"""
         return dict(zip([*self.keys, "fitness"], [*self.mean_results(), self.fitness]))
 
     @property
     def curves(self) -> list:
-        """No PR curves for depth."""
+        """深度任务没有 PR 曲线。"""
         return []
 
     @property
     def curves_results(self) -> list:
-        """No PR curve results for depth."""
+        """深度任务没有 PR 曲线结果。"""
         return []
 
     def summary(self, normalize: bool = True, decimals: int = 5) -> list[dict]:
-        """Single-row summary of global depth metrics."""
+        """全局深度指标的单行汇总。"""
         return [{k.split("/")[-1]: round(v, decimals) for k, v in self._results.items()}]

@@ -8,25 +8,24 @@ from ultralytics.utils.plotting import colors
 
 
 class SecurityAlarm(BaseSolution):
-    """A class to manage security alarm functionalities for real-time monitoring.
+    """管理实时监控安全报警功能的类。
 
-    This class extends the BaseSolution class and provides features to monitor objects in a frame, send email
-    notifications when specific thresholds are exceeded for total detections, and annotate the output frame for
-    visualization.
+    此类继承 BaseSolution，可监控帧中的对象，在检测总数超过指定阈值时发送电子邮件通知，
+    并为输出帧添加可视化标注。
 
-    Attributes:
-        email_sent (bool): Flag to track if an email has already been sent for the current event.
-        records (int): Threshold for the number of detected objects to trigger an alert.
-        server (smtplib.SMTP): SMTP server connection for sending email alerts.
-        to_email (str): Recipient's email address for alerts.
-        from_email (str): Sender's email address for alerts.
+    属性：
+        email_sent (bool): 标记当前事件是否已经发送过邮件。
+        records (int): 触发报警所需的检测对象数量阈值。
+        server (smtplib.SMTP): 用于发送报警邮件的 SMTP 服务器连接。
+        to_email (str): 报警邮件收件人地址。
+        from_email (str): 报警邮件发件人地址。
 
-    Methods:
-        authenticate: Set up email server authentication for sending alerts.
-        send_email: Send an email notification with details and an image attachment.
-        process: Monitor the frame, process detections, and trigger alerts if thresholds are crossed.
+    方法：
+        authenticate: 设置用于发送报警邮件的服务器身份验证。
+        send_email: 发送包含检测详情和图像附件的报警邮件。
+        process: 监控帧、处理检测结果，并在达到阈值时触发报警。
 
-    Examples:
+    示例：
         >>> security = SecurityAlarm()
         >>> security.authenticate("abc@gmail.com", "1111222233334444", "xyz@gmail.com")
         >>> frame = cv2.imread("frame.jpg")
@@ -34,10 +33,10 @@ class SecurityAlarm(BaseSolution):
     """
 
     def __init__(self, **kwargs: Any) -> None:
-        """Initialize the SecurityAlarm class with parameters for real-time object monitoring.
+        """使用实时对象监控参数初始化 SecurityAlarm 类。
 
-        Args:
-            **kwargs (Any): Additional keyword arguments passed to the parent class.
+        参数：
+            **kwargs (Any): 传递给父类的其他关键字参数。
         """
         super().__init__(**kwargs)
         self.email_sent = False
@@ -47,16 +46,16 @@ class SecurityAlarm(BaseSolution):
         self.from_email = ""
 
     def authenticate(self, from_email: str, password: str, to_email: str) -> None:
-        """Authenticate the email server for sending alert notifications.
+        """验证用于发送报警通知的电子邮件服务器。
 
-        This method initializes a secure connection with the SMTP server and logs in using the provided credentials.
+        此方法会与 SMTP 服务器建立安全连接，并使用提供的凭据登录。
 
-        Args:
-            from_email (str): Sender's email address.
-            password (str): Password for the sender's email account.
-            to_email (str): Recipient's email address.
+        参数：
+            from_email (str): 发件人电子邮件地址。
+            password (str): 发件人电子邮件账户密码。
+            to_email (str): 收件人电子邮件地址。
 
-        Examples:
+        示例：
             >>> alarm = SecurityAlarm()
             >>> alarm.authenticate("sender@example.com", "password123", "recipient@example.com")
         """
@@ -69,16 +68,15 @@ class SecurityAlarm(BaseSolution):
         self.from_email = from_email
 
     def send_email(self, im0, records: int = 5) -> None:
-        """Send an email notification with an image attachment indicating the number of objects detected.
+        """发送包含图像附件的电子邮件通知，说明检测到的对象数量。
 
-        This method encodes the input image, composes the email message with details about the detection, and sends it
-        to the specified recipient.
+        此方法会编码输入图像，组合包含检测详情的邮件，并将邮件发送给指定收件人。
 
-        Args:
-            im0 (np.ndarray): The input image or frame to be attached to the email.
-            records (int, optional): The number of detected objects to be included in the email message.
+        参数：
+            im0 (np.ndarray): 要作为附件发送的输入图像或帧。
+            records (int, 可选): 要包含在邮件中的检测对象数量。
 
-        Examples:
+        示例：
             >>> alarm = SecurityAlarm()
             >>> frame = cv2.imread("path/to/image.jpg")
             >>> alarm.send_email(frame, records=10)
@@ -89,23 +87,23 @@ class SecurityAlarm(BaseSolution):
 
         import cv2
 
-        img_bytes = cv2.imencode(".jpg", im0)[1].tobytes()  # Encode the image as JPEG
+        img_bytes = cv2.imencode(".jpg", im0)[1].tobytes()  # 将图像编码为 JPEG
 
-        # Create the email
+        # 创建邮件
         message = MIMEMultipart()
         message["From"] = self.from_email
         message["To"] = self.to_email
         message["Subject"] = "Security Alert"
 
-        # Add the text message body
+        # 添加文本邮件正文
         message_body = f"Ultralytics alert: {records} object(s) detected."
         message.attach(MIMEText(message_body))
 
-        # Attach the image
+        # 添加图像附件
         image_attachment = MIMEImage(img_bytes, name="ultralytics.jpg")
         message.attach(image_attachment)
 
-        # Send the email
+        # 发送邮件
         try:
             self.server.send_message(message)
             LOGGER.info("Email sent successfully!")
@@ -113,30 +111,29 @@ class SecurityAlarm(BaseSolution):
             LOGGER.error(f"Failed to send email: {e}")
 
     def process(self, im0) -> SolutionResults:
-        """Monitor the frame, process object detections, and trigger alerts if thresholds are met.
+        """监控帧并处理对象检测结果，在达到阈值时触发报警。
 
-        This method processes the input frame, extracts detections, annotates the frame with bounding boxes, and sends
-        an email notification if the number of detected objects meets or exceeds the specified threshold and an alert
-        has not already been sent.
+        此方法处理输入帧，提取检测结果并使用边界框标注帧；当检测对象数量达到或超过指定阈值，
+        且尚未发送过报警时，发送电子邮件通知。
 
-        Args:
-            im0 (np.ndarray): The input image or frame to be processed and annotated.
+        参数：
+            im0 (np.ndarray): 要处理和标注的输入图像或帧。
 
-        Returns:
-            (SolutionResults): Contains processed image `plot_im`, 'total_tracks' (total number of tracked objects) and
-                'email_sent' (whether an email alert was triggered).
+        返回：
+            (SolutionResults): 包含处理后图像 `plot_im`、`total_tracks`（跟踪对象总数）和
+                `email_sent`（是否触发电子邮件报警）。
 
-        Examples:
+        示例：
             >>> alarm = SecurityAlarm()
             >>> frame = cv2.imread("path/to/image.jpg")
             >>> results = alarm.process(frame)
         """
-        self.extract_tracks(im0)  # Extract tracks
-        annotator = SolutionAnnotator(im0, line_width=self.line_width)  # Initialize annotator
+        self.extract_tracks(im0)  # 提取跟踪结果
+        annotator = SolutionAnnotator(im0, line_width=self.line_width)  # 初始化标注器
 
-        # Iterate over bounding boxes and classes index
+        # 遍历边界框和类别索引
         for box, cls in zip(self.boxes, self.clss):
-            # Draw bounding box
+            # 绘制边界框
             annotator.box_label(box, label=self.names[cls], color=colors(cls, True))
 
         total_det = len(self.clss)
@@ -145,7 +142,7 @@ class SecurityAlarm(BaseSolution):
             self.email_sent = True
 
         plot_im = annotator.result()
-        self.display_output(plot_im)  # Display output with base class function
+        self.display_output(plot_im)  # 使用基类方法显示输出
 
-        # Return a SolutionResults
+        # 返回 SolutionResults
         return SolutionResults(plot_im=plot_im, total_tracks=len(self.track_ids), email_sent=self.email_sent)

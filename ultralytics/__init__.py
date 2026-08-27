@@ -7,9 +7,9 @@ import os
 import sys
 from typing import TYPE_CHECKING
 
-# Set ENV variables (place before imports)
+# 设置环境变量（必须放在导入其他模块之前）
 if not os.environ.get("OMP_NUM_THREADS"):
-    os.environ["OMP_NUM_THREADS"] = "1"  # default for reduced CPU utilization during training
+    os.environ["OMP_NUM_THREADS"] = "1"  # 训练期间默认减少 CPU 占用
 
 from ultralytics.utils import ASSETS, SETTINGS
 from ultralytics.utils.checks import check_yolo as checks
@@ -31,13 +31,13 @@ __all__ = (  # noqa: PLE0604
 )
 
 if TYPE_CHECKING:
-    # Enable hints for type checkers
+    # 为类型检查器启用类型提示
     from ultralytics.models import LLM, YOLO, YOLOWorld, YOLOE, NAS, SAM, FastSAM, RTDETR  # noqa
     from ultralytics_platform import APIConnectionError, APIError, AsyncPlatform, Platform  # noqa: F401
 
 
 def __getattr__(name: str):
-    """Lazy-import public classes on first access."""
+    """首次访问公共类时再延迟导入。"""
     if name in MODELS:
         return getattr(importlib.import_module("ultralytics.models"), name)
     if name in PLATFORM_EXPORTS:
@@ -48,7 +48,7 @@ def __getattr__(name: str):
 
 
 def __dir__():
-    """Extend dir() to include lazily available public names for IDE autocompletion."""
+    """扩展 dir() 结果，使其包含可延迟加载的公共名称，便于 IDE 自动补全。"""
     return sorted(set(globals()) | set(MODELS) | set(PLATFORM_EXPORTS))
 
 

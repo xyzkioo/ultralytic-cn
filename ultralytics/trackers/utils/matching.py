@@ -5,9 +5,9 @@ import numpy as np
 from ultralytics.utils.metrics import batch_probiou, bbox_ioa
 
 try:
-    import lap  # for linear_assignment
+    import lap  # 用于线性分配
 
-    assert lap.__version__  # verify package is not directory
+    assert lap.__version__  # 确认已导入的 lap 是软件包而不是目录
 except (ImportError, AssertionError, AttributeError):
     from ultralytics.utils.checks import check_requirements
 
@@ -16,20 +16,19 @@ except (ImportError, AssertionError, AttributeError):
 
 
 def linear_assignment(cost_matrix: np.ndarray, thresh: float, use_lap: bool = True):
-    """Perform linear assignment using either lap.lapjv or the built-in NumPy solver.
+    """使用 lap.lapjv 或内置 NumPy 求解器执行线性分配。
 
-    Args:
-        cost_matrix (np.ndarray): The matrix containing cost values for assignments, with shape (N, M).
-        thresh (float): Threshold for considering an assignment valid.
-        use_lap (bool): Use lap.lapjv for the assignment. If False, ops.linear_sum_assignment is used.
+    参数：
+        cost_matrix (np.ndarray): 包含分配代价的矩阵，形状为 (N, M)。
+        thresh (float): 判断分配有效性的阈值。
+        use_lap (bool): 是否使用 lap.lapjv 执行分配。为 False 时使用 ops.linear_sum_assignment。
 
-    Returns:
-        matched_indices (list[list[int]] | np.ndarray): Matched indices of shape (K, 2), where K is the number of
-            matches.
-        unmatched_a (tuple | list | np.ndarray): Unmatched indices from the first set.
-        unmatched_b (tuple | list | np.ndarray): Unmatched indices from the second set.
+    返回：
+        matched_indices (列表[列表[int]] | np.ndarray): 匹配索引，形状为 (K, 2)，K 为匹配数量。
+        unmatched_a (tuple | 列表 | np.ndarray): 第一组中未匹配的索引。
+        unmatched_b (tuple | 列表 | np.ndarray): 第二组中未匹配的索引。
 
-    Examples:
+    示例：
         >>> cost_matrix = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
         >>> thresh = 5.0
         >>> matched_indices, unmatched_a, unmatched_b = linear_assignment(cost_matrix, thresh, use_lap=True)
@@ -38,7 +37,7 @@ def linear_assignment(cost_matrix: np.ndarray, thresh: float, use_lap: bool = Tr
         return np.empty((0, 2), dtype=int), tuple(range(cost_matrix.shape[0])), tuple(range(cost_matrix.shape[1]))
 
     if use_lap:
-        # Use lap.lapjv
+        # 使用 lap.lapjv
         # https://github.com/gatagat/lap
         _, x, y = lap.lapjv(cost_matrix, extend_cost=True, cost_limit=thresh)
         matches = [[ix, mx] for ix, mx in enumerate(x) if mx >= 0]
@@ -47,7 +46,7 @@ def linear_assignment(cost_matrix: np.ndarray, thresh: float, use_lap: bool = Tr
     else:
         from ultralytics.utils.ops import linear_sum_assignment
 
-        x, y = linear_sum_assignment(cost_matrix)  # row x, col y
+        x, y = linear_sum_assignment(cost_matrix)  # 行索引 x，列索引 y
         matches = np.asarray([[x[i], y[i]] for i in range(len(x)) if cost_matrix[x[i], y[i]] <= thresh])
         if len(matches) == 0:
             unmatched_a = list(np.arange(cost_matrix.shape[0]))
@@ -60,17 +59,17 @@ def linear_assignment(cost_matrix: np.ndarray, thresh: float, use_lap: bool = Tr
 
 
 def iou_distance(atracks: list, btracks: list) -> np.ndarray:
-    """Compute cost based on Intersection over Union (IoU) between tracks.
+    """根据跟踪对象之间的交并比（IoU）计算代价。
 
-    Args:
-        atracks (list[STrack] | list[np.ndarray]): List of tracks 'a' or bounding boxes.
-        btracks (list[STrack] | list[np.ndarray]): List of tracks 'b' or bounding boxes.
+    参数：
+        atracks (列表[STrack] | 列表[np.ndarray]): 跟踪对象 'a' 或边界框列表。
+        btracks (列表[STrack] | 列表[np.ndarray]): 跟踪对象 'b' 或边界框列表。
 
-    Returns:
-        (np.ndarray): Cost matrix computed based on IoU with shape (len(atracks), len(btracks)).
+    返回：
+        (np.ndarray): 根据 IoU 计算的代价矩阵，形状为 (len(atracks), len(btracks))。
 
-    Examples:
-        Compute IoU distance between two sets of tracks
+    示例：
+        计算两组跟踪对象之间的 IoU 距离。
         >>> atracks = [np.array([0, 0, 10, 10]), np.array([20, 20, 30, 30])]
         >>> btracks = [np.array([5, 5, 15, 15]), np.array([25, 25, 35, 35])]
         >>> cost_matrix = iou_distance(atracks, btracks)
@@ -95,32 +94,30 @@ def iou_distance(atracks: list, btracks: list) -> np.ndarray:
                 np.ascontiguousarray(btlbrs, dtype=np.float32),
                 iou=True,
             )
-    return 1 - ious  # cost matrix
+    return 1 - ious  # 代价矩阵
 
 
 def embedding_distance(tracks: list, detections: list) -> np.ndarray:
-    """Compute cosine distance between tracks and detections based on embeddings.
+    """根据嵌入计算跟踪对象与检测对象之间的余弦距离。
 
-    Args:
-        tracks (list[BOTrack]): List of tracks, where each track contains embedding features.
-        detections (list[BOTrack]): List of detections, where each detection contains embedding features.
+    参数：
+        tracks (列表[BOTrack]): 跟踪对象列表，每个对象包含嵌入特征。
+        detections (列表[BOTrack]): 检测对象列表，每个对象包含嵌入特征。
 
-    Returns:
-        (np.ndarray): Cost matrix computed based on embeddings with shape (N, M), where N is the number of tracks and M
-            is the number of detections.
+    返回：
+        (np.ndarray): 根据嵌入计算的代价矩阵，形状为 (N, M)，N 为跟踪对象数量，M 为检测对象数量。
 
-    Examples:
-        Compute the embedding distance between tracks and detections using cosine metric
-        >>> tracks = [BOTrack(...), BOTrack(...)]  # List of track objects with embedding features
-        >>> detections = [BOTrack(...), BOTrack(...)]  # List of detection objects with embedding features
+    示例：
+        使用余弦度量计算跟踪对象与检测对象之间的嵌入距离。
+        >>> tracks = [BOTrack(...), BOTrack(...)]  # 带嵌入特征的轨迹对象列表
+        >>> detections = [BOTrack(...), BOTrack(...)]  # 带嵌入特征的检测对象列表
         >>> cost_matrix = embedding_distance(tracks, detections)
     """
     cost_matrix = np.zeros((len(tracks), len(detections)), dtype=np.float32)
     if cost_matrix.size == 0:
         return cost_matrix
-    # A zero-norm embedding is skipped upstream, leaving curr_feat/smooth_feat None. Stack a zero placeholder so the
-    # array isn't ragged, then (below) force any missing-feature pair to the maximum distance so callers ignore
-    # appearance and fall back to motion/IoU rather than crashing or treating it as a partial match.
+    # 上游会跳过零范数嵌入，使 curr_feat/smooth_feat 为 None。堆叠零占位符以保持数组规则，
+    # 然后将缺失特征的任意对象对强制设为最大距离，使调用方忽略外观并回退到运动或 IoU，而不是崩溃或部分匹配。
     track_feats = [t.smooth_feat for t in tracks]
     det_feats = [d.curr_feat for d in detections]
     feat_dim = next((len(f) for f in (*track_feats, *det_feats) if f is not None), 0)
@@ -132,29 +129,29 @@ def embedding_distance(tracks: list, detections: list) -> np.ndarray:
     cost_matrix = 1 - track_features @ det_features.T / np.maximum(
         track_norm * det_norm, np.finfo(track_features.dtype).eps
     )
-    cost_matrix = np.maximum(0.0, cost_matrix)  # Normalized features
+    cost_matrix = np.maximum(0.0, cost_matrix)  # 归一化特征
     missing_t = [i for i, f in enumerate(track_feats) if f is None]
     missing_d = [j for j, f in enumerate(det_feats) if f is None]
     if missing_t:
-        cost_matrix[missing_t] = 2.0  # max cosine distance -> caller's /2 then appearance gate ignores the pair
+        cost_matrix[missing_t] = 2.0  # 最大余弦距离 -> 调用方除以 2 后，外观门控会忽略该对象对
     if missing_d:
         cost_matrix[:, missing_d] = 2.0
     return cost_matrix
 
 
 def fuse_score(cost_matrix: np.ndarray, detections: list) -> np.ndarray:
-    """Fuse cost matrix with detection scores to produce a single cost matrix.
+    """融合代价矩阵和检测分数，生成单一代价矩阵。
 
-    Args:
-        cost_matrix (np.ndarray): The matrix containing cost values for assignments, with shape (N, M).
-        detections (list[BaseTrack]): List of detections, each containing a score attribute.
+    参数：
+        cost_matrix (np.ndarray): 包含分配代价的矩阵，形状为 (N, M)。
+        detections (列表[BaseTrack]): 检测对象列表，每个对象包含分数属性。
 
-    Returns:
-        (np.ndarray): Fused cost matrix with shape (N, M).
+    返回：
+        (np.ndarray): 融合后的代价矩阵，形状为 (N, M)。
 
-    Examples:
+    示例：
         Fuse a cost matrix with detection scores
-        >>> cost_matrix = np.random.rand(5, 10)  # 5 tracks and 10 detections
+        >>> cost_matrix = np.random.rand(5, 10)  # 5 条轨迹和 10 个检测结果
         >>> detections = [BaseTrack(score=np.random.rand()) for _ in range(10)]
         >>> fused_matrix = fuse_score(cost_matrix, detections)
     """
@@ -164,4 +161,4 @@ def fuse_score(cost_matrix: np.ndarray, detections: list) -> np.ndarray:
     det_scores = np.array([det.score for det in detections])
     det_scores = det_scores[None].repeat(cost_matrix.shape[0], axis=0)
     fuse_sim = iou_sim * det_scores
-    return 1 - fuse_sim  # fuse_cost
+    return 1 - fuse_sim  # 融合后的代价

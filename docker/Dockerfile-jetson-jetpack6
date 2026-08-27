@@ -1,24 +1,24 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
-# Builds ultralytics/ultralytics:latest-jetson-jetpack6 image on DockerHub https://hub.docker.com/r/ultralytics/ultralytics
-# Supports JetPack6.1 for YOLO on Jetson AGX Orin, Orin NX and Orin Nano Series
+# 在 Docker Hub 上构建 ultralytics/ultralytics:latest-jetson-jetpack6 镜像：https://hub.docker.com/r/ultralytics/ultralytics
+# 支持在 Jetson AGX Orin、Orin NX 和 Orin Nano 系列的 JetPack6.1 上运行 YOLO
 
 # Start FROM https://catalog.ngc.nvidia.com/orgs/nvidia/containers/l4t-jetpack
 FROM nvcr.io/nvidia/l4t-jetpack:r36.4.0
 
-# Set environment variables
+# 设置环境变量
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_BREAK_SYSTEM_PACKAGES=1 \
     UV_BREAK_SYSTEM_PACKAGES=1
 
-# Downloads to user config dir
+# 下载到用户配置目录
 ADD https://github.com/ultralytics/assets/releases/download/v0.0.0/Arial.ttf \
     https://github.com/ultralytics/assets/releases/download/v0.0.0/Arial.Unicode.ttf \
     /root/.config/Ultralytics/
 
-# Install dependencies and cleanup
+# 安装依赖项并清理文件
 ADD https://developer.download.nvidia.com/compute/cudss/0.7.1/local_installers/cudss-local-tegra-repo-ubuntu2204-0.7.1_0.7.1-1_arm64.deb .
 RUN dpkg -i cudss-local-tegra-repo-ubuntu2204-0.7.1_0.7.1-1_arm64.deb && \
     cp /var/cudss-local-tegra-repo-ubuntu2204-0.7.1/cudss-*-keyring.gpg /usr/share/keyrings/ && \
@@ -28,7 +28,7 @@ RUN dpkg -i cudss-local-tegra-repo-ubuntu2204-0.7.1_0.7.1-1_arm64.deb && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Upgrade TensorRT from 10.3.0 to 10.7.0 to fix INT8 + end2end build issues on JetPack 6
+# 将 TensorRT 从 10.3.0 升级到 10.7.0，以修复 JetPack 6 上 INT8 + 端到端构建问题
 # https://github.com/ultralytics/ultralytics/issues/23841
 ADD https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/arm64/cuda-keyring_1.1-1_all.deb .
 RUN dpkg -i cuda-keyring_1.1-1_all.deb && \
@@ -37,22 +37,22 @@ RUN dpkg -i cuda-keyring_1.1-1_all.deb && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* cuda-keyring_1.1-1_all.deb
 
-# Create working directory
+# 创建工作目录
 WORKDIR /ultralytics
 
-# Copy contents and configure dependencies
+# 复制内容并配置依赖项
 COPY . .
 RUN sed -i'' -e 's/"opencv-python/"opencv-python-headless/' pyproject.toml
 ADD https://github.com/ultralytics/assets/releases/download/v8.4.0/yolo26n.pt .
 
-# Pip install onnxruntime-gpu, torch, torchvision and ultralytics, then remove build files
+# 使用 pip 安装 onnxruntime-gpu、torch、torchvision 和 ultralytics，然后删除构建文件
 RUN python3 -m pip install --upgrade pip uv && \
     uv pip install --system \
     https://github.com/ultralytics/assets/releases/download/v0.0.0/onnxruntime_gpu-1.23.0-cp310-cp310-linux_aarch64.whl \
     https://github.com/ultralytics/assets/releases/download/v0.0.0/torch-2.10.0-cp310-cp310-linux_aarch64.whl \
     https://github.com/ultralytics/assets/releases/download/v0.0.0/torchvision-0.25.0-cp310-cp310-linux_aarch64.whl && \
     uv pip install --system -e ".[export]" && \
-    # Remove extra build files
+    # 删除多余的构建文件
     rm -rf *.whl /root/.config/Ultralytics/persistent_cache.json
 
 # Usage --------------------------------------------------------------------------------------------------------------

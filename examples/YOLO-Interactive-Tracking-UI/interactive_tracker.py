@@ -177,20 +177,20 @@ while cap.isOpened():
             draw_tracking_scope(im, (x1, y1, x2, y2), color)
             cv2.circle(im, center, 6, color, -1)
 
-            # Pulsing circle for attention
+            # 用脉冲圆形吸引注意力
             pulse_radius = 8 + int(4 * abs(time.time() % 1 - 0.5))
             cv2.circle(im, center, pulse_radius, color, 2)
 
             annotator.box_label([x1, y1, x2, y2], label=f"ACTIVE: TRACK {track_id}", color=color)
         else:
-            # Draw dashed box for other objects
+            # 为其他对象绘制虚线框
             for i in range(x1, x2, 10):
                 cv2.line(im, (i, y1), (i + 5, y1), color, 3)
                 cv2.line(im, (i, y2), (i + 5, y2), color, 3)
             for i in range(y1, y2, 10):
                 cv2.line(im, (x1, i), (x1, i + 5), color, 3)
                 cv2.line(im, (x2, i), (x2, i + 5), color, 3)
-            # Draw label text with background
+            # 绘制带背景的标签文本
             (tw, th), bl = cv2.getTextSize(label, 0, 0.7, 2)
             cv2.rectangle(im, (x1 + 5 - 5, y1 + 20 - th - 5), (x1 + 5 + tw + 5, y1 + 20 + bl), color, -1)
             cv2.putText(im, label, (x1 + 5, y1 + 20), 0, 0.7, txt_color, 1, cv2.LINE_AA)
@@ -202,7 +202,7 @@ while cap.isOpened():
             fps_counter = 0
             fps_timer = time.time()
 
-        # Draw FPS text with background
+        # 绘制带背景的 FPS 文本
         fps_text = f"FPS: {fps_display}"
         (tw, th), bl = cv2.getTextSize(fps_text, 0, 0.7, 2)
         cv2.rectangle(im, (10 - 5, 25 - th - 5), (10 + tw + 5, 25 + bl), (255, 255, 255), -1)
@@ -219,7 +219,7 @@ while cap.isOpened():
     cv2.imshow(window_name, im)
     if save_video and vw is not None:
         vw.write(im)
-    # Terminal logging
+    # 终端日志
     LOGGER.info(
         f"Detected {len(detections)} object(s): {' | '.join(detected_objects)}"
         if detected_objects

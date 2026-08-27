@@ -19,7 +19,7 @@ from ultralytics.utils.patches import onnx_export_patch
 from ultralytics.utils.tal import make_anchors
 from ultralytics.utils.torch_utils import copy_attr
 
-# Configuration for Model Compression Toolkit (MCT) quantization
+# Model Compression Toolkit（MCT）的量化配置
 MCT_CONFIG = {
     "YOLO11": {
         "detect": {
@@ -61,49 +61,47 @@ MCT_CONFIG = {
 
 
 class FXModel(torch.nn.Module):
-    """A custom model class for torch.fx compatibility.
+    """用于兼容 torch.fx 的自定义模型类。
 
-    This class extends `torch.nn.Module` and is designed to ensure compatibility with torch.fx for tracing and graph
-    manipulation. It copies attributes from an existing model and explicitly sets the model attribute to ensure proper
-    copying.
+    此类继承 `torch.nn.Module`，用于确保 torch.fx 的跟踪和图操作兼容性。
+    它会复制现有模型的属性，并显式设置模型属性以确保正确复制。
 
-    Attributes:
-        model (nn.Module): The original model's layers.
-        imgsz (tuple[int, int]): The input image size (height, width).
+    属性：
+        model (nn.Module): 原始模型的层。
+        imgsz (tuple[int, int]): 输入图像尺寸 (高度, 宽度)。
     """
 
     def __init__(self, model, imgsz=(640, 640)):
-        """Initialize the FXModel.
+        """初始化 FXModel。
 
-        Args:
-            model (nn.Module): The original model to wrap for torch.fx compatibility.
-            imgsz (tuple[int, int]): The input image size (height, width). Default is (640, 640).
+        参数：
+            model (nn.Module): 为兼容 torch.fx 而封装的原始模型。
+            imgsz (tuple[int, int]): 输入图像尺寸 (高度, 宽度)，默认为 (640, 640)。
         """
         super().__init__()
         copy_attr(self, model)
-        # Explicitly set `model` since `copy_attr` somehow does not copy it.
+        # 显式设置 `model`，因为 `copy_attr` 不会复制该属性。
         self.model = model.model
         self.imgsz = imgsz
 
     def forward(self, x):
-        """Forward pass through the model.
+        """执行模型前向传播。
 
-        This method performs the forward pass through the model, handling the dependencies between layers and saving
-        intermediate outputs.
+        此方法执行模型前向传播，处理层之间的依赖关系并保存中间输出。
 
-        Args:
-            x (torch.Tensor): The input tensor to the model.
+        参数：
+            x (torch.Tensor): 传递给模型的输入张量。
 
-        Returns:
-            (torch.Tensor): The output tensor from the model.
+        返回：
+            (torch.Tensor): 模型输出张量。
         """
-        y = []  # outputs
+        y = []  # 中间输出
         for m in self.model:
-            if m.f != -1:  # if not from previous layer
-                # from earlier layers
+            if m.f != -1:  # 如果不是从上一层获取输入
+                # 来自较早的层
                 x = y[m.f] if isinstance(m.f, int) else [x if j == -1 else y[j] for j in m.f]
             if isinstance(m, Detect):
-                m._inference = types.MethodType(_inference, m)  # bind method to Detect
+                m._inference = types.MethodType(_inference, m)  # 将方法绑定到 Detect
                 m.anchors, m.strides = (
                     x.transpose(0, 1)
                     for x in make_anchors(
@@ -115,23 +113,23 @@ class FXModel(torch.nn.Module):
             if type(m) is Segment:
                 m.forward = types.MethodType(segment_forward, m)  # bind method to Segment
             x = m(x)  # run
-            y.append(x)  # save output
+            y.append(x)  # 保存输出
         return x
 
 
 def _inference(self, x: dict[str, torch.Tensor]) -> tuple[torch.Tensor, torch.Tensor]:
-    """Decode boxes and cls scores for imx object detection."""
+    """解码 IMX 目标检测的边界框和类别分数。"""
     dbox = self.decode_bboxes(self.dfl(x["boxes"]), self.anchors.unsqueeze(0)) * self.strides
     return dbox.transpose(1, 2), x["scores"].sigmoid().permute(0, 2, 1)
 
 
 def pose_forward(self, x: list[torch.Tensor]) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-    """Forward pass for imx pose estimation, including keypoint decoding."""
-    bs = x[0].shape[0]  # batch size
+    """执行 IMX 姿态估计前向传播，包括关键点解码。"""
+    bs = x[0].shape[0]  # 批次大小
     nk_out = getattr(self, "nk_output", self.nk)
     kpt = torch.cat([self.cv4[i](x[i]).view(bs, nk_out, -1) for i in range(self.nl)], -1)
 
-    # If using Pose26 with 5 dims, convert to 3 dims for export
+    # 如果 Pose26 使用 5 个维度，则转换为 3 个维度后导出
     if hasattr(self, "nk_output") and self.nk_output != self.nk:
         spatial = kpt.shape[-1]
         kpt = kpt.view(bs, self.kpt_shape[0], self.kpt_shape[1] + 2, spatial)
@@ -143,16 +141,16 @@ def pose_forward(self, x: list[torch.Tensor]) -> tuple[torch.Tensor, torch.Tenso
 
 
 def segment_forward(self, x: list[torch.Tensor]) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
-    """Forward pass for imx segmentation."""
-    p = self.proto(x[0])  # mask protos
-    bs = p.shape[0]  # batch size
-    mc = torch.cat([self.cv4[i](x[i]).view(bs, self.nm, -1) for i in range(self.nl)], 2)  # mask coefficients
+    """执行 IMX 分割前向传播。"""
+    p = self.proto(x[0])  # 掩码原型
+    bs = p.shape[0]  # 批次大小
+    mc = torch.cat([self.cv4[i](x[i]).view(bs, self.nm, -1) for i in range(self.nl)], 2)  # 掩码系数
     x = Detect.forward(self, x)
     return *x, mc.transpose(1, 2), p
 
 
 class NMSWrapper(torch.nn.Module):
-    """Wrap PyTorch Module with multiclass_nms layer from edge-mdt-cl."""
+    """使用 edge-mdt-cl 的 multiclass_nms 层包装 PyTorch 模块。"""
 
     def __init__(
         self,
@@ -162,14 +160,14 @@ class NMSWrapper(torch.nn.Module):
         max_detections: int = 300,
         task: str = "detect",
     ):
-        """Initialize NMSWrapper with PyTorch Module and NMS parameters.
+        """使用 PyTorch 模块和 NMS 参数初始化 NMSWrapper。
 
-        Args:
-            model (torch.nn.Module): Model instance.
-            score_threshold (float): Score threshold for non-maximum suppression.
-            iou_threshold (float): Intersection over union threshold for non-maximum suppression.
-            max_detections (int): The number of detections to return.
-            task (str): Task type, one of 'detect', 'pose', or 'segment'.
+        参数：
+            model (torch.nn.Module): 模型实例。
+            score_threshold (float): 非极大值抑制的分数阈值。
+            iou_threshold (float): 非极大值抑制的交并比阈值。
+            max_detections (int): 要返回的检测结果数量。
+            task (str): 任务类型，可选 'detect'、'pose' 或 'segment'。
         """
         super().__init__()
         self.model = model
@@ -179,10 +177,10 @@ class NMSWrapper(torch.nn.Module):
         self.task = task
 
     def forward(self, images):
-        """Forward pass with model inference and NMS post-processing."""
+        """执行模型推理和 NMS 后处理的前向传播。"""
         from edgemdt_cl.pytorch.nms.nms_with_indices import multiclass_nms_with_indices
 
-        # model inference
+        # 模型 推理
         outputs = self.model(images)
         boxes, scores = outputs[0], outputs[1]
         nms_outputs = multiclass_nms_with_indices(
@@ -214,41 +212,39 @@ def torch2imx(
     dataset=None,
     prefix: str = "",
 ) -> str:
-    """Export YOLO model to IMX format for deployment on Sony IMX500 devices.
+    """将 YOLO 模型导出为 IMX 格式，以部署到 Sony IMX500 设备。
 
-    This function quantizes a YOLO model using Model Compression Toolkit (MCT) and exports it to IMX format compatible
-    with Sony IMX500 edge devices. It supports both YOLOv8n and YOLO11n models for detection, segmentation, pose
-    estimation, and classification tasks.
+    此函数使用 Model Compression Toolkit（MCT）量化 YOLO 模型，并将其导出为兼容 Sony IMX500 边缘设备的 IMX 格式。
+    支持 YOLOv8n 和 YOLO11n 模型的检测、分割、姿态估计和分类任务。
 
-    Args:
-        model (torch.nn.Module): The YOLO model to export. Must be YOLOv8n or YOLO11n.
-        output_dir (Path | str): Directory to save the exported IMX model.
-        conf (float): Confidence threshold for NMS post-processing.
-        iou (float): IoU threshold for NMS post-processing.
-        max_det (int): Maximum number of detections to return.
-        metadata (dict | None, optional): Metadata to embed in the ONNX model. Defaults to None.
-        gptq (bool, optional): Whether to use Gradient-Based Post Training Quantization. If False, uses standard Post
-            Training Quantization. Defaults to False.
-        dataset (optional): Representative dataset for quantization calibration. Defaults to None.
-        prefix (str, optional): Logging prefix string. Defaults to "".
+    参数：
+        model (torch.nn.Module): 要导出的 YOLO 模型，必须是 YOLOv8n 或 YOLO11n。
+        output_dir (Path | str): 保存导出 IMX 模型的目录。
+        conf (float): NMS 后处理的置信度阈值。
+        iou (float): NMS 后处理的 IoU 阈值。
+        max_det (int): 返回的最大检测数量。
+        metadata (dict | None, 可选): 要嵌入 ONNX 模型的元数据，默认为 None。
+        gptq (bool, 可选): 是否使用基于梯度的训练后量化；为 False 时使用标准训练后量化，默认为 False。
+        dataset (可选): 用于量化校准的代表性数据集，默认为 None。
+        prefix (str, 可选): 日志前缀字符串，默认为 ""。
 
-    Returns:
-        (str): Path to the exported IMX model directory.
+    返回：
+        (str): 导出 IMX 模型目录的路径。
 
-    Raises:
-        ValueError: If the model is not a supported YOLOv8n or YOLO11n variant.
+    异常：
+        ValueError: 模型不是受支持的 YOLOv8n 或 YOLO11n 变体时抛出。
 
-    Examples:
+    示例：
         >>> from ultralytics import YOLO
         >>> model = YOLO("yolo11n.pt")
         >>> path = torch2imx(model, "output_dir/", conf=0.25, iou=0.7, max_det=300)
 
-    Notes:
-        - Auto-installs Java>=17, model-compression-toolkit, imx500-converter, and related packages if not present
-        - Only supports YOLOv8n and YOLO11n models (detection, segmentation, pose, and classification tasks)
-        - Output includes quantized ONNX model, IMX binary, and labels.txt file
+    注意：
+        - 如果尚未安装，则自动安装 Java>=17、模型压缩工具包、imx500-converter 及相关软件包。
+        - 仅支持 YOLOv8n 和 YOLO11n 模型（检测、分割、姿态和分类任务）。
+        - 输出包含量化后的 ONNX 模型、IMX 二进制文件和标签.txt 文件。
     """
-    # Install Java>=17
+    # 安装 Java>=17
     try:
         java_output = subprocess.run(["java", "--version"], check=True, capture_output=True).stdout.decode()
         version_match = re.search(r"(?:openjdk|java) (\d+)", java_output)
@@ -285,13 +281,13 @@ def torch2imx(
             img = img / 255.0
             yield [img]
 
-    # NOTE: need tpc_version to be "4.0" for IMX500 Pose estimation models
+    # 注意：IMX500 姿态估计模型需要 tpc_version 为 "4.0"
     tpc = get_target_platform_capabilities(tpc_version="4.0", device_type="imx500")
 
     bit_cfg = mct.core.BitWidthConfig()
     mct_config = MCT_CONFIG["YOLO11" if "C2PSA" in model.__str__() else "YOLOv8"][model.task]
 
-    # Check if the model has the expected number of layers
+    # 检查模型是否包含预期数量的层
     if len(list(model.modules())) not in mct_config["n_layers"]:
         raise ValueError("IMX export only supported for YOLOv8n and YOLO11n models.")
 
@@ -307,7 +303,7 @@ def torch2imx(
     resource_utilization = mct.core.ResourceUtilization(weights_memory=mct_config["weights_memory"])
 
     quant_model = (
-        mct.gptq.pytorch_gradient_post_training_quantization(  # Perform Gradient-Based Post Training Quantization
+        mct.gptq.pytorch_gradient_post_training_quantization(  # 执行基于梯度的训练后量化
             model=model,
             representative_data_gen=representative_dataset_gen,
             target_resource_utilization=resource_utilization,
@@ -318,7 +314,7 @@ def torch2imx(
             target_platform_capabilities=tpc,
         )[0]
         if gptq
-        else mct.ptq.pytorch_post_training_quantization(  # Perform post training quantization
+        else mct.ptq.pytorch_post_training_quantization(  # 执行训练后量化
             in_module=model,
             representative_data_gen=representative_dataset_gen,
             target_resource_utilization=resource_utilization,
@@ -345,14 +341,14 @@ def torch2imx(
             model=quant_model, save_model_path=onnx_model, repr_dataset=representative_dataset_gen
         )
 
-    model_onnx = onnx.load(onnx_model)  # load onnx model
+    model_onnx = onnx.load(onnx_model)  # 加载 ONNX 模型
     for k, v in (metadata or {}).items():
         meta = model_onnx.metadata_props.add()
         meta.key, meta.value = k, str(v)
 
     onnx.save(model_onnx, onnx_model)
 
-    # Find imxconv-pt binary - check venv bin directory first, then PATH
+    # 查找 imxconv-pt 二进制文件：先检查虚拟环境 bin 目录，再检查 PATH。
     bin_dir = Path(sys.executable).parent
     imxconv = bin_dir / ("imxconv-pt.exe" if WINDOWS else "imxconv-pt")
     if not imxconv.exists():
@@ -365,7 +361,7 @@ def torch2imx(
         check=True,
     )
 
-    # Needed for imx models.
+    # imx 模型所需配置。
     with open(output_dir / "labels.txt", "w", encoding="utf-8") as labels_file:
         labels_file.writelines([f"{name}\n" for _, name in model.names.items()])
 

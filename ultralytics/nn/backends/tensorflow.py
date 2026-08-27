@@ -14,30 +14,30 @@ from .base import BaseBackend
 
 
 class TensorFlowBackend(BaseBackend):
-    """Google TensorFlow inference backend supporting multiple serialization formats.
+    """支持多种序列化格式的 Google TensorFlow 推理后端。
 
-    Loads and runs inference with Google TensorFlow models in SavedModel, GraphDef (.pb), and Edge TPU formats. Handles
-    quantized model dequantization and task-specific output formatting.
+    加载并运行 SavedModel、GraphDef（.pb）和 Edge TPU 格式的 Google TensorFlow 模型推理，
+    同时处理量化模型的反量化和任务特定的输出格式化。
     """
 
     def __init__(self, weight: str | Path, device: torch.device, fp16: bool = False, format: str = "saved_model"):
-        """Initialize the Google TensorFlow backend.
+        """初始化 Google TensorFlow 后端。
 
-        Args:
-            weight (str | Path): Path to the SavedModel directory, .pb file, or Edge TPU .tflite file.
-            device (torch.device): Device to run inference on.
-            fp16 (bool): Whether to use FP16 half-precision inference.
-            format (str): Model format, one of "saved_model", "pb", or "edgetpu".
+        参数：
+            weight (str | Path): SavedModel 目录、.pb 文件或 Edge TPU .tflite 文件的路径。
+            device (torch.device): 执行推理的设备。
+            fp16 (bool): 是否使用 FP16 半精度推理。
+            format (str): 模型格式，可选 "saved_model"、"pb" 或 "edgetpu"。
         """
         assert format in {"saved_model", "pb", "edgetpu"}, f"Unsupported TensorFlow format: {format}."
         self.format = format
         super().__init__(weight, device, fp16)
 
     def load_model(self, weight: str | Path) -> None:
-        """Load a Google TensorFlow model in SavedModel, GraphDef, or Edge TPU format.
+        """以 SavedModel、GraphDef 或 Edge TPU 格式加载 Google TensorFlow 模型。
 
-        Args:
-            weight (str | Path): Path to the model file or directory.
+        参数：
+            weight (str | Path): 模型文件或目录的路径。
         """
         if self.format in {"saved_model", "pb"}:
             import tensorflow as tf
@@ -51,7 +51,7 @@ class TensorFlowBackend(BaseBackend):
             from ultralytics.utils.export.tensorflow import gd_outputs
 
             def wrap_frozen_graph(gd, inputs, outputs):
-                """Wrap a TensorFlow frozen graph for inference by pruning to specified input/output nodes."""
+                """裁剪到指定的输入和输出节点，将 TensorFlow 冻结图包装为推理模型。"""
                 x = tf.compat.v1.wrap_function(lambda: tf.compat.v1.import_graph_def(gd, name=""), [])
                 ge = x.graph.as_graph_element
                 return x.prune(tf.nest.map_structure(ge, inputs), tf.nest.map_structure(ge, outputs))
@@ -81,7 +81,7 @@ class TensorFlowBackend(BaseBackend):
                 model_path=str(weight),
                 experimental_delegates=[load_delegate(delegate, options={"device": device})],
             )
-            self.device = torch.device("cpu")  # Edge TPU runs on CPU from PyTorch's perspective
+            self.device = torch.device("cpu")  # 从 PyTorch 角度看，Edge TPU 在 CPU 上运行
 
             self.interpreter.allocate_tensors()
             self.input_details = self.interpreter.get_input_details()
@@ -90,13 +90,13 @@ class TensorFlowBackend(BaseBackend):
             self.apply_metadata(self.read_metadata(weight))
 
     def forward(self, im: torch.Tensor) -> list[np.ndarray]:
-        """Run Google TensorFlow inference with format-specific execution and output post-processing.
+        """执行 Google TensorFlow 推理，并根据格式完成对应的执行和输出后处理。
 
-        Args:
-            im (torch.Tensor): Input image tensor in BHWC format (converted from BCHW by AutoBackend).
+        参数：
+            im (torch.Tensor): 输入图像张量，格式为 BHWC（由 AutoBackend 从 BCHW 转换而来）。
 
-        Returns:
-            (list[np.ndarray]): Model predictions as a list of numpy arrays.
+        返回：
+            (列表[np.ndarray]): NumPy 数组列表形式的模型预测结果。
         """
         im = im.cpu().numpy()
         if self.format == "saved_model":
@@ -124,15 +124,15 @@ class TensorFlowBackend(BaseBackend):
             for output in self.output_details:
                 x = self.interpreter.get_tensor(output["index"])
                 if self.task == "semantic" and x.ndim == 3:
-                    # Baked argmax class map [B, H, W] of integer class IDs, not boxes or quantized logits:
-                    # skip dequantization and xywh denormalization, which would corrupt and overflow the indices.
+                    # 固化的 argmax 类别图 [B, H, W] 包含整数类别 ID，而不是边界框或量化 logits：
+                    # 跳过反量化和 xywh 反归一化，否则会破坏索引并造成溢出。
                     y.append(x)
                     continue
                 if is_int:
                     scale, zero_point = output["quantization"]
                     x = (x.astype(np.float32) - zero_point) * scale
                 if x.ndim == 3:
-                    # Denormalize xywh by image size
+                    # 根据图像尺寸对 xywh 反归一化
                     if x.shape[-1] == 6 or self.end2end:
                         x[:, :, [0, 2]] *= w
                         x[:, :, [1, 3]] *= h
@@ -147,10 +147,10 @@ class TensorFlowBackend(BaseBackend):
                             x[:, 6::3] *= h
                 y.append(x)
 
-        if self.task == "segment":  # segment with (det, proto) output order reversed
+        if self.task == "segment":  # 分割任务的 (det, proto) 输出顺序相反
             if len(y[1].shape) != 4:
                 y = list(reversed(y))  # should be y = (1, 116, 8400), (1, 160, 160, 32)
-            if y[1].shape[-1] == 6:  # end-to-end model
+            if y[1].shape[-1] == 6:  # end-to-end 模型
                 y = [y[1]]
             else:
                 y[1] = np.transpose(y[1], (0, 3, 1, 2))  # should be y = (1, 116, 8400), (1, 32, 160, 160)

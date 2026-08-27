@@ -21,13 +21,13 @@ RAY_SEARCH_ALG_REQUIREMENTS = {
 
 
 def _sanitize_tune_value(value: dict):
-    """Convert NumPy-backed Tune values into native Python types for YAML serialization.
+    """将 NumPy 支持的 Tune 值转换为原生 Python 类型，以便 YAML 序列化。
 
-    Args:
-        value (dict): The value to convert. Can be a dict, list, tuple, NumPy scalar, or NumPy array.
+    参数：
+        value (dict): 要转换的值，可以是字典、列表、元组、NumPy 标量或 NumPy 数组。
 
-    Returns:
-        The converted value with NumPy types replaced by native Python types.
+    返回：
+        转换后的值，其中 NumPy 类型已替换为原生 Python 类型。
     """
     if isinstance(value, dict):
         return {k: _sanitize_tune_value(v) for k, v in value.items()}
@@ -43,14 +43,13 @@ def _sanitize_tune_value(value: dict):
 
 
 def _get_ray_search_alg_kind(search_alg):
-    """Return the normalized Ray Tune search algorithm kind for known searcher objects.
+    """返回已知搜索器对象对应的规范化 Ray Tune 搜索算法类型。
 
-    Args:
-        search_alg (str | ray.tune.search.Searcher): The search algorithm to identify. Can be None, a string, or a Ray
-            Tune searcher object.
+    参数：
+        search_alg (str | ray.tune.search.Searcher): 要识别的搜索算法，可以是 None、字符串或 Ray Tune 搜索器对象。
 
-    Returns:
-        str | None: The normalized search algorithm name, or None if not recognized.
+    返回：
+        str | None: 规范化的搜索算法名称；无法识别时返回 None。
     """
     if search_alg is None:
         return None
@@ -70,16 +69,16 @@ def _get_ray_search_alg_kind(search_alg):
 
 
 def _validate_ax_search_space(space):
-    """Validate that a Tune search space can be consumed by Ax.
+    """验证 Tune 搜索空间是否可被 Ax 使用。
 
-    Args:
-        space (dict): The hyperparameter search space to validate.
+    参数：
+        space (dict): 要验证的超参数搜索空间。
 
-    Returns:
-        list: The converted Ax parameters.
+    返回：
+        列表: 转换后的 Ax 参数。
 
-    Raises:
-        ImportError: If the required 'ax-platform' package is not installed.
+    异常：
+        ImportError: 未安装所需的 'ax-platform' 软件包。
     """
     checks.check_requirements(RAY_SEARCH_ALG_REQUIREMENTS["ax"])
 
@@ -89,17 +88,17 @@ def _validate_ax_search_space(space):
 
 
 def _create_ax_search(space, task):
-    """Create an Ax searcher with an initialized experiment.
+    """创建带已初始化实验的 Ax 搜索器。
 
-    Args:
-        space (dict): The hyperparameter search space.
-        task (str): The task type (e.g., 'detect', 'segment', 'classify').
+    参数：
+        space (dict): 超参数搜索空间。
+        task (str): 任务类型（例如 'detect'、'分割段'、'classify'）。
 
-    Returns:
-        AxSearch (ray.tune.search.Searcher): The configured Ax search algorithm.
+    返回：
+        AxSearch (ray.tune.search.Searcher): 已配置的 Ax 搜索算法。
 
-    Raises:
-        ImportError: If required Ax packages are not installed.
+    异常：
+        ImportError: 未安装所需的 Ax 软件包。
     """
     parameters = _validate_ax_search_space(space)
 
@@ -116,17 +115,17 @@ def _create_ax_search(space, task):
 
 
 def _convert_bohb_search_space(space):
-    """Convert a Tune search space into BOHB-compatible ConfigSpace and fixed-only Tune param_space.
+    """将 Tune 搜索空间转换为 BOHB 兼容的 ConfigSpace 和仅包含固定值的 Tune param_space。
 
-    Args:
-        space (dict): The hyperparameter search space.
+    参数：
+        space (dict): 超参数搜索空间。
 
-    Returns:
-        (tuple): A tuple containing the ConfigSpace object and a dict of fixed parameters.
+    返回：
+        (tuple): 包含 ConfigSpace 对象和固定参数字典的元组。
 
-    Raises:
-        ValueError: If the search space contains grid search parameters or unsupported samplers.
-        ImportError: If required BOHB packages are not installed.
+    异常：
+        ValueError: 搜索空间包含网格搜索参数或不支持的采样器。
+        ImportError: 未安装所需的 BOHB 软件包。
     """
     checks.check_requirements(RAY_SEARCH_ALG_REQUIREMENTS["bohb"])
 
@@ -154,7 +153,7 @@ def _convert_bohb_search_space(space):
                 )
             )
         elif isinstance(domain, Integer) and isinstance(sampler, (Uniform, LogUniform)):
-            upper = domain.upper - 1  # Tune integer search spaces are exclusive on the upper bound
+            upper = domain.upper - 1  # 整数搜索空间的上界不包含在内
             cs.add(
                 ConfigSpace.UniformIntegerHyperparameter(
                     par, lower=domain.lower, upper=upper, log=isinstance(sampler, LogUniform)
@@ -173,17 +172,17 @@ def _convert_bohb_search_space(space):
 
 
 def _create_bohb_search(space, task):
-    """Create a BOHB searcher using a ConfigSpace definition compatible with current ConfigSpace versions.
+    """使用兼容当前 ConfigSpace 版本的定义创建 BOHB 搜索器。
 
-    Args:
-        space (dict): The hyperparameter search space.
-        task (str): The task type (e.g., 'detect', 'segment', 'classify').
+    参数：
+        space (dict): 超参数搜索空间。
+        task (str): 任务类型（例如 'detect'、'分割段'、'classify'）。
 
-    Returns:
-        (tuple): A tuple containing the TuneBOHB searcher and fixed parameter space dict.
+    返回：
+        (tuple): 包含 TuneBOHB 搜索器和固定参数空间字典的元组。
 
-    Raises:
-        ImportError: If required BOHB packages are not installed.
+    异常：
+        ImportError: 未安装所需的 BOHB 软件包。
     """
     cs, fixed_param_space = _convert_bohb_search_space(space)
 
@@ -193,16 +192,16 @@ def _create_bohb_search(space, task):
 
 
 def _create_nevergrad_search(task):
-    """Create a Nevergrad searcher with a default optimizer.
+    """使用默认优化器创建 Nevergrad 搜索器。
 
-    Args:
-        task (str): The task type (e.g., 'detect', 'segment', 'classify').
+    参数：
+        task (str): 任务类型（例如 'detect'、'分割段'、'classify'）。
 
-    Returns:
-        (NevergradSearch): The configured Nevergrad search algorithm.
+    返回：
+        (NevergradSearch): 已配置的 Nevergrad 搜索算法。
 
-    Raises:
-        ImportError: If the 'nevergrad' package is not installed.
+    异常：
+        ImportError: 未安装 'nevergrad' 软件包。
     """
     checks.check_requirements(RAY_SEARCH_ALG_REQUIREMENTS["nevergrad"])
 
@@ -213,16 +212,16 @@ def _create_nevergrad_search(task):
 
 
 def _convert_zoopt_search_space(space):
-    """Convert a Tune search space into ZOOpt-compatible dimensions and fixed-only Tune param_space.
+    """将 Tune 搜索空间转换为 ZOOpt 兼容的维度和仅包含固定值的 Tune param_space。
 
-    Args:
-        space (dict): The hyperparameter search space.
+    参数：
+        space (dict): 超参数搜索空间。
 
-    Returns:
-        (tuple): A tuple containing the ZOOpt dimension dict and fixed parameter space dict.
+    返回：
+        (tuple): 包含 ZOOpt 维度字典和固定参数空间字典的元组。
 
-    Raises:
-        ImportError: If the 'zoopt' package is not installed.
+    异常：
+        ImportError: 未安装 'zoopt' 软件包。
     """
     checks.check_requirements(RAY_SEARCH_ALG_REQUIREMENTS["zoopt"])
 
@@ -238,18 +237,18 @@ def _convert_zoopt_search_space(space):
 
 
 def _create_zoopt_search(space, task, iterations):
-    """Create a ZOOpt searcher with required budget and converted search space.
+    """使用所需预算和转换后的搜索空间创建 ZOOpt 搜索器。
 
-    Args:
-        space (dict): The hyperparameter search space.
-        task (str): The task type (e.g., 'detect', 'segment', 'classify').
-        iterations (int): The maximum number of trials (budget) for ZOOpt.
+    参数：
+        space (dict): 超参数搜索空间。
+        task (str): 任务类型（例如 'detect'、'分割段'、'classify'）。
+        iterations (int): ZOOpt 的最大试验数量（预算）。
 
-    Returns:
-        (tuple): A tuple containing the ZOOptSearch searcher and fixed parameter space dict.
+    返回：
+        (tuple): 包含 ZOOptSearch 搜索器和固定参数空间字典的元组。
 
-    Raises:
-        ImportError: If the 'zoopt' package is not installed.
+    异常：
+        ImportError: 未安装 'zoopt' 软件包。
     """
     dim_dict, fixed_param_space = _convert_zoopt_search_space(space)
 
@@ -261,24 +260,23 @@ def _create_zoopt_search(space, task, iterations):
 
 
 def _resolve_ray_search_alg(search_alg, task, space, iterations):
-    """Resolve search algorithms and normalize Tune param_space for known Ray Tune searchers.
+    """解析搜索算法，并为已知 Ray Tune 搜索器规范化 Tune param_space。
 
-    Args:
-        search_alg (str | object | None): The search algorithm to use. Can be a string name, a pre-instantiated Ray Tune
-            searcher object, or None for default behavior.
-        task (str): The task type (e.g., 'detect', 'segment', 'classify').
-        space (dict): The hyperparameter search space.
-        iterations (int): The maximum number of trials to run.
+    参数：
+        search_alg (str | 对象 | None): 要使用的搜索算法，可以是字符串名称、已实例化的 Ray Tune 搜索器对象，或 None（使用默认行为）。
+        task (str): 任务类型（例如 'detect'、'分割段'、'classify'）。
+        space (dict): 超参数搜索空间。
+        iterations (int): 要运行的最大试验数量。
 
-    Returns:
-        (tuple): A tuple containing (resolved_search_alg, tuner_param_space, resolved_search_alg_kind).
-            - resolved_search_alg: The configured searcher or None.
-            - tuner_param_space: The normalized parameter space for the tuner.
-            - resolved_search_alg_kind: The normalized algorithm name or None.
+    返回：
+        (tuple): 包含 (resolved_search_alg, tuner_param_space, resolved_search_alg_kind) 的元组。
+            - resolved_search_alg：已配置的搜索器或 None。
+            - tuner_param_space：调优器使用的规范化参数空间。
+            - resolved_search_alg_kind：规范化的算法名称或 None。
 
-    Raises:
-        ValueError: If an unsupported search_alg string is provided.
-        ModuleNotFoundError: If required dependencies for the chosen algorithm are not installed.
+    异常：
+        ValueError: 提供了不支持的 search_alg 字符串。
+        ModuleNotFoundError: 未安装所选算法所需的依赖。
     """
     if search_alg is None:
         return None, space, None
@@ -340,27 +338,26 @@ def run_ray_tune(
     search_alg=None,
     **train_args,
 ):
-    """Run hyperparameter tuning using Ray Tune.
+    """使用 Ray Tune 执行超参数调优。
 
-    Args:
-        model (YOLO): Model to run the tuner on.
-        space (dict, optional): The hyperparameter search space. If not provided, uses default space.
-        grace_period (int, optional): The grace period in epochs of the ASHA scheduler.
-        gpu_per_trial (int, optional): The number of GPUs to allocate per trial.
-        iterations (int, optional): The maximum number of trials to run.
-        search_alg (str | ray.tune.search.Searcher | ray.tune.search.SearchAlgorithm, optional): Search algorithm to
-            use. Strings are resolved to supported Ray Tune searchers. Pre-instantiated objects are reused, and known
-            searchers with special Tune param_space requirements are normalized automatically.
-        **train_args (Any): Additional arguments to pass to the `train()` method.
+    参数：
+        model (YOLO): 用于执行调优的模型。
+        space (dict, 可选): 超参数搜索空间。未提供时使用默认空间。
+        grace_period (int, 可选): ASHA 调度器的周期宽限期。
+        gpu_per_trial (int, 可选): 每个试验分配的 GPU 数量。
+        iterations (int, 可选): 要运行的最大试验数量。
+        search_alg (str | ray.tune.search.Searcher | ray.tune.search.SearchAlgorithm, 可选): 要使用的搜索算法。
+            字符串会解析为受支持的 Ray Tune 搜索器；已实例化对象会复用，具有特殊 Tune 参数空间要求的已知搜索器会自动规范化。
+        **train_args (Any): 传递给 `train()` 方法的其他参数。
 
-    Returns:
-        (ray.tune.ResultGrid): A ResultGrid containing the results of the hyperparameter search.
+    返回：
+        (ray.tune.ResultGrid): 包含超参数搜索结果的 ResultGrid。
 
-    Examples:
+    示例：
         >>> from ultralytics import YOLO
-        >>> model = YOLO("yolo26n.pt")  # Load a YOLO26n model
+        >>> model = YOLO("yolo26n.pt")  # 加载 YOLO26n 模型
 
-        Start tuning hyperparameters for YOLO26n training on the COCO8 dataset
+        在 COCO8 数据集上开始调优 YOLO26n 训练超参数
         >>> result_grid = model.tune(data="coco8.yaml", use_ray=True)
     """
     LOGGER.info("💡 Learn about RayTune at https://docs.ultralytics.com/integrations/ray-tune")
@@ -383,58 +380,58 @@ def run_ray_tune(
 
     checks.check_version(ray.__version__, ">=2.0.0", "ray")
     default_space = {
-        # 'optimizer': tune.choice(['SGD', 'Adam', 'AdamW', 'NAdam', 'RAdam', 'RMSProp']),
+        # '优化器': tune.choice(['SGD', 'Adam', 'AdamW', 'NAdam', 'RAdam', 'RMSProp']),
         "lr0": tune.uniform(1e-5, 1e-2),  # initial learning rate (i.e. SGD=1E-2, Adam=1E-3)
         "lrf": tune.uniform(0.01, 1.0),  # final OneCycleLR learning rate (lr0 * lrf)
         "momentum": tune.uniform(0.7, 0.98),  # SGD momentum/Adam beta1
-        "weight_decay": tune.uniform(0.0, 0.001),  # optimizer weight decay
+        "weight_decay": tune.uniform(0.0, 0.001),  # 优化器 权重衰减
         "warmup_epochs": tune.uniform(0.0, 5.0),  # warmup epochs (fractions ok)
         "warmup_momentum": tune.uniform(0.0, 0.95),  # warmup initial momentum
-        "box": tune.uniform(1.0, 20.0),  # box loss gain
-        "cls": tune.uniform(0.1, 4.0),  # cls loss gain (scale with pixels)
-        "cls_pw": tune.uniform(0.0, 1.0),  # cls power weight (scale with pixels)
-        "dfl": tune.uniform(0.4, 12.0),  # dfl loss gain
-        "hsv_h": tune.uniform(0.0, 0.1),  # image HSV-Hue augmentation (fraction)
-        "hsv_s": tune.uniform(0.0, 0.9),  # image HSV-Saturation augmentation (fraction)
-        "hsv_v": tune.uniform(0.0, 0.9),  # image HSV-Value augmentation (fraction)
-        "degrees": tune.uniform(0.0, 45.0),  # image rotation (+/- deg)
-        "translate": tune.uniform(0.0, 0.9),  # image translation (+/- fraction)
-        "scale": tune.uniform(0.0, 0.95),  # image scale (+/- gain)
-        "shear": tune.uniform(0.0, 10.0),  # image shear (+/- deg)
-        "perspective": tune.uniform(0.0, 0.001),  # image perspective (+/- fraction), range 0-0.001
-        "flipud": tune.uniform(0.0, 1.0),  # image flip up-down (probability)
-        "fliplr": tune.uniform(0.0, 1.0),  # image flip left-right (probability)
-        "bgr": tune.uniform(0.0, 1.0),  # swap RGB↔BGR channels (probability)
-        "mosaic": tune.uniform(0.0, 1.0),  # image mosaic (probability)
-        "mixup": tune.uniform(0.0, 1.0),  # image mixup (probability)
-        "cutmix": tune.uniform(0.0, 1.0),  # image cutmix (probability)
-        "copy_paste": tune.uniform(0.0, 1.0),  # segment copy-paste (object fraction)
+        "box": tune.uniform(1.0, 20.0),  # 边界框 损失 gain
+        "cls": tune.uniform(0.1, 4.0),  # cls 损失增益（随像素数量缩放）
+        "cls_pw": tune.uniform(0.0, 1.0),  # cls 幂权重（随像素数量缩放）
+        "dfl": tune.uniform(0.4, 12.0),  # dfl 损失 gain
+        "hsv_h": tune.uniform(0.0, 0.1),  # 图像 HSV-Hue augmentation (fraction)
+        "hsv_s": tune.uniform(0.0, 0.9),  # 图像 HSV-Saturation augmentation (fraction)
+        "hsv_v": tune.uniform(0.0, 0.9),  # 图像 HSV-Value augmentation (fraction)
+        "degrees": tune.uniform(0.0, 45.0),  # 图像 rotation (+/- deg)
+        "translate": tune.uniform(0.0, 0.9),  # 图像 translation (+/- fraction)
+        "scale": tune.uniform(0.0, 0.95),  # 图像 scale (+/- gain)
+        "shear": tune.uniform(0.0, 10.0),  # 图像 shear (+/- deg)
+        "perspective": tune.uniform(0.0, 0.001),  # 图像 perspective (+/- fraction), range 0-0.001
+        "flipud": tune.uniform(0.0, 1.0),  # 图像 flip up-down (概率)
+        "fliplr": tune.uniform(0.0, 1.0),  # 图像 flip left-right (概率)
+        "bgr": tune.uniform(0.0, 1.0),  # swap RGB↔BGR 通道 (概率)
+        "mosaic": tune.uniform(0.0, 1.0),  # 图像 mosaic (概率)
+        "mixup": tune.uniform(0.0, 1.0),  # 图像 mixup (概率)
+        "cutmix": tune.uniform(0.0, 1.0),  # 图像 cutmix (概率)
+        "copy_paste": tune.uniform(0.0, 1.0),  # 分割段 copy-paste (对象 fraction)
         "close_mosaic": tune.randint(0, 11),  # close dataloader mosaic (epochs)
     }
 
-    # Put the model in ray store
+    # 将模型放入 Ray 存储
     task = model.task
     model_in_store = ray.put(model)
     base_name = train_args.get("name", "tune")
 
     def _tune(config):
-        """Train the YOLO model with the specified hyperparameters and return results."""
-        model_to_train = ray.get(model_in_store)  # get the model from ray store for tuning
+        """使用指定超参数训练 YOLO 模型并返回结果。"""
+        model_to_train = ray.get(model_in_store)  # 从 Ray 存储获取用于调参的模型
         model_to_train.trainer = None
         model_to_train.reset_callbacks()
         config = _sanitize_tune_value(dict(config))
         config.update(train_args)
 
-        # Set trial-specific name for W&B logging
+        # 设置试验专用名称，用于 W&B 日志记录
         try:
             if hasattr(tune, "get_context"):
-                trial_id = tune.get_context().get_trial_id()  # Ray ≥2.7, get current trial ID (e.g., "tune_c1c1ce99")
+                trial_id = tune.get_context().get_trial_id()  # Ray ≥2.7，获取当前试验 ID（例如 "tune_c1c1ce99"）
             else:
                 trial_id = tune.get_trial_id()  # Ray <2.7
             trial_suffix = trial_id.split("_")[-1] if "_" in trial_id else trial_id
             config["name"] = f"{base_name}_{trial_suffix}"
         except Exception:
-            # Not in Ray Tune context or error getting trial ID, use base name
+            # 不在 Ray Tune 上下文中或获取试验 ID 出错时，使用基础名称
             config["name"] = base_name
 
         results = model_to_train.train(**config)
@@ -446,12 +443,12 @@ def run_ray_tune(
             }
         return results.results_dict
 
-    # Get search space
+    # 获取搜索空间
     if not space and not train_args.get("resume"):
         space = default_space
         LOGGER.warning("Search space not provided, using default search space.")
 
-    # Get dataset
+    # 获取数据集
     data = train_args.get("data", TASK2DATA[task])
     space["data"] = data
     if "data" not in train_args:
@@ -461,10 +458,10 @@ def run_ray_tune(
         search_alg, task, space, iterations
     )
 
-    # Define the trainable function with allocated resources
+    # 使用分配的资源定义可训练函数
     trainable_with_resources = tune.with_resources(_tune, {"cpu": NUM_THREADS, "gpu": gpu_per_trial or 0})
 
-    # Define the scheduler for hyperparameter search
+    # 为超参数搜索定义调度器
     max_t = train_args.get("epochs") or DEFAULT_CFG_DICT["epochs"] or 100
     scheduler = ASHAScheduler(
         time_attr="epoch",
@@ -483,14 +480,14 @@ def run_ray_tune(
             reduction_factor=3,
         )
 
-    # Create the Ray Tune hyperparameter search tuner
+    # 创建 Ray Tune 超参数搜索调优器
     tune_dir = get_save_dir(
         get_cfg(
             DEFAULT_CFG,
             {**train_args, "exist_ok": train_args.pop("resume", False)},  # resume w/ same tune_dir
         ),
         name=train_args.pop("name", "tune"),  # runs/{task}/{tune_dir}
-    )  # must be absolute dir
+    )  # 必须是绝对目录
     tune_dir.mkdir(parents=True, exist_ok=True)
     if tune.Tuner.can_restore(tune_dir):
         LOGGER.info(f"{colorstr('Tuner: ')} Resuming tuning run {tune_dir}...")
@@ -509,13 +506,13 @@ def run_ray_tune(
             run_config=RunConfig(storage_path=tune_dir.parent, name=tune_dir.name),
         )
 
-    # Run the hyperparameter search
+    # 执行超参数搜索
     tuner.fit()
 
-    # Get the results of the hyperparameter search
+    # 获取超参数搜索结果
     results = tuner.get_results()
 
-    # Shut down Ray to clean up workers
+    # 关闭 Ray 以清理 worker
     ray.shutdown()
 
     return results

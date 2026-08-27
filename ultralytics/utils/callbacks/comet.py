@@ -13,19 +13,19 @@ from ultralytics.utils import LOGGER, RANK, SETTINGS, TESTS_RUNNING, env_bool, o
 from ultralytics.utils.metrics import ClassifyMetrics, DetMetrics, OBBMetrics, PoseMetrics, SegmentMetrics
 
 try:
-    assert not TESTS_RUNNING  # do not log pytest
-    assert SETTINGS["comet"] is True  # verify integration is enabled
+    assert not TESTS_RUNNING  # 不记录 pytest 测试
+    assert SETTINGS["comet"] is True  # 确认已启用集成
     import comet_ml
 
-    assert hasattr(comet_ml, "__version__")  # verify package is not directory
+    assert hasattr(comet_ml, "__version__")  # 确认导入的是有效软件包
 
     import os
     from pathlib import Path
 
-    # Ensures certain logging functions only run for supported tasks
+    # 确保部分日志函数只在支持的任务上运行
     COMET_SUPPORTED_TASKS = ["detect", "segment"]
 
-    # Names of plots created by Ultralytics that are logged to Comet
+    # Ultralytics 创建并记录到 Comet 的绘图名称
     CONFUSION_MATRIX_PLOT_NAMES = "confusion_matrix", "confusion_matrix_normalized"
     EVALUATION_PLOT_NAMES = "F1_curve", "P_curve", "R_curve", "PR_curve"
     LABEL_PLOT_NAMES = ["labels"]
@@ -42,7 +42,7 @@ except (ImportError, AssertionError):
 
 
 def _get_comet_mode() -> str:
-    """Return the Comet mode from environment variables, defaulting to 'online'."""
+    """从环境变量获取 Comet 模式，默认使用 `online`。"""
     comet_mode = os.getenv("COMET_MODE")
     if comet_mode is not None:
         LOGGER.warning(
@@ -57,49 +57,49 @@ def _get_comet_mode() -> str:
 
 
 def _get_comet_model_name() -> str:
-    """Return the Comet model name from environment variable or default to 'Ultralytics'."""
+    """从环境变量获取 Comet 模型名称；未设置时默认为 `Ultralytics`。"""
     return os.getenv("COMET_MODEL_NAME", "Ultralytics")
 
 
 def _get_eval_batch_logging_interval() -> int:
-    """Get the evaluation batch logging interval from environment variable or use default value 1."""
+    """从环境变量获取评估批次日志间隔；未设置时使用默认值 1。"""
     return int(os.getenv("COMET_EVAL_BATCH_LOGGING_INTERVAL", "1"))
 
 
 def _get_max_image_predictions_to_log() -> int:
-    """Get the maximum number of image predictions to log from environment variables."""
+    """从环境变量获取要记录的图像预测结果最大数量。"""
     return int(os.getenv("COMET_MAX_IMAGE_PREDICTIONS", "100"))
 
 
 def _scale_confidence_score(score: float) -> float:
-    """Scale the confidence score by a factor specified in environment variable."""
+    """按照环境变量指定的倍率缩放置信度分数。"""
     scale = float(os.getenv("COMET_MAX_CONFIDENCE_SCORE", "100.0"))
     return score * scale
 
 
 def _should_log_confusion_matrix() -> bool:
-    """Determine if the confusion matrix should be logged based on environment variable settings."""
+    """根据环境变量设置确定是否记录混淆矩阵。"""
     return env_bool("COMET_EVAL_LOG_CONFUSION_MATRIX", False)
 
 
 def _should_log_image_predictions() -> bool:
-    """Determine whether to log image predictions based on environment variable."""
+    """根据环境变量确定是否记录图像预测结果。"""
     return env_bool("COMET_EVAL_LOG_IMAGE_PREDICTIONS", True)
 
 
 def _resume_or_create_experiment(args: SimpleNamespace) -> None:
-    """Resume CometML experiment or create a new experiment based on args.
+    """根据 args 恢复 CometML 实验，或创建新的实验。
 
-    Ensures that the experiment object is only created in a single process during distributed training.
+    确保分布式训练期间只在一个进程中创建实验对象。
 
-    Args:
-        args (SimpleNamespace): Training arguments containing project configuration and other parameters.
+    参数：
+        args (SimpleNamespace): 包含项目配置和其他参数的训练参数对象。
     """
     if RANK not in {-1, 0}:
         return
 
-    # Set environment variable (if not set by the user) to configure the Comet experiment's online mode under the hood.
-    # IF COMET_START_ONLINE is set by the user it will override COMET_MODE value.
+    # 如果用户未设置，则设置环境变量以配置 Comet 实验的在线模式。
+    # 如果用户设置了 COMET_START_ONLINE，它将覆盖 COMET_MODE 的值。
     if os.getenv("COMET_START_ONLINE") is None:
         comet_mode = _get_comet_mode()
         os.environ["COMET_START_ONLINE"] = "1" if comet_mode != "offline" else "0"
@@ -123,13 +123,13 @@ def _resume_or_create_experiment(args: SimpleNamespace) -> None:
 
 
 def _fetch_trainer_metadata(trainer) -> dict:
-    """Return metadata for YOLO training including epoch and asset saving status.
+    """返回 YOLO 训练元数据，包括周期和资源保存状态。
 
-    Args:
-        trainer (ultralytics.engine.trainer.BaseTrainer): The YOLO trainer object containing training state and config.
+    参数：
+        trainer (ultralytics.engine.trainer.BaseTrainer): 包含训练状态和配置的 YOLO 训练器对象。
 
-    Returns:
-        (dict): Dictionary containing current epoch, step, save assets flag, and final epoch flag.
+    返回：
+        (dict): 包含当前周期、步数、是否保存资源以及是否为最后一个周期的字典。
     """
     curr_epoch = trainer.epoch + 1
 
@@ -148,29 +148,29 @@ def _fetch_trainer_metadata(trainer) -> dict:
 def _scale_bounding_box_to_original_image_shape(
     box, resized_image_shape, original_image_shape, ratio_pad
 ) -> list[float]:
-    """Scale bounding box from resized image coordinates to original image coordinates.
+    """将边界框从缩放图像坐标转换回原始图像坐标。
 
-    YOLO resizes images during training and the label values are normalized based on this resized shape. This function
-    rescales the bounding box labels to the original image shape.
+    YOLO 会在训练期间缩放图像，标签值以缩放后的图像形状为基准进行归一化。
+    此函数会将边界框标签重新缩放到原始图像形状。
 
-    Args:
-        box (torch.Tensor): Bounding box in normalized xywh format.
-        resized_image_shape (tuple): Shape of the resized image (height, width).
-        original_image_shape (tuple): Shape of the original image (height, width).
-        ratio_pad (tuple): Ratio and padding information for scaling.
+    参数：
+        box (torch.Tensor): 归一化 xywh 格式的边界框。
+        resized_image_shape (tuple): 缩放图像的形状（高度、宽度）。
+        original_image_shape (tuple): 原始图像的形状（高度、宽度）。
+        ratio_pad (tuple): 用于缩放的比例和填充信息。
 
-    Returns:
-        (list[float]): Scaled bounding box coordinates in xywh format with top-left corner adjustment.
+    返回：
+        (列表[float]): 经缩放并调整左上角坐标后的 xywh 格式边界框。
     """
     resized_image_height, resized_image_width = resized_image_shape
 
-    # Convert normalized xywh format predictions to xyxy in resized scale format
+    # 将归一化 xywh 格式的预测结果转换为缩放尺寸下的 xyxy 格式
     box = ops.xywhn2xyxy(box, h=resized_image_height, w=resized_image_width)
-    # Scale box predictions from resized image scale back to original image scale
+    # 将边界框预测结果从缩放图像尺寸还原到原始图像尺寸
     box = ops.scale_boxes(resized_image_shape, box, original_image_shape, ratio_pad)
-    # Convert bounding box format from xyxy to xywh for Comet logging
+    # 将边界框从 xyxy 格式转换为 xywh 格式，以便记录到 Comet
     box = ops.xyxy2xywh(box)
-    # Adjust xy center to correspond top-left corner
+    # 调整 xy 中心点，使其对应左上角
     box[:2] -= box[2:] / 2
     box = box.tolist()
 
@@ -178,28 +178,26 @@ def _scale_bounding_box_to_original_image_shape(
 
 
 def _format_ground_truth_annotations_for_detection(img_idx, image_path, batch, class_name_map=None) -> dict | None:
-    """Format ground truth annotations for object detection.
+    """整理目标检测任务的真实标注。
 
-    This function processes ground truth annotations from a batch of images for object detection tasks. It extracts
-    bounding boxes, class labels, and other metadata for a specific image in the batch, and formats them for
-    visualization or evaluation.
+    此函数处理目标检测任务中一个图像批次的真实标注，提取指定图像的边界框、类别标签及其他元数据，
+    并将其整理为可用于可视化或评估的格式。
 
-    Args:
-        img_idx (int): Index of the image in the batch to process.
-        image_path (str | Path): Path to the image file.
-        batch (dict): Batch dictionary containing detection data with keys:
-            - 'batch_idx': Tensor of batch indices
-            - 'bboxes': Tensor of bounding boxes in normalized xywh format
-            - 'cls': Tensor of class labels
-            - 'ori_shape': Original image shapes
-            - 'resized_shape': Resized image shapes
-            - 'ratio_pad': Ratio and padding information
-        class_name_map (dict, optional): Mapping from class indices to class names.
+    参数：
+        img_idx (int): 要处理的图像在批次中的索引。
+        image_path (str | Path): 图像文件路径。
+        batch (dict): 包含检测数据的批次字典，键包括：
+            - 'batch_idx'：批次索引张量
+            - 'bboxes'：归一化 xywh 格式的边界框张量
+            - 'cls'：类别标签张量
+            - 'ori_shape'：原始图像形状
+            - 'resized_shape'：缩放图像形状
+            - 'ratio_pad'：比例和填充信息
+        class_name_map (dict, 可选)：从类别索引映射到类别名称的字典。
 
-    Returns:
-        (dict | None): Formatted ground truth annotations with keys 'name' and 'data', where 'data' is a list of
-            annotation dicts each containing 'boxes', 'label', and 'score' keys. Returns None if no bounding boxes are
-            found for the image.
+    返回：
+        (dict | None)：整理后的真实标注，包含 `name` 和 `data` 键；`data` 是标注字典列表，
+            每个字典包含 `boxes`、`label` 和 `score` 键。如果图像中没有边界框，则返回 None。
     """
     indices = batch["batch_idx"] == img_idx
     bboxes = batch["bboxes"][indices]
@@ -230,16 +228,16 @@ def _format_ground_truth_annotations_for_detection(img_idx, image_path, batch, c
 
 
 def _format_prediction_annotations(image_path, metadata, class_label_map=None, class_map=None) -> dict | None:
-    """Format YOLO predictions for object detection visualization.
+    """整理用于目标检测可视化的 YOLO 预测结果。
 
-    Args:
-        image_path (Path): Path to the image file.
-        metadata (dict): Prediction metadata containing bounding boxes and class information.
-        class_label_map (dict, optional): Mapping from class indices to class names.
-        class_map (dict, optional): Additional class mapping for label conversion.
+    参数：
+        image_path (Path): 图像文件路径。
+        metadata (dict): 包含边界框和类别信息的预测元数据。
+        class_label_map (dict, 可选)：从类别索引映射到类别名称的字典。
+        class_map (dict, 可选)：用于标签转换的其他类别映射。
 
-    Returns:
-        (dict | None): Formatted prediction annotations or None if no predictions exist.
+    返回：
+        (dict | None)：整理后的预测标注；不存在预测结果时返回 None。
     """
     stem = image_path.stem
     image_id = int(stem) if stem.isnumeric() else stem
@@ -249,11 +247,11 @@ def _format_prediction_annotations(image_path, metadata, class_label_map=None, c
         LOGGER.debug(f"Comet Image: {image_path} has no bounding boxes predictions")
         return None
 
-    # apply the mapping that was used to map the predicted classes when the JSON was created
+    # 应用生成 JSON 时用于映射预测类别的映射表
     if class_label_map and class_map:
         class_label_map = {class_map[k]: v for k, v in class_label_map.items()}
     try:
-        # import faster_coco_eval utilities to decompress annotations for various tasks, e.g. segmentation
+        # 导入 faster_coco_eval 工具，以解压分割等任务的标注
         from faster_coco_eval.core.mask import decode
     except ImportError:
         decode = None
@@ -269,7 +267,7 @@ def _format_prediction_annotations(image_path, metadata, class_label_map=None, c
         annotation_data = {"boxes": [boxes], "label": cls_label, "score": score}
 
         if decode is not None:
-            # do segmentation processing only if we are able to decode it
+            # 只有能够解码时才处理分割数据
             segments = prediction.get("segmentation", None)
             if segments is not None:
                 segments = _extract_segmentation_annotation(segments, decode)
@@ -282,14 +280,14 @@ def _format_prediction_annotations(image_path, metadata, class_label_map=None, c
 
 
 def _extract_segmentation_annotation(segmentation_raw: str, decode: Callable) -> list[list[Any]] | None:
-    """Extract segmentation annotation from compressed segmentations as list of polygons.
+    """从压缩的分割数据中提取分割标注，并返回多边形列表。
 
-    Args:
-        segmentation_raw (str): Raw segmentation data in compressed format.
-        decode (Callable): Function to decode the compressed segmentation data.
+    参数：
+        segmentation_raw (str): 压缩格式的原始分割数据。
+        decode (Callable)：用于解码压缩分割数据的函数。
 
-    Returns:
-        (list[list[Any]] | None): List of polygon points or None if extraction fails.
+    返回：
+        (列表[列表[Any]] | None)：多边形点列表；提取失败时返回 None。
     """
     try:
         mask = decode(segmentation_raw)
@@ -302,18 +300,18 @@ def _extract_segmentation_annotation(segmentation_raw: str, decode: Callable) ->
 
 
 def _fetch_annotations(img_idx, image_path, batch, prediction_metadata_map, class_label_map, class_map) -> list | None:
-    """Join the ground truth and prediction annotations if they exist.
+    """如果真实标注和预测标注存在，则将二者合并。
 
-    Args:
-        img_idx (int): Index of the image in the batch.
-        image_path (Path): Path to the image file.
-        batch (dict): Batch data containing ground truth annotations.
-        prediction_metadata_map (dict): Map of prediction metadata by image ID.
-        class_label_map (dict): Mapping from class indices to class names.
-        class_map (dict): Additional class mapping for label conversion.
+    参数：
+        img_idx (int): 图像在批次中的索引。
+        image_path (Path): 图像文件路径。
+        batch (dict): 包含真实标注的批次数据。
+        prediction_metadata_map (dict): 按图像 ID 保存预测元数据的映射。
+        class_label_map (dict): 从类别索引映射到类别名称的字典。
+        class_map (dict): 用于标签转换的其他类别映射。
 
-    Returns:
-        (list | None): List of annotation dictionaries or None if no annotations exist.
+    返回：
+        (列表 | None)：标注字典列表；不存在标注时返回 None。
     """
     ground_truth_annotations = _format_ground_truth_annotations_for_detection(
         img_idx, image_path, batch, class_label_map
@@ -329,7 +327,7 @@ def _fetch_annotations(img_idx, image_path, batch, prediction_metadata_map, clas
 
 
 def _create_prediction_metadata_map(model_predictions) -> dict:
-    """Create metadata map for model predictions by grouping them based on image ID."""
+    """按图像 ID 对模型预测结果分组，创建预测元数据映射。"""
     pred_metadata_map = {}
     for prediction in model_predictions:
         pred_metadata_map.setdefault(prediction["image_id"], [])
@@ -339,7 +337,7 @@ def _create_prediction_metadata_map(model_predictions) -> dict:
 
 
 def _log_confusion_matrix(experiment, trainer, curr_step, curr_epoch) -> None:
-    """Log the confusion matrix to Comet experiment."""
+    """将混淆矩阵记录到 Comet 实验。"""
     conf_mat = trainer.validator.confusion_matrix.matrix
     names = [*list(trainer.data["names"].values()), "background"]
     experiment.log_confusion_matrix(
@@ -348,17 +346,15 @@ def _log_confusion_matrix(experiment, trainer, curr_step, curr_epoch) -> None:
 
 
 def _log_images(experiment, image_paths, curr_step: int | None, annotations=None) -> None:
-    """Log images to the experiment with optional annotations.
+    """将图像及可选标注记录到实验中。
 
-    This function logs images to a Comet ML experiment, optionally including annotation data for visualization such as
-    bounding boxes or segmentation masks.
+    此函数会将图像记录到 Comet ML 实验，并可选地附带用于可视化的边界框或分割掩码等标注数据。
 
-    Args:
-        experiment (comet_ml.CometExperiment): The Comet ML experiment to log images to.
-        image_paths (list[Path]): List of paths to images that will be logged.
-        curr_step (int | None): Current training step/iteration for tracking in the experiment timeline.
-        annotations (list[list[dict]], optional): Nested list of annotation dictionaries for each image. Each annotation
-            contains visualization data like bounding boxes, labels, and confidence scores.
+    参数：
+        experiment (comet_ml.CometExperiment): 要记录图像的 Comet ML 实验。
+        image_paths (列表[Path]): 要记录的图像路径列表。
+        curr_step (int | None): 用于实验时间线跟踪的当前训练步数或迭代次数。
+        annotations (列表[列表[dict]], 可选)：每个图像对应的嵌套标注字典列表。每个标注包含边界框、标签和置信度等可视化数据。
     """
     if annotations:
         for image_path, annotation in zip(image_paths, annotations):
@@ -370,20 +366,20 @@ def _log_images(experiment, image_paths, curr_step: int | None, annotations=None
 
 
 def _log_image_predictions(experiment, validator, curr_step) -> None:
-    """Log image predictions to a Comet ML experiment during model validation.
+    """在模型验证期间将图像预测结果记录到 Comet ML 实验。
 
-    This function processes validation data and formats both ground truth and prediction annotations for visualization
-    in the Comet dashboard. The function respects configured limits on the number of images to log.
+    此函数处理验证数据，并整理真实标注和预测标注，以便在 Comet 面板中可视化。
+    函数会遵守配置的图像记录数量限制。
 
-    Args:
-        experiment (comet_ml.CometExperiment): The Comet ML experiment to log to.
-        validator (BaseValidator): The validator instance containing validation data and predictions.
-        curr_step (int): The current training step for logging timeline.
+    参数：
+        experiment (comet_ml.CometExperiment): 要记录数据的 Comet ML 实验。
+        validator (BaseValidator): 包含验证数据和预测结果的验证器实例。
+        curr_step (int): 用于记录时间线的当前训练步数。
 
-    Notes:
-        This function uses global state to track the number of logged predictions across calls.
-        It only logs predictions for supported tasks defined in COMET_SUPPORTED_TASKS.
-        The number of logged images is limited by the COMET_MAX_IMAGE_PREDICTIONS environment variable.
+    注意：
+        此函数使用全局状态跟踪多次调用期间已记录的预测结果数量。
+        它只记录 COMET_SUPPORTED_TASKS 中定义的支持任务的预测结果。
+        记录图像的数量受 COMET_MAX_IMAGE_PREDICTIONS 环境变量限制。
     """
     global _comet_image_prediction_count
 
@@ -431,18 +427,16 @@ def _log_image_predictions(experiment, validator, curr_step) -> None:
 
 
 def _log_plots(experiment, trainer) -> None:
-    """Log evaluation plots and label plots for the experiment.
+    """将评估绘图和标签绘图记录到实验中。
 
-    This function logs various evaluation plots and confusion matrices to the experiment tracking system. It handles
-    different types of metrics (SegmentMetrics, PoseMetrics, DetMetrics, OBBMetrics) and logs the appropriate plots for
-    each type.
+    此函数会将各种评估绘图和混淆矩阵记录到实验跟踪系统。
+    它处理不同类型的指标（SegmentMetrics、PoseMetrics、DetMetrics、OBBMetrics），并记录每种类型对应的绘图。
 
-    Args:
-        experiment (comet_ml.CometExperiment): The Comet ML experiment to log plots to.
-        trainer (ultralytics.engine.trainer.BaseTrainer): The trainer object containing validation metrics and save
-            directory information.
+    参数：
+        experiment (comet_ml.CometExperiment): 要记录绘图的 Comet ML 实验。
+        trainer (ultralytics.engine.trainer.BaseTrainer): 包含验证指标和保存目录信息的训练器对象。
 
-    Examples:
+    示例：
         >>> from ultralytics.utils.callbacks.comet import _log_plots
         >>> _log_plots(experiment, trainer)
     """
@@ -478,49 +472,48 @@ def _log_plots(experiment, trainer) -> None:
 
 
 def _log_model(experiment, trainer) -> None:
-    """Log the best-trained model to Comet.ml."""
+    """将训练得到的最佳模型记录到 Comet.ml。"""
     model_name = _get_comet_model_name()
     experiment.log_model(model_name, file_or_folder=str(trainer.best), file_name="best.pt", overwrite=True)
 
 
 def _log_image_batches(experiment, trainer, curr_step: int) -> None:
-    """Log samples of image batches for train and validation."""
+    """记录训练和验证图像批次的样本。"""
     _log_images(experiment, trainer.save_dir.glob("train_batch*.jpg"), curr_step)
     _log_images(experiment, trainer.save_dir.glob("val_batch*.jpg"), curr_step)
 
 
 def _log_asset(experiment, asset_path) -> None:
-    """Logs a specific asset file to the given experiment.
+    """将指定资源文件记录到给定实验。
 
-    This function facilitates logging an asset, such as a file, to the provided
-    experiment. It enables integration with experiment tracking platforms.
+    此函数用于将文件等资源记录到指定实验，从而实现与实验跟踪平台的集成。
 
-    Args:
-        experiment (comet_ml.CometExperiment): The experiment instance to which the asset will be logged.
-        asset_path (Path): The file path of the asset to log.
+    参数：
+        experiment (comet_ml.CometExperiment): 要记录资源的实验实例。
+        asset_path (Path): 要记录的资源文件路径。
     """
     experiment.log_asset(asset_path)
 
 
 def _log_table(experiment, table_path) -> None:
-    """Logs a table to the provided experiment.
+    """将表格记录到指定实验。
 
-    This function is used to log a table file to the given experiment. The table is identified by its file path.
+    此函数用于将表格文件记录到给定实验，表格由其文件路径标识。
 
-    Args:
-        experiment (comet_ml.CometExperiment): The experiment object where the table file will be logged.
-        table_path (Path): The file path of the table to be logged.
+    参数：
+        experiment (comet_ml.CometExperiment): 要记录表格文件的实验对象。
+        table_path (Path): 要记录的表格文件路径。
     """
     experiment.log_table(str(table_path))
 
 
 def on_pretrain_routine_start(trainer) -> None:
-    """Create or resume a CometML experiment at the start of a YOLO pre-training routine."""
+    """在 YOLO 预训练流程开始时创建或恢复 CometML 实验。"""
     _resume_or_create_experiment(trainer.args)
 
 
 def on_train_epoch_end(trainer) -> None:
-    """Log metrics and save batch images at the end of training epochs."""
+    """在训练周期结束时记录指标并保存批次图像。"""
     experiment = comet_ml.get_running_experiment()
     if not experiment:
         return
@@ -533,22 +526,20 @@ def on_train_epoch_end(trainer) -> None:
 
 
 def on_fit_epoch_end(trainer) -> None:
-    """Log model assets at the end of each epoch during training.
+    """在每个训练周期结束时记录模型资源。
 
-    This function is called at the end of each training epoch to log metrics, learning rates, and model information to a
-    Comet ML experiment. It also logs model assets, confusion matrices, and image predictions based on configuration
-    settings.
+    此函数会在每个训练周期结束时，将指标、学习率和模型信息记录到 Comet ML 实验。
+    它还会根据配置记录模型资源、混淆矩阵和图像预测结果。
 
-    The function retrieves the current Comet ML experiment and logs various training metrics. If it's the first epoch,
-    it also logs model information. On specified save intervals, it logs the model, confusion matrix (if enabled), and
-    image predictions (if enabled).
+    此函数获取当前 Comet ML 实验并记录各种训练指标。如果是第一个周期，还会记录模型信息。
+    在指定的保存间隔内，它会记录模型、混淆矩阵（如果启用）以及图像预测结果（如果启用）。
 
-    Args:
-        trainer (BaseTrainer): The YOLO trainer object containing training state, metrics, and configuration.
+    参数：
+        trainer (BaseTrainer): 包含训练状态、指标和配置的 YOLO 训练器对象。
 
-    Examples:
-        >>> # Inside a training loop
-        >>> on_fit_epoch_end(trainer)  # Log metrics and assets to Comet ML
+    示例：
+        >>> # 在训练循环内部
+        >>> on_fit_epoch_end(trainer)  # 将指标和资源记录到 Comet ML
     """
     experiment = comet_ml.get_running_experiment()
     if not experiment:
@@ -577,7 +568,7 @@ def on_fit_epoch_end(trainer) -> None:
 
 
 def on_train_end(trainer) -> None:
-    """Perform operations at the end of training."""
+    """在训练结束时执行相关操作。"""
     experiment = comet_ml.get_running_experiment()
     if not experiment:
         return
@@ -594,12 +585,12 @@ def on_train_end(trainer) -> None:
     _log_confusion_matrix(experiment, trainer, curr_step, curr_epoch)
     _log_image_predictions(experiment, trainer.validator, curr_step)
     _log_image_batches(experiment, trainer, curr_step)
-    # log results table
+    # 记录结果表格
     table_path = trainer.save_dir / RESULTS_TABLE_NAME
     if table_path.exists():
         _log_table(experiment, table_path)
 
-    # log arguments YAML
+    # 记录参数 YAML 文件
     args_path = trainer.save_dir / ARGS_YAML_NAME
     if args_path.exists():
         _log_asset(experiment, args_path)

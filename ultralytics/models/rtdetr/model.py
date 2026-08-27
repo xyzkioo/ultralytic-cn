@@ -5,7 +5,7 @@ Interface for Baidu's RT-DETR, a Vision Transformer-based real-time object detec
 RT-DETR offers real-time performance and high accuracy, excelling in accelerated backends like CUDA with TensorRT.
 It features an efficient hybrid encoder and IoU-aware query selection for enhanced detection accuracy.
 
-References:
+参考：
     https://arxiv.org/pdf/2304.08069.pdf
 """
 
@@ -19,39 +19,38 @@ from .val import RTDETRValidator
 
 
 class RTDETR(Model):
-    """Interface for Baidu's RT-DETR model, a Vision Transformer-based real-time object detector.
+    """百度 RT-DETR 模型接口，一种基于 Vision Transformer 的实时对象检测器。
 
-    This model provides real-time performance with high accuracy. It supports efficient hybrid encoding, IoU-aware query
-    selection, and adaptable inference speed.
+    此模型在保持高精度的同时提供实时性能，支持高效混合编码、IoU 感知查询选择和可调节推理速度。
 
-    Attributes:
-        model (str): Path to the pre-trained model.
+    属性：
+        model (str): 预训练模型路径。
 
-    Methods:
-        task_map: Return a task map for RT-DETR, associating tasks with corresponding Ultralytics classes.
+    方法：
+        task_map: 返回 RT-DETR 任务到对应 Ultralytics 类的任务映射。
 
-    Examples:
-        Initialize RT-DETR with a pre-trained model
+    示例：
+        使用预训练模型初始化 RT-DETR
         >>> from ultralytics import RTDETR
         >>> model = RTDETR("rtdetr-l.pt")
         >>> results = model("image.jpg")
     """
 
     def __init__(self, model: str = "rtdetr-l.pt") -> None:
-        """Initialize the RT-DETR model with the given pre-trained model file.
+        """使用给定的预训练模型文件初始化 RT-DETR 模型。
 
-        Args:
-            model (str): Path to the pre-trained model. Supports .pt, .yaml, and .yml formats.
+        参数：
+            model (str): 预训练模型路径，支持 .pt、.yaml 和 .yml 格式。
         """
         assert TORCH_1_11, "RTDETR requires torch>=1.11"
         super().__init__(model=model, task="detect")
 
     @property
     def task_map(self) -> dict:
-        """Return a task map for RT-DETR, associating tasks with corresponding Ultralytics classes.
+        """返回 RT-DETR 任务到对应 Ultralytics 类的任务映射。
 
-        Returns:
-            (dict): A dictionary mapping task names to Ultralytics task classes for the RT-DETR model.
+        返回：
+            (dict): 将任务名称映射到 RT-DETR 模型对应 Ultralytics 任务类的字典。
         """
         return {
             "detect": {

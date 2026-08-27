@@ -1,8 +1,7 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
-"""
-Train a model on a dataset.
+"""在数据集上训练模型。
 
-Usage:
+用法：
     $ yolo mode=train model=yolo26n.pt data=coco8.yaml imgsz=640 epochs=100 batch=16
 """
 
@@ -70,71 +69,70 @@ from ultralytics.utils.torch_utils import (
 
 
 class BaseTrainer:
-    """A base class for creating trainers.
+    """用于创建训练器的基类。
 
-    This class provides the foundation for training YOLO models, handling the training loop, validation, checkpointing,
-    and various training utilities. It supports both single-GPU and multi-GPU distributed training.
+    此类为训练 YOLO 模型提供基础功能，负责训练循环、验证、检查点保存以及各种训练工具，
+    同时支持单 GPU 和多 GPU 分布式训练。
 
-    Attributes:
-        args (SimpleNamespace): Configuration for the trainer.
-        validator (BaseValidator): Validator instance.
-        model (nn.Module): Model instance.
-        callbacks (defaultdict): Dictionary of callbacks.
-        save_dir (Path): Directory to save results.
-        wdir (Path): Directory to save weights.
-        last (Path): Path to the last checkpoint.
-        best (Path): Path to the best checkpoint.
-        save_period (int): Save checkpoint every x epochs (disabled if < 1).
-        batch_size (int): Batch size for training.
-        epochs (int): Number of epochs to train for.
-        start_epoch (int): Starting epoch for training.
-        device (torch.device): Device to use for training.
-        amp (bool): Flag to enable AMP (Automatic Mixed Precision).
-        scaler (torch.amp.GradScaler): Gradient scaler for AMP.
-        data (dict): Dataset dictionary containing paths and metadata.
-        ema (ModelEMA): EMA (Exponential Moving Average) of the model.
-        resume (bool): Resume training from a checkpoint.
-        lf (callable): Learning rate scheduling function.
-        scheduler (torch.optim.lr_scheduler._LRScheduler): Learning rate scheduler.
-        best_fitness (float): The best fitness value achieved.
-        fitness (float): Current fitness value.
-        loss (torch.Tensor): Current loss value.
-        tloss (dict): Running mean of loss items.
-        loss_names (tuple): Names of loss items, derived from the loss dict returned by the criterion on the first
-            batch.
-        csv (Path): Path to results CSV file.
-        metrics (dict): Dictionary of metrics.
-        plots (dict): Dictionary of plots.
+    属性：
+        args (SimpleNamespace)：训练器配置。
+        validator (BaseValidator)：验证器实例。
+        model (nn.Module)：模型实例。
+        callbacks (defaultdict)：回调函数字典。
+        save_dir (Path)：结果保存目录。
+        wdir (Path)：权重保存目录。
+        last (Path)：最新检查点路径。
+        best (Path)：最佳检查点路径。
+        save_period (int)：每隔多少个 epoch 保存检查点（小于 1 时禁用）。
+        batch_size (int)：训练批次大小。
+        epochs (int)：训练轮数。
+        start_epoch (int)：训练起始轮次。
+        device (torch.device)：训练使用的设备。
+        amp (bool)：是否启用 AMP（自动混合精度）。
+        scaler (torch.amp.GradScaler)：AMP 使用的梯度缩放器。
+        data (dict)：包含路径和元数据的数据集字典。
+        ema (ModelEMA)：模型的 EMA（指数移动平均）副本。
+        resume (bool)：是否从检查点恢复训练。
+        lf (callable)：学习率调度函数。
+        scheduler (torch.optim.lr_scheduler._LRScheduler)：学习率调度器。
+        best_fitness (float)：当前达到的最佳适应度值。
+        fitness (float)：当前适应度值。
+        loss (torch.Tensor)：当前损失值。
+        tloss (dict)：损失项的运行平均值。
+        loss_names (tuple)：损失项名称，由第一个批次中损失函数返回的损失字典推导得到。
+        csv (Path)：结果 CSV 文件路径。
+        metrics (dict)：指标字典。
+        plots (dict)：图表字典。
 
-    Methods:
-        train: Execute the training process.
-        validate: Run validation on the val set.
-        save_model: Save model training checkpoints.
-        get_dataset: Get train and validation datasets.
-        setup_model: Load, create, or download model.
-        build_optimizer: Construct an optimizer for the model.
+    方法：
+        train：执行训练过程。
+        validate：在验证集上执行验证。
+        save_model：保存模型训练检查点。
+        get_dataset：获取训练集和验证集。
+        setup_model：加载、创建或下载模型。
+        build_optimizer：为模型构建优化器。
 
-    Examples:
-        Initialize a trainer and start training
+    示例：
+        初始化训练器并开始训练。
         >>> trainer = BaseTrainer(cfg="config.yaml")
         >>> trainer.train()
     """
 
     def __init__(self, cfg=DEFAULT_CFG, overrides=None, _callbacks: dict | None = None):
-        """Initialize the BaseTrainer class.
+        """初始化 BaseTrainer。
 
-        Args:
-            cfg (str | dict | SimpleNamespace, optional): Path to a configuration file or configuration object.
-            overrides (dict, optional): Configuration overrides.
-            _callbacks (dict, optional): Dictionary of callback functions.
+        参数：
+            cfg (str | dict | SimpleNamespace，可选)：配置文件路径或配置对象。
+            overrides (dict，可选)：配置覆盖项。
+            _callbacks (dict，可选)：回调函数字典。
         """
         self.args = get_cfg(cfg, overrides)
         if getattr(self.args, "augmentations", None) and not isinstance(self.args.augmentations[0], dict):
             import albumentations as A
 
-            self.args.augmentations = [A.to_dict(t) for t in self.args.augmentations]  # YAML/pickle-safe, DDP-safe
+            self.args.augmentations = [A.to_dict(t) for t in self.args.augmentations]  # 兼容 YAML、pickle 和 DDP
         self.check_resume(overrides)
-        self.args.device = parse_device(self.args.device)  # canonical string, resolves '-1' auto-selection once
+        self.args.device = parse_device(self.args.device)  # 规范化设备字符串，并只执行一次 '-1' 自动选择
         self.device = select_device(self.args.device)
         self.accelerator = get_torch_device_backend(self.device) if self.device.type not in {"cpu", "mps"} else None
         self.validator = None
@@ -142,55 +140,55 @@ class BaseTrainer:
         self.plots = {}
         init_seeds(self.args.seed + 1 + RANK, deterministic=self.args.deterministic)
 
-        # Dirs
+        # 目录
         self.save_dir = get_save_dir(self.args)
-        self.args.name = self.save_dir.name  # update name for loggers
-        self.wdir = self.save_dir / "weights"  # weights dir
+        self.args.name = self.save_dir.name  # 更新日志记录器使用的名称
+        self.wdir = self.save_dir / "weights"  # 权重目录
         if RANK in {-1, 0}:
-            self.wdir.mkdir(parents=True, exist_ok=True)  # make dir
+            self.wdir.mkdir(parents=True, exist_ok=True)  # 创建目录
             self.args.save_dir = str(self.save_dir)
-            YAML.save(self.save_dir / "args.yaml", vars(self.args))  # save run args
-        self.last, self.best = self.wdir / "last.pt", self.wdir / "best.pt"  # checkpoint paths
+            YAML.save(self.save_dir / "args.yaml", vars(self.args))  # 保存运行参数
+        self.last, self.best = self.wdir / "last.pt", self.wdir / "best.pt"  # 检查点 路径
         self.save_period = self.args.save_period
 
         self.batch_size = self.args.batch
-        self.epochs = self.args.epochs or 100  # in case users accidentally pass epochs=None with timed training
+        self.epochs = self.args.epochs or 100  # 防止用户在计时训练中误传 epochs=None
         self.start_epoch = 0
         if RANK == -1:
             print_args(vars(self.args))
 
-        # Device
+        # 设备
         if self.device.type in {"cpu", "mps"}:
-            self.args.workers = 0  # faster CPU training as time dominated by inference, not dataloading
+            self.args.workers = 0  # CPU 训练的耗时主要由推理决定，而不是数据加载
 
-        # Callbacks - initialize early so on_pretrain_routine_start can capture original args.data
+        # 回调：提前初始化，使 on_pretrain_routine_start 能获取原始参数
         self.callbacks = _callbacks or callbacks.get_default_callbacks()
 
-        # Device count in the launching process; distinct from utils.WORLD_SIZE set in spawned DDP workers
+        # 启动进程中的设备数量；这与生成的 DDP 工作进程中设置的 utils.WORLD_SIZE 不同
         if self.device.type in {"cpu", "mps"}:
             world_size = 0
-        else:  # i.e. device='0', '0,1,2,3', 'npu:0', or '' auto-selecting a single GPU
+        else:  # 例如 device='0'、'0,1,2,3'、'npu:0'，或自动选择单个 GPU 的空字符串
             world_size = len(self.args.device.split(",")) if self.args.device else 1
 
-        self.ddp = world_size > 1 and LOCAL_RANK == -1  # spawn DDP workers unless already one
+        self.ddp = world_size > 1 and LOCAL_RANK == -1  # 除非已经处于 DDP，否则启动 DDP 工作进程
         self.world_size = world_size
-        # Run on_pretrain_routine_start before get_dataset() to capture original args.data (e.g., ul:// URIs)
+        # 在 get_dataset() 前运行 on_pretrain_routine_start，以获取原始参数（例如 ul:// URI）
         if RANK in {-1, 0} and not self.ddp:
             callbacks.add_integration_callbacks(self)
             self.run_callbacks("on_pretrain_routine_start")
 
-        # Model and Dataset
+        # 模型和数据集
         self.model = check_model_file_from_stem(self.args.model)  # add suffix, i.e. yolo26n -> yolo26n.pt
-        with torch_distributed_zero_first(LOCAL_RANK):  # avoid auto-downloading dataset multiple times
+        with torch_distributed_zero_first(LOCAL_RANK):  # 避免多次自动下载数据集
             self.data = self.get_dataset()
 
         self.ema = None
 
-        # Optimization utils init
+        # 初始化优化工具
         self.lf = None
         self.scheduler = None
 
-        # Epoch level metrics
+        # epoch 级别指标
         self.best_fitness = None
         self.fitness = None
         self.loss = None
@@ -203,24 +201,24 @@ class BaseTrainer:
         self.nan_recovery_attempts = 0
 
     def add_callback(self, event: str, callback):
-        """Append the given callback to the event's callback list."""
+        """将给定回调添加到指定事件的回调列表中。"""
         self.callbacks[event].append(callback)
 
     def set_callback(self, event: str, callback):
-        """Override the existing callbacks with the given callback for the specified event."""
+        """使用给定回调覆盖指定事件的现有回调。"""
         self.callbacks[event] = [callback]
 
     def run_callbacks(self, event: str):
-        """Run all existing callbacks associated with a particular event."""
+        """运行与指定事件关联的所有现有回调。"""
         for callback in self.callbacks.get(event, []):
             callback(self)
 
     def train(self):
-        """Execute the training process, using DDP subprocess for multi-GPU or direct training for single-GPU."""
-        # Run subprocess if DDP training, else train normally
+        """执行训练过程：多 GPU 时使用 DDP 子进程，单 GPU 时直接训练。"""
+        # DDP 训练时运行子进程，否则正常训练
         try:
             if self.ddp:
-                # Argument checks
+                # 参数检查
                 if self.args.rect:
                     LOGGER.warning("'rect=True' is incompatible with Multi-GPU training, setting 'rect=False'")
                     self.args.rect = False
@@ -230,7 +228,7 @@ class BaseTrainer:
                         f"please specify a valid batch size multiple of GPU count {self.world_size}, i.e. batch={self.world_size * 8}."
                     )
 
-                # Command
+                # 命令
                 cmd, file = None, None
                 try:
                     cmd, file = generate_ddp_command(self)
@@ -243,34 +241,34 @@ class BaseTrainer:
             else:
                 self._do_train()
         finally:
-            unset_deterministic()  # never leave deterministic state on, including the DDP parent and failed runs
+            unset_deterministic()  # 绝不让确定性状态持续存在，包括 DDP 父进程和失败的运行
         if not self.ddp:
             self.run_callbacks("teardown")
 
     def _setup_scheduler(self):
-        """Initialize training learning rate scheduler."""
+        """初始化训练学习率调度器。"""
         if self.args.cos_lr:
-            self.lf = one_cycle(1, self.args.lrf, self.epochs)  # cosine 1->hyp['lrf']
+            self.lf = one_cycle(1, self.args.lrf, self.epochs)  # 余弦调度 1 -> hyp['lrf']
         else:
-            self.lf = lambda x: max(1 - x / self.epochs, 0) * (1.0 - self.args.lrf) + self.args.lrf  # linear
+            self.lf = lambda x: max(1 - x / self.epochs, 0) * (1.0 - self.args.lrf) + self.args.lrf  # 线性调度
         self.scheduler = optim.lr_scheduler.LambdaLR(self.optimizer, lr_lambda=self.lf)
 
     def _get_warmup_iterations(self, num_batches):
-        """Return warmup iterations, leaving at least the final epoch for regular training."""
+        """返回预热迭代次数，并至少为常规训练保留最后一个 epoch。"""
         warmup_epochs = min(self.args.warmup_epochs, max(self.epochs - 1, 0))
         return round(warmup_epochs * num_batches) if warmup_epochs > 0 else 0
 
     def _setup_ddp(self):
-        """Initialize and set the DistributedDataParallel parameters for training."""
+        """初始化并设置训练使用的 DistributedDataParallel 参数。"""
         device_type = self.args.device.split(":", 1)[0]
         device_type = device_type if device_type in {"npu", "xpu"} else "cuda"
         devices = self.args.device.split(":", 1)[-1].split(",")
-        index = int(devices[LOCAL_RANK])  # world_size > 1 guarantees a multi-device string
+        index = int(devices[LOCAL_RANK])  # world_size > 1 保证这里是多设备字符串
         self.device = torch.device(device_type, index)
         self.accelerator = get_torch_device_backend(self.device)
         self.accelerator.set_device(index)
         if device_type == "cuda":
-            os.environ["TORCH_NCCL_BLOCKING_WAIT"] = "1"  # set to enforce timeout
+            os.environ["TORCH_NCCL_BLOCKING_WAIT"] = "1"  # 设置为 1 以强制执行超时
         elif device_type == "xpu" and not (hasattr(dist, "is_xccl_available") and dist.is_xccl_available()):
             raise RuntimeError("Multi-XPU training requires XCCL, which is not available in this PyTorch build.")
         dist.init_process_group(
@@ -281,7 +279,7 @@ class BaseTrainer:
         )
 
     def _build_train_pipeline(self):
-        """Build dataloaders, optimizer, and scheduler for current batch size."""
+        """为当前批次大小构建数据加载器、优化器和调度器。"""
         batch_size = self.batch_size // max(self.world_size, 1)
         self.train_loader = self.get_dataloader(
             self.data["train"], batch_size=batch_size, rank=LOCAL_RANK, mode="train"
@@ -292,15 +290,15 @@ class BaseTrainer:
                 f"final batch=1 training at imgsz={self.args.imgsz} gives BatchNorm a single value per channel; "
                 f"change batch or use imgsz >= {2 * self.stride}"
             )
-        # Note: When training DOTA dataset, double batch size could get OOM on images with >2000 objects.
+        # 注意：训练 DOTA 数据集时，将批次大小加倍可能导致包含超过 2000 个目标的图像发生显存溢出。
         self.test_loader = self.get_dataloader(
             self.data.get("val") or self.data.get("test"),
             batch_size=batch_size if self.args.task in {"obb", "semantic", "depth"} else batch_size * 2,
             rank=LOCAL_RANK,
             mode="val",
         )
-        self.accumulate = max(round(self.args.nbs / self.batch_size), 1)  # accumulate loss before optimizing
-        weight_decay = self.args.weight_decay * self.batch_size * self.accumulate / self.args.nbs  # scale weight_decay
+        self.accumulate = max(round(self.args.nbs / self.batch_size), 1)  # 优化前累积损失
+        weight_decay = self.args.weight_decay * self.batch_size * self.accumulate / self.args.nbs  # 缩放权重衰减
         iterations = math.ceil(len(self.train_loader.dataset) / max(self.batch_size, self.args.nbs)) * self.epochs
         self.optimizer = self.build_optimizer(
             model=self.model,
@@ -313,25 +311,25 @@ class BaseTrainer:
         self._setup_scheduler()
 
     def _setup_train(self):
-        """Configure model, optimizer, dataloaders, and training utilities before the training loop."""
+        """在训练循环开始前配置模型、优化器、数据加载器和训练工具。"""
         ckpt = self.setup_model()
         self.model = self.model.to(self.device)
-        # channels_last (NHWC) is CUDA-only: lossless and Tensor-Core friendly there, but numerically wrong
-        # on MPS and no benefit on CPU
+        # channels_last（NHWC）仅支持 CUDA：在 CUDA 上不会损失精度且有利于 Tensor Core，
+        # 但在 MPS 上数值不正确，在 CPU 上也没有收益。
         if self.args.channels_last and self.device.type == "cuda":
             self.model = self.model.to(memory_format=torch.channels_last)
         elif self.args.channels_last:
             LOGGER.warning(f"'channels_last=True' is only supported on CUDA, ignoring on '{self.device.type}'.")
         self.set_model_attributes()
 
-        # Compile model (knowledge distillation runs the wrapped model eagerly and relies on
-        # find_unused_parameters under DDP for the frozen teacher, so disable compilation when distilling)
+        # 编译模型（知识蒸馏会立即运行封装后的模型，并依赖 DDP 中的 find_unused_parameters 处理冻结教师模型，
+        # 因此蒸馏时禁用编译）
         if self.args.distill_model is not None and self.args.compile:
             LOGGER.warning("'compile' is not supported with knowledge distillation and will be disabled.")
             self.args.compile = False
         self.model = attempt_compile(self.model, device=self.device, mode=self.args.compile)
 
-        # Freeze layers
+        # 冻结层
         freeze_list = (
             self.args.freeze
             if isinstance(self.args.freeze, list)
@@ -339,17 +337,17 @@ class BaseTrainer:
             if isinstance(self.args.freeze, int)
             else []
         )
-        always_freeze_names = [".dfl"]  # always freeze these layers
+        always_freeze_names = [".dfl"]  # 始终冻结这些层
         freeze_layer_names = [f"model.{x}." for x in freeze_list] + always_freeze_names
         if isinstance(unwrap_model(self.model), DistillationModel):
             freeze_layer_names.append("teacher_model.")
         self.freeze_layer_names = freeze_layer_names
         for k, v in self.model.named_parameters():
-            # v.register_hook(lambda x: torch.nan_to_num(x))  # NaN to 0 (commented for erratic training results)
+            # v.register_hook(lambda x: torch.nan_to_num(x))  # 将 NaN 转为 0（因训练结果不稳定而注释）
             if any(x in k for x in freeze_layer_names):
                 LOGGER.info(f"Freezing layer '{k}'")
                 v.requires_grad = False
-            elif not v.requires_grad and v.dtype.is_floating_point:  # only floating point Tensor can require gradients
+            elif not v.requires_grad and v.dtype.is_floating_point:  # 只有浮点张量可以计算梯度
                 LOGGER.warning(
                     f"setting 'requires_grad=True' for frozen layer '{k}'. "
                     "See ultralytics.engine.trainer for customization of frozen layers."
@@ -361,16 +359,16 @@ class BaseTrainer:
                 f"Reduce 'freeze' or pass a list of specific layer indices."
             )
 
-        # Check AMP
-        self.amp = torch.tensor(self.args.amp).to(self.device)  # True or False
-        if self.amp and RANK in {-1, 0}:  # Single-GPU and DDP
-            callbacks_backup = callbacks.default_callbacks.copy()  # backup callbacks as check_amp() resets them
+        # 检查 AMP
+        self.amp = torch.tensor(self.args.amp).to(self.device)  # True 或 False
+        if self.amp and RANK in {-1, 0}:  # 单 GPU 或 DDP 主进程
+            callbacks_backup = callbacks.default_callbacks.copy()  # 备份回调，因为 check_amp() 会重置它们
             self.amp = torch.tensor(check_amp(self.model), device=self.device)
-            callbacks.default_callbacks = callbacks_backup  # restore callbacks
-        if RANK > -1 and self.world_size > 1:  # DDP
-            self.amp = self.amp.int()  # gloo errors with boolean
-            dist.broadcast(self.amp, src=0)  # broadcast from rank 0 to all other ranks
-        self.amp = bool(self.amp)  # as boolean
+            callbacks.default_callbacks = callbacks_backup  # 恢复回调
+        if RANK > -1 and self.world_size > 1:  # DDP 模式
+            self.amp = self.amp.int()  # gloo 不支持布尔值
+            dist.broadcast(self.amp, src=0)  # 从 rank 0 广播到所有其他 rank
+        self.amp = bool(self.amp)  # 转换为布尔值
         if self.device.type == "npu":
             import torch_npu
 
@@ -381,17 +379,17 @@ class BaseTrainer:
                 if TORCH_2_4
                 else torch.cuda.amp.GradScaler(enabled=self.amp)
             )
-        # Check imgsz
-        gs = max(int(self.model.stride.max() if hasattr(self.model, "stride") else 32), 32)  # grid size (max stride)
+        # 检查图像尺寸
+        gs = max(int(self.model.stride.max() if hasattr(self.model, "stride") else 32), 32)  # 网格尺寸（最大步长）
         self.args.imgsz = check_imgsz(self.args.imgsz, stride=gs, floor=gs, max_dim=1)
-        self.stride = gs  # for multiscale training
+        self.stride = gs  # 用于多尺度训练
 
-        # resume training would directly load DistillationModel so check here
+        # 恢复训练会直接加载 DistillationModel，因此在此处检查
         if self.args.distill_model is not None and not isinstance(unwrap_model(self.model), DistillationModel):
             self.model = DistillationModel(student_model=self.model, teacher_model=self.args.distill_model)
         if self.world_size > 1:
-            # static_graph=True permits params used >1 time per forward (e.g. flow_model in
-            # o2m+o2o pose loss branches) under torch.compile.
+            # static_graph=True 允许在一次前向传播中多次使用参数（例如 torch.compile 下姿态损失的一对多和一对一分支中的
+            # flow_model）。
             ddp_kwargs = {"static_graph": bool(self.args.compile)} if TORCH_1_11 else {}
             self.model = nn.parallel.DistributedDataParallel(
                 self.model,
@@ -401,13 +399,13 @@ class BaseTrainer:
                 **ddp_kwargs,
             )
 
-        # Batch size
-        if self.batch_size < 1 and RANK == -1:  # single-GPU only, estimate best batch size
+        # 批次大小
+        if self.batch_size < 1 and RANK == -1:  # 仅单 GPU 时估计最佳批次大小
             self.args.batch = self.batch_size = self.auto_batch()
         self._build_train_pipeline()
         self.validator = self.get_validator()
         self.ema = ModelEMA(self.model)
-        self.set_class_weights()  # compute class weights after dataloader is ready
+        self.set_class_weights()  # 数据加载器就绪后计算类别权重
         if RANK in {-1, 0}:
             metric_keys = self.validator.metrics.keys + self.label_loss_items(prefix="val")
             self.metrics = dict(zip(metric_keys, [0] * len(metric_keys)))
@@ -416,16 +414,16 @@ class BaseTrainer:
 
         self.stopper, self.stop = EarlyStopping(patience=self.args.patience), False
         self.resume_training(ckpt)
-        self.scheduler.last_epoch = self.start_epoch - 1  # do not move
+        self.scheduler.last_epoch = self.start_epoch - 1  # 不要移动
         self.run_callbacks("on_pretrain_routine_end")
 
     def _do_train(self):
-        """Perform the full training loop including setup, epoch iteration, validation, and final evaluation."""
+        """执行完整训练循环，包括初始化、epoch 迭代、验证和最终评估。"""
         if self.world_size > 1:
             self._setup_ddp()
         self._setup_train()
 
-        nb = len(self.train_loader)  # number of batches
+        nb = len(self.train_loader)  # 批次数量
         nw = self._get_warmup_iterations(nb)
         last_opt_step = -1
         self.epoch_time = None
@@ -442,20 +440,20 @@ class BaseTrainer:
             base_idx = (self.epochs - self.args.close_mosaic) * nb
             self.plot_idx.extend([base_idx, base_idx + 1, base_idx + 2])
         epoch = self.start_epoch
-        self.optimizer.zero_grad()  # zero any resumed gradients to ensure stability on train start
-        self._oom_retries = 0  # OOM auto-reduce counter for first epoch
+        self.optimizer.zero_grad()  # 清零可能恢复的梯度，确保训练开始时稳定
+        self._oom_retries = 0  # 第一个 epoch 的 OOM 自动降低批次计数器
         while True:
             self.epoch = epoch
             self.run_callbacks("on_train_epoch_start")
             with warnings.catch_warnings():
-                warnings.simplefilter("ignore")  # suppress 'Detected lr_scheduler.step() before optimizer.step()'
+                warnings.simplefilter("ignore")  # 忽略“在 optimizer.step() 之前调用 lr_scheduler.step()”警告
                 self.scheduler.step()
 
             self._model_train()
             if RANK != -1:
                 self.train_loader.sampler.set_epoch(epoch)
             pbar = enumerate(self.train_loader)
-            # Update dataloader attributes (optional)
+            # 更新数据加载器属性（可选）
             if epoch == (self.epochs - self.args.close_mosaic):
                 self._close_dataloader_mosaic()
                 self.train_loader.reset()
@@ -467,13 +465,13 @@ class BaseTrainer:
             self.tloss = None
             for i, batch in pbar:
                 self.run_callbacks("on_train_batch_start")
-                # Warmup
+                # 预热
                 ni = i + nb * epoch
                 if ni < nw:
-                    xi = [0, nw]  # x interp
+                    xi = [0, nw]  # 插值区间
                     self.accumulate = max(1, int(np.interp(ni, xi, [1, self.args.nbs / self.batch_size]).round()))
                     for x in self.optimizer.param_groups:
-                        # Bias lr falls from 0.1 to lr0, all other lrs rise from 0.0 to lr0
+                        # 偏置学习率从 0.1 降至 lr0，其他学习率从 0.0 升至 lr0
                         x["lr"] = float(
                             np.interp(
                                 ni,
@@ -487,12 +485,12 @@ class BaseTrainer:
                         if "momentum" in x:
                             x["momentum"] = float(np.interp(ni, xi, [self.args.warmup_momentum, self.args.momentum]))
 
-                # Forward
+                # 前向传播
                 try:
                     with autocast(self.amp, device=self.device.type):
                         batch = self.preprocess_batch(batch)
                         if self.args.compile:
-                            # Decouple inference and loss calculations for improved compile performance
+                            # 分离推理和损失计算，以提升编译性能
                             preds = self.model(batch["img"])
                             loss, self.loss_items = unwrap_model(self.model).loss(batch, preds)
                         else:
@@ -500,7 +498,7 @@ class BaseTrainer:
                         self.loss = loss.sum()
                         if RANK != -1:
                             self.loss *= self.world_size
-                        if not self.loss_names:  # derive loss names from the criterion's loss dict on first batch
+                        if not self.loss_names:  # 根据第一个批次中损失函数返回的损失字典推导损失名称
                             self.loss_names = tuple(self.loss_items)
                             if RANK in {-1, 0}:
                                 LOGGER.info(self.progress_string())
@@ -514,7 +512,7 @@ class BaseTrainer:
                     # Backward
                     self.scaler.scale(self.loss).backward()
                 except RuntimeError as e:
-                    is_oom = "out of memory" in str(e).lower()  # torch.cuda.OutOfMemoryError requires torch>=1.13
+                    is_oom = "out of memory" in str(e).lower()  # torch.cuda.OutOfMemoryError 需要 torch>=1.13
                     if not is_oom and not any(
                         s in str(e)
                         for s in (
@@ -525,7 +523,7 @@ class BaseTrainer:
                     ):
                         raise
                     if epoch > self.start_epoch or self._oom_retries >= 3 or RANK != -1:
-                        raise  # only auto-reduce during first epoch on single GPU, max 3 retries
+                        raise  # 仅在单 GPU 的第一个 epoch 自动降低批次大小，最多重试 3 次
                     self._oom_retries += 1
                     old_batch = self.batch_size
                     self.args.batch = self.batch_size = max(self.batch_size // 2, 1)
@@ -537,25 +535,25 @@ class BaseTrainer:
                     batch = loss = preds = None
                     self.loss = self.loss_items = self.tloss = None
                     self._clear_memory()
-                    self._build_train_pipeline()  # rebuild dataloaders, optimizer, scheduler
+                    self._build_train_pipeline()  # 重建数据加载器、优化器和调度器
                     self.scheduler.last_epoch = self.start_epoch - 1
                     nb = len(self.train_loader)
                     nw = self._get_warmup_iterations(nb)
                     last_opt_step = -1
                     self.optimizer.zero_grad()
-                    break  # restart epoch loop with reduced batch size
+                    break  # 使用降低后的批次大小重新开始 epoch 循环
                 if ni - last_opt_step >= self.accumulate:
                     self.optimizer_step()
                     last_opt_step = ni
 
-                    # Timed stopping
+                    # 定时停止
                     if self.args.time:
                         self.stop = (time.time() - self.train_time_start) > (self.args.time * 3600)
-                        if RANK != -1:  # if DDP training
+                        if RANK != -1:  # DDP 训练时
                             broadcast_list = [self.stop if RANK == 0 else None]
-                            dist.broadcast_object_list(broadcast_list, 0)  # broadcast 'stop' to all ranks
+                            dist.broadcast_object_list(broadcast_list, 0)  # 将“停止”广播到所有 rank
                             self.stop = broadcast_list[0]
-                        if self.stop:  # training time exceeded
+                        if self.stop:  # 超过训练时间
                             break
 
                 # Log
@@ -565,10 +563,10 @@ class BaseTrainer:
                         ("%11s" * 2 + "%11.4g" * (2 + loss_length))
                         % (
                             f"{epoch + 1}/{self.epochs}",
-                            f"{self._get_memory():.3g}G",  # (GB) GPU memory util
-                            *self.tloss.values(),  # losses
-                            batch.get("cls", batch["img"]).shape[0],  # no. of instances
-                            batch["img"].shape[-1],  # imgsz, i.e 640
+                            f"{self._get_memory():.3g}G",  # GPU 内存使用量（GB）
+                            *self.tloss.values(),  # 损失
+                            batch.get("cls", batch["img"]).shape[0],  # 实例数量
+                            batch["img"].shape[-1],  # 图像尺寸，例如 640
                         )
                     )
                     self.run_callbacks("on_batch_end")
@@ -577,30 +575,30 @@ class BaseTrainer:
 
                 self.run_callbacks("on_train_batch_end")
                 if self.stop:
-                    break  # allow external stop (e.g. platform cancellation) between batches
+                    break  # 允许在批次之间响应外部停止请求（例如平台取消）
             else:
-                # for/else: this block runs only when the for loop completes without break (no OOM retry)
-                self._oom_retries = 0  # reset OOM counter after successful first epoch
+                # for/else：仅当 for 循环未遇到 break（未触发 OOM 重试）时执行此代码块
+                self._oom_retries = 0  # 第一个 epoch 成功后重置 OOM 计数器
 
             if self._oom_retries and not self.stop:
-                continue  # OOM recovery broke the for loop, restart with reduced batch size
+                continue  # OOM 恢复中断了 for 循环，使用降低后的批次大小重新开始
 
             if hasattr(unwrap_model(self.model).criterion, "update"):
                 unwrap_model(self.model).criterion.update()
 
-            self.lr = {f"lr/pg{ir}": x["lr"] for ir, x in enumerate(self.optimizer.param_groups)}  # for loggers
+            self.lr = {f"lr/pg{ir}": x["lr"] for ir, x in enumerate(self.optimizer.param_groups)}  # 供日志记录器使用
 
             self.run_callbacks("on_train_epoch_end")
             if RANK in {-1, 0}:
                 self.ema.update_attr(self.model, include=["yaml", "nc", "args", "names", "stride", "class_weights"])
 
-            # Validation
+            # 验证
             final_epoch = epoch + 1 >= self.epochs
             if self.args.val or final_epoch or self.stopper.possible_stop or self.stop:
-                self._clear_memory(None if self.device.type == "mps" else 0.5)  # prevent VRAM spike
+                self._clear_memory(None if self.device.type == "mps" else 0.5)  # 防止显存峰值过高
                 self.metrics, self.fitness = self.validate()
 
-            # NaN recovery
+            # NaN 恢复
             if self._handle_nan_recovery(epoch):
                 continue
 
@@ -611,11 +609,11 @@ class BaseTrainer:
                 if self.args.time:
                     self.stop |= (time.time() - self.train_time_start) > (self.args.time * 3600)
 
-                # Save model
+                # 保存模型
                 if (self.args.save or final_epoch) and self.save_model():
                     self.run_callbacks("on_model_save")
 
-            # Scheduler
+            # 调度器
             t = time.time()
             self.epoch_time = t - self.epoch_time_start
             self.epoch_time_start = t
@@ -624,24 +622,25 @@ class BaseTrainer:
                 self.epochs = self.args.epochs = math.ceil(self.args.time * 3600 / mean_epoch_time)
                 nw = self._get_warmup_iterations(nb)
                 self._setup_scheduler()
-                self.scheduler.last_epoch = self.epoch  # do not move
-                self.stop |= epoch >= self.epochs  # stop if exceeded epochs
+                self.scheduler.last_epoch = self.epoch  # 不要移动
+                self.stop |= epoch >= self.epochs  # 超过 epoch 数量时停止
             self.run_callbacks("on_fit_epoch_end")
-            # clear if memory utilization > 50%; always clear on MPS due to leak https://github.com/ultralytics/ultralytics/issues/22621
+            # 内存利用率超过 50% 时清理；由于存在内存泄漏，MPS 始终清理
+            # https://github.com/ultralytics/ultralytics/issues/22621
             self._clear_memory(None if self.device.type == "mps" else 0.5)
 
-            # Early Stopping
-            if RANK != -1:  # if DDP training
+            # 提前停止
+            if RANK != -1:  # DDP 训练时
                 broadcast_list = [self.stop if RANK == 0 else None]
-                dist.broadcast_object_list(broadcast_list, 0)  # broadcast 'stop' to all ranks
+                dist.broadcast_object_list(broadcast_list, 0)  # 将“停止”广播到所有 rank
                 self.stop = broadcast_list[0]
             if self.stop:
-                break  # must break all DDP ranks
+                break  # 必须中断所有 DDP rank
             epoch += 1
 
         seconds = time.time() - self.train_time_start
         LOGGER.info(f"\n{epoch - self.start_epoch + 1} epochs completed in {seconds / 3600:.3f} hours.")
-        # Do final val with best.pt
+        # 使用 best.pt 执行最终验证
         self.final_eval()
         if RANK in {-1, 0}:
             if self.args.plots:
@@ -650,11 +649,11 @@ class BaseTrainer:
         self._clear_memory()
         for loader in (self.train_loader, self.test_loader):
             if hasattr(loader, "close"):
-                loader.close()  # shut down persistent dataloader workers so none survive to interpreter exit
+                loader.close()  # 关闭持久化数据加载器工作进程，避免其存活到解释器退出
 
     def auto_batch(self, max_num_obj=0, dataset_size=0):
-        """Calculate optimal batch size based on model and device memory constraints."""
-        # Stride-aligned to match the true multi-scale max size; pyramid heads require stride-multiple inputs
+        """根据模型和设备内存限制计算最佳批次大小。"""
+        # 与真实多尺度最大尺寸对齐；金字塔检测头要求输入尺寸是步长的整数倍
         max_imgsz = math.ceil(self.args.imgsz * (1 + self.args.multi_scale) / self.stride) * self.stride
         return check_train_batch_size(
             model=self.model,
@@ -663,10 +662,10 @@ class BaseTrainer:
             batch=self.batch_size,
             max_num_obj=max_num_obj,
             dataset_size=dataset_size,
-        )  # returns batch size
+        )  # 返回批次大小
 
     def _get_memory(self, fraction=False):
-        """Get accelerator memory utilization in GB or as a fraction of total memory."""
+        """获取加速器内存使用量（GB）或占总内存的比例。"""
         memory, total = 0, 0
         if self.device.type == "mps":
             memory = torch.mps.driver_allocated_memory()
@@ -679,9 +678,9 @@ class BaseTrainer:
         return ((memory / total) if total > 0 else 0) if fraction else (memory / 2**30)
 
     def _clear_memory(self, threshold: float | None = None):
-        """Clear accelerator memory by calling garbage collector and emptying cache."""
+        """调用垃圾回收器并清空缓存，以释放加速器内存。"""
         if threshold:
-            assert 0 <= threshold <= 1, "Threshold must be between 0 and 1."
+            assert 0 <= threshold <= 1, "threshold 必须介于 0 和 1 之间。"
             if self._get_memory(fraction=True) <= threshold:
                 return
         gc.collect()
@@ -693,8 +692,8 @@ class BaseTrainer:
             self.accelerator.empty_cache()
 
     def read_results_csv(self):
-        """Read results.csv into a dictionary using polars."""
-        import polars as pl  # scope for faster 'import ultralytics'
+        """使用 polars 将 results.csv 读取为字典。"""
+        import polars as pl  # 局部导入，以加快 `import ultralytics`
 
         try:
             return pl.read_csv(self.csv, infer_schema_length=None).to_dict(as_series=False)
@@ -702,49 +701,48 @@ class BaseTrainer:
             return {}
 
     def _model_train(self):
-        """Set model in training mode."""
+        """将模型设置为训练模式。"""
         self.model.train()
-        # Freeze BN stat
+        # 冻结 BN 统计量
         for n, m in self.model.named_modules():
             if any(filter(lambda f: f in n, self.freeze_layer_names)) and isinstance(m, nn.BatchNorm2d):
                 m.eval()
 
     def save_model(self):
-        """Save model training checkpoints with additional metadata."""
+        """保存模型训练检查点及附加元数据。"""
         import io
 
-        # A transient NaN/Inf permanently poisons the EMA running average (ema = decay*ema + (1-decay)*model), so
-        # save_model would otherwise skip every epoch and the run would finish with no checkpoint on valid input.
-        # Resync each poisoned EMA tensor from the live model where finite; any tensor that is non-finite in both is
-        # left for the nan_to_num_ pass below, so a usable checkpoint is always written.
+        # 瞬时 NaN/Inf 会永久污染 EMA 运行平均值（ema = decay*ema + (1-decay)*model），否则 save_model 会跳过每个
+        # epoch，导致在有效输入上运行结束时仍没有检查点。对于有限的实时模型张量，重新同步每个受污染的 EMA 张量；
+        # 如果某个张量在两者中都不是有限值，则交给下面的 nan_to_num_ 处理，确保始终写入可用检查点。
         ema = unwrap_model(self.ema.ema)
         if not all(torch.isfinite(v).all() for v in ema.state_dict().values() if isinstance(v, torch.Tensor)):
             model_sd = unwrap_model(self.model).state_dict()
             for k, v in ema.state_dict().items():
                 if isinstance(v, torch.Tensor) and not torch.isfinite(v).all() and torch.isfinite(model_sd[k]).all():
                     v.copy_(model_sd[k])
-        # Serialize NCHW regardless of channels_last training: released versions fuse with .view(), which crashes on
-        # NHWC-strided checkpoint weights, and trainer/predictor re-apply channels_last at setup anyway.
+        # 无论是否使用 channels_last 训练，都以 NCHW 格式序列化：已发布版本的融合逻辑使用 .view()，
+        # 处理 NHWC 步幅的检查点权重时会崩溃；而 trainer/predictor 会在初始化时重新应用 channels_last。
         ema = deepcopy(ema).half().to(memory_format=torch.contiguous_format)
         if hasattr(ema, "criterion"):
-            ema.criterion = None  # strip training-only state from the serialization snapshot
-        # Clamp fp16 serialization overflow without mutating the live EMA.
+            ema.criterion = None  # 从序列化快照中移除仅供训练使用的状态
+        # 限制 fp16 序列化溢出，但不修改正在使用的 EMA。
         for v in ema.state_dict().values():
             if isinstance(v, torch.Tensor) and v.is_floating_point():
                 torch.nan_to_num_(v)
 
-        # Serialize ckpt to a byte buffer once (faster than repeated torch.save() calls)
+        # 只将检查点序列化到字节缓冲区一次（比重复调用 torch.save() 更快）
         buffer = io.BytesIO()
         torch.save(
             {
                 "epoch": self.epoch,
                 "best_fitness": self.best_fitness,
-                "model": None,  # resume and final checkpoints derive from EMA
+                "model": None,  # 恢复训练和最终检查点都从 EMA 获取模型
                 "ema": ema,
                 "updates": self.ema.updates,
                 "optimizer": convert_optimizer_state_dict_to_fp16(deepcopy(self.optimizer.state_dict())),
                 "scaler": self.scaler.state_dict(),
-                "train_args": vars(self.args),  # save as dict
+                "train_args": vars(self.args),  # 保存为字典
                 "train_metrics": {**self.metrics, "fitness": self.fitness},
                 "train_results": self.read_results_csv(),
                 "date": datetime.now().astimezone().isoformat(),
@@ -761,27 +759,27 @@ class BaseTrainer:
             },
             buffer,
         )
-        serialized_ckpt = buffer.getvalue()  # get the serialized content to save
+        serialized_ckpt = buffer.getvalue()  # 获取待保存的序列化内容
 
-        # Save checkpoints
-        self.wdir.mkdir(parents=True, exist_ok=True)  # ensure weights directory exists
-        self.last.write_bytes(serialized_ckpt)  # save last.pt
+        # 保存检查点
+        self.wdir.mkdir(parents=True, exist_ok=True)  # 确保权重目录存在
+        self.last.write_bytes(serialized_ckpt)  # 保存 last.pt
         if self.best_fitness == self.fitness:
-            self.best.write_bytes(serialized_ckpt)  # save best.pt
+            self.best.write_bytes(serialized_ckpt)  # 保存 best.pt
         if (self.save_period > 0) and (self.epoch % self.save_period == 0):
-            (self.wdir / f"epoch{self.epoch}.pt").write_bytes(serialized_ckpt)  # save epoch, i.e. 'epoch3.pt'
+            (self.wdir / f"epoch{self.epoch}.pt").write_bytes(serialized_ckpt)  # 保存 epoch，例如 'epoch3.pt'
         return True
 
     def get_dataset(self):
-        """Get train and validation datasets from data dictionary.
+        """从数据配置中获取训练集和验证集。
 
-        Returns:
-            (dict): A dictionary containing the training/validation/test dataset and category names.
+        返回：
+            (dict)：包含训练集、验证集、测试集和类别名称的字典。
         """
         try:
             self.args.data = convert_ndjson_to_yolo_if_needed(self.args.data)
 
-            # Task-specific dataset checking
+            # 根据任务检查数据集
             if self.args.task == "classify":
                 data = check_cls_dataset(self.args.data)
             elif str(self.args.data).rsplit(".", 1)[-1] in {"yaml", "yml"} or self.args.task in {
@@ -794,7 +792,7 @@ class BaseTrainer:
             }:
                 data = check_det_dataset(self.args.data)
                 if "yaml_file" in data:
-                    self.args.data = data["yaml_file"]  # for validating 'yolo train data=url.zip' usage
+                    self.args.data = data["yaml_file"]  # 用于验证 'yolo train data=url.zip' 用法
         except Exception as e:
             raise RuntimeError(emojis(f"Dataset '{clean_url(self.args.data)}' error ❌ {e}")) from e
         if self.args.single_cls:
@@ -804,12 +802,12 @@ class BaseTrainer:
         return data
 
     def setup_model(self):
-        """Load, create, or download model for any task.
+        """为任意任务加载、创建或下载模型。
 
-        Returns:
-            (dict | None): Checkpoint to resume training from, or None if no checkpoint is loaded.
+        返回：
+            (dict | None)：用于恢复训练的检查点；如果未加载检查点则返回 None。
         """
-        if isinstance(self.model, torch.nn.Module):  # if model is loaded beforehand. No setup needed
+        if isinstance(self.model, torch.nn.Module):  # 如果模型已提前加载，则无需设置
             return
 
         cfg, weights = self.model, None
@@ -822,26 +820,26 @@ class BaseTrainer:
         elif self.args.pretrained is False and not self.resume:
             weights = None
 
-        # rebuild DistillationModel from resuming checkpoint
+        # 从恢复训练的检查点重建 DistillationModel
         if isinstance(weights, DistillationModel):
             if RANK in {-1, 0}:
                 LOGGER.info("Resuming training DistillationModel from checkpoint weights")
             student_model = self.get_model(cfg=cfg, weights=weights.student_model, verbose=RANK in {-1, 0})
             student_model.args = self.args
-            # teacher is stripped from the checkpoint to save memory/disk; rebuild it from the distill_model path
+            # 为节省内存和磁盘空间，检查点中已移除教师模型；从 distill_model 路径重新构建
             teacher_model = weights.teacher_model if weights.teacher_model is not None else self.args.distill_model
             model = DistillationModel(student_model=student_model, teacher_model=teacher_model)
             if getattr(weights, "projector", None) is not None:
-                model.projector.load_state_dict(weights.projector.state_dict())  # restore the trained projector
+                model.projector.load_state_dict(weights.projector.state_dict())  # 恢复训练好的投影器
             model.criterion = None
             self.model = model
         else:
-            self.model = self.get_model(cfg=cfg, weights=weights, verbose=RANK in {-1, 0})  # calls Model(cfg, weights)
+            self.model = self.get_model(cfg=cfg, weights=weights, verbose=RANK in {-1, 0})  # 调用 Model(cfg, 权重)
         return ckpt
 
     def optimizer_step(self):
-        """Perform a single step of the training optimizer with gradient clipping and EMA update."""
-        self.scaler.unscale_(self.optimizer)  # unscale gradients
+        """执行一次训练优化器更新，包括梯度裁剪和 EMA 更新。"""
+        self.scaler.unscale_(self.optimizer)  # 取消梯度缩放
         if self.device.type == "npu" and TORCH_2_0:
             torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=10.0, foreach=False)
         else:
@@ -853,112 +851,112 @@ class BaseTrainer:
             self.ema.update(self.model)
 
     def preprocess_batch(self, batch):
-        """Allow custom preprocessing of model inputs and ground truths depending on task type."""
+        """允许根据任务类型自定义模型输入和真实标注的预处理。"""
         return batch
 
     def validate(self):
-        """Run validation on val set using self.validator.
+        """使用 self.validator 在验证集上执行验证。
 
-        Returns:
+        返回：
             (tuple): A tuple containing:
-                - metrics (dict | None): Dictionary of validation metrics, or None if validation was skipped.
-                - fitness (float | None): Fitness score for the validation, or None if validation was skipped.
+                - metrics (dict | None)：验证指标字典；跳过验证时为 None。
+                - fitness (float | None)：验证适应度分数；跳过验证时为 None。
         """
         if self.ema and self.world_size > 1:
-            # Sync EMA buffers from rank 0 to all ranks
+            # 将 EMA 缓冲区从 rank 0 同步到所有 rank
             for buffer in self.ema.ema.buffers():
                 dist.broadcast(buffer, src=0)
         metrics = self.validator(self)
         if metrics is None:
             return None, None
-        fitness = metrics.pop("fitness", -self.loss.detach().cpu().numpy())  # use loss as fitness measure if not found
+        fitness = metrics.pop("fitness", -self.loss.detach().cpu().numpy())  # 未找到适应度时使用损失的相反数
         if self.best_fitness is None or self.best_fitness < fitness:
             self.best_fitness = fitness
         return metrics, fitness
 
     def get_model(self, cfg=None, weights=None, verbose=True):
-        """Get model and raise NotImplementedError for loading cfg files."""
+        """获取模型；加载配置文件时抛出 NotImplementedError。"""
         raise NotImplementedError("This task trainer doesn't support loading cfg files")
 
     def get_validator(self):
-        """Raise NotImplementedError (must be implemented by subclasses)."""
+        """抛出 NotImplementedError（必须由子类实现）。"""
         raise NotImplementedError("get_validator function not implemented in trainer")
 
     def get_dataloader(self, dataset_path, batch_size=16, rank=0, mode="train"):
-        """Raise NotImplementedError (must return a `torch.utils.data.DataLoader` in subclasses)."""
+        """抛出 NotImplementedError（子类必须返回 `torch.utils.data.DataLoader`）。"""
         raise NotImplementedError("get_dataloader function not implemented in trainer")
 
     def build_dataset(self, img_path, mode="train", batch=None):
-        """Build dataset."""
+        """构建数据集。"""
         raise NotImplementedError("build_dataset function not implemented in trainer")
 
     def label_loss_items(self, loss_items=None, prefix="train"):
-        """Return a loss dict with labeled training loss items, or a list of loss names if loss_items is None."""
+        """返回带标签的训练损失字典；如果 loss_items 为 None，则返回损失名称列表。"""
         if loss_items is None:
             return [f"{prefix}/{x}" for x in self.loss_names]
         return {f"{prefix}/{k}": round(float(v), 5) for k, v in loss_items.items()}
 
     def set_model_attributes(self):
-        """Set or update model parameters before training."""
+        """在训练前设置或更新模型参数。"""
         self.model.names = self.data["names"]
 
     def set_class_weights(self):
-        """Compute and set class weights for handling class imbalance. Override in subclasses."""
+        """计算并设置类别权重，以处理类别不平衡。子类可覆盖此方法。"""
 
     def build_targets(self, preds, targets):
-        """Build target tensors for training YOLO model."""
+        """构建 YOLO 模型训练所需的目标张量。"""
 
     def progress_string(self):
-        """Return a string describing training progress."""
+        """返回描述训练进度的字符串。"""
         return ""
 
-    # TODO: may need to put these following functions into callback
+    # TODO：后续可能需要将以下函数移入回调。
     def plot_training_samples(self, batch, ni):
-        """Plot training samples during YOLO training."""
+        """在 YOLO 训练期间绘制训练样本。"""
 
     def plot_training_labels(self):
-        """Plot training labels for YOLO model."""
+        """绘制 YOLO 模型的训练标签。"""
 
     def save_metrics(self, metrics):
-        """Save training metrics to a CSV file."""
+        """将训练指标保存到 CSV 文件。"""
         keys, vals = list(metrics.keys()), list(metrics.values())
-        n = len(metrics) + 2  # number of cols
+        n = len(metrics) + 2  # 列数
         t = time.time() - self.train_time_start
-        self.csv.parent.mkdir(parents=True, exist_ok=True)  # ensure parent directory exists
+        self.csv.parent.mkdir(parents=True, exist_ok=True)  # 确保父目录存在
         s = "" if self.csv.exists() else ("%s," * n % ("epoch", "time", *keys)).rstrip(",") + "\n"
         with open(self.csv, "a", encoding="utf-8") as f:
             f.write(s + ("%.6g," * n % (self.epoch + 1, t, *vals)).rstrip(",") + "\n")
 
     def plot_metrics(self):
-        """Plot metrics from a CSV file."""
-        plot_results(file=self.csv, on_plot=self.on_plot)  # save results.png
+        """根据 CSV 文件绘制指标。"""
+        plot_results(file=self.csv, on_plot=self.on_plot)  # 保存 results.png
 
     def on_plot(self, name, data=None):
-        """Register plots (e.g. to be consumed in callbacks)."""
+        """注册图表（例如供回调使用）。"""
         path = Path(name)
         self.plots[path] = {"data": data, "timestamp": time.time()}
 
     def final_eval(self):
-        """Perform final evaluation and validation for the YOLO model."""
+        """对 YOLO 模型执行最终评估和验证。"""
         model = self.best if self.best.exists() else None
-        with torch_distributed_zero_first(LOCAL_RANK):  # strip only on GPU 0; other GPUs should wait
+        with torch_distributed_zero_first(LOCAL_RANK):  # 仅在 GPU 0 上清理，其他 GPU 等待
             if RANK in {-1, 0}:
                 ckpt = strip_optimizer(self.last) if self.last.exists() else {}
                 if model:
-                    # update best.pt train_metrics from last.pt
+                    # 使用 last.pt 中的训练指标更新 best.pt
                     strip_optimizer(self.best, updates={"train_results": ckpt.get("train_results")})
         if model:
             LOGGER.info(f"\nValidating {model}...")
             self.validator.args.plots = self.args.plots
-            self.validator.args.compile = False  # disable final val compile as too slow
+            self.validator.args.compile = False  # 最终验证编译速度过慢，因此禁用
             self.metrics = self.validator(model=model)
             self.metrics.pop("fitness", None)
-            self.epoch += 1  # log best metrics at step epochs+1, not overwriting last epoch
+            self.epoch += 1  # 在 epochs+1 步记录最佳指标，不覆盖最后一个 epoch
             self.run_callbacks("on_fit_epoch_end")
-            self.epoch -= 1  # restore epoch
+            self.epoch -= 1  # 恢复 epoch
 
     def check_resume(self, overrides):
-        """Check if resume checkpoint exists and update arguments accordingly."""
+        """检查恢复训练的检查点是否存在，并相应更新参数。"""
         resume = self.args.resume
         if resume:
             try:
@@ -970,7 +968,7 @@ class BaseTrainer:
 
                 resume = True
                 self.args = get_cfg(ckpt_args)
-                self.args.model = self.args.resume = str(last)  # reinstate model
+                self.args.model = self.args.resume = str(last)  # reinstate 模型
                 for k in (
                     "imgsz",
                     "batch",
@@ -987,7 +985,7 @@ class BaseTrainer:
                     "plots",
                     "distill_model",
                     "save_dir",
-                ):  # allow arg updates to reduce memory or update device on resume
+                ):  # 允许在恢复训练时更新参数，以减少内存或更换设备
                     if k in overrides:
                         setattr(self.args, k, overrides[k])
 
@@ -999,24 +997,24 @@ class BaseTrainer:
         self.resume = resume
 
     def _load_checkpoint_state(self, ckpt):
-        """Load optimizer, scaler, EMA, and best_fitness from checkpoint."""
+        """从检查点加载优化器、scaler、EMA 和 best_fitness。"""
         if ckpt.get("optimizer") is not None:
             self.optimizer.load_state_dict(ckpt["optimizer"])
         if ckpt.get("scaler") is not None:
             self.scaler.load_state_dict(ckpt["scaler"])
         if self.ema and ckpt.get("ema"):
-            self.ema = ModelEMA(self.model)  # validation with EMA creates inference tensors that can't be updated
+            self.ema = ModelEMA(self.model)  # 使用 EMA 验证会创建无法更新的推理张量
             self.ema.ema.load_state_dict(ckpt["ema"].float().state_dict())
             self.ema.updates = ckpt["updates"]
         self.best_fitness = ckpt.get("best_fitness")
 
     def _handle_nan_recovery(self, epoch):
-        """Detect and recover from NaN/Inf loss by loading last checkpoint."""
+        """检测 NaN/Inf 损失，并通过加载最新检查点进行恢复。"""
         loss_nan = self.loss is not None and not self.loss.isfinite()
         fitness_nan = self.fitness is not None and not np.isfinite(self.fitness)
         corrupted = RANK in {-1, 0} and (loss_nan or fitness_nan)
         reason = "Loss NaN/Inf" if loss_nan else "Fitness NaN/Inf"
-        if RANK != -1:  # DDP: broadcast to all ranks
+        if RANK != -1:  # DDP：广播到所有 rank
             broadcast_list = [corrupted if RANK == 0 else None]
             dist.broadcast_object_list(broadcast_list, 0)
             corrupted = broadcast_list[0]
@@ -1024,14 +1022,14 @@ class BaseTrainer:
             return False
         if epoch == self.start_epoch:
             LOGGER.warning(f"{reason} detected but can not recover from last.pt...")
-            return False  # Cannot recover on first epoch, let training continue
+            return False  # 第一个 epoch 无法恢复，让训练继续
         if not self.last.exists():
             raise RuntimeError(f"{reason} detected but no valid last.pt is available for recovery")
         self.nan_recovery_attempts += 1
         if self.nan_recovery_attempts > 3:
             raise RuntimeError(f"Training failed: NaN persisted for {self.nan_recovery_attempts} epochs")
         LOGGER.warning(f"{reason} detected (attempt {self.nan_recovery_attempts}/3), recovering from last.pt...")
-        self._model_train()  # set model to train mode before loading checkpoint to avoid inference tensor errors
+        self._model_train()  # 加载检查点前将模型设为训练模式，避免推理张量错误
         _, ckpt = load_checkpoint(self.last)
         ema = ckpt["ema"].float()
         ema_state = ema.state_dict()
@@ -1039,19 +1037,19 @@ class BaseTrainer:
             raise RuntimeError(f"Checkpoint {self.last} is corrupted with NaN/Inf weights")
         model = unwrap_model(self.model)
         if hasattr(model, "student_model"):
-            # Distillation: the EMA is stripped of the teacher (rebuilt from the distill_model path), so only the
-            # student and projector are restored; loading them separately keeps a strict key match.
+            # 知识蒸馏：EMA 中已移除教师模型（从 distill_model 路径重建），因此只恢复学生模型和投影器；
+            # 分别加载它们可以保持严格的键匹配。
             model.student_model.load_state_dict(ema.student_model.state_dict())
             model.projector.load_state_dict(ema.projector.state_dict())
         else:
-            model.load_state_dict(ema_state)  # Load EMA weights into model
-        self._load_checkpoint_state(ckpt)  # Load optimizer/scaler/EMA/best_fitness
+            model.load_state_dict(ema_state)  # 将 EMA 权重加载到模型
+        self._load_checkpoint_state(ckpt)  # 加载 优化器/scaler/EMA/best_fitness
         del ckpt, ema, ema_state
         self.scheduler.last_epoch = epoch - 1
         return True
 
     def resume_training(self, ckpt):
-        """Resume YOLO training from a given checkpoint."""
+        """从给定检查点恢复 YOLO 训练。"""
         if ckpt is None or not self.resume:
             return
         start_epoch = ckpt.get("epoch", -1) + 1
@@ -1062,7 +1060,7 @@ class BaseTrainer:
         LOGGER.info(f"Resuming training {self.args.model} from epoch {start_epoch + 1} to {self.epochs} total epochs")
         self._load_checkpoint_state(ckpt)
         if getattr(unwrap_model(self.model), "end2end", False):
-            # initialize loss and resume o2o and o2m args
+            # 初始化损失，并恢复一对一和一对多参数
             unwrap_model(self.model).criterion = unwrap_model(self.model).init_criterion()
             unwrap_model(self.model).criterion.updates = start_epoch - 1
             unwrap_model(self.model).criterion.update()
@@ -1072,7 +1070,7 @@ class BaseTrainer:
             self.train_loader.reset()
 
     def _close_dataloader_mosaic(self):
-        """Update dataloaders to stop using mosaic augmentation."""
+        """更新数据加载器，停止使用 mosaic 增强。"""
         if hasattr(self.train_loader.dataset, "mosaic"):
             self.train_loader.dataset.mosaic = False
         if hasattr(self.train_loader.dataset, "close_mosaic"):
@@ -1080,22 +1078,21 @@ class BaseTrainer:
             self.train_loader.dataset.close_mosaic(hyp=copy(self.args))
 
     def build_optimizer(self, model, name="auto", lr=0.001, momentum=0.9, decay=1e-5, iterations=1e5):
-        """Construct an optimizer for the given model.
+        """为给定模型构建优化器。
 
-        Args:
-            model (torch.nn.Module): The model for which to build an optimizer.
-            name (str, optional): The name of the optimizer to use. If 'auto', the optimizer is selected based on the
-                number of iterations.
-            lr (float, optional): The learning rate for the optimizer.
-            momentum (float, optional): The momentum factor for the optimizer.
-            decay (float, optional): The weight decay for the optimizer.
-            iterations (float, optional): The number of iterations, which determines the optimizer if name is 'auto'.
+        参数：
+            model (torch.nn.Module)：要构建优化器的模型。
+            name (str，可选)：要使用的优化器名称。为 'auto' 时，根据迭代次数自动选择优化器。
+            lr (float，可选)：优化器的学习率。
+            momentum (float，可选)：优化器的动量因子。
+            decay (float，可选)：权重衰减系数。
+            iterations (float，可选)：迭代次数；当 name 为 'auto' 时用于确定优化器。
 
-        Returns:
-            (torch.optim.Optimizer): The constructed optimizer.
+        返回：
+            (torch.optim.Optimizer)：构建的优化器。
         """
-        g = [{}, {}, {}, {}]  # optimizer parameter groups
-        bn = tuple(v for k, v in nn.__dict__.items() if "Norm" in k)  # normalization layers, i.e. BatchNorm2d()
+        g = [{}, {}, {}, {}]  # 优化器 参数 groups
+        bn = tuple(v for k, v in nn.__dict__.items() if "Norm" in k)  # 归一化层，例如 BatchNorm2d()
         optimizers = {"Adam", "Adamax", "AdamW", "NAdam", "RAdam", "RMSprop", "SGD", "MuSGD", "auto"}
         name = {x.lower(): x for x in optimizers}.get(str(name).lower(), str(name))
         if name == "auto":
@@ -1104,26 +1101,26 @@ class BaseTrainer:
                 f"ignoring 'lr0={self.args.lr0}' and 'momentum={self.args.momentum}' and "
                 f"determining best 'optimizer', 'lr0' and 'momentum' automatically... "
             )
-            nc = self.data.get("nc", 10)  # number of classes
-            lr_fit = round(0.002 * 5 / (4 + nc), 6)  # lr0 fit equation to 6 decimal places
+            nc = self.data.get("nc", 10)  # 类别数量
+            lr_fit = round(0.002 * 5 / (4 + nc), 6)  # lr0 拟合公式，保留 6 位小数
             name, lr, momentum = ("MuSGD", 0.01, 0.9) if iterations > 10000 else ("AdamW", lr_fit, 0.9)
-            self.args.warmup_bias_lr = 0.0  # no higher than 0.01 for Adam
+            self.args.warmup_bias_lr = 0.0  # Adam 不超过 0.01
 
         use_muon = name == "MuSGD"
         for module_name, module in unwrap_model(model).named_modules():
             for param_name, param in module.named_parameters(recurse=False):
                 fullname = f"{module_name}.{param_name}" if module_name else param_name
-                if param.ndim in {2, 4} and use_muon:  # muon only orthogonalizes matrices and conv filters
-                    g[3][fullname] = param  # muon params
-                elif "bias" in fullname:  # bias (no decay)
+                if param.ndim in {2, 4} and use_muon:  # muon 只对矩阵和卷积滤波器进行正交化
+                    g[3][fullname] = param  # muon 参数
+                elif "bias" in fullname:  # 偏置（不衰减）
                     g[2][fullname] = param
-                elif isinstance(module, bn) or "logit_scale" in fullname:  # weight (no decay)
-                    # ContrastiveHead and BNContrastiveHead included here with 'logit_scale'
+                elif isinstance(module, bn) or "logit_scale" in fullname:  # 权重（不衰减）
+                    # ContrastiveHead 和 BNContrastiveHead 在此包含 'logit_scale'
                     g[1][fullname] = param
-                else:  # weight (with decay)
+                else:  # 权重（进行衰减）
                     g[0][fullname] = param
         if not use_muon:
-            g = [x.values() for x in g[:3]]  # convert to list of params
+            g = [x.values() for x in g[:3]]  # 转换为参数列表
 
         if name in {"Adam", "Adamax", "AdamW", "NAdam", "RAdam"}:
             optim_args = {"lr": lr, "betas": (momentum, 0.999), "weight_decay": 0.0}
@@ -1137,20 +1134,20 @@ class BaseTrainer:
                 "Request support for additional optimizers at https://github.com/ultralytics/ultralytics."
             )
 
-        num_params = [len(g[0]), len(g[1]), len(g[2])]  # number of param groups
+        num_params = [len(g[0]), len(g[1]), len(g[2])]  # 参数数量
         g[2] = {"params": g[2], **optim_args, "param_group": "bias"}
         g[0] = {"params": g[0], **optim_args, "weight_decay": decay, "param_group": "weight"}
         g[1] = {"params": g[1], **optim_args, "weight_decay": 0.0, "param_group": "bn"}
         muon, sgd = (0.2, 1.0)
         if use_muon:
-            num_params[0] = len(g[3])  # update number of params
+            num_params[0] = len(g[3])  # 更新参数数量
             g[3] = {"params": g[3], **optim_args, "weight_decay": decay, "use_muon": True, "param_group": "muon"}
-            # higher lr for certain parameters in MuSGD when finetuning
+            # 微调时为 MuSGD 的特定参数使用更高学习率
             target = unwrap_model(model)
             head = getattr(target, "student_model", target).model[-1]
             heads = (getattr(head, "cv3", None), getattr(head, "one2one_cv3", None))
             boosted = {id(p) for m in heads if m for p in m.parameters()}
-            g_ = []  # new param groups
+            g_ = []  # 新的参数组
             for x in g:
                 p = x.pop("params")
                 p1, p2 = [], []
@@ -1168,40 +1165,39 @@ class BaseTrainer:
 
 
 class MultiTrainer:
-    """Fine-tune a single base model across a collection of datasets and aggregate per-dataset results.
+    """在多个数据集上微调同一个基础模型，并汇总每个数据集的结果。
 
-    Used automatically by Model.train() when `data` is a list or tuple, allowing one base model to be benchmarked across
-    many datasets (such as the RF100 collection) in a single call. The datasets are fine-tuned in series and the same
-    base weights seed each run, so every run starts from an identical model. All output is grouped under one sweep
-    directory (e.g. runs/detect/multitrain): each dataset gets its own run subdirectory, and the per-dataset and mean
-    metrics are written to multitrain_results.json (for post-processing) alongside a multitrain_results.png bar
-    chart. The base model object is left unchanged; each dataset's fine-tuned weights live in its own run directory.
+    当 `data` 是列表或元组时，Model.train() 会自动使用此类，使一个基础模型能够在一次调用中基准测试多个数据集
+    （例如 RF100 集合）。数据集会依次进行微调，每次运行都使用相同的基础权重副本，因此每次运行都从完全相同的模型开始。
+    所有输出都归入一个统一的 sweep 目录（例如 runs/detect/multitrain）：每个数据集拥有独立的运行子目录，
+    每个数据集的指标和平均指标会写入 multitrain_results.json，并与 multitrain_results.png 柱状图一起保存。
+    基础模型对象保持不变；每个数据集微调后的权重保存在各自的运行目录中。
 
-    Attributes:
-        trainer (type[BaseTrainer] | None): Task trainer class for Python runs, or None for CLI subprocess runs.
+    属性：
+        trainer (type[BaseTrainer] | None): Task trainer 类别 for Python runs, or None for CLI subprocess runs.
         args (dict): Training arguments shared across datasets; its `data` key holds the dataset collection.
-        model (torch.nn.Module): Base model whose weights seed each per-dataset fine-tune.
-        callbacks (dict | None): Callbacks forwarded to each per-dataset trainer.
-        trainers (list[SimpleNamespace]): Completed per-dataset run records.
-        metrics (dict): Mapping of each run name (e.g. coco8, coco8-2) to its training-metrics dict from the checkpoint.
-        save_dir (Path | None): Sweep directory holding the per-dataset runs and the results JSON/plot.
+        模型 (torch.nn.Module): Base 模型 whose 权重 seed 每个 per-dataset fine-tune.
+        callbacks (dict | None): Callbacks forwarded to 每个 per-dataset trainer.
+        trainers (列表[SimpleNamespace]): Completed per-dataset run records.
+        指标 (dict): Mapping of 每个 run 名称 (e.g. coco8, coco8-2) to its 训练-指标 dict from the 检查点.
+        save_dir (Path | None): Sweep 目录 holding the per-dataset runs and 结果 JSON/plot.
 
-    Examples:
-        Fine-tune one base model across several datasets and read back per-run metrics:
+    示例：
+        在多个数据集上微调一个基础模型，并读取每次运行的指标：
         >>> from ultralytics import YOLO
         >>> model = YOLO("yolo26n.pt")
         >>> results = model.train(data=["coco8.yaml", "african-wildlife.yaml"], epochs=10)
-        >>> results["coco8"]["fitness"]  # final fitness on the coco8 run
+        >>> results["coco8"]["fitness"]  # coco8 运行的最终适应度
     """
 
     def __init__(self, trainer, args, model, _callbacks: dict | None = None):
-        """Initialize MultiTrainer with a task trainer class, shared training arguments, and the base model.
+        """使用任务训练器类型、共享训练参数和基础模型初始化 MultiTrainer。
 
-        Args:
-            trainer (type[BaseTrainer] | None): Task trainer class to run once per dataset. None uses CLI subprocesses.
-            args (dict): Training arguments; the `data` key holds the list/tuple of datasets to fine-tune on.
-            model (torch.nn.Module): Base model whose weights seed each per-dataset fine-tune.
-            _callbacks (dict, optional): Callback functions forwarded to each per-dataset trainer.
+        参数：
+            trainer (type[BaseTrainer] | None)：每个数据集运行一次的任务训练器类型；为 None 时使用 CLI 子进程。
+            args (dict)：训练参数；`data` 键保存待微调数据集的列表或元组。
+            model (torch.nn.Module)：为每个数据集微调提供初始权重的基础模型。
+            _callbacks (dict，可选)：转发给每个数据集训练器的回调函数。
         """
         self.trainer = trainer
         self.args = args
@@ -1212,13 +1208,13 @@ class MultiTrainer:
         self.save_dir = None
 
     def train(self):
-        """Fine-tune the base model on each dataset in series and return a {dataset: metrics} mapping."""
+        """依次在每个数据集上微调基础模型，并返回 {dataset: 指标} 映射。"""
         from types import SimpleNamespace
 
         from ultralytics.utils.patches import torch_load, torch_save
 
         datasets = self.args["data"]
-        # Group every per-dataset run and the summary plot under one sweep directory, e.g. runs/detect/multitrain
+        # 将每个数据集的运行结果和汇总图表归入一个 sweep 目录，例如 runs/detect/multitrain
         sweep = SimpleNamespace(
             project=self.args.get("project"),
             task=self.args.get("task"),
@@ -1243,7 +1239,7 @@ class MultiTrainer:
                     overrides = {
                         **self.args,
                         "data": data,
-                        "project": str(self.save_dir),  # nest per-dataset runs inside the sweep directory
+                        "project": str(self.save_dir),  # 将每个数据集的运行嵌套在 sweep 目录中
                         "name": name,
                         "resume": False,
                     }
@@ -1283,7 +1279,7 @@ class MultiTrainer:
                             metrics = metrics.results_dict
                     self.metrics[run_name] = metrics or (torch_load(ckpt)["train_metrics"] if ckpt.exists() else None)
                     self.trainers.append(SimpleNamespace(save_dir=save_dir, best=best, last=last))
-                except Exception as e:  # one bad dataset should not abort the whole sweep
+                except Exception as e:  # 单个数据集失败不应中止整个 sweep
                     LOGGER.error(f"MultiTrainer: fine-tuning on {data} failed, skipping: {e}")
                     self.metrics[run_name] = None
         finally:
@@ -1291,13 +1287,13 @@ class MultiTrainer:
                 base_model.unlink(missing_ok=True)
         if RANK in {-1, 0} and self.trainers:
             self.save_dir.mkdir(parents=True, exist_ok=True)
-            self.save_results()  # JSON of per-dataset + mean metrics for programmatic post-processing
+            self.save_results()  # 保存每个数据集和平均指标的 JSON，供程序后处理
             if self.args.get("plots", True):
                 self.plot_results()
         return self.metrics
 
     def save_results(self):
-        """Write per-dataset and mean metrics to multitrain_results.json for programmatic post-processing."""
+        """将每个数据集的指标和平均指标写入 multitrain_results.json，供程序后处理。"""
         import json
 
         results = {run: ({k: float(v) for k, v in m.items()} if m else None) for run, m in self.metrics.items()}
@@ -1311,7 +1307,7 @@ class MultiTrainer:
         return file
 
     def plot_results(self):
-        """Save a cross-dataset bar chart of the per-dataset metric with the mean across all datasets."""
+        """保存跨数据集柱状图，其中包含每个数据集的指标和所有数据集的平均值。"""
         from ultralytics.cfg import TASK2METRIC
         from ultralytics.utils.plotting import plot_multitrain_results
 

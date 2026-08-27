@@ -11,28 +11,28 @@ from ultralytics.utils import LOGGER
 
 
 class GMC:
-    """Generalized Motion Compensation (GMC) class for tracking and object detection in video frames.
+    """用于视频帧跟踪和目标检测的通用运动补偿（GMC）类。
 
-    This class provides methods for tracking and detecting objects based on several tracking algorithms including ORB,
-    SIFT, ECC, and Sparse Optical Flow. It also supports downscaling of frames for computational efficiency.
+    此类提供基于 ORB、SIFT、ECC 和稀疏光流等多种跟踪算法进行跟踪和目标检测的方法，
+    同时支持缩小帧尺寸以提高计算效率。
 
-    Attributes:
-        method (str | None): The tracking method to use. Options include 'orb', 'sift', 'ecc', 'sparseOptFlow', None.
-        downscale (int): Factor by which to downscale the frames for processing.
-        prevFrame (np.ndarray | None): Previous frame for tracking.
-        prevKeyPoints (tuple | np.ndarray | None): Keypoints from the previous frame.
-        prevDescriptors (np.ndarray | None): Descriptors from the previous frame.
-        initializedFirstFrame (bool): Flag indicating if the first frame has been processed.
+    属性：
+        method (str | None): 要使用的跟踪方法，可选 'orb'、'sift'、'ecc'、'sparseOptFlow' 或 None。
+        downscale (int): 处理帧时的缩小倍数。
+        prevFrame (np.ndarray | None): 用于跟踪的上一帧。
+        prevKeyPoints (tuple | np.ndarray | None): 上一帧的关键点。
+        prevDescriptors (np.ndarray | None): 上一帧的描述子。
+        initializedFirstFrame (bool): 指示是否已处理第一帧的标志。
 
-    Methods:
-        apply: Apply the chosen method to a raw frame and optionally use provided detections.
-        apply_ecc: Apply the ECC algorithm to a raw frame.
-        apply_features: Apply feature-based methods like ORB or SIFT to a raw frame.
-        apply_sparseoptflow: Apply the Sparse Optical Flow method to a raw frame.
-        reset_params: Reset the internal parameters of the GMC object.
+    方法：
+        apply：将选定方法应用于原始帧，并可选择使用提供的检测结果。
+        apply_ecc：将 ECC 算法应用于原始帧。
+        apply_features：将 ORB 或 SIFT 等基于特征的方法应用于原始帧。
+        apply_sparseoptflow：将稀疏光流方法应用于原始帧。
+        reset_params：重置 GMC 对象的内部参数。
 
-    Examples:
-        Create a GMC object and apply it to a frame
+    示例：
+        创建 GMC 对象并将其应用于一帧图像
         >>> gmc = GMC(method="sparseOptFlow", downscale=2)
         >>> frame = np.random.randint(0, 255, (480, 640, 3), dtype=np.uint8)
         >>> warp = gmc.apply(frame)
@@ -41,11 +41,11 @@ class GMC:
     """
 
     def __init__(self, method: str = "sparseOptFlow", downscale: int = 2) -> None:
-        """Initialize a Generalized Motion Compensation (GMC) object with tracking method and downscale factor.
+        """使用跟踪方法和缩小倍数初始化通用运动补偿（GMC）对象。
 
-        Args:
-            method (str): The tracking method to use. Options include 'orb', 'sift', 'ecc', 'sparseOptFlow', 'none'.
-            downscale (int): Downscale factor for processing frames.
+        参数：
+            method (str): 要使用的跟踪方法，可选 'orb'、'sift'、'ecc'、'sparseOptFlow' 或 'none'。
+            downscale (int): 处理帧时的缩小倍数。
         """
         super().__init__()
 
@@ -89,16 +89,16 @@ class GMC:
         self.initializedFirstFrame = False
 
     def apply(self, raw_frame: np.ndarray, detections: list | None = None) -> np.ndarray:
-        """Estimate a 2×3 motion compensation warp for a frame.
+        """估计一帧图像的 2×3 运动补偿变换矩阵。
 
-        Args:
-            raw_frame (np.ndarray): The raw frame to be processed, with shape (H, W, C).
-            detections (list, optional): List of detections to be used in the processing.
+        参数：
+            raw_frame (np.ndarray): 要处理的原始帧，形状为 (H, W, C)。
+            detections (列表, 可选): 处理时使用的检测结果列表。
 
-        Returns:
-            (np.ndarray): Transformation matrix with shape (2, 3).
+        返回：
+            (np.ndarray): 形状为 (2, 3) 的变换矩阵。
 
-        Examples:
+        示例：
             >>> gmc = GMC(method="sparseOptFlow")
             >>> raw_frame = np.random.randint(0, 255, (480, 640, 3), dtype=np.uint8)
             >>> transformation_matrix = gmc.apply(raw_frame)
@@ -115,15 +115,15 @@ class GMC:
             return np.eye(2, 3)
 
     def apply_ecc(self, raw_frame: np.ndarray) -> np.ndarray:
-        """Apply the ECC (Enhanced Correlation Coefficient) algorithm to a raw frame for motion compensation.
+        """使用 ECC（增强相关系数）算法对原始帧执行运动补偿。
 
-        Args:
-            raw_frame (np.ndarray): The raw frame to be processed, with shape (H, W, C).
+        参数：
+            raw_frame (np.ndarray): 要处理的原始帧，形状为 (H, W, C)。
 
-        Returns:
-            (np.ndarray): Transformation matrix with shape (2, 3).
+        返回：
+            (np.ndarray): 形状为 (2, 3) 的变换矩阵。
 
-        Examples:
+        示例：
             >>> gmc = GMC(method="ecc")
             >>> raw_frame = np.random.randint(0, 255, (480, 640, 3), dtype=np.uint8)
             >>> transformation_matrix = gmc.apply_ecc(raw_frame)
@@ -134,38 +134,38 @@ class GMC:
         frame = cv2.cvtColor(raw_frame, cv2.COLOR_BGR2GRAY) if c == 3 else raw_frame
         H = np.eye(2, 3, dtype=np.float32)
 
-        # Downscale image for computational efficiency
+        # 缩小图像以提高计算效率
         if self.downscale > 1.0:
             frame = cv2.GaussianBlur(frame, (3, 3), 1.5)
             frame = cv2.resize(frame, (width // self.downscale, height // self.downscale))
 
-        # Handle first frame initialization
+        # 处理第一帧初始化
         if not self.initializedFirstFrame:
             self.prevFrame = frame.copy()
             self.initializedFirstFrame = True
             return H
 
-        # Run the ECC algorithm to find transformation matrix
+        # 运行 ECC 算法以查找变换矩阵
         try:
             (_, H) = cv2.findTransformECC(self.prevFrame, frame, H, self.warp_mode, self.criteria, None, 1)
             H[:, 2] *= (width / frame.shape[1], height / frame.shape[0])
         except Exception as e:
-            LOGGER.warning(f"findTransformECC failed; using identity warp. {e}")
+            LOGGER.warning(f"findTransformECC 失败，将使用单位变换。{e}")
 
         self.prevFrame = frame.copy()
         return H
 
     def apply_features(self, raw_frame: np.ndarray, detections: list | None = None) -> np.ndarray:
-        """Apply feature-based methods like ORB or SIFT to a raw frame.
+        """将 ORB 或 SIFT 等基于特征的方法应用于原始帧。
 
-        Args:
-            raw_frame (np.ndarray): The raw frame to be processed, with shape (H, W, C).
-            detections (list, optional): List of detections to be used in the processing.
+        参数：
+            raw_frame (np.ndarray): 要处理的原始帧，形状为 (H, W, C)。
+            detections (列表, 可选): 处理时使用的检测结果列表。
 
-        Returns:
-            (np.ndarray): Transformation matrix with shape (2, 3).
+        返回：
+            (np.ndarray): 形状为 (2, 3) 的变换矩阵。
 
-        Examples:
+        示例：
             >>> gmc = GMC(method="orb")
             >>> raw_frame = np.random.randint(0, 255, (480, 640, 3), dtype=np.uint8)
             >>> transformation_matrix = gmc.apply_features(raw_frame)
@@ -176,27 +176,27 @@ class GMC:
         frame = cv2.cvtColor(raw_frame, cv2.COLOR_BGR2GRAY) if c == 3 else raw_frame
         H = np.eye(2, 3)
 
-        # Downscale image for computational efficiency
+        # 缩小图像以提高计算效率
         if self.downscale > 1.0:
             frame = cv2.resize(frame, (width // self.downscale, height // self.downscale))
             width = width // self.downscale
             height = height // self.downscale
 
-        # Create mask for keypoint detection, excluding border regions
+        # 创建用于关键点检测的掩码，排除边缘区域
         mask = np.zeros_like(frame)
         mask[int(0.02 * height) : int(0.98 * height), int(0.02 * width) : int(0.98 * width)] = 255
 
-        # Exclude detection regions from mask to avoid tracking detected objects
+        # 从掩码中排除检测区域，避免跟踪已检测到的目标
         if detections is not None:
             for det in detections:
                 tlbr = (det[:4] / self.downscale).astype(np.int_)
                 mask[tlbr[1] : tlbr[3], tlbr[0] : tlbr[2]] = 0
 
-        # Find keypoints and compute descriptors
+        # 查找关键点并计算描述子
         keypoints = self.detector.detect(frame, mask)
         keypoints, descriptors = self.extractor.compute(frame, keypoints)
 
-        # Handle first frame initialization
+        # 处理第一帧初始化
         if not self.initializedFirstFrame:
             self.prevFrame = frame.copy()
             self.prevKeyPoints = copy.copy(keypoints)
@@ -204,18 +204,18 @@ class GMC:
             self.initializedFirstFrame = True
             return H
 
-        # Match descriptors between previous and current frame
+        # 匹配上一帧和当前帧之间的描述子
         knnMatches = (
             self.matcher.knnMatch(self.prevDescriptors, descriptors, 2)
             if self.prevDescriptors is not None and descriptors is not None
             else []
         )
 
-        # Filter matches based on spatial distance constraints
+        # 根据空间距离约束筛选匹配结果
         spatialDistances = []
         maxSpatialDistance = 0.25 * np.array([width, height])
 
-        # Apply Lowe's ratio test and spatial distance filtering
+        # 应用 Lowe 比率测试和空间距离筛选
         prevPoints = []
         currPoints = []
         for matches in knnMatches:
@@ -244,30 +244,30 @@ class GMC:
             self.prevDescriptors = copy.copy(descriptors)
             return H
 
-        # Filter outliers using statistical analysis
+        # 使用统计分析筛选异常值
         spatialDistances = np.asarray(spatialDistances).reshape(-1, 2)
         meanSpatialDistances = np.mean(spatialDistances, 0)
         stdSpatialDistances = np.std(spatialDistances, 0)
-        # Include exact-boundary and zero-variance matches.
+        # 保留位于边界上的匹配和方差为零的匹配。
         inliers = np.abs(spatialDistances - meanSpatialDistances) <= 2.5 * stdSpatialDistances
 
-        # Keep matched point pairs that survive the outlier filter
+        # 保留通过异常值筛选的匹配点对
         good = inliers.all(axis=1)
         prevPoints = np.asarray(prevPoints).reshape(-1, 2)[good]
         currPoints = np.asarray(currPoints).reshape(-1, 2)[good]
 
-        # Estimate transformation matrix using RANSAC
+        # 使用 RANSAC 估计变换矩阵
         if prevPoints.shape[0] > 4:
             H, inliers = cv2.estimateAffinePartial2D(prevPoints, currPoints, cv2.RANSAC)
 
-            # Scale translation components back to original resolution
+            # 将平移分量缩放回原始分辨率
             if self.downscale > 1.0:
                 H[0, 2] *= self.downscale
                 H[1, 2] *= self.downscale
         else:
-            LOGGER.warning("not enough matching points")
+            LOGGER.warning("匹配点数量不足")
 
-        # Store current frame data for next iteration
+        # 保存当前帧数据，供下一次迭代使用
         self.prevFrame = frame.copy()
         self.prevKeyPoints = copy.copy(keypoints)
         self.prevDescriptors = copy.copy(descriptors)
@@ -275,15 +275,15 @@ class GMC:
         return H
 
     def apply_sparseoptflow(self, raw_frame: np.ndarray) -> np.ndarray:
-        """Apply Sparse Optical Flow method to a raw frame.
+        """将稀疏光流方法应用于原始帧。
 
-        Args:
-            raw_frame (np.ndarray): The raw frame to be processed, with shape (H, W, C).
+        参数：
+            raw_frame (np.ndarray): 要处理的原始帧，形状为 (H, W, C)。
 
-        Returns:
-            (np.ndarray): Transformation matrix with shape (2, 3).
+        返回：
+            (np.ndarray): 形状为 (2, 3) 的变换矩阵。
 
-        Examples:
+        示例：
             >>> gmc = GMC()
             >>> raw_frame = np.random.randint(0, 255, (480, 640, 3), dtype=np.uint8)
             >>> transformation_matrix = gmc.apply_sparseoptflow(raw_frame)
@@ -294,47 +294,47 @@ class GMC:
         frame = cv2.cvtColor(raw_frame, cv2.COLOR_BGR2GRAY) if c == 3 else raw_frame
         H = np.eye(2, 3)
 
-        # Downscale image for computational efficiency
+        # 缩小图像以提高计算效率
         if self.downscale > 1.0:
             frame = cv2.resize(frame, (width // self.downscale, height // self.downscale))
 
-        # Find good features to track
+        # 查找适合跟踪的特征点
         keypoints = cv2.goodFeaturesToTrack(frame, mask=None, **self.feature_params)
 
-        # Handle first frame initialization
+        # 处理第一帧初始化
         if not self.initializedFirstFrame or self.prevKeyPoints is None:
             self.prevFrame = frame.copy()
             self.prevKeyPoints = copy.copy(keypoints)
             self.initializedFirstFrame = True
             return H
 
-        # Calculate optical flow using Lucas-Kanade method
+        # 使用 Lucas-Kanade 方法计算光流
         matchedKeypoints, status, _ = cv2.calcOpticalFlowPyrLK(self.prevFrame, frame, self.prevKeyPoints, None)
 
-        # Extract successfully tracked points
+        # 提取跟踪成功的点
         good = status.ravel().astype(bool)
         prevPoints = self.prevKeyPoints[good]
         currPoints = matchedKeypoints[good]
 
-        # Estimate transformation matrix using RANSAC
+        # 使用 RANSAC 估计变换矩阵
         if prevPoints.shape[0] > 4:
             H, _ = cv2.estimateAffinePartial2D(prevPoints, currPoints, cv2.RANSAC)
 
-            # Scale translation components back to original resolution
+            # 将平移分量缩放回原始分辨率
             if self.downscale > 1.0:
                 H[0, 2] *= self.downscale
                 H[1, 2] *= self.downscale
         else:
-            LOGGER.warning("not enough matching points")
+            LOGGER.warning("匹配点数量不足")
 
-        # Store current frame data for next iteration
+        # 保存当前帧数据，供下一次迭代使用
         self.prevFrame = frame.copy()
         self.prevKeyPoints = copy.copy(keypoints)
 
         return H
 
     def reset_params(self) -> None:
-        """Reset the internal parameters including previous frame, keypoints, and descriptors."""
+        """重置内部参数，包括上一帧、关键点和描述子。"""
         self.prevFrame = None
         self.prevKeyPoints = None
         self.prevDescriptors = None

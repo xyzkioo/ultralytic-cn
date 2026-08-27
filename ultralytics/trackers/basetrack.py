@@ -1,22 +1,22 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
-"""Module defines the base classes and structures for object tracking in YOLO."""
+"""定义 YOLO 对象跟踪所需的基类和数据结构。"""
 
 from typing import Any
 
 
 class TrackState:
-    """Enumeration class representing the possible states of an object being tracked.
+    """表示被跟踪对象可能状态的枚举类。
 
-    Attributes:
-        New (int): State when the object is newly detected.
-        Tracked (int): State when the object is successfully tracked in subsequent frames.
-        Lost (int): State when the object is no longer tracked.
-        Removed (int): State when the object is removed from tracking.
+    属性：
+        New (int): 对象刚被检测到时的状态。
+        Tracked (int): 对象在后续帧中被成功跟踪时的状态。
+        Lost (int): 对象不再被跟踪时的状态。
+        Removed (int): 对象从跟踪列表中移除时的状态。
 
-    Examples:
+    示例：
         >>> state = TrackState.New
         >>> if state == TrackState.New:
-        ...     print("Object is newly detected.")
+        ...     print("对象刚被检测到。")
     """
 
     New = 0
@@ -26,38 +26,38 @@ class TrackState:
 
 
 class BaseTrack:
-    """Base class for object tracking, providing foundational attributes and methods.
+    """对象跟踪的基类，提供基础属性和方法。
 
-    Attributes:
-        _count (int): Class-level counter for unique track IDs.
-        track_id (int): Unique identifier for the track.
-        is_activated (bool): Flag indicating whether the track is currently active.
-        state (TrackState): Current state of the track.
-        score (float): The confidence score of the tracking.
-        start_frame (int): The frame number where tracking started.
-        frame_id (int): The most recent frame ID processed by the track.
+    属性：
+        _count (int): 用于生成唯一跟踪 ID 的类级计数器。
+        track_id (int): 当前跟踪对象的唯一标识符。
+        is_activated (bool): 指示当前跟踪是否处于激活状态。
+        state (TrackState): 当前跟踪状态。
+        score (float): 跟踪置信度分数。
+        start_frame (int): 开始跟踪时的帧编号。
+        frame_id (int): 当前跟踪处理的最近一帧编号。
 
-    Methods:
-        end_frame: Returns the ID of the last frame where the object was tracked.
-        next_id: Increments and returns the next global track ID.
-        activate: Abstract method to activate the track.
-        predict: Abstract method to predict the next state of the track.
-        update: Abstract method to update the track with new data.
-        mark_lost: Marks the track as lost.
-        mark_removed: Marks the track as removed.
-        reset_id: Resets the global track ID counter.
+    方法：
+        end_frame: 返回对象最后被跟踪的帧编号。
+        next_id: 递增并返回下一个全局跟踪 ID。
+        activate: 激活跟踪对象的抽象方法。
+        predict: 预测跟踪对象下一状态的抽象方法。
+        update: 使用新数据更新跟踪对象的抽象方法。
+        mark_lost: 将跟踪标记为丢失。
+        mark_removed: 将跟踪标记为已移除。
+        reset_id: 重置全局跟踪 ID 计数器。
 
-    Examples:
-        Initialize a new track and mark it as lost:
+    示例：
+        初始化一个新的跟踪对象并将其标记为丢失：
         >>> track = BaseTrack()
         >>> track.mark_lost()
-        >>> print(track.state)  # Output: 2 (TrackState.Lost)
+        >>> print(track.state)  # 输出：2（TrackState.Lost）
     """
 
     _count = 0
 
     def __init__(self):
-        """Initialize a new track with a unique ID and foundational tracking attributes."""
+        """使用唯一 ID 和基础跟踪属性初始化新的跟踪对象。"""
         self.track_id = 0
         self.is_activated = False
         self.state = TrackState.New
@@ -67,36 +67,36 @@ class BaseTrack:
 
     @property
     def end_frame(self) -> int:
-        """Return the ID of the most recent frame where the object was tracked."""
+        """返回对象最近一次被跟踪的帧编号。"""
         return self.frame_id
 
     @staticmethod
     def next_id() -> int:
-        """Increment and return the next unique global track ID for object tracking."""
+        """递增并返回对象跟踪使用的下一个唯一全局跟踪 ID。"""
         BaseTrack._count += 1
         return BaseTrack._count
 
     def activate(self, *args: Any) -> None:
-        """Activate the track with provided arguments, initializing necessary attributes for tracking."""
+        """使用提供的参数激活跟踪对象，并初始化跟踪所需属性。"""
         raise NotImplementedError
 
     def predict(self) -> None:
-        """Predict the next state of the track based on the current state and tracking model."""
+        """根据当前状态和跟踪模型预测跟踪对象的下一状态。"""
         raise NotImplementedError
 
     def update(self, *args: Any, **kwargs: Any) -> None:
-        """Update the track with new observations and data, modifying its state and attributes accordingly."""
+        """使用新的观测和数据更新跟踪对象，并相应修改其状态和属性。"""
         raise NotImplementedError
 
     def mark_lost(self) -> None:
-        """Mark the track as lost by updating its state to TrackState.Lost."""
+        """将状态更新为 TrackState.Lost，把跟踪对象标记为丢失。"""
         self.state = TrackState.Lost
 
     def mark_removed(self) -> None:
-        """Mark the track as removed by setting its state to TrackState.Removed."""
+        """将状态设置为 TrackState.Removed，把跟踪对象标记为已移除。"""
         self.state = TrackState.Removed
 
     @staticmethod
     def reset_id() -> None:
-        """Reset the global track ID counter to its initial value."""
+        """将全局跟踪 ID 计数器重置为初始值。"""
         BaseTrack._count = 0

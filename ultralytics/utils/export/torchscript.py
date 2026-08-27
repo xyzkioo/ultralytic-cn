@@ -17,17 +17,17 @@ def torch2torchscript(
     metadata: dict | None = None,
     prefix: str = "",
 ) -> str:
-    """Export a PyTorch model to TorchScript format.
+    """将 PyTorch 模型导出为 TorchScript 格式。
 
-    Args:
-        model (torch.nn.Module): The PyTorch model to export (may be NMS-wrapped).
-        im (torch.Tensor): Example input tensor for tracing.
-        output_file (Path | str): Path to save the exported TorchScript model.
-        metadata (dict | None): Optional metadata to embed in the TorchScript archive.
-        prefix (str): Prefix for log messages.
+    参数：
+        model (torch.nn.Module): 要导出的 PyTorch 模型（可能已使用 NMS 包装）。
+        im (torch.Tensor): 用于跟踪的示例输入张量。
+        output_file (Path | str): 保存导出 TorchScript 模型的路径。
+        metadata (dict | None): 要嵌入 TorchScript 存档的可选元数据。
+        prefix (str): 日志消息前缀。
 
-    Returns:
-        (str): Path to the exported ``.torchscript`` file.
+    返回：
+        (str): 导出的 ``.torchscript`` 文件路径。
     """
     LOGGER.info(f"\n{prefix} starting export with torch {TORCH_VERSION}...")
 

@@ -13,7 +13,7 @@ from ultralytics.utils.checks import check_executorch_requirements
 
 
 def executorch_wrapper(model: torch.nn.Module) -> torch.nn.Module:
-    """Apply ExecuTorch-specific model patches required for export/runtime compatibility."""
+    """应用 ExecuTorch 专用模型补丁，以保证导出和运行时兼容性。"""
     import types
 
     for m in model.modules():
@@ -24,12 +24,12 @@ def executorch_wrapper(model: torch.nn.Module) -> torch.nn.Module:
 
 
 def _executorch_kpts_decode(self, kpts: torch.Tensor, is_pose26: bool = False) -> torch.Tensor:
-    """Decode pose keypoints for ExecuTorch export with XNNPACK-safe broadcasting."""
+    """为 ExecuTorch 导出解码姿态关键点，并使用 XNNPACK 安全的广播方式。"""
     ndim = self.kpt_shape[1]
     bs = kpts.shape[0]
     y = kpts.view(bs, *self.kpt_shape, -1)
 
-    # XNNPACK requires explicit dim matching for broadcasting, expand 2D tensors to 4D.
+    # XNNPACK 要求广播时维度显式匹配，因此将二维张量扩展为四维。
     anchors = self.anchors[None, None]
     strides = self.strides[None, None]
     a = ((y[:, :, :2] + anchors) if is_pose26 else (y[:, :, :2] * 2.0 + (anchors - 0.5))) * strides
@@ -45,17 +45,17 @@ def torch2executorch(
     metadata: dict | None = None,
     prefix: str = "",
 ) -> str:
-    """Export a PyTorch model to ExecuTorch format.
+    """将 PyTorch 模型导出为 ExecuTorch 格式。
 
-    Args:
-        model (torch.nn.Module): The PyTorch model to export.
-        im (torch.Tensor): Example input tensor for tracing/export.
-        output_dir (Path | str): Directory to save the exported ExecuTorch model.
-        metadata (dict | None, optional): Optional metadata to save as YAML.
-        prefix (str, optional): Prefix for log messages.
+    参数：
+        model (torch.nn.Module): 要导出的 PyTorch 模型。
+        im (torch.Tensor): 用于跟踪和导出的示例输入张量。
+        output_dir (Path | str): 保存导出 ExecuTorch 模型的目录。
+        metadata (dict | None, 可选): 要保存为 YAML 的可选元数据。
+        prefix (str, 可选): 日志消息前缀。
 
-    Returns:
-        (str): Path to the exported ExecuTorch model directory.
+    返回：
+        (str): 导出的 ExecuTorch 模型目录路径。
     """
     check_executorch_requirements()
     from executorch import version as executorch_version

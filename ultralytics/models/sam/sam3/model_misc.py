@@ -2,7 +2,7 @@
 
 # Copyright (c) Meta Platforms, Inc. and affiliates. All Rights Reserved
 
-"""Various utility models."""
+"""各种实用模型。"""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ from torch import Tensor, nn
 
 
 class DotProductScoring(torch.nn.Module):
-    """A module that computes dot-product scores between query features and pooled prompt embeddings."""
+    """计算查询特征与池化提示嵌入之间点积得分的模块。"""
 
     def __init__(
         self,
@@ -24,11 +24,11 @@ class DotProductScoring(torch.nn.Module):
         clamp_logits=True,
         clamp_max_val=12.0,
     ):
-        """Initialize the DotProductScoring module."""
+        """初始化 DotProductScoring 模块。"""
         super().__init__()
         self.d_proj = d_proj
         assert isinstance(prompt_mlp, torch.nn.Module) or prompt_mlp is None
-        self.prompt_mlp = prompt_mlp  # an optional MLP projection for prompt
+        self.prompt_mlp = prompt_mlp  # an 可选 MLP projection for prompt
         self.prompt_proj = torch.nn.Linear(d_model, d_proj)
         self.hs_proj = torch.nn.Linear(d_model, d_proj)
         self.scale = float(1.0 / np.sqrt(d_proj))
@@ -38,38 +38,38 @@ class DotProductScoring(torch.nn.Module):
 
     @staticmethod
     def mean_pool_text(prompt, prompt_mask):
-        """Mean-pool the prompt embeddings over the valid tokens only."""
-        # is_valid has shape (seq, bs, 1), where 1 is valid and 0 is padding
+        """仅对有效词元的提示嵌入执行平均池化。"""
+        # is_valid 的形状为 (seq, bs, 1)，其中 1 表示有效，0 表示填充
         is_valid = (~prompt_mask).to(prompt.dtype).permute(1, 0)[..., None]
-        # num_valid has shape (bs, 1)
+        # num_valid 的形状为 (bs, 1)
         num_valid = torch.clamp(torch.sum(is_valid, dim=0), min=1.0)
-        # mean pool over all the valid tokens -- pooled_prompt has shape (bs, proj_dim)
+        # 对所有有效词元执行平均池化，pooled_prompt 的形状为 (bs, proj_dim)
         pooled_prompt = (prompt * is_valid).sum(dim=0) / num_valid
         return pooled_prompt
 
     def forward(self, hs, prompt, prompt_mask):
-        """Compute dot-product scores between hs and prompt."""
-        # hs has shape (num_layer, bs, num_query, d_model)
-        # prompt has shape (seq, bs, d_model)
-        # prompt_mask has shape (bs, seq), where 1 is padding and 0 is valid
+        """计算 hs 与 prompt 之间的点积得分。"""
+        # hs 的形状为 (num_layer, bs, num_query, d_model)
+        # prompt 的形状为 (seq, bs, d_model)
+        # prompt_mask 的形状为 (bs, seq)，其中 1 表示填充，0 表示有效
         assert hs.dim() == 4 and prompt.dim() == 3 and prompt_mask.dim() == 2
 
-        # apply MLP on prompt if specified
+        # 如果指定了 MLP，则对 prompt 应用 MLP
         if self.prompt_mlp is not None:
             prompt = self.prompt_mlp(prompt.to(hs.dtype))
 
-        # first, get the mean-pooled version of the prompt
+        # 首先获取 prompt 的平均池化结果
         pooled_prompt = self.mean_pool_text(prompt, prompt_mask)
 
-        # then, project pooled_prompt and hs to d_proj dimensions
+        # 然后将 pooled_prompt 和 hs 投影到 d_proj 维度
         proj_pooled_prompt = self.prompt_proj(pooled_prompt)  # (bs, d_proj)
         proj_hs = self.hs_proj(hs)  # (num_layer, bs, num_query, d_proj)
 
-        # finally, get dot-product scores of shape (num_layer, bs, num_query, 1)
+        # 最后获取形状为 (num_layer, bs, num_query, 1) 的点积得分
         scores = torch.matmul(proj_hs, proj_pooled_prompt.unsqueeze(-1))
         scores *= self.scale
 
-        # clamp scores to a max value to avoid numerical issues in loss or matcher
+        # 将得分限制在最大值范围内，避免损失计算或匹配器出现数值问题
         if self.clamp_logits:
             scores.clamp_(min=-self.clamp_max_val, max=self.clamp_max_val)
 
@@ -77,7 +77,7 @@ class DotProductScoring(torch.nn.Module):
 
 
 class LayerScale(nn.Module):
-    """LayerScale module for per-channel scaling of layer outputs."""
+    """对层输出执行逐通道缩放的 LayerScale 模块。"""
 
     def __init__(
         self,
@@ -85,18 +85,18 @@ class LayerScale(nn.Module):
         init_values: float | Tensor = 1e-5,
         inplace: bool = False,
     ) -> None:
-        """Initialize the LayerScale module."""
+        """初始化 LayerScale 模块。"""
         super().__init__()
         self.inplace = inplace
         self.gamma = nn.Parameter(init_values * torch.ones(dim))
 
     def forward(self, x: Tensor) -> Tensor:
-        """Apply LayerScale to the input tensor."""
+        """对输入张量应用 LayerScale。"""
         return x.mul_(self.gamma) if self.inplace else x * self.gamma
 
 
 class TransformerWrapper(nn.Module):
-    """A wrapper for the transformer consisting of an encoder and a decoder."""
+    """由编码器和解码器组成的 Transformer 封装器。"""
 
     def __init__(
         self,
@@ -106,14 +106,14 @@ class TransformerWrapper(nn.Module):
         two_stage_type="none",  # ["none"] only for now
         pos_enc_at_input_dec=True,
     ):
-        """Initialize the TransformerWrapper."""
+        """初始化 TransformerWrapper。"""
         super().__init__()
         self.encoder = encoder
         self.decoder = decoder
         self.num_queries = decoder.num_queries if decoder is not None else None
         self.pos_enc_at_input_dec = pos_enc_at_input_dec
 
-        # for two stage
+        # 两阶段模式
         assert two_stage_type in ["none"], f"unknown param {two_stage_type} of two_stage_type"
         self.two_stage_type = two_stage_type
 
@@ -121,14 +121,14 @@ class TransformerWrapper(nn.Module):
         self.d_model = d_model
 
     def _reset_parameters(self):
-        """Initialize the parameters of the model."""
+        """初始化模型参数。"""
         for n, p in self.named_parameters():
             if p.dim() > 1 and "box_embed" not in n and "query_embed" not in n and "reference_points" not in n:
                 nn.init.xavier_uniform_(p)
 
 
 def get_valid_ratio(mask):
-    """Compute the valid ratio of height and width from the mask."""
+    """根据掩码计算有效高度和宽度的比例。"""
     _, H, W = mask.shape
     valid_H = torch.sum(~mask[:, :, 0], 1)
     valid_W = torch.sum(~mask[:, 0, :], 1)
@@ -139,26 +139,24 @@ def get_valid_ratio(mask):
 
 
 def gen_sineembed_for_position(pos_tensor: torch.Tensor, num_feats: int = 256):
-    """Generate sinusoidal position embeddings for 2D or 4D coordinate tensors.
+    """为二维或四维坐标张量生成正弦位置嵌入。
 
-    This function creates sinusoidal embeddings using sine and cosine functions at different frequencies, similar to the
-    positional encoding used in Transformer models. It supports both 2D position tensors (x, y) and 4D tensors (x, y, w,
-    h) for bounding box coordinates.
+    此函数使用不同频率的正弦和余弦函数创建嵌入，形式类似于 Transformer 模型使用的位置编码。
+    它同时支持二维位置张量 (x, y) 和用于边界框坐标的四维张量 (x, y, w, h)。
 
-    Args:
-        pos_tensor (torch.Tensor): Input position tensor of shape (n_query, bs, 2) for 2D coordinates or (n_query, bs,
-            4) for 4D coordinates (bounding boxes).
-        num_feats (int): Number of feature dimensions for the output embedding. Must be even. Defaults to 256.
+    参数：
+        pos_tensor (torch.Tensor): 输入位置张量；二维坐标形状为 (n_query, bs, 2)，四维边界框坐标形状为 (n_query, bs, 4)。
+        num_feats (int): 输出嵌入的特征维度，必须为偶数，默认为 256。
 
-    Returns:
-        (torch.Tensor): Sinusoidal position embeddings of shape (n_query, bs, num_feats) for 2D input or (n_query, bs,
-            num_feats * 2) for 4D input.
+    返回：
+        (torch.Tensor): 正弦位置嵌入；二维输入的形状为 (n_query, bs, num_feats)，四维输入的形状为
+            (n_query, bs, num_feats * 2)。
 
-    Raises:
+    异常：
         AssertionError: If num_feats is not even.
-        ValueError: If pos_tensor.size(-1) is not 2 or 4.
+        ValueError: 当 pos_tensor.size(-1) 不是 2 或 4 时抛出。
 
-    Examples:
+    示例：
         >>> pos_2d = torch.rand(100, 8, 2)  # 100 queries, batch size 8, 2D coordinates
         >>> embeddings_2d = gen_sineembed_for_position(pos_2d, num_feats=256)
         >>> embeddings_2d.shape

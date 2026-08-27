@@ -1,5 +1,5 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
-"""Monkey patches to update/extend functionality of existing functions."""
+"""用于更新或扩展现有函数功能的猴子补丁。"""
 
 from __future__ import annotations
 
@@ -14,21 +14,21 @@ import numpy as np
 import torch
 from PIL import Image
 
-# OpenCV Multilanguage-friendly functions ------------------------------------------------------------------------------
+# OpenCV 多语言文件名支持函数 -----------------------------------------------------------------------------------------
 _imshow = cv2.imshow  # copy to avoid recursion errors
 
 
 def imread(filename: str | Path, flags: int = cv2.IMREAD_COLOR) -> np.ndarray | None:
-    """Read an image from a file with multilanguage filename support.
+    """从文件读取图像，并支持包含多语言字符的文件名。
 
-    Args:
-        filename (str | Path): Path to the file to read.
-        flags (int, optional): Flag that can take values of cv2.IMREAD_*. Controls how the image is read.
+    参数：
+        filename (str | Path): 要读取的文件路径。
+        flags (int, 可选): 可取 cv2.IMREAD_* 中的值，用于控制图像的读取方式。
 
-    Returns:
-        (np.ndarray | None): The read image array, or None if reading fails.
+    返回：
+        (np.ndarray | None): 读取到的图像数组；读取失败时返回 None。
 
-    Examples:
+    示例：
         >>> img = imread("path/to/image.jpg")
         >>> img = imread("path/to/image.jpg", cv2.IMREAD_GRAYSCALE)
     """
@@ -40,36 +40,35 @@ def imread(filename: str | Path, flags: int = cv2.IMREAD_COLOR) -> np.ndarray | 
     if filename.endswith((".tiff", ".tif")):
         success, frames = cv2.imdecodemulti(file_bytes, cv2.IMREAD_UNCHANGED)
         if success:
-            # Handle multi-frame TIFFs and color images
+            # 处理多帧 TIFF 和彩色图像
             return frames[0] if len(frames) == 1 and frames[0].ndim == 3 else np.stack(frames, axis=2)
         return None
     else:
         im = cv2.imdecode(file_bytes, flags)
-        # Fallback for formats OpenCV imdecode may not support (AVIF, HEIC, HEIF)
+        # 对 OpenCV imdecode 可能不支持的格式（AVIF、HEIC、HEIF）使用备用方案
         if im is None and filename.lower().endswith((".avif", ".heic", ".heif")):
             im = _imread_pil(filename, flags)
-        return im[..., None] if im is not None and im.ndim == 2 else im  # Always ensure 3 dimensions
+        return im[..., None] if im is not None and im.ndim == 2 else im  # 始终确保图像具有 3 个维度
 
 
-# PIL patches ---------------------------------------------------------------------------------------------------------
+# PIL 补丁 ------------------------------------------------------------------------------------------------------------
 _image_open = Image.open  # copy to avoid recursion errors
 _pil_plugins_registered = False
 
 
 def image_open(filename, *args, **kwargs):
-    """Open an image with PIL, lazily registering the HEIF plugin on first failure.
+    """使用 PIL 打开图像，并在首次失败时按需注册 HEIF 插件。
 
-    This monkey-patches PIL.Image.open to add HEIC/HEIF support via pi-heif (lightweight, decode-only), avoiding the
-    ~800ms startup cost of importing the package unless actually needed. AVIF is supported natively by Pillow 12+ and
-    does not require a plugin.
+    此猴子补丁通过 pi-heif（轻量级、仅支持解码）为 PIL.Image.open 增加 HEIC/HEIF 支持，只有实际需要时才导入该包，
+    从而避免约 800 毫秒的启动开销。Pillow 12 及更高版本原生支持 AVIF，无需额外插件。
 
-    Args:
-        filename (str): Path to the image file.
-        *args (Any): Additional positional arguments passed to PIL.Image.open.
-        **kwargs (Any): Additional keyword arguments passed to PIL.Image.open.
+    参数：
+        filename (str): 图像文件路径。
+        *args (Any): 传递给 PIL.Image.open 的其他位置参数。
+        **kwargs (Any): 传递给 PIL.Image.open 的其他关键字参数。
 
-    Returns:
-        (PIL.Image.Image): The opened PIL image.
+    返回：
+        (PIL.Image.Image): 打开的 PIL 图像。
     """
     global _pil_plugins_registered
     if _pil_plugins_registered:
@@ -91,14 +90,14 @@ Image.open = image_open  # apply patch
 
 
 def _imread_pil(filename: str, flags: int = cv2.IMREAD_COLOR) -> np.ndarray | None:
-    """Read an image using PIL as fallback for formats not supported by OpenCV.
+    """使用 PIL 读取图像，作为 OpenCV 不支持格式的备用方案。
 
-    Args:
-        filename (str): Path to the file to read.
-        flags (int, optional): OpenCV imread flags (used to determine grayscale conversion).
+    参数：
+        filename (str): 要读取的文件路径。
+        flags (int, 可选): OpenCV 的 imread 标志，用于确定是否转换为灰度图。
 
-    Returns:
-        (np.ndarray | None): The read image array in BGR format, or None if reading fails.
+    返回：
+        (np.ndarray | None): 读取到的 BGR 格式图像数组；读取失败时返回 None。
     """
     try:
         with Image.open(filename) as img:
@@ -110,17 +109,17 @@ def _imread_pil(filename: str, flags: int = cv2.IMREAD_COLOR) -> np.ndarray | No
 
 
 def imread_unicode(filename: str | Path, flags: int = cv2.IMREAD_COLOR) -> np.ndarray | None:
-    """Read an image with multilanguage filename support, preserving native cv2.imread behavior.
+    """读取图像并支持包含多语言字符的文件名，同时保持 cv2.imread 的原生行为。
 
-    This is intended as a Windows monkey-patch for cv2.imread. Unlike `imread`, it does not expand grayscale dimensions
-    or handle TIFF/AVIF/HEIC fallback.
+    此函数用于在 Windows 上替换 cv2.imread。与 `imread` 不同，它不会扩展灰度图维度，也不处理 TIFF、AVIF 或 HEIC
+    格式的备用读取。
 
-    Args:
-        filename (str | Path): Path to the file to read.
-        flags (int, optional): Flag that can take values of cv2.IMREAD_*.
+    参数：
+        filename (str | Path): 要读取的文件路径。
+        flags (int, 可选): 可取 cv2.IMREAD_* 中的值。
 
-    Returns:
-        (np.ndarray | None): The read image array, or None if reading fails.
+    返回：
+        (np.ndarray | None): 读取到的图像数组；读取失败时返回 None。
     """
     try:
         return cv2.imdecode(np.fromfile(filename, np.uint8), flags)
@@ -129,20 +128,20 @@ def imread_unicode(filename: str | Path, flags: int = cv2.IMREAD_COLOR) -> np.nd
 
 
 def imwrite(filename: str, img: np.ndarray, params: list[int] | None = None) -> bool:
-    """Write an image to a file with multilanguage filename support.
+    """将图像写入文件，并支持包含多语言字符的文件名。
 
-    Args:
-        filename (str): Path to the file to write.
-        img (np.ndarray): Image to write.
-        params (list[int], optional): Additional parameters for image encoding.
+    参数：
+        filename (str): 要写入的文件路径。
+        img (np.ndarray): 要写入的图像。
+        params (列表[int], 可选): 图像编码的其他参数。
 
-    Returns:
-        (bool): True if the file was written successfully, False otherwise.
+    返回：
+        (bool): 文件写入成功返回 True，否则返回 False。
 
-    Examples:
+    示例：
         >>> import numpy as np
-        >>> img = np.zeros((100, 100, 3), dtype=np.uint8)  # Create a black image
-        >>> success = imwrite("output.jpg", img)  # Write image to file
+        >>> img = np.zeros((100, 100, 3), dtype=np.uint8)  # 创建黑色图像
+        >>> success = imwrite("output.jpg", img)  # 将图像写入文件
         >>> print(success)
         True
     """
@@ -154,44 +153,42 @@ def imwrite(filename: str, img: np.ndarray, params: list[int] | None = None) -> 
 
 
 def imshow(winname: str, mat: np.ndarray) -> None:
-    """Display an image in the specified window with multilanguage window name support.
+    """在指定窗口中显示图像，并支持包含多语言字符的窗口名称。
 
-    This function is a wrapper around OpenCV's imshow function that displays an image in a named window. It handles
-    multilanguage window names by encoding them properly for OpenCV compatibility.
+    此函数封装了 OpenCV 的 imshow，用于在命名窗口中显示图像。它会先对多语言窗口名称进行适当编码，
+    以确保与 OpenCV 兼容。
 
-    Args:
-        winname (str): Name of the window where the image will be displayed. If a window with this name already exists,
-            the image will be displayed in that window.
-        mat (np.ndarray): Image to be shown. Should be a valid numpy array representing an image.
+    参数：
+        winname (str): 显示图像的窗口名称。如果已存在同名窗口，图像将在该窗口中显示。
+        mat (np.ndarray): 要显示的图像，应为表示图像的有效 NumPy 数组。
 
-    Examples:
+    示例：
         >>> import numpy as np
-        >>> img = np.zeros((300, 300, 3), dtype=np.uint8)  # Create a black image
-        >>> img[:100, :100] = [255, 0, 0]  # Add a blue square
-        >>> imshow("Example Window", img)  # Display the image
+        >>> img = np.zeros((300, 300, 3), dtype=np.uint8)  # 创建黑色图像
+        >>> img[:100, :100] = [255, 0, 0]  # 添加蓝色方块
+        >>> imshow("Example Window", img)  # 显示图像
     """
     _imshow(winname.encode("unicode_escape").decode(), mat)
 
 
-# PyTorch functions ----------------------------------------------------------------------------------------------------
+# PyTorch 函数 ---------------------------------------------------------------------------------------------------------
 _torch_save = torch.save
 
 
 def torch_load(*args, **kwargs):
-    """Load a PyTorch model with updated arguments to avoid warnings.
+    """使用更新后的参数加载 PyTorch 模型，以避免警告。
 
-    This function wraps torch.load and adds the 'weights_only' argument for PyTorch 1.13.0+ to prevent warnings.
+    此函数封装 torch.load，并为 PyTorch 1.13.0 及更高版本增加 `weights_only` 参数，以避免警告。
 
-    Args:
-        *args (Any): Variable length argument list to pass to torch.load.
-        **kwargs (Any): Arbitrary keyword arguments to pass to torch.load.
+    参数：
+        *args (Any): 要传递给 torch.load 的可变长度位置参数列表。
+        **kwargs (Any): 要传递给 torch.load 的任意关键字参数。
 
-    Returns:
-        (Any): The loaded PyTorch object.
+    返回：
+        (Any): 加载得到的 PyTorch 对象。
 
-    Notes:
-        For PyTorch versions 1.13 and above, this function automatically sets `weights_only=False` if the argument is
-        not provided, to avoid deprecation warnings.
+    注意：
+        对于 PyTorch 1.13 及更高版本，如果未提供该参数，此函数会自动设置 `weights_only=False`，以避免弃用警告。
     """
     from ultralytics.utils.torch_utils import TORCH_1_13
 
@@ -202,31 +199,30 @@ def torch_load(*args, **kwargs):
 
 
 def torch_save(*args, **kwargs):
-    """Save PyTorch objects with retry mechanism for robustness.
+    """保存 PyTorch 对象，并通过重试机制提高稳定性。
 
-    This function wraps torch.save with 3 retries and exponential backoff in case of save failures, which can occur due
-    to device flushing delays or antivirus scanning.
+    此函数封装 torch.save。保存失败时最多重试 3 次，并采用指数退避，这些失败可能由设备刷新延迟或杀毒软件扫描造成。
 
-    Args:
-        *args (Any): Positional arguments to pass to torch.save.
-        **kwargs (Any): Keyword arguments to pass to torch.save.
+    参数：
+        *args (Any): 要传递给 torch.save 的位置参数。
+        **kwargs (Any): 要传递给 torch.save 的关键字参数。
 
-    Examples:
+    示例：
         >>> model = torch.nn.Linear(10, 1)
         >>> torch_save(model.state_dict(), "model.pt")
     """
-    for i in range(4):  # 3 retries
+    for i in range(4):  # 最多重试 3 次
         try:
             return _torch_save(*args, **kwargs)
-        except RuntimeError:  # Unable to save, possibly waiting for device to flush or antivirus scan
+        except RuntimeError:  # 无法保存，可能正在等待设备刷新或杀毒软件扫描
             if i == 3:
                 raise
-            time.sleep((2**i) / 2)  # Exponential backoff: 0.5s, 1.0s, 2.0s
+            time.sleep((2**i) / 2)  # 指数退避：0.5 秒、1.0 秒、2.0 秒
 
 
 @contextmanager
 def arange_patch(dynamic: bool = False, quantize: int | str | None = None, fmt: str = ""):
-    """Workaround for ONNX torch.arange incompatibility with FP16.
+    """解决 ONNX 中 torch.arange 与 FP16 不兼容的问题。
 
     https://github.com/pytorch/pytorch/issues/148041.
     """
@@ -234,8 +230,8 @@ def arange_patch(dynamic: bool = False, quantize: int | str | None = None, fmt: 
         func = torch.arange
 
         def arange(*args, dtype=None, **kwargs):
-            """Wrap torch.arange to cast dtype after creation instead of passing it directly."""
-            return func(*args, **kwargs).to(dtype)  # cast to dtype instead of passing dtype
+            """封装 torch.arange，在创建张量后转换 dtype，而不是直接传入该参数。"""
+            return func(*args, **kwargs).to(dtype)  # 转换为目标 dtype，而不是直接传入 dtype
 
         torch.arange = arange  # patch
         yield
@@ -246,14 +242,14 @@ def arange_patch(dynamic: bool = False, quantize: int | str | None = None, fmt: 
 
 @contextmanager
 def onnx_export_patch():
-    """Workaround for ONNX export issues in PyTorch 2.9+ with Dynamo enabled."""
+    """解决 PyTorch 2.9 及更高版本启用 Dynamo 时的 ONNX 导出问题。"""
     from ultralytics.utils.torch_utils import TORCH_2_9
 
     if TORCH_2_9:
         func = torch.onnx.export
 
         def torch_export(*args, **kwargs):
-            """Export model to ONNX format with Dynamo disabled for compatibility."""
+            """禁用 Dynamo，将模型导出为 ONNX 格式，以确保兼容性。"""
             return func(*args, **kwargs, dynamo=False)
 
         torch.onnx.export = torch_export  # patch
@@ -265,14 +261,14 @@ def onnx_export_patch():
 
 @contextmanager
 def override_configs(args, overrides: dict[str, Any] | None = None):
-    """Context manager to temporarily override configurations in args.
+    """临时覆盖 args 中配置项的上下文管理器。
 
-    Args:
-        args (IterableSimpleNamespace): Original configuration arguments.
-        overrides (dict[str, Any] | None): Dictionary of overrides to apply.
+    参数：
+        args (IterableSimpleNamespace): 原始配置参数。
+        overrides (dict[str, Any] | None): 要应用的覆盖配置字典。
 
     Yields:
-        (IterableSimpleNamespace): Configuration arguments with overrides applied.
+        (IterableSimpleNamespace): 已应用覆盖配置的参数对象。
     """
     if overrides:
         original_args = copy(args)

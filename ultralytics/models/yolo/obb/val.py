@@ -16,27 +16,26 @@ from ultralytics.utils.plotting import plot_images
 
 
 class OBBValidator(DetectionValidator):
-    """A class extending the DetectionValidator class for validation based on an Oriented Bounding Box (OBB) model.
+    """继承 DetectionValidator 的验证器，用于验证旋转边界框（OBB）模型。
 
-    This validator specializes in evaluating models that predict rotated bounding boxes, commonly used for aerial and
-    satellite imagery where objects can appear at various orientations.
+    此验证器专门评估预测旋转边界框的模型，常用于目标可能呈现不同方向的航空和卫星图像。
 
-    Attributes:
-        args (dict): Configuration arguments for the validator.
-        metrics (OBBMetrics): Metrics object for evaluating OBB model performance.
-        is_dota (bool): Flag indicating whether the validation dataset is in DOTA format.
+    属性：
+        args (dict): 验证器配置参数。
+        metrics (OBBMetrics): 用于评估 OBB 模型性能的指标对象。
+        is_dota (bool): 指示验证数据集是否为 DOTA 格式的标志。
 
-    Methods:
-        init_metrics: Initialize evaluation metrics for YOLO.
-        _process_batch: Process batch of detections and ground truth boxes to compute IoU matrix.
-        _prepare_batch: Prepare batch data for OBB validation.
-        _prepare_pred: Prepare predictions for evaluation against ground truth.
-        plot_predictions: Plot predicted bounding boxes on input images.
-        pred_to_json: Serialize YOLO predictions to COCO json format.
-        save_one_txt: Save YOLO detections to a txt file in normalized coordinates.
-        eval_json: Evaluate YOLO output in JSON format and return performance statistics.
+    方法：
+        init_metrics：初始化 YOLO 评估指标。
+        _process_batch：处理检测结果和真实边界框批次，计算 IoU 矩阵。
+        _prepare_batch：准备 OBB 验证所需的批次数据。
+        _prepare_pred：准备用于与真实标注比较的预测结果。
+        plot_predictions：在输入图像上绘制预测旋转边界框。
+        pred_to_json：将 YOLO 预测结果序列化为 COCO JSON 格式。
+        save_one_txt：按归一化坐标将 YOLO 检测结果保存到 txt 文件。
+        eval_json：评估 JSON 格式的 YOLO 输出并返回性能统计信息。
 
-    Examples:
+    示例：
         >>> from ultralytics.models.yolo.obb import OBBValidator
         >>> args = dict(model="yolo26n-obb.pt", data="dota8.yaml")
         >>> validator = OBBValidator(args=args)
@@ -44,47 +43,44 @@ class OBBValidator(DetectionValidator):
     """
 
     def __init__(self, dataloader=None, save_dir=None, args=None, _callbacks: dict | None = None) -> None:
-        """Initialize OBBValidator and set task to 'obb', metrics to OBBMetrics.
+        """初始化 OBBValidator，并将任务设置为 'obb'、指标设置为 OBBMetrics。
 
-        This constructor initializes an OBBValidator instance for validating Oriented Bounding Box (OBB) models. It
-        extends the DetectionValidator class and configures it specifically for the OBB task.
+        此构造函数初始化用于验证旋转边界框（OBB）模型的 OBBValidator 实例。
+        它继承 DetectionValidator，并针对 OBB 任务进行专门配置。
 
-        Args:
-            dataloader (torch.utils.data.DataLoader, optional): DataLoader to be used for validation.
-            save_dir (str | Path, optional): Directory to save results.
-            args (dict, optional): Arguments containing validation parameters.
-            _callbacks (dict, optional): Dictionary of callback functions to be called during validation.
+        参数：
+            dataloader (torch.utils.data.DataLoader, 可选): 用于验证的数据加载器。
+            save_dir (str | Path, 可选): 结果保存目录。
+            args (dict, 可选): 包含验证参数的字典。
+            _callbacks (dict, 可选): 验证期间调用的回调函数字典。
         """
         super().__init__(dataloader, save_dir, args, _callbacks)
         self.args.task = "obb"
         self.metrics = OBBMetrics()
 
     def init_metrics(self, model: torch.nn.Module) -> None:
-        """Initialize evaluation metrics for YOLO obb validation.
+        """初始化 YOLO OBB 验证的评估指标。
 
-        Args:
-            model (torch.nn.Module): Model to validate.
+        参数：
+            model (torch.nn.Module): 待验证的模型。
         """
         super().init_metrics(model)
-        val = self.data.get(self.args.split, "")  # validation path
-        self.is_dota = isinstance(val, str) and "DOTA" in val  # check if dataset is DOTA format
-        self.confusion_matrix.task = "obb"  # set confusion matrix task to 'obb'
+        val = self.data.get(self.args.split, "")  # validation 路径
+        self.is_dota = isinstance(val, str) and "DOTA" in val  # 检查数据集是否为 DOTA 格式
+        self.confusion_matrix.task = "obb"  # 将混淆矩阵任务设置为 'obb'
 
     def _process_batch(self, preds: dict[str, torch.Tensor], batch: dict[str, torch.Tensor]) -> dict[str, np.ndarray]:
-        """Compute the correct prediction matrix for a batch of detections and ground truth bounding boxes.
+        """计算检测结果与真实边界框批次的正确预测矩阵。
 
-        Args:
-            preds (dict[str, torch.Tensor]): Prediction dictionary containing 'cls' and 'bboxes' keys with detected
-                class labels and bounding boxes.
-            batch (dict[str, torch.Tensor]): Batch dictionary containing 'cls' and 'bboxes' keys with ground truth class
-                labels and bounding boxes.
+        参数：
+            preds (dict[str, torch.Tensor]): 包含 'cls' 和 'bboxes' 键的预测字典，表示检测类别标签和边界框。
+            batch (dict[str, torch.Tensor]): 包含 'cls' 和 'bboxes' 键的批次字典，表示真实类别标签和边界框。
 
-        Returns:
-            (dict[str, np.ndarray]): Dictionary containing 'tp' key with the correct prediction matrix as a numpy array
-                with shape (N, 10), which includes 10 IoU levels for each detection, indicating the accuracy of
-                predictions compared to the ground truth.
+        返回：
+            (dict[str, np.ndarray]): 包含 'tp' 键的字典。正确预测矩阵为形状 (N, 10) 的 NumPy 数组，
+                包含每个检测结果在 10 个 IoU 阈值下与真实标注的匹配情况。
 
-        Examples:
+        示例：
             >>> preds = {"cls": torch.randint(0, 5, (100,)), "bboxes": torch.rand(100, 5)}
             >>> batch = {"cls": torch.randint(0, 5, (50,)), "bboxes": torch.rand(50, 5)}
             >>> correct_matrix = validator._process_batch(preds, batch)
@@ -95,34 +91,34 @@ class OBBValidator(DetectionValidator):
         return {"tp": self.match_predictions(preds["cls"], batch["cls"], iou).cpu().numpy()}
 
     def postprocess(self, preds: torch.Tensor) -> list[dict[str, torch.Tensor]]:
-        """Postprocess OBB predictions.
+        """后处理 OBB 预测结果。
 
-        Args:
-            preds (torch.Tensor): Raw predictions from the model.
+        参数：
+            preds (torch.Tensor): 模型输出的原始预测结果。
 
-        Returns:
-            (list[dict[str, torch.Tensor]]): Processed predictions with angle information concatenated to bboxes.
+        返回：
+            (列表[dict[str, torch.Tensor]]): 后处理后的预测结果，角度信息已拼接到 bboxes。
         """
         preds = super().postprocess(preds)
         for pred in preds:
-            pred["bboxes"] = torch.cat([pred["bboxes"], pred.pop("extra")], dim=-1)  # concatenate angle
+            pred["bboxes"] = torch.cat([pred["bboxes"], pred.pop("extra")], dim=-1)  # 拼接角度
         return preds
 
     def _prepare_batch(self, si: int, batch: dict[str, Any]) -> dict[str, Any]:
-        """Prepare batch data for OBB validation with proper scaling and formatting.
+        """按正确的缩放和格式准备 OBB 验证批次数据。
 
-        Args:
-            si (int): Sample index within the batch.
-            batch (dict[str, Any]): Dictionary containing batch data with keys:
-                - batch_idx: Tensor of batch indices
-                - cls: Tensor of class labels
-                - bboxes: Tensor of bounding boxes
-                - ori_shape: Original image shapes
-                - img: Batch of images
-                - ratio_pad: Ratio and padding information
+        参数：
+            si (int): 样本在批次中的索引。
+            batch (dict[str, Any]): 包含批次数据的字典，键包括：
+                - batch_idx：批次索引张量
+                - cls：类别标签张量
+                - bboxes：边界框张量
+                - ori_shape：原始图像尺寸
+                - img：图像批次
+                - ratio_pad：缩放比例和填充信息
 
-        Returns:
-            (dict[str, Any]): Prepared batch data with scaled bounding boxes and metadata.
+        返回：
+            (dict[str, Any]): 包含缩放后边界框和元数据的批次数据。
         """
         idx = batch["batch_idx"] == si
         cls = batch["cls"][idx].squeeze(-1)
@@ -131,7 +127,7 @@ class OBBValidator(DetectionValidator):
         imgsz = batch["img"].shape[2:]
         ratio_pad = batch["ratio_pad"][si]
         if cls.shape[0]:
-            bbox[..., :4].mul_(torch.tensor(imgsz, device=self.device)[[1, 0, 1, 0]])  # target boxes
+            bbox[..., :4].mul_(torch.tensor(imgsz, device=self.device)[[1, 0, 1, 0]])  # 目标 边界框
         return {
             "cls": cls,
             "bboxes": bbox,
@@ -142,14 +138,14 @@ class OBBValidator(DetectionValidator):
         }
 
     def plot_predictions(self, batch: dict[str, Any], preds: list[dict[str, torch.Tensor]], ni: int) -> None:
-        """Plot predicted bounding boxes on input images and save the result.
+        """在输入图像上绘制预测旋转边界框并保存结果。
 
-        Args:
-            batch (dict[str, Any]): Batch data containing images, file paths, and other metadata.
-            preds (list[dict[str, torch.Tensor]]): List of prediction dictionaries for each image in the batch.
-            ni (int): Batch index used for naming the output file.
+        参数：
+            batch (dict[str, Any]): 包含图像、文件路径和其他元数据的批次数据。
+            preds (列表[dict[str, torch.Tensor]]): 批次中每张图像对应的预测字典列表。
+            ni (int): 用于命名输出文件的批次索引。
 
-        Examples:
+        示例：
             >>> validator = OBBValidator()
             >>> batch = {"img": images, "im_file": paths}
             >>> preds = [{"bboxes": torch.rand(10, 5), "cls": torch.zeros(10), "conf": torch.rand(10)}]
@@ -171,17 +167,15 @@ class OBBValidator(DetectionValidator):
         )
 
     def pred_to_json(self, predn: dict[str, torch.Tensor], pbatch: dict[str, Any]) -> None:
-        """Convert YOLO predictions to COCO JSON format with rotated bounding box information.
+        """将 YOLO 预测结果转换为包含旋转边界框信息的 COCO JSON 格式。
 
-        Args:
-            predn (dict[str, torch.Tensor]): Prediction dictionary containing 'bboxes', 'conf', and 'cls' keys with
-                bounding box coordinates, confidence scores, and class predictions.
-            pbatch (dict[str, Any]): Batch dictionary containing 'imgsz', 'ori_shape', 'ratio_pad', and 'im_file'.
+        参数：
+            predn (dict[str, torch.Tensor]): 包含 'bboxes'、'conf' 和 'cls' 键的预测字典，分别表示边界框坐标、置信度分数和类别预测结果。
+            pbatch (dict[str, Any]): 包含 'imgsz'、'ori_shape'、'ratio_pad' 和 'im_file' 的批次字典。
 
-        Notes:
-            This method processes rotated bounding box predictions and converts them to both rbox format
-            (x, y, w, h, angle) and polygon format (x1, y1, x2, y2, x3, y3, x4, y4) before adding them
-            to the JSON dictionary.
+        注意：
+            此方法处理旋转边界框预测结果，在写入 JSON 字典前将其同时转换为 rbox 格式
+            (x, y, w, h, angle) 和多边形格式 (x1, y1, x2, y2, x3, y3, x4, y4)。
         """
         path = Path(pbatch["im_file"])
         stem = path.stem
@@ -201,16 +195,15 @@ class OBBValidator(DetectionValidator):
             )
 
     def save_one_txt(self, predn: dict[str, torch.Tensor], save_conf: bool, shape: tuple[int, int], file: Path) -> None:
-        """Save YOLO OBB detections to a text file in normalized coordinates.
+        """按归一化坐标将 YOLO OBB 检测结果保存到文本文件。
 
-        Args:
-            predn (dict[str, torch.Tensor]): Prediction dictionary containing 'bboxes', 'conf', and 'cls' keys with
-                bounding box coordinates (including angle), confidence scores, and class predictions.
-            save_conf (bool): Whether to save confidence scores in the text file.
-            shape (tuple[int, int]): Original image shape in format (height, width).
-            file (Path): Output file path to save detections.
+        参数：
+            predn (dict[str, torch.Tensor]): 包含 'bboxes'、'conf' 和 'cls' 键的预测字典，分别表示带角度的边界框坐标、置信度分数和类别预测结果。
+            save_conf (bool): 是否在文本文件中保存置信度分数。
+            shape (tuple[int, int]): 原始图像尺寸，格式为 (高度, 宽度)。
+            file (Path): 保存检测结果的输出文件路径。
 
-        Examples:
+        示例：
             >>> validator = OBBValidator()
             >>> predn = {
             ...     "bboxes": torch.tensor([[100, 100, 50, 30, 45]]),
@@ -231,7 +224,7 @@ class OBBValidator(DetectionValidator):
         ).save_txt(file, save_conf=save_conf)
 
     def scale_preds(self, predn: dict[str, torch.Tensor], pbatch: dict[str, Any]) -> dict[str, torch.Tensor]:
-        """Scales predictions to the original image size."""
+        """将预测结果缩放到原始图像尺寸。"""
         return {
             **predn,
             "bboxes": ops.scale_boxes(
@@ -240,12 +233,12 @@ class OBBValidator(DetectionValidator):
         }
 
     def eval_json(self, stats: dict[str, Any]) -> dict[str, Any]:
-        """Evaluate YOLO output in JSON format and save predictions in DOTA format.
+        """评估 JSON 格式的 YOLO 输出，并以 DOTA 格式保存预测结果。
 
-        Args:
-            stats (dict[str, Any]): Performance statistics dictionary.
+        参数：
+            stats (dict[str, Any]): Performance statistics 字典.
 
-        Returns:
+        返回：
             (dict[str, Any]): Updated performance statistics.
         """
         if self.args.save_json and self.is_dota and len(self.jdict):
@@ -253,12 +246,12 @@ class OBBValidator(DetectionValidator):
             import re
             from collections import defaultdict
 
-            pred_json = self.save_dir / "predictions.json"  # predictions
-            pred_txt = self.save_dir / "predictions_txt"  # predictions
+            pred_json = self.save_dir / "predictions.json"  # 预测结果
+            pred_txt = self.save_dir / "predictions_txt"  # 预测结果
             pred_txt.mkdir(parents=True, exist_ok=True)
             with open(pred_json) as f:
                 data = json.load(f)
-            # Save split results
+            # 保存切分结果
             LOGGER.info(f"Saving predictions with DOTA format to {pred_txt}...")
             for d in data:
                 image_id = d["image_id"]
@@ -268,9 +261,9 @@ class OBBValidator(DetectionValidator):
 
                 with open(f"{pred_txt / f'Task1_{classname}'}.txt", "a", encoding="utf-8") as f:
                     f.writelines(f"{image_id} {score} {p[0]} {p[1]} {p[2]} {p[3]} {p[4]} {p[5]} {p[6]} {p[7]}\n")
-            # Save merged results, this could result slightly lower map than using official merging script,
-            # because of the probiou calculation.
-            pred_merged_txt = self.save_dir / "predictions_merged_txt"  # predictions
+            # 保存合并结果；与使用官方合并脚本相比，这可能导致 map 略低，
+            # 这是由于 probiou 计算造成的。
+            pred_merged_txt = self.save_dir / "predictions_merged_txt"  # 预测结果
             pred_merged_txt.mkdir(parents=True, exist_ok=True)
             merged_results = defaultdict(list)
             LOGGER.info(f"Saving merged predictions with DOTA format to {pred_merged_txt}...")
@@ -286,11 +279,11 @@ class OBBValidator(DetectionValidator):
             for image_id, bbox in merged_results.items():
                 bbox = torch.tensor(bbox)
                 max_wh = torch.max(bbox[:, :2]).item() * 2
-                c = bbox[:, 6:7] * max_wh  # classes
+                c = bbox[:, 6:7] * max_wh  # 类别
                 scores = bbox[:, 5]  # scores
                 b = bbox[:, :5].clone()
                 b[:, :2] += c
-                # 0.3 could get results close to the ones from official merging script, even slightly better.
+                # 0.3 可以获得接近官方合并脚本的结果，甚至可能略好。
                 i = TorchNMS.fast_nms(b, scores, 0.3, iou_func=batch_probiou)
                 bbox = bbox[i]
 

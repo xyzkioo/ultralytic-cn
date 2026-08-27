@@ -26,29 +26,27 @@ DEFAULT_STD = (1.0, 1.0, 1.0)
 
 
 class BaseTransform:
-    """Base class for image transformations in the Ultralytics library.
+    """Ultralytics 图像变换的基类。
 
-    This class provides a unified interface for applying transformations to images, object instances, and semantic
-    segmentation masks. Subclasses should override `apply_image`, `apply_instances`, and/or `apply_semantic` for simple
-    transforms, or override `__call__` directly for complex transforms that need shared state between image and
-    annotation modifications.
+    此类为图像、对象实例和语义分割掩码提供统一的变换接口。简单变换应重写 `apply_image`、`apply_instances`
+    和/或 `apply_semantic`；需要在图像与标注修改之间共享状态的复杂变换，则应直接重写 `__call__`。
 
-    Methods:
-        get_params: Compute transformation parameters shared across image, instances, and semantic mask.
-        apply_image: Apply transformation to the image in labels['img'].
-        apply_instances: Apply transformation to object instances in labels['instances'].
-        apply_semantic: Apply transformation to semantic mask in labels['semantic_mask'].
-        __call__: Orchestrate the transformation pipeline.
+    方法：
+        get_params: 计算图像、对象实例和语义掩码之间共享的变换参数。
+        apply_image: 对 labels['img'] 中的图像应用变换。
+        apply_instances: 对 labels['instances'] 中的对象实例应用变换。
+        apply_semantic: 对 labels['semantic_mask'] 中的语义掩码应用变换。
+        __call__: 组织完整的变换流程。
     """
 
     def __call__(self, labels):
-        """Apply transformation to labels dict.
+        """对标签字典应用变换。
 
-        Args:
-            labels (dict): Dictionary containing 'img', optionally 'instances' and 'semantic_mask'.
+        参数：
+            labels (dict): 包含 'img'，以及可选 'instances' 和 'semantic_mask' 的字典。
 
-        Returns:
-            (dict): Transformed labels dictionary.
+        返回：
+            (dict): 变换后的标签字典。
         """
         params = self.get_params(labels)
         labels = self.apply_image(labels, params)
@@ -58,83 +56,82 @@ class BaseTransform:
         return labels
 
     def get_params(self, labels):
-        """Compute and return transformation parameters.
+        """计算并返回变换参数。
 
-        This method allows sharing random state or computed matrices (e.g. affine matrix, flip
-        decision) between image, instances, and semantic mask transformations.
+        此方法允许在图像、对象实例和语义掩码变换之间共享随机状态或已计算的矩阵（例如仿射矩阵和翻转决策）。
 
-        Args:
-            labels (dict): Input labels dictionary.
+        参数：
+            labels (dict): 输入标签字典。
 
-        Returns:
-            (dict): Parameters to pass to apply_image, apply_instances, and apply_semantic.
+        返回：
+            (dict): 传递给 apply_image、apply_instances 和 apply_semantic 的参数。
         """
         return {}
 
     def apply_image(self, labels, params=None):
-        """Apply transformation to image.
+        """对图像应用变换。
 
-        Args:
-            labels (dict): Dictionary containing 'img'.
-            params (dict | None): Parameters from get_params.
+        参数：
+            labels (dict): 包含 'img' 的字典。
+            params (dict | None): 由 get_params 返回的参数。
 
-        Returns:
-            (dict): Updated labels dictionary.
+        返回：
+            (dict): 更新后的标签字典。
         """
         return labels
 
     def apply_instances(self, labels, params=None):
-        """Apply transformation to object instances.
+        """对对象实例应用变换。
 
-        Args:
-            labels (dict): Dictionary containing 'instances'.
-            params (dict | None): Parameters from get_params.
+        参数：
+            labels (dict): 包含 'instances' 的字典。
+            params (dict | None): 由 get_params 返回的参数。
 
-        Returns:
-            (dict): Updated labels dictionary.
+        返回：
+            (dict): 更新后的标签字典。
         """
         return labels
 
     def apply_semantic(self, labels, params=None):
-        """Apply transformation to semantic segmentation mask.
+        """对语义分割掩码应用变换。
 
-        Args:
-            labels (dict): Dictionary containing 'semantic_mask'.
-            params (dict | None): Parameters from get_params.
+        参数：
+            labels (dict): 包含 'semantic_mask' 的字典。
+            params (dict | None): 由 get_params 返回的参数。
 
-        Returns:
-            (dict): Updated labels dictionary.
+        返回：
+            (dict): 更新后的标签字典。
         """
         return labels
 
     def apply_depth(self, labels, params=None):
-        """Apply transformation to depth map.
+        """对深度图应用变换。
 
-        Args:
-            labels (dict): Dictionary containing 'depth'.
-            params (dict | None): Parameters from get_params.
+        参数：
+            labels (dict): 包含 'depth' 的字典。
+            params (dict | None): 由 get_params 返回的参数。
 
-        Returns:
-            (dict): Updated labels dictionary.
+        返回：
+            (dict): 更新后的标签字典。
         """
         return labels
 
 
 class Compose:
-    """A class for composing multiple image transformations.
+    """用于组合多个图像变换的类。
 
-    Attributes:
-        transforms (list[Callable]): A list of transformation functions to be applied sequentially.
+    属性：
+        transforms (list[Callable]): 按顺序应用的变换函数列表。
 
-    Methods:
-        __call__: Apply a series of transformations to input data.
-        append: Append a new transform to the existing list of transforms.
-        insert: Insert a new transform at a specified index in the list of transforms.
-        __getitem__: Retrieve a specific transform or a set of transforms using indexing.
-        __setitem__: Set a specific transform or a set of transforms using indexing.
-        tolist: Convert the list of transforms to a standard Python list.
+    方法：
+        __call__: 对输入数据依次应用一系列变换。
+        append: 向现有变换列表追加新变换。
+        insert: 在指定索引处插入新变换。
+        __getitem__: 使用索引获取单个变换或一组变换。
+        __setitem__: 使用索引设置单个变换或一组变换。
+        tolist: 将变换列表转换为标准 Python 列表。
 
-    Examples:
+    示例：
         >>> transforms = [RandomFlip(), RandomPerspective(30)]
         >>> compose = Compose(transforms)
         >>> transformed_data = compose(data)
@@ -143,26 +140,25 @@ class Compose:
     """
 
     def __init__(self, transforms):
-        """Initialize the Compose object with a list of transforms.
+        """使用变换列表初始化 Compose 对象。
 
-        Args:
-            transforms (list[Callable]): A list of callable transform objects to be applied sequentially.
+        参数：
+            transforms (list[Callable]): 按顺序调用的变换对象列表。
         """
         self.transforms = transforms if isinstance(transforms, list) else [transforms]
 
     def __call__(self, data):
-        """Apply a series of transformations to input data.
+        """对输入数据依次应用一系列变换。
 
-        This method sequentially applies each transformation in the Compose object's transforms to the input data.
+        此方法会按照顺序将 Compose 对象中的每个变换应用到输入数据。
 
-        Args:
-            data (Any): The input data to be transformed. This can be of any type, depending on the transformations in
-                the list.
+        参数：
+            data (Any): 待变换的输入数据。其类型取决于变换列表中的具体变换，可以是任意类型。
 
-        Returns:
-            (Any): The transformed data after applying all transformations in sequence.
+        返回：
+            (Any): 按顺序应用所有变换后的数据。
 
-        Examples:
+        示例：
             >>> transforms = [Transform1(), Transform2(), Transform3()]
             >>> compose = Compose(transforms)
             >>> transformed_data = compose(input_data)
@@ -172,25 +168,25 @@ class Compose:
         return data
 
     def append(self, transform):
-        """Append a new transform to the existing list of transforms.
+        """向现有变换列表追加新变换。
 
-        Args:
-            transform (BaseTransform): The transformation to be added to the composition.
+        参数：
+            transform (BaseTransform): 要添加到组合中的变换。
 
-        Examples:
+        示例：
             >>> compose = Compose([RandomFlip(), RandomPerspective()])
             >>> compose.append(RandomHSV())
         """
         self.transforms.append(transform)
 
     def insert(self, index, transform):
-        """Insert a new transform at a specified index in the existing list of transforms.
+        """在现有变换列表的指定索引处插入新变换。
 
-        Args:
-            index (int): The index at which to insert the new transform.
-            transform (BaseTransform): The transform object to be inserted.
+        参数：
+            index (int): 插入新变换的位置索引。
+            transform (BaseTransform): 要插入的变换对象。
 
-        Examples:
+        示例：
             >>> compose = Compose([Transform1(), Transform2()])
             >>> compose.insert(1, Transform3())
             >>> len(compose.transforms)
@@ -199,59 +195,59 @@ class Compose:
         self.transforms.insert(index, transform)
 
     def __getitem__(self, index: list | int) -> Compose:
-        """Retrieve a specific transform or a set of transforms using indexing.
+        """使用索引获取单个变换或一组变换。
 
-        Args:
-            index (int | list[int]): Index or list of indices of the transforms to retrieve.
+        参数：
+            index (int | list[int]): 要获取的变换索引，或索引列表。
 
-        Returns:
-            (Compose | Any): A new Compose object if index is a list, or a single transform if index is an int.
+        返回：
+            (Compose | Any): index 为列表时返回新的 Compose 对象，为整数时返回单个变换。
 
-        Raises:
-            AssertionError: If the index is not of type int or list.
+        异常：
+            AssertionError: 当 index 不是 int 或 list 类型时抛出。
 
-        Examples:
+        示例：
             >>> transforms = [RandomFlip(), RandomPerspective(10), RandomHSV(0.5, 0.5, 0.5)]
             >>> compose = Compose(transforms)
-            >>> single_transform = compose[1]  # Returns the RandomPerspective transform directly
-            >>> multiple_transforms = compose[[0, 1]]  # Returns a Compose object with RandomFlip and RandomPerspective
+            >>> single_transform = compose[1]  # 直接返回 RandomPerspective 变换
+            >>> multiple_transforms = compose[[0, 1]]  # 返回包含 RandomFlip 和 RandomPerspective 的 Compose 对象
         """
-        assert isinstance(index, (int, list)), f"The indices should be either list or int type but got {type(index)}"
+        assert isinstance(index, (int, list)), f"索引必须是 list 或 int 类型，但当前为 {type(index)}"
         return Compose([self.transforms[i] for i in index]) if isinstance(index, list) else self.transforms[index]
 
     def __setitem__(self, index: list | int, value: list | int) -> None:
-        """Set one or more transforms in the composition using indexing.
+        """使用索引设置组合中的一个或多个变换。
 
-        Args:
-            index (int | list[int]): Index or list of indices to set transforms at.
-            value (Any | list[Any]): Transform or list of transforms to set at the specified index(es).
+        参数：
+            index (int | list[int]): 要设置变换的索引或索引列表。
+            value (Any | list[Any]): 要设置到指定索引处的变换或变换列表。
 
-        Raises:
-            AssertionError: If index type is invalid, value type doesn't match index type, or index is out of range.
+        异常：
+            AssertionError: 当索引类型无效、value 类型与索引类型不匹配或索引越界时抛出。
 
-        Examples:
+        示例：
             >>> compose = Compose([Transform1(), Transform2(), Transform3()])
-            >>> compose[1] = NewTransform()  # Replace second transform
-            >>> compose[[0, 1]] = [NewTransform1(), NewTransform2()]  # Replace first two transforms
+            >>> compose[1] = NewTransform()  # 替换第二个变换
+            >>> compose[[0, 1]] = [NewTransform1(), NewTransform2()]  # 替换前两个变换
         """
-        assert isinstance(index, (int, list)), f"The indices should be either list or int type but got {type(index)}"
+        assert isinstance(index, (int, list)), f"索引必须是 list 或 int 类型，但当前为 {type(index)}"
         if isinstance(index, list):
             assert isinstance(value, list), (
-                f"The indices should be the same type as values, but got {type(index)} and {type(value)}"
+                f"索引和 value 必须是相同类型，但当前分别为 {type(index)} 和 {type(value)}"
             )
         if isinstance(index, int):
             index, value = [index], [value]
         for i, v in zip(index, value):
-            assert i < len(self.transforms), f"list index {i} out of range {len(self.transforms)}."
+            assert i < len(self.transforms), f"列表索引 {i} 超出范围，变换列表长度为 {len(self.transforms)}。"
             self.transforms[i] = v
 
     def tolist(self):
-        """Convert the list of transforms to a standard Python list.
+        """将变换列表转换为标准 Python 列表。
 
-        Returns:
-            (list): A list containing all the transform objects in the Compose instance.
+        返回：
+            (list): 包含 Compose 实例中所有变换对象的列表。
 
-        Examples:
+        示例：
             >>> transforms = [RandomFlip(), RandomPerspective(10), CenterCrop()]
             >>> compose = Compose(transforms)
             >>> transform_list = compose.tolist()
@@ -261,12 +257,12 @@ class Compose:
         return self.transforms
 
     def __repr__(self):
-        """Return a string representation of the Compose object.
+        """返回 Compose 对象的字符串表示。
 
-        Returns:
-            (str): A string representation of the Compose object, including the list of transforms.
+        返回：
+            (str): 包含变换列表的 Compose 对象字符串表示。
 
-        Examples:
+        示例：
             >>> transforms = [RandomFlip(), RandomPerspective(degrees=10, translate=0.1, scale=0.1)]
             >>> compose = Compose(transforms)
             >>> "RandomFlip" in repr(compose) and "RandomPerspective" in repr(compose)
@@ -276,26 +272,25 @@ class Compose:
 
 
 class BaseMixTransform(BaseTransform):
-    """Base class for mix transformations like Cutmix, MixUp and Mosaic.
+    """CutMix、MixUp 和 Mosaic 等混合变换的基类。
 
-    This class provides a foundation for implementing mix transformations on datasets. It handles the probability-based
-    application of transforms and manages the mixing of multiple images and labels.
+    此类为数据集混合变换提供基础实现，负责根据概率应用变换，并管理多张图像及其标签的混合。
 
-    Attributes:
-        dataset (Any): The dataset object containing images and labels.
-        pre_transform (Callable | None): Optional transform to apply before mixing.
-        p (float): Probability of applying the mix transformation.
+    属性：
+        dataset (Any): 包含图像和标签的数据集对象。
+        pre_transform (Callable | None): 混合前可选的预处理变换。
+        p (float): 应用混合变换的概率。
 
-    Methods:
-        __call__: Apply the mix transformation to the input labels.
-        get_params: Prepare mixed labels and update text labels.
-        get_indexes: Abstract method to get indexes of images to be mixed.
-        _update_label_text: Update label text for mixed images.
+    方法：
+        __call__: 对输入标签应用混合变换。
+        get_params: 准备混合标签并更新文本标签。
+        get_indexes: 获取待混合图像索引的方法。
+        _update_label_text: 更新混合图像的文本标签。
 
-    Examples:
+    示例：
         >>> class CustomMixTransform(BaseMixTransform):
         ...     def apply_image(self, labels, params=None):
-        ...         # Implement custom image mixing here
+        ...         # 在此处实现自定义图像混合
         ...         return labels
         ...
         ...     def get_indexes(self):
@@ -306,14 +301,14 @@ class BaseMixTransform(BaseTransform):
     """
 
     def __init__(self, dataset, pre_transform=None, p=0.0) -> None:
-        """Initialize the BaseMixTransform object for mix transformations like CutMix, MixUp and Mosaic.
+        """初始化 CutMix、MixUp 和 Mosaic 等混合变换的 BaseMixTransform 对象。
 
-        This class serves as a base for implementing mix transformations in image processing pipelines.
+        此类用于在图像处理流程中实现混合变换。
 
-        Args:
-            dataset (Any): The dataset object containing images and labels for mixing.
-            pre_transform (Callable | None): Optional transform to apply before mixing.
-            p (float): Probability of applying the mix transformation. Should be in the range [0.0, 1.0].
+        参数：
+            dataset (Any): 包含待混合图像和标签的数据集对象。
+            pre_transform (Callable | None): 混合前可选的预处理变换。
+            p (float): 应用混合变换的概率，取值范围应为 [0.0, 1.0]。
         """
         self.dataset = dataset
         self.pre_transform = pre_transform
@@ -321,18 +316,17 @@ class BaseMixTransform(BaseTransform):
         self.preserve_obb = getattr(dataset, "use_obb", False)
 
     def __call__(self, labels: dict[str, Any]) -> dict[str, Any]:
-        """Apply pre-processing transforms and cutmix/mixup/mosaic transforms to labels data.
+        """对标签数据应用预处理以及 CutMix、MixUp 或 Mosaic 变换。
 
-        This method determines whether to apply the mix transform based on a probability factor. If applied, it selects
-        additional images, applies pre-transforms if specified, and then performs the mix transform.
+        此方法根据概率决定是否应用混合变换。应用时会选择其他图像，按需执行预处理，然后完成混合变换。
 
-        Args:
-            labels (dict[str, Any]): A dictionary containing label data for an image.
+        参数：
+            labels (dict[str, Any]): 包含图像标签数据的字典。
 
-        Returns:
-            (dict[str, Any]): The transformed labels dictionary, which may include mixed data from other images.
+        返回：
+            (dict[str, Any]): 变换后的标签字典，其中可能包含其他图像的混合数据。
 
-        Examples:
+        示例：
             >>> transform = BaseMixTransform(dataset, pre_transform=None, p=0.5)
             >>> result = transform({"image": img, "bboxes": boxes, "cls": classes})
         """
@@ -348,20 +342,20 @@ class BaseMixTransform(BaseTransform):
         return labels
 
     def get_params(self, labels: dict[str, Any]) -> dict[str, Any]:
-        """Prepare mixed labels and update text labels.
+        """准备混合标签并更新文本标签。
 
-        Args:
-            labels (dict[str, Any]): A dictionary containing label data for an image.
+        参数：
+            labels (dict[str, Any]): 包含图像标签数据的字典。
 
-        Returns:
-            (dict[str, Any]): Parameters for apply_image, apply_instances, and apply_semantic.
+        返回：
+            (dict[str, Any]): 传递给 apply_image、apply_instances 和 apply_semantic 的参数。
         """
-        # Get index of one or three other images
+        # 获取一张或三张其他图像的索引
         indexes = self.get_indexes()
         if isinstance(indexes, int):
             indexes = [indexes]
 
-        # Get images information will be used for Mosaic, CutMix or MixUp
+        # 获取 Mosaic、CutMix 或 MixUp 所需的图像信息
         mix_labels = [self.dataset.get_image_and_label(i) for i in indexes]
 
         if self.pre_transform is not None:
@@ -369,17 +363,17 @@ class BaseMixTransform(BaseTransform):
                 mix_labels[i] = self.pre_transform(data)
         labels["mix_labels"] = mix_labels
 
-        # Update cls and texts
+        # 更新类别和文本标签
         self._update_label_text(labels)
         return {"mix_labels": mix_labels}
 
     def get_indexes(self):
-        """Get a random index for mosaic augmentation.
+        """获取 Mosaic 增强所需的随机索引。
 
-        Returns:
-            (int): A random index from the dataset.
+        返回：
+            (int): 数据集中的随机索引。
 
-        Examples:
+        示例：
             >>> transform = BaseMixTransform(dataset)
             >>> index = transform.get_indexes()
             >>> print(index)  # 7
@@ -388,19 +382,18 @@ class BaseMixTransform(BaseTransform):
 
     @staticmethod
     def _update_label_text(labels: dict[str, Any]) -> dict[str, Any]:
-        """Update label text and class IDs for mixed labels in image augmentation.
+        """更新图像增强中混合标签的文本和类别 ID。
 
-        This method processes the 'texts' and 'cls' fields of the input labels dictionary and any mixed labels, creating
-        a unified set of text labels and updating class IDs accordingly.
+        此方法处理输入标签字典及混合标签中的 'texts' 和 'cls' 字段，创建统一的文本标签集合，并相应更新类别 ID。
 
-        Args:
-            labels (dict[str, Any]): A dictionary containing label information, including 'texts' and 'cls' fields, and
-                optionally a 'mix_labels' field with additional label dictionaries.
+        参数：
+            labels (dict[str, Any]): 包含标签信息的字典，必须包含 'texts' 和 'cls' 字段，也可以包含由其他标签字典组成的
+                'mix_labels' 字段。
 
-        Returns:
-            (dict[str, Any]): The updated labels dictionary with unified text labels and updated class IDs.
+        返回：
+            (dict[str, Any]): 文本标签已统一且类别 ID 已更新的标签字典。
 
-        Examples:
+        示例：
             >>> labels = {
             ...     "texts": [["cat"], ["dog"]],
             ...     "cls": torch.tensor([[0], [1]]),
@@ -432,47 +425,45 @@ class BaseMixTransform(BaseTransform):
 
 
 class Mosaic(BaseMixTransform):
-    """Mosaic augmentation for image datasets.
+    """对图像数据集应用 Mosaic 增强。
 
-    This class performs mosaic augmentation by combining multiple (4 or 9) images into a single mosaic image. The
-    augmentation is applied to a dataset with a given probability.
+    此类通过将多张（4 张或 9 张）图像组合成一张 Mosaic 图像来执行数据增强，并按照指定概率应用该增强。
 
-    Attributes:
-        dataset: The dataset on which the mosaic augmentation is applied.
-        imgsz (int): Image size (height and width) after mosaic pipeline of a single image.
-        p (float): Probability of applying the mosaic augmentation. Must be in the range 0-1.
-        n (int): The grid size, either 4 (for 2x2) or 9 (for 3x3).
-        border (tuple[int, int]): Border size for height and width.
+    属性：
+        dataset: 应用 Mosaic 增强的数据集。
+        imgsz (int): 单张图像经过 Mosaic 流程后的图像尺寸（高度和宽度）。
+        p (float): 应用 Mosaic 增强的概率，取值范围为 0-1。
+        n (int): 网格大小，可为 4（2x2）或 9（3x3）。
+        border (tuple[int, int]): 高度和宽度方向的边界大小。
 
-    Methods:
-        get_indexes: Return a list of random indexes from the dataset.
-        get_params: Compute mosaic layout parameters.
-        apply_image: Allocate canvas and paste images into mosaic.
-        apply_instances: Concatenate and clip instances for mosaic.
-        _update_labels: Update labels with padding.
-        _cat_labels: Concatenate labels and clips mosaic border instances.
+    方法：
+        get_indexes: 返回数据集中的随机索引列表。
+        get_params: 计算 Mosaic 布局参数。
+        apply_image: 创建画布并将图像粘贴到 Mosaic 图像中。
+        apply_instances: 拼接并裁剪 Mosaic 中的对象实例。
+        _update_labels: 使用填充量更新标签。
+        _cat_labels: 拼接标签，并裁剪超出 Mosaic 边界的实例。
 
-    Examples:
+    示例：
         >>> from ultralytics.data.augment import Mosaic
-        >>> dataset = YourDataset(...)  # Your image dataset
+        >>> dataset = YourDataset(...)  # 你的图像数据集
         >>> mosaic_aug = Mosaic(dataset, imgsz=640, p=0.5, n=4)
         >>> augmented_labels = mosaic_aug(original_labels)
     """
 
     def __init__(self, dataset, imgsz: int = 640, p: float = 1.0, n: int = 4):
-        """Initialize the Mosaic augmentation object.
+        """初始化 Mosaic 增强对象。
 
-        This class performs mosaic augmentation by combining multiple (4 or 9) images into a single mosaic image. The
-        augmentation is applied to a dataset with a given probability.
+        此类通过将多张（4 张或 9 张）图像组合成一张 Mosaic 图像来执行数据增强，并按照指定概率应用该增强。
 
-        Args:
-            dataset (Any): The dataset on which the mosaic augmentation is applied.
-            imgsz (int): Image size (height and width) after mosaic pipeline of a single image.
-            p (float): Probability of applying the mosaic augmentation. Must be in the range 0-1.
-            n (int): The grid size, either 4 (for 2x2) or 9 (for 3x3).
+        参数：
+            dataset (Any): 应用 Mosaic 增强的数据集。
+            imgsz (int): 单张图像经过 Mosaic 流程后的图像尺寸（高度和宽度）。
+            p (float): 应用 Mosaic 增强的概率，取值范围为 0-1。
+            n (int): 网格大小，可为 4（2x2）或 9（3x3）。
         """
-        assert 0 <= p <= 1.0, f"The probability should be in range [0, 1], but got {p}."
-        assert n in {4, 9}, "grid must be equal to 4 or 9."
+        assert 0 <= p <= 1.0, f"概率必须在 [0, 1] 范围内，但当前为 {p}。"
+        assert n in {4, 9}, "网格大小必须为 4 或 9。"
         super().__init__(dataset=dataset, p=p)
         self.imgsz = imgsz
         self.border = (-imgsz // 2, -imgsz // 2)  # width, height
@@ -480,37 +471,35 @@ class Mosaic(BaseMixTransform):
         self.buffer_enabled = self.dataset.cache != "ram"
 
     def get_indexes(self):
-        """Return a list of random indexes from the dataset for mosaic augmentation.
+        """返回 Mosaic 增强所需的数据集随机索引列表。
 
-        This method selects random image indexes either from a buffer or from the entire dataset, depending on the
-        'buffer_enabled' attribute. It is used to choose images for creating mosaic augmentations.
+        此方法根据 `buffer_enabled` 属性，从缓冲区或整个数据集中选择随机图像索引，用于创建 Mosaic 增强图像。
 
-        Returns:
-            (list[int]): A list of random image indexes. The length of the list is n-1, where n is the number of images
-                used in the mosaic (either 3 or 8, depending on whether n is 4 or 9).
+        返回：
+            (list[int]): 随机图像索引列表。列表长度为 n-1；当 n 为 4 或 9 时，分别对应额外使用 3 张或 8 张图像。
 
-        Examples:
+        示例：
             >>> mosaic = Mosaic(dataset, imgsz=640, p=1.0, n=4)
             >>> indexes = mosaic.get_indexes()
-            >>> print(len(indexes))  # Output: 3
+            >>> print(len(indexes))  # 输出：3
         """
-        if self.buffer_enabled:  # select images from buffer
+        if self.buffer_enabled:  # 从缓冲区选择图像
             return random.choices(list(self.dataset.buffer), k=self.n - 1)
-        else:  # select any images
+        else:  # 从整个数据集中选择图像
             return [random.randint(0, len(self.dataset) - 1) for _ in range(self.n - 1)]
 
     def get_params(self, labels: dict[str, Any]) -> dict[str, Any]:
-        """Compute mosaic layout parameters.
+        """计算 Mosaic 布局参数。
 
-        Args:
-            labels (dict[str, Any]): Input labels dictionary.
+        参数：
+            labels (dict[str, Any]): 输入标签字典。
 
-        Returns:
-            (dict[str, Any]): Parameters including 'layout' with per-patch geometry.
+        返回：
+            (dict[str, Any]): 包含 `layout` 的参数字典，其中记录每个图像块的几何信息。
         """
         params = super().get_params(labels)
-        assert labels.get("rect_shape") is None, "rect and mosaic are mutually exclusive."
-        assert len(labels.get("mix_labels", [])), "There are no other images for mosaic augment."
+        assert labels.get("rect_shape") is None, "rect 和 mosaic 不能同时使用。"
+        assert len(labels.get("mix_labels", [])), "没有可用于 Mosaic 增强的其他图像。"
 
         s = self.imgsz
         layout = []
@@ -520,16 +509,16 @@ class Mosaic(BaseMixTransform):
                 labels_patch = labels if i == 0 else labels["mix_labels"][i - 1]
                 img = labels_patch["img"]
                 h, w = labels_patch.get("resized_shape", img.shape[:2])
-                if i == 0:  # top left
+                if i == 0:  # 左上
                     x1a, y1a, x2a, y2a = max(xc - w, 0), max(yc - h, 0), xc, yc
                     x1b, y1b, x2b, y2b = w - (x2a - x1a), h - (y2a - y1a), w, h
-                elif i == 1:  # top right
+                elif i == 1:  # 右上
                     x1a, y1a, x2a, y2a = xc, max(yc - h, 0), min(xc + w, s * 2), yc
                     x1b, y1b, x2b, y2b = 0, h - (y2a - y1a), min(w, x2a - x1a), h
-                elif i == 2:  # bottom left
+                elif i == 2:  # 左下
                     x1a, y1a, x2a, y2a = max(xc - w, 0), yc, xc, min(s * 2, yc + h)
                     x1b, y1b, x2b, y2b = w - (x2a - x1a), 0, w, min(y2a - y1a, h)
-                elif i == 3:  # bottom right
+                elif i == 3:  # 右下
                     x1a, y1a, x2a, y2a = xc, yc, min(xc + w, s * 2), min(s * 2, yc + h)
                     x1b, y1b, x2b, y2b = 0, 0, min(w, x2a - x1a), min(y2a - y1a, h)
                 padw = x1a - x1b
@@ -557,24 +546,24 @@ class Mosaic(BaseMixTransform):
                 labels_patch = labels if i == 0 else labels["mix_labels"][i - 1]
                 img = labels_patch["img"]
                 h, w = labels_patch.get("resized_shape", img.shape[:2])
-                if i == 0:  # center
+                if i == 0:  # 中心
                     c = s, s, s + w, s + h
                     h0, w0 = h, w
-                elif i == 1:  # top
+                elif i == 1:  # 上方
                     c = s, s - h, s + w, s
-                elif i == 2:  # top right
+                elif i == 2:  # 右上
                     c = s + wp, s - h, s + wp + w, s
-                elif i == 3:  # right
+                elif i == 3:  # 右侧
                     c = s + w0, s, s + w0 + w, s + h
-                elif i == 4:  # bottom right
+                elif i == 4:  # 右下
                     c = s + w0, s + hp, s + w0 + w, s + hp + h
-                elif i == 5:  # bottom
+                elif i == 5:  # 下方
                     c = s + w0 - w, s + h0, s + w0, s + h0 + h
-                elif i == 6:  # bottom left
+                elif i == 6:  # 左下
                     c = s + w0 - wp - w, s + h0, s + w0 - wp, s + h0 + h
-                elif i == 7:  # left
+                elif i == 7:  # 左侧
                     c = s - w, s + h0 - h, s, s + h0
-                elif i == 8:  # top left
+                elif i == 8:  # 左上
                     c = s - w, s + h0 - hp - h, s, s + h0 - hp
                 padw, padh = c[:2]
                 x1, y1, x2, y2 = (max(x, 0) for x in c)
@@ -595,14 +584,14 @@ class Mosaic(BaseMixTransform):
         return params
 
     def apply_image(self, labels: dict[str, Any], params: dict[str, Any] | None = None) -> dict[str, Any]:
-        """Apply mosaic augmentation to the image.
+        """对图像应用 Mosaic 增强。
 
-        Args:
-            labels (dict[str, Any]): Dictionary containing 'img'.
-            params (dict | None): Parameters from get_params, including 'layout'.
+        参数：
+            labels (dict[str, Any]): 包含 'img' 的字典。
+            params (dict | None): 由 get_params 返回且包含 `layout` 的参数。
 
-        Returns:
-            (dict): Updated labels with mosaic image.
+        返回：
+            (dict): 包含 Mosaic 图像的更新后标签字典。
         """
         layout = params["layout"]
         if self.n == 4:
@@ -628,14 +617,14 @@ class Mosaic(BaseMixTransform):
         return labels
 
     def apply_instances(self, labels: dict[str, Any], params: dict[str, Any] | None = None) -> dict[str, Any]:
-        """Apply mosaic augmentation to instances.
+        """对对象实例应用 Mosaic 增强。
 
-        Args:
-            labels (dict[str, Any]): Dictionary containing 'instances' and 'cls'.
-            params (dict | None): Parameters from get_params, including 'layout'.
+        参数：
+            labels (dict[str, Any]): 包含 'instances' 和 'cls' 的字典。
+            params (dict | None): 由 get_params 返回且包含 `layout` 的参数。
 
-        Returns:
-            (dict): Updated labels with concatenated instances.
+        返回：
+            (dict): 包含拼接后对象实例的更新后标签字典。
         """
         layout = params["layout"]
         mosaic_labels = []
@@ -643,7 +632,7 @@ class Mosaic(BaseMixTransform):
             if self.n == 4:
                 padw = item["padw"]
                 padh = item["padh"]
-            else:  # n == 9
+            else:  # n == 9 时
                 padw = item["padw"] + self.border[0]
                 padh = item["padh"] + self.border[1]
             labels_patch = self._update_labels(item["labels_patch"], padw, padh, item.get("img_shape"))
@@ -653,14 +642,14 @@ class Mosaic(BaseMixTransform):
         return labels
 
     def apply_semantic(self, labels: dict[str, Any], params: dict[str, Any] | None = None) -> dict[str, Any]:
-        """Apply mosaic augmentation to semantic mask.
+        """对语义掩码应用 Mosaic 增强。
 
-        Args:
-            labels (dict[str, Any]): Dictionary containing 'semantic_mask'.
-            params (dict | None): Parameters from get_params.
+        参数：
+            labels (dict[str, Any]): 包含 'semantic_mask' 的字典。
+            params (dict | None): 由 get_params 返回的参数。
 
-        Returns:
-            (dict): Updated labels with concatenated semantic mask.
+        返回：
+            (dict): 包含拼接后语义掩码的更新后标签字典。
         """
         if labels.get("semantic_mask") is None and all(
             m.get("semantic_mask") is None for m in labels.get("mix_labels", [])
@@ -696,22 +685,21 @@ class Mosaic(BaseMixTransform):
 
     @staticmethod
     def _update_labels(labels, padw: int, padh: int, img_shape: tuple[int, int] | None = None) -> dict[str, Any]:
-        """Update label coordinates with padding values.
+        """使用填充值更新标签坐标。
 
-        This method adjusts the bounding box coordinates of object instances in the labels by adding padding
-        values. It also denormalizes the coordinates if they were previously normalized.
+        此方法通过添加填充值调整标签中对象实例的边界框坐标；如果坐标之前已归一化，还会将其反归一化。
 
-        Args:
-            labels (dict[str, Any]): A dictionary containing image and instance information.
-            padw (int): Padding width to be added to the x-coordinates.
-            padh (int): Padding height to be added to the y-coordinates.
-            img_shape (tuple[int, int] | None): Optional (h, w) of the original patch image. Needed because apply_image
-                may overwrite labels["img"] with the mosaic canvas before apply_instances runs.
+        参数：
+            labels (dict[str, Any]): 包含图像和实例信息的字典。
+            padw (int): 添加到 x 坐标上的宽度填充值。
+            padh (int): 添加到 y 坐标上的高度填充值。
+            img_shape (tuple[int, int] | None): 原始图像块的可选尺寸 (h, w)。这是因为 apply_image 可能会在
+                apply_instances 执行前用 Mosaic 画布覆盖 labels["img"]。
 
-        Returns:
-            (dict): Updated labels dictionary with adjusted instance coordinates.
+        返回：
+            (dict): 对象实例坐标已调整的标签字典。
 
-        Examples:
+        示例：
             >>> labels = {"img": np.zeros((100, 100, 3)), "instances": Instances(...)}
             >>> padw, padh = 50, 50
             >>> updated_labels = Mosaic._update_labels(labels, padw, padh)
@@ -723,24 +711,23 @@ class Mosaic(BaseMixTransform):
         return labels
 
     def _cat_labels(self, mosaic_labels: list[dict[str, Any]]) -> dict[str, Any]:
-        """Concatenate and process labels for mosaic augmentation.
+        """拼接并处理 Mosaic 增强的标签。
 
-        This method combines labels from multiple images used in mosaic augmentation, clips instances to the mosaic
-        border, and removes zero-area boxes.
+        此方法合并 Mosaic 增强所用多张图像的标签，将实例裁剪到 Mosaic 边界内，并移除面积为零的边界框。
 
-        Args:
-            mosaic_labels (list[dict[str, Any]]): A list of label dictionaries for each image in the mosaic.
+        参数：
+            mosaic_labels (list[dict[str, Any]]): Mosaic 中每张图像对应的标签字典列表。
 
-        Returns:
-            (dict[str, Any]): A dictionary containing concatenated and processed labels for the mosaic image, including:
-                - im_file (str): File path of the first image in the mosaic.
-                - ori_shape (tuple[int, int]): Original shape of the first image.
-                - resized_shape (tuple[int, int]): Shape of the mosaic image (imgsz * 2, imgsz * 2).
-                - cls (np.ndarray): Concatenated class labels.
-                - instances (Instances): Concatenated instance annotations.
-                - texts (list[str], optional): Text labels if present in the original labels.
+        返回：
+            (dict[str, Any]): 包含 Mosaic 图像拼接及处理后标签的字典，包括：
+                - im_file (str)：Mosaic 中第一张图像的文件路径。
+                - ori_shape (tuple[int, int])：第一张图像的原始尺寸。
+                - resized_shape (tuple[int, int])：Mosaic 图像的尺寸 (imgsz * 2, imgsz * 2)。
+                - cls (np.ndarray)：拼接后的类别标签。
+                - instances (Instances)：拼接后的实例标注。
+                - texts (list[str], optional)：原始标签中存在时保留的文本标签。
 
-        Examples:
+        示例：
             >>> mosaic = Mosaic(dataset, imgsz=640)
             >>> mosaic_labels = [{"cls": np.array([0, 1]), "instances": Instances(...)} for _ in range(4)]
             >>> result = mosaic._cat_labels(mosaic_labels)
@@ -755,7 +742,7 @@ class Mosaic(BaseMixTransform):
         for labels in mosaic_labels:
             cls.append(labels["cls"])
             instances.append(labels["instances"])
-        # Final labels
+        # 生成最终标签
         final_labels = {
             "im_file": mosaic_labels[0]["im_file"],
             "ori_shape": mosaic_labels[0]["ori_shape"],
@@ -772,63 +759,62 @@ class Mosaic(BaseMixTransform):
 
 
 class MixUp(BaseMixTransform):
-    """Apply MixUp augmentation to image datasets.
+    """对图像数据集应用 MixUp 增强。
 
-    This class implements the MixUp augmentation technique as described in the paper [mixup: Beyond Empirical Risk
-    Minimization](https://arxiv.org/abs/1710.09412). MixUp combines two images and their labels using a random weight.
+    此类实现论文 [mixup: Beyond Empirical Risk Minimization](https://arxiv.org/abs/1710.09412) 中描述的 MixUp
+    增强技术。MixUp 使用随机权重混合两张图像及其标签。
 
-    Attributes:
-        dataset (Any): The dataset to which MixUp augmentation will be applied.
-        pre_transform (Callable | None): Optional transform to apply before MixUp.
-        p (float): Probability of applying MixUp augmentation.
+    属性：
+        dataset (Any): 应用 MixUp 增强的数据集。
+        pre_transform (Callable | None): MixUp 前可选的预处理变换。
+        p (float): 应用 MixUp 增强的概率。
 
-    Methods:
-        get_params: Compute MixUp parameters including blend ratio.
-        apply_image: Blend images using MixUp.
-        apply_instances: Concatenate instances for MixUp.
+    方法：
+        get_params: 计算包括混合比例在内的 MixUp 参数。
+        apply_image: 使用 MixUp 混合图像。
+        apply_instances: 拼接 MixUp 的对象实例。
 
-    Examples:
+    示例：
         >>> from ultralytics.data.augment import MixUp
-        >>> dataset = YourDataset(...)  # Your image dataset
+        >>> dataset = YourDataset(...)  # 你的图像数据集
         >>> mixup = MixUp(dataset, p=0.5)
         >>> augmented_labels = mixup(original_labels)
     """
 
     def __init__(self, dataset, pre_transform=None, p: float = 0.0) -> None:
-        """Initialize the MixUp augmentation object.
+        """初始化 MixUp 增强对象。
 
-        MixUp is an image augmentation technique that combines two images by taking a weighted sum of their pixel values
-        and labels. This implementation is designed for use with the Ultralytics YOLO framework.
+        MixUp 是一种图像增强技术，通过对两张图像的像素值和标签进行加权求和来合并它们。本实现用于 Ultralytics YOLO 框架。
 
-        Args:
-            dataset (Any): The dataset to which MixUp augmentation will be applied.
-            pre_transform (Callable | None): Optional transform to apply to images before MixUp.
-            p (float): Probability of applying MixUp augmentation to an image. Must be in the range [0, 1].
+        参数：
+            dataset (Any): 应用 MixUp 增强的数据集。
+            pre_transform (Callable | None): MixUp 前应用于图像的可选预处理变换。
+            p (float): 对图像应用 MixUp 增强的概率，取值范围必须为 [0, 1]。
         """
         super().__init__(dataset=dataset, pre_transform=pre_transform, p=p)
 
     def get_params(self, labels: dict[str, Any]) -> dict[str, Any]:
-        """Compute MixUp parameters.
+        """计算 MixUp 参数。
 
-        Args:
-            labels (dict[str, Any]): Input labels dictionary.
+        参数：
+            labels (dict[str, Any]): 输入标签字典。
 
-        Returns:
-            (dict[str, Any]): Parameters including mix ratio 'r'.
+        返回：
+            (dict[str, Any]): 包含混合比例 `r` 的参数字典。
         """
         params = super().get_params(labels)
         params["r"] = np.random.beta(32.0, 32.0)
         return params
 
     def apply_image(self, labels: dict[str, Any], params: dict[str, Any] | None = None) -> dict[str, Any]:
-        """Blend images using MixUp.
+        """使用 MixUp 混合图像。
 
-        Args:
-            labels (dict[str, Any]): Dictionary containing 'img'.
-            params (dict | None): Parameters from get_params, including 'r'.
+        参数：
+            labels (dict[str, Any]): 包含 'img' 的字典。
+            params (dict | None): 由 get_params 返回且包含 `r` 的参数。
 
-        Returns:
-            (dict): Updated labels with blended image.
+        返回：
+            (dict): 包含混合图像的更新后标签字典。
         """
         r = params["r"]
         labels2 = labels["mix_labels"][0]
@@ -836,14 +822,14 @@ class MixUp(BaseMixTransform):
         return labels
 
     def apply_instances(self, labels: dict[str, Any], params: dict[str, Any] | None = None) -> dict[str, Any]:
-        """Concatenate instances for MixUp.
+        """拼接 MixUp 的对象实例。
 
-        Args:
-            labels (dict[str, Any]): Dictionary containing 'instances' and 'cls'.
-            params (dict | None): Parameters from get_params.
+        参数：
+            labels (dict[str, Any]): 包含 'instances' 和 'cls' 的字典。
+            params (dict | None): 由 get_params 返回的参数。
 
-        Returns:
-            (dict): Updated labels with concatenated instances.
+        返回：
+            (dict): 包含拼接后对象实例的更新后标签字典。
         """
         labels2 = labels["mix_labels"][0]
         labels["instances"] = Instances.concatenate([labels["instances"], labels2["instances"]], axis=0)
@@ -851,14 +837,14 @@ class MixUp(BaseMixTransform):
         return labels
 
     def apply_semantic(self, labels: dict[str, Any], params: dict[str, Any] | None = None) -> dict[str, Any]:
-        """Apply MixUp augmentation to semantic segmentation masks.
+        """对语义分割掩码应用 MixUp 增强。
 
-        Args:
-            labels (dict[str, Any]): Primary image labels containing 'semantic_mask' and 'mix_labels'.
-            params (dict[str, Any] | None): Parameters dict with key 'r' (mix ratio). Defaults to None.
+        参数：
+            labels (dict[str, Any]): 主图像标签，包含 'semantic_mask' 和 'mix_labels'。
+            params (dict[str, Any] | None): 包含 `r`（混合比例）的参数字典，默认为 None。
 
-        Returns:
-            (dict[str, Any]): Updated labels with the semantic mask replaced by the mixed image's mask if r < 0.5.
+        返回：
+            (dict[str, Any]): 更新后的标签字典；当 r < 0.5 时，语义掩码会替换为混合图像的掩码。
         """
         if labels.get("semantic_mask") is None:
             return labels
@@ -866,74 +852,73 @@ class MixUp(BaseMixTransform):
         if labels2.get("semantic_mask") is None:
             return labels
         r = params["r"]
-        # Use mask from the image with higher weight to avoid fractional class indices
+        # 使用权重较大的图像掩码，避免类别索引出现小数
         if r < 0.5:
             labels["semantic_mask"] = labels2["semantic_mask"].copy()
         return labels
 
 
 class CutMix(BaseMixTransform):
-    """Apply CutMix augmentation to image datasets as described in the paper https://arxiv.org/abs/1905.04899.
+    """按照论文 https://arxiv.org/abs/1905.04899 的描述，对图像数据集应用 CutMix 增强。
 
-    CutMix combines two images by replacing a random rectangular region of one image with the corresponding region from
-    another image, and adjusts the labels proportionally to the area of the mixed region.
+    CutMix 从一张图像中随机选取矩形区域，并用另一张图像的对应区域替换它，同时按照混合区域面积的比例调整标签。
 
-    Attributes:
-        dataset (Any): The dataset to which CutMix augmentation will be applied.
-        pre_transform (Callable | None): Optional transform to apply before CutMix.
-        p (float): Probability of applying CutMix augmentation.
-        beta (float): Beta distribution parameter for sampling the mixing ratio.
-        num_areas (int): Number of areas to try to cut and mix.
+    属性：
+        dataset (Any): 应用 CutMix 增强的数据集。
+        pre_transform (Callable | None): CutMix 前可选的预处理变换。
+        p (float): 应用 CutMix 增强的概率。
+        beta (float): 用于采样混合比例的 Beta 分布参数。
+        num_areas (int): 尝试裁剪和混合的区域数量。
 
-    Methods:
-        get_params: Compute CutMix parameters including cut area and filtered indexes.
-        apply_image: Copy patch from secondary image into primary image.
-        apply_instances: Clip and concatenate instances for CutMix.
-        _rand_bbox: Generate random bounding box coordinates for the cut region.
+    方法：
+        get_params: 计算包括裁剪区域和筛选后索引在内的 CutMix 参数。
+        apply_image: 将辅助图像的图像块复制到主图像中。
+        apply_instances: 裁剪并拼接 CutMix 的对象实例。
+        _rand_bbox: 生成裁剪区域的随机边界框坐标。
 
-    Examples:
+    示例：
         >>> from ultralytics.data.augment import CutMix
-        >>> dataset = YourDataset(...)  # Your image dataset
+        >>> dataset = YourDataset(...)  # 你的图像数据集
         >>> cutmix = CutMix(dataset, p=0.5)
         >>> augmented_labels = cutmix(original_labels)
     """
 
     def __init__(self, dataset, pre_transform=None, p: float = 0.0, beta: float = 1.0, num_areas: int = 3) -> None:
-        """Initialize the CutMix augmentation object.
+        """初始化 CutMix 增强对象。
 
-        Args:
-            dataset (Any): The dataset to which CutMix augmentation will be applied.
-            pre_transform (Callable | None): Optional transform to apply before CutMix.
-            p (float): Probability of applying CutMix augmentation.
-            beta (float): Beta distribution parameter for sampling the mixing ratio.
-            num_areas (int): Number of areas to try to cut and mix.
+        参数：
+            dataset (Any): 应用 CutMix 增强的数据集。
+            pre_transform (Callable | None): CutMix 前可选的预处理变换。
+            p (float): 应用 CutMix 增强的概率。
+            beta (float): 用于采样混合比例的 Beta 分布参数。
+            num_areas (int): 尝试裁剪和混合的区域数量。
         """
         super().__init__(dataset=dataset, pre_transform=pre_transform, p=p)
         self.beta = beta
         self.num_areas = num_areas
 
     def _rand_bbox(self, width: int, height: int) -> tuple[int, int, int, int]:
-        """Generate random bounding box coordinates for the cut region.
+        """生成裁剪区域的随机边界框坐标。
 
-        Args:
-            width (int): Width of the image.
-            height (int): Height of the image.
+        参数：
+            width (int): 图像宽度。
+            height (int): 图像高度。
 
-        Returns:
-            (tuple[int]): (x1, y1, x2, y2) coordinates of the bounding box.
+        返回：
+            (tuple[int]): 边界框坐标 (x1, y1, x2, y2)。
         """
-        # Sample mixing ratio from Beta distribution
+        # 从 Beta 分布采样混合比例
         lam = np.random.beta(self.beta, self.beta)
 
         cut_ratio = np.sqrt(1.0 - lam)
         cut_w = int(width * cut_ratio)
         cut_h = int(height * cut_ratio)
 
-        # Random center
+        # 随机中心点
         cx = np.random.randint(width)
         cy = np.random.randint(height)
 
-        # Bounding box coordinates
+        # 边界框坐标
         x1 = np.clip(cx - cut_w // 2, 0, width)
         y1 = np.clip(cy - cut_h // 2, 0, height)
         x2 = np.clip(cx + cut_w // 2, 0, width)
@@ -942,13 +927,13 @@ class CutMix(BaseMixTransform):
         return x1, y1, x2, y2
 
     def get_params(self, labels: dict[str, Any]) -> dict[str, Any]:
-        """Compute CutMix parameters.
+        """计算 CutMix 参数。
 
-        Args:
-            labels (dict[str, Any]): Input labels dictionary.
+        参数：
+            labels (dict[str, Any]): 输入标签字典。
 
-        Returns:
-            (dict[str, Any]): Parameters including 'skip', 'area', and 'indexes2'.
+        返回：
+            (dict[str, Any]): 包含 'skip'、'area' 和 'indexes2' 的参数字典。
         """
         params = super().get_params(labels)
         h, w = labels["img"].shape[:2]
@@ -961,7 +946,7 @@ class CutMix(BaseMixTransform):
             return params
 
         labels2 = labels["mix_labels"][0]
-        area = cut_areas[np.random.choice(idx)]  # randomly select one
+        area = cut_areas[np.random.choice(idx)]  # 随机选择一个区域
         ioa2 = bbox_ioa(area[None], labels2["instances"].bboxes).squeeze(0)
         indexes2 = np.nonzero(ioa2 >= (0.01 if len(labels["instances"].segments) else 0.1))[0]
         if len(indexes2) == 0:
@@ -975,14 +960,14 @@ class CutMix(BaseMixTransform):
         return params
 
     def apply_image(self, labels: dict[str, Any], params: dict[str, Any] | None = None) -> dict[str, Any]:
-        """Apply CutMix to the image.
+        """对图像应用 CutMix。
 
-        Args:
-            labels (dict[str, Any]): Dictionary containing 'img'.
-            params (dict | None): Parameters from get_params.
+        参数：
+            labels (dict[str, Any]): 包含 'img' 的字典。
+            params (dict | None): 由 get_params 返回的参数。
 
-        Returns:
-            (dict): Updated labels with mixed image.
+        返回：
+            (dict): 包含混合图像的更新后标签字典。
         """
         if params.get("skip"):
             return labels
@@ -992,14 +977,14 @@ class CutMix(BaseMixTransform):
         return labels
 
     def apply_instances(self, labels: dict[str, Any], params: dict[str, Any] | None = None) -> dict[str, Any]:
-        """Apply CutMix to instances.
+        """对对象实例应用 CutMix。
 
-        Args:
-            labels (dict[str, Any]): Dictionary containing 'instances' and 'cls'.
-            params (dict | None): Parameters from get_params.
+        参数：
+            labels (dict[str, Any]): 包含 'instances' 和 'cls' 的字典。
+            params (dict | None): 由 get_params 返回的参数。
 
-        Returns:
-            (dict): Updated labels with mixed instances.
+        返回：
+            (dict): 包含混合对象实例的更新后标签字典。
         """
         if params.get("skip"):
             return labels
@@ -1024,15 +1009,14 @@ class CutMix(BaseMixTransform):
         return labels
 
     def apply_semantic(self, labels: dict[str, Any], params: dict[str, Any] | None = None) -> dict[str, Any]:
-        """Apply CutMix augmentation to semantic segmentation masks.
+        """对语义分割掩码应用 CutMix 增强。
 
-        Args:
-            labels (dict[str, Any]): Primary image labels containing 'semantic_mask' and 'mix_labels'.
-            params (dict[str, Any] | None): Parameters dict with 'area' (bounding box coordinates) and 'skip' (bool
-                flag). Defaults to None.
+        参数：
+            labels (dict[str, Any]): 主图像标签，包含 'semantic_mask' 和 'mix_labels'。
+            params (dict[str, Any] | None): 参数字典，包含 'area'（边界框坐标）和 'skip'（布尔标志），默认为 None。
 
-        Returns:
-            (dict[str, Any]): Updated labels with the semantic mask region replaced by the mixed image's mask.
+        返回：
+            (dict[str, Any]): 更新后的标签字典，其中语义掩码区域已替换为混合图像的掩码。
         """
         if params.get("skip"):
             return labels
@@ -1048,31 +1032,29 @@ class CutMix(BaseMixTransform):
 
 
 class RandomPerspective(BaseTransform):
-    """Implement random perspective and affine transformations on images and corresponding annotations.
+    """对图像及其对应标注执行随机透视和仿射变换。
 
-    This class applies random rotations, translations, scaling, shearing, and perspective transformations to images and
-    their associated bounding boxes, segments, and keypoints. It can be used as part of an augmentation pipeline for
-    object detection and instance segmentation tasks.
+    此类会对图像及其边界框、分割段和关键点应用随机旋转、平移、缩放、剪切和透视变换，可用于对象检测和实例分割任务的数据增强流程。
 
-    Attributes:
-        degrees (float): Maximum absolute degree range for random rotations.
-        translate (float): Maximum translation as a fraction of the image size.
-        scale (float): Scaling factor range, e.g., scale=0.1 means 0.9-1.1.
-        shear (float): Maximum shear angle in degrees.
-        perspective (float): Perspective distortion factor.
-        size (tuple[int, int] | None): Output size (width, height). If None, uses the input image size.
+    属性：
+        degrees (float): 随机旋转的最大绝对角度范围。
+        translate (float): 最大平移量相对于图像尺寸的比例。
+        scale (float): 缩放因子范围，例如 scale=0.1 表示 0.9-1.1。
+        shear (float): 最大剪切角度，单位为度。
+        perspective (float): 透视畸变因子。
+        size (tuple[int, int] | None): 输出尺寸 (width, height)；为 None 时使用输入图像尺寸。
 
-    Methods:
-        get_params: Compute affine transformation matrix and related parameters.
-        apply_image: Warp the image using the affine matrix.
-        apply_instances: Transform bounding boxes, segments, and keypoints.
-        apply_semantic: Placeholder for semantic segmentation mask transformation.
-        apply_bboxes: Transform bounding boxes using the affine matrix.
-        apply_segments: Transform segments and generate new bounding boxes.
-        apply_keypoints: Transform keypoints using the affine matrix.
-        box_candidates: Filter transformed bounding boxes based on size and aspect ratio.
+    方法：
+        get_params: 计算仿射变换矩阵及相关参数。
+        apply_image: 使用仿射矩阵扭曲图像。
+        apply_instances: 变换边界框、分割段和关键点。
+        apply_semantic: 对语义分割掩码执行变换。
+        apply_bboxes: 使用仿射矩阵变换边界框。
+        apply_segments: 变换分割段并生成新的边界框。
+        apply_keypoints: 使用仿射矩阵变换关键点。
+        box_candidates: 根据尺寸和宽高比筛选变换后的边界框。
 
-    Examples:
+    示例：
         >>> transform = RandomPerspective(degrees=10, translate=0.1, scale=0.1, shear=10)
         >>> image = np.random.randint(0, 255, (640, 640, 3), dtype=np.uint8)
         >>> labels = {"img": image, "cls": np.array([0, 1]), "instances": Instances(...)}
@@ -1091,20 +1073,18 @@ class RandomPerspective(BaseTransform):
         size: tuple[int, int] | None = None,
         preserve_obb: bool = False,
     ):
-        """Initialize RandomPerspective object with transformation parameters.
+        """使用变换参数初始化 RandomPerspective 对象。
 
-        This class implements random perspective and affine transformations on images and corresponding bounding boxes,
-        segments, and keypoints. Transformations include rotation, translation, scaling, and shearing.
+        此类对图像及其对应的边界框、分割段和关键点执行随机透视与仿射变换，包括旋转、平移、缩放和剪切。
 
-        Args:
-            degrees (float): Degree range for random rotations.
-            translate (float): Fraction of total width and height for random translation.
-            scale (float | tuple[float, float]): Scaling factor interval. If float, e.g. 0.5 means resize between
-                50%-150%. If tuple, interpreted as absolute (min, max) scale factors.
-            shear (float): Shear intensity (angle in degrees).
-            perspective (float): Perspective distortion factor.
-            size (tuple[int, int] | None): Output size (width, height). If None, uses the input image size.
-            preserve_obb (bool): Preserve oriented-box direction when transformed segments cross image boundaries.
+        参数：
+            degrees (float): 随机旋转的角度范围。
+            translate (float): 随机平移占总宽度和总高度的比例。
+            scale (float | tuple[float, float]): 缩放因子区间。为浮点数时，例如 0.5 表示在 50%-150% 之间缩放；为元组时，表示绝对的 (min, max) 缩放因子。
+            shear (float): 剪切强度（角度，单位为度）。
+            perspective (float): 透视畸变因子。
+            size (tuple[int, int] | None): 输出尺寸 (width, height)；为 None 时使用输入图像尺寸。
+            preserve_obb (bool): 当变换后的分割段越过图像边界时，是否保留有向框方向。
         """
         self.degrees = degrees
         self.translate = translate
@@ -1115,26 +1095,26 @@ class RandomPerspective(BaseTransform):
         self.preserve_obb = preserve_obb
 
     def _compute_affine_matrix(self, img: np.ndarray, size: tuple[int, int]) -> tuple[np.ndarray, float]:
-        """Compute the affine transformation matrix without applying it.
+        """计算仿射变换矩阵，但不应用该矩阵。
 
-        Args:
-            img (np.ndarray): Input image used to determine center and dimensions.
-            size (tuple[int, int]): Size of the output image (width, height) used for clipping translation transform.
+        参数：
+            img (np.ndarray): 用于确定中心和尺寸的输入图像。
+            size (tuple[int, int]): 输出图像尺寸 (width, height)，用于限制平移变换。
 
-        Returns:
-            (M, scale): 3x3 transformation matrix and scale factor.
+        返回：
+            (M, scale)：3x3 变换矩阵和缩放因子。
         """
-        # Center
+        # 中心平移
         C = np.eye(3, dtype=np.float32)
-        C[0, 2] = -img.shape[1] / 2  # x translation (pixels)
-        C[1, 2] = -img.shape[0] / 2  # y translation (pixels)
+        C[0, 2] = -img.shape[1] / 2  # x 方向平移（像素）
+        C[1, 2] = -img.shape[0] / 2  # y 方向平移（像素）
 
-        # Perspective
+        # 透视变换
         P = np.eye(3, dtype=np.float32)
-        P[2, 0] = random.uniform(-self.perspective, self.perspective)  # x perspective (about y)
-        P[2, 1] = random.uniform(-self.perspective, self.perspective)  # y perspective (about x)
+        P[2, 0] = random.uniform(-self.perspective, self.perspective)  # x 方向透视（绕 y 轴）
+        P[2, 1] = random.uniform(-self.perspective, self.perspective)  # y 方向透视（绕 x 轴）
 
-        # Rotation and Scale
+        # 旋转和缩放
         R = np.eye(3, dtype=np.float32)
         a = random.uniform(-self.degrees, self.degrees)
         if isinstance(self.scale, (tuple, list)):
@@ -1143,33 +1123,33 @@ class RandomPerspective(BaseTransform):
             s = random.uniform(1 - self.scale, 1 + self.scale)
         R[:2] = cv2.getRotationMatrix2D(angle=a, center=(0, 0), scale=s)
 
-        # Shear
+        # 剪切
         S = np.eye(3, dtype=np.float32)
-        S[0, 1] = math.tan(random.uniform(-self.shear, self.shear) * math.pi / 180)  # x shear (deg)
-        S[1, 0] = math.tan(random.uniform(-self.shear, self.shear) * math.pi / 180)  # y shear (deg)
+        S[0, 1] = math.tan(random.uniform(-self.shear, self.shear) * math.pi / 180)  # x 方向剪切（度）
+        S[1, 0] = math.tan(random.uniform(-self.shear, self.shear) * math.pi / 180)  # y 方向剪切（度）
 
-        # Translation
+        # 平移
         T = np.eye(3, dtype=np.float32)
 
-        T[0, 2] = random.uniform(0.5 - self.translate, 0.5 + self.translate) * size[0]  # x translation (pixels)
-        T[1, 2] = random.uniform(0.5 - self.translate, 0.5 + self.translate) * size[1]  # y translation (pixels)
+        T[0, 2] = random.uniform(0.5 - self.translate, 0.5 + self.translate) * size[0]  # x 方向平移（像素）
+        T[1, 2] = random.uniform(0.5 - self.translate, 0.5 + self.translate) * size[1]  # y 方向平移（像素）
 
-        # Combined rotation matrix
-        M = T @ S @ R @ P @ C  # order of operations (right to left) is IMPORTANT
+        # 组合变换矩阵
+        M = T @ S @ R @ P @ C  # 运算顺序（从右到左）非常重要
         return M, s
 
     def get_params(self, labels: dict[str, Any]) -> dict[str, Any]:
-        """Compute affine transformation parameters shared across image and instances.
+        """计算图像和对象实例之间共享的仿射变换参数。
 
-        Args:
-            labels (dict[str, Any]): Input labels dictionary containing 'img'.
+        参数：
+            labels (dict[str, Any]): 包含 'img' 的输入标签字典。
 
-        Returns:
-            (dict): Parameters including 'M' (affine matrix), 'scale', 'orig_shape', and 'size'.
+        返回：
+            (dict): 包含 'M'（仿射矩阵）、'scale'、'orig_shape' 和 'size' 的参数字典。
         """
         img = labels["img"]
-        if (rect_shape := labels.get("rect_shape")) is not None:  # rect has higher priority
-            size = (int(rect_shape[1]), int(rect_shape[0]))  # rect mode batch shape (h, w) to (w, h)
+        if (rect_shape := labels.get("rect_shape")) is not None:  # rect 优先级更高
+            size = (int(rect_shape[1]), int(rect_shape[0]))  # 将 rect 模式批次尺寸 (h, w) 转为 (w, h)
         else:
             size = (img.shape[1], img.shape[0]) if self.size is None else self.size  # w, h
         orig_shape = img.shape[:2]
@@ -1177,22 +1157,22 @@ class RandomPerspective(BaseTransform):
         return {"M": M, "scale": scale, "orig_shape": orig_shape, "size": size}
 
     def apply_image(self, labels: dict[str, Any], params: dict[str, Any] | None = None) -> dict[str, Any]:
-        """Apply affine warp to the image.
+        """对图像应用仿射扭曲。
 
-        Args:
-            labels (dict[str, Any]): Dictionary containing 'img'.
-            params (dict | None): Parameters from get_params, including 'M' and 'size'.
+        参数：
+            labels (dict[str, Any]): 包含 'img' 的字典。
+            params (dict | None): 由 get_params 返回且包含 'M' 和 'size' 的参数。
 
-        Returns:
-            (dict): Updated labels with warped image and 'resized_shape'.
+        返回：
+            (dict): 包含扭曲图像和 'resized_shape' 的更新后标签字典。
         """
         img = labels["img"]
         M = params["M"]
         size = params["size"]
-        # 4 values: cv2 tiles borderValue in blocks of 4, so a 3-tuple zeroes every 4th multispectral channel
+        # 4 个值：cv2 会按每 4 个通道为一组平铺 borderValue，因此 3 元组会将多光谱图像的每第 4 个通道置零
         if self.perspective:
             img = cv2.warpPerspective(img, M, dsize=size, borderValue=(114, 114, 114, 114))
-        else:  # affine
+        else:  # 仿射变换
             img = cv2.warpAffine(img, M[:2], dsize=size, borderValue=(114, 114, 114, 114))
         if img.ndim == 2:
             img = img[..., None]
@@ -1201,7 +1181,7 @@ class RandomPerspective(BaseTransform):
         return labels
 
     def apply_instances(self, labels: dict[str, Any], params: dict[str, Any] | None = None) -> dict[str, Any]:
-        """Apply the affine transformation to object instances."""
+        """对对象实例应用仿射变换。"""
         cls = labels["cls"]
         instances = labels.pop("instances")
         instances.convert_bbox(format="xyxy")
@@ -1214,19 +1194,19 @@ class RandomPerspective(BaseTransform):
 
         segments = instances.segments
         keypoints = instances.keypoints
-        # Update bboxes if there are segments.
+        # 如果存在分割段，则使用分割段更新边界框。
         if len(segments):
             bboxes, segments = self.apply_segments(segments, M, params["size"])
 
         if keypoints is not None:
             keypoints = self.apply_keypoints(keypoints, M, params["size"])
         new_instances = Instances(bboxes, segments, keypoints, bbox_format="xyxy", normalized=False)
-        # Clip
+        # 裁剪到图像边界
         new_instances.clip(*params["size"], preserve_obb=self.preserve_obb)
 
-        # Filter instances
+        # 筛选对象实例
         instances.scale(scale_w=scale, scale_h=scale, bbox_only=True)
-        # Make the bboxes have the same scale with new_bboxes
+        # 使原始边界框与新边界框具有相同的缩放比例
         i = self.box_candidates(
             box1=instances.bboxes.T, box2=new_instances.bboxes.T, area_thr=0.01 if len(segments) else 0.10
         )
@@ -1235,20 +1215,18 @@ class RandomPerspective(BaseTransform):
         return labels
 
     def apply_bboxes(self, bboxes: np.ndarray, M: np.ndarray) -> np.ndarray:
-        """Apply affine transformation to bounding boxes.
+        """对边界框应用仿射变换。
 
-        This function applies an affine transformation to a set of bounding boxes using the provided transformation
-        matrix.
+        此函数使用指定的变换矩阵对一组边界框应用仿射变换。
 
-        Args:
-            bboxes (np.ndarray): Bounding boxes in xyxy format with shape (N, 4), where N is the number of bounding
-                boxes.
-            M (np.ndarray): Affine transformation matrix with shape (3, 3).
+        参数：
+            bboxes (np.ndarray): 形状为 (N, 4) 的 xyxy 格式边界框，N 表示边界框数量。
+            M (np.ndarray): 形状为 (3, 3) 的仿射变换矩阵。
 
-        Returns:
-            (np.ndarray): Transformed bounding boxes in xyxy format with shape (N, 4).
+        返回：
+            (np.ndarray): 形状为 (N, 4) 的变换后 xyxy 格式边界框。
 
-        Examples:
+        示例：
             >>> rp = RandomPerspective()
             >>> bboxes = np.array([[10, 10, 20, 20], [30, 30, 40, 40]], dtype=np.float32)
             >>> M = np.eye(3, dtype=np.float32)
@@ -1259,11 +1237,11 @@ class RandomPerspective(BaseTransform):
             return bboxes
 
         xy = np.ones((n * 4, 3), dtype=bboxes.dtype)
-        xy[:, :2] = bboxes[:, [0, 1, 2, 3, 0, 3, 2, 1]].reshape(n * 4, 2)  # x1y1, x2y2, x1y2, x2y1
-        xy = xy @ M.T  # transform
-        xy = (xy[:, :2] / xy[:, 2:3] if self.perspective else xy[:, :2]).reshape(n, 8)  # perspective rescale or affine
+        xy[:, :2] = bboxes[:, [0, 1, 2, 3, 0, 3, 2, 1]].reshape(n * 4, 2)  # x1y1、x2y2、x1y2、x2y1
+        xy = xy @ M.T  # 应用变换
+        xy = (xy[:, :2] / xy[:, 2:3] if self.perspective else xy[:, :2]).reshape(n, 8)  # 透视重缩放或仿射变换
 
-        # Create new boxes
+        # 创建新边界框
         x = xy[:, [0, 2, 4, 6]]
         y = xy[:, [1, 3, 5, 7]]
         return np.concatenate((x.min(1), y.min(1), x.max(1), y.max(1)), dtype=bboxes.dtype).reshape(4, n).T
@@ -1271,7 +1249,7 @@ class RandomPerspective(BaseTransform):
     def apply_segments(
         self, segments: np.ndarray, M: np.ndarray, size: tuple[int, int]
     ) -> tuple[np.ndarray, np.ndarray]:
-        """Transform segments and derive their bounding boxes."""
+        """变换分割段并计算其边界框。"""
         n, num = segments.shape[:2]
         if n == 0:
             return [], segments
@@ -1279,7 +1257,7 @@ class RandomPerspective(BaseTransform):
         xy = np.ones((n * num, 3), dtype=segments.dtype)
         segments = segments.reshape(-1, 2)
         xy[:, :2] = segments
-        xy = xy @ M.T  # transform
+        xy = xy @ M.T  # 应用变换
         xy = xy[:, :2] / xy[:, 2:3]
         segments = xy.reshape(n, -1, 2)
         bboxes = np.stack([segment2box(xy, size[0], size[1]) for xy in segments], 0)
@@ -1289,22 +1267,19 @@ class RandomPerspective(BaseTransform):
         return bboxes, segments
 
     def apply_keypoints(self, keypoints: np.ndarray, M: np.ndarray, size: tuple[int, int]) -> np.ndarray:
-        """Apply affine transformation to keypoints.
+        """对关键点应用仿射变换。
 
-        This method transforms the input keypoints using the provided affine transformation matrix. It handles
-        perspective rescaling if necessary and updates the visibility of keypoints that fall outside the image
-        boundaries after transformation.
+        此方法使用指定的仿射变换矩阵变换输入关键点；必要时处理透视重缩放，并将变换后落在图像边界外的关键点设为不可见。
 
-        Args:
-            keypoints (np.ndarray): Array of keypoints with shape (N, K, 3), where N is the number of instances, K is
-                the number of keypoints per instance, and 3 represents (x, y, visibility).
-            M (np.ndarray): 3x3 affine transformation matrix.
-            size (tuple[int, int]): Size of the output image (width, height) used to determine visibility of keypoints.
+        参数：
+            keypoints (np.ndarray): 形状为 (N, K, 3) 的关键点数组；N 为实例数，K 为每个实例的关键点数，3 表示 (x, y, visibility)。
+            M (np.ndarray): 3x3 仿射变换矩阵。
+            size (tuple[int, int]): 输出图像尺寸 (width, height)，用于判断关键点是否可见。
 
-        Returns:
-            (np.ndarray): Transformed keypoints array with the same shape as input (N, K, 3).
+        返回：
+            (np.ndarray): 形状与输入相同 (N, K, 3) 的变换后关键点数组。
 
-        Examples:
+        示例：
             >>> random_perspective = RandomPerspective()
             >>> keypoints = np.random.rand(5, 17, 3)  # 5 instances, 17 keypoints each
             >>> M = np.eye(3)  # Identity transformation
@@ -1316,21 +1291,21 @@ class RandomPerspective(BaseTransform):
         xy = np.ones((n * nkpt, 3), dtype=keypoints.dtype)
         visible = keypoints[..., 2].reshape(n * nkpt, 1)
         xy[:, :2] = keypoints[..., :2].reshape(n * nkpt, 2)
-        xy = xy @ M.T  # transform
-        xy = xy[:, :2] / xy[:, 2:3]  # perspective rescale or affine
+        xy = xy @ M.T  # 应用变换
+        xy = xy[:, :2] / xy[:, 2:3]  # 透视重缩放或仿射变换
         out_mask = (xy[:, 0] < 0) | (xy[:, 1] < 0) | (xy[:, 0] > size[0]) | (xy[:, 1] > size[1])
         visible[out_mask] = 0
         return np.concatenate([xy, visible], axis=-1).reshape(n, nkpt, 3)
 
     def apply_semantic(self, labels: dict[str, Any], params: dict[str, Any] | None = None) -> dict[str, Any]:
-        """Apply affine transformation to semantic segmentation mask.
+        """对语义分割掩码应用仿射变换。
 
-        Args:
-            labels (dict[str, Any]): Dictionary containing 'semantic_mask'.
-            params (dict | None): Parameters from get_params, including 'M' and 'size'.
+        参数：
+            labels (dict[str, Any]): 包含 'semantic_mask' 的字典。
+            params (dict | None): 由 get_params 返回且包含 'M' 和 'size' 的参数。
 
-        Returns:
-            (dict): Updated labels with transformed semantic mask.
+        返回：
+            (dict): 包含变换后语义掩码的更新后标签字典。
         """
         if "semantic_mask" not in labels or labels["semantic_mask"] is None:
             return labels
@@ -1346,10 +1321,9 @@ class RandomPerspective(BaseTransform):
         return labels
 
     def apply_depth(self, labels: dict[str, Any], params: dict[str, Any] | None = None) -> dict[str, Any]:
-        """Apply the same projective warp to metric depth maps.
+        """对度量深度图应用相同的投影扭曲。
 
-        Depth values remain in meters; only their spatial support is warped. Nearest-neighbor interpolation avoids
-        manufacturing spurious near-zero "valid" pixels when sparse or invalid regions border real depth.
+        深度值仍以米为单位，仅对其空间位置进行扭曲。最近邻插值可避免在稀疏区域或无效区域邻接真实深度时产生虚假的近零“有效”像素。
         """
         depth = labels.get("depth")
         if depth is None:
@@ -1374,29 +1348,23 @@ class RandomPerspective(BaseTransform):
         area_thr: float = 0.1,
         eps: float = 1e-16,
     ) -> np.ndarray:
-        """Compute candidate boxes for further processing based on size and aspect ratio criteria.
+        """根据尺寸和宽高比条件计算可供后续处理的候选边界框。
 
-        This method compares boxes before and after augmentation to determine if they meet specified thresholds for
-        width, height, aspect ratio, and area. It's used to filter out boxes that have been overly distorted or reduced
-        by the augmentation process.
+        此方法比较增强前后的边界框，判断它们是否满足宽度、高度、宽高比和面积阈值，用于筛除在增强过程中严重变形或缩小的边界框。
 
-        Args:
+        参数：
             box1 (np.ndarray): Original boxes before augmentation, shape (4, N) where N is the number of boxes. Format
                 is [x1, y1, x2, y2] in absolute coordinates.
-            box2 (np.ndarray): Augmented boxes after transformation, shape (4, N). Format is [x1, y1, x2, y2] in
-                absolute coordinates.
-            wh_thr (int): Width and height threshold in pixels. Boxes smaller than this in either dimension are
-                rejected.
-            ar_thr (int): Aspect ratio threshold. Boxes with an aspect ratio greater than this value are rejected.
-            area_thr (float): Area ratio threshold. Boxes with an area ratio (new/old) less than this value are
-                rejected.
-            eps (float): Small epsilon value to prevent division by zero.
+            box2 (np.ndarray): 变换后的边界框，形状为 (4, N)，格式为绝对坐标 [x1, y1, x2, y2]。
+            wh_thr (int): 宽度和高度像素阈值，任一维度小于该值的边界框会被拒绝。
+            ar_thr (int): 宽高比阈值，宽高比大于该值的边界框会被拒绝。
+            area_thr (float): 面积比例阈值，面积比例（新面积/旧面积）小于该值的边界框会被拒绝。
+            eps (float): 用于避免除零的小量。
 
-        Returns:
-            (np.ndarray): Boolean array of shape (N,) indicating which boxes are candidates. True values correspond to
-                boxes that meet all criteria.
+        返回：
+            (np.ndarray): 形状为 (N,) 的布尔数组，用于指示哪些边界框是候选框。True 表示满足所有条件。
 
-        Examples:
+        示例：
             >>> random_perspective = RandomPerspective()
             >>> box1 = np.array([[0, 0, 100, 100], [0, 0, 50, 50]]).T
             >>> box2 = np.array([[10, 10, 90, 90], [5, 5, 45, 45]]).T
@@ -1406,24 +1374,24 @@ class RandomPerspective(BaseTransform):
         """
         w1, h1 = box1[2] - box1[0], box1[3] - box1[1]
         w2, h2 = box2[2] - box2[0], box2[3] - box2[1]
-        ar = np.maximum(w2 / (h2 + eps), h2 / (w2 + eps))  # aspect ratio
-        return (w2 > wh_thr) & (h2 > wh_thr) & (w2 * h2 / (w1 * h1 + eps) > area_thr) & (ar < ar_thr)  # candidates
+        ar = np.maximum(w2 / (h2 + eps), h2 / (w2 + eps))  # 宽高比
+        return (w2 > wh_thr) & (h2 > wh_thr) & (w2 * h2 / (w1 * h1 + eps) > area_thr) & (ar < ar_thr)  # 候选框
 
 
 class RandomHSV(BaseTransform):
-    """Randomly adjust the Hue, Saturation, and Value (HSV) channels of an image.
+    """随机调整图像的色调、饱和度和值（HSV）通道。
 
-    This class applies random HSV augmentation to images within predefined limits set by hgain, sgain, and vgain.
+    此类在 hgain、sgain 和 vgain 设定的范围内对图像应用随机 HSV 增强。
 
-    Attributes:
-        hgain (float): Maximum variation for hue. Range is typically [0, 1].
-        sgain (float): Maximum variation for saturation. Range is typically [0, 1].
-        vgain (float): Maximum variation for value. Range is typically [0, 1].
+    属性：
+        hgain (float): 色调的最大变化量，通常取值范围为 [0, 1]。
+        sgain (float): 饱和度的最大变化量，通常取值范围为 [0, 1]。
+        vgain (float): 明度的最大变化量，通常取值范围为 [0, 1]。
 
-    Methods:
-        apply_image: Apply random HSV augmentation to an image.
+    方法：
+        apply_image: 对图像应用随机 HSV 增强。
 
-    Examples:
+    示例：
         >>> import numpy as np
         >>> from ultralytics.data.augment import RandomHSV
         >>> augmenter = RandomHSV(hgain=0.5, sgain=0.5, vgain=0.5)
@@ -1434,74 +1402,71 @@ class RandomHSV(BaseTransform):
     """
 
     def __init__(self, hgain: float = 0.5, sgain: float = 0.5, vgain: float = 0.5) -> None:
-        """Initialize the RandomHSV object for random HSV (Hue, Saturation, Value) augmentation.
+        """初始化用于随机 HSV（色调、饱和度、明度）增强的 RandomHSV 对象。
 
-        This class applies random adjustments to the HSV channels of an image within specified limits.
+        此类在指定范围内随机调整图像的 HSV 通道。
 
-        Args:
-            hgain (float): Maximum variation for hue. Should be in the range [0, 1].
-            sgain (float): Maximum variation for saturation. Should be in the range [0, 1].
-            vgain (float): Maximum variation for value. Should be in the range [0, 1].
+        参数：
+            hgain (float): 色调的最大变化量，取值范围应为 [0, 1]。
+            sgain (float): 饱和度的最大变化量，取值范围应为 [0, 1]。
+            vgain (float): 明度的最大变化量，取值范围应为 [0, 1]。
         """
         self.hgain = hgain
         self.sgain = sgain
         self.vgain = vgain
 
     def apply_image(self, labels, params: dict[str, Any] | None = None):
-        """Apply random HSV augmentation to an image within predefined limits.
+        """在预定义范围内对图像应用随机 HSV 增强。
 
-        This method modifies the input image by randomly adjusting its Hue, Saturation, and Value (HSV) channels. The
-        adjustments are made within the limits set by hgain, sgain, and vgain during initialization.
+        此方法通过随机调整输入图像的色调、饱和度和明度（HSV）通道来修改图像，调整范围由初始化时的 hgain、sgain 和 vgain 确定。
 
-        Args:
-            labels (dict[str, Any]): A dictionary containing image data and metadata. Must include an 'img' key with the
-                image as a numpy array.
-            params (dict[str, Any] | None): Unused parameters for API compatibility.
+        参数：
+            labels (dict[str, Any]): 包含图像数据和元数据的字典，必须包含值为 NumPy 数组的 'img' 键。
+            params (dict[str, Any] | None): 为兼容接口保留但未使用的参数。
 
-        Returns:
-            (dict[str, Any]): The labels dictionary with the HSV-augmented image.
+        返回：
+            (dict[str, Any]): 包含 HSV 增强后图像的标签字典。
 
-        Examples:
+        示例：
             >>> hsv_augmenter = RandomHSV(hgain=0.5, sgain=0.5, vgain=0.5)
             >>> labels = {"img": np.random.randint(0, 255, (100, 100, 3), dtype=np.uint8)}
             >>> labels = hsv_augmenter.apply_image(labels)
             >>> augmented_img = labels["img"]
         """
         img = labels["img"]
-        if img.shape[-1] != 3:  # only apply to 3-channel (BGR) images
+        if img.shape[-1] != 3:  # 仅对 3 通道（BGR）图像应用
             return labels
         if self.hgain or self.sgain or self.vgain:
-            dtype = img.dtype  # uint8
+            dtype = img.dtype  # uint8 类型
 
-            r = np.random.uniform(-1, 1, 3) * [self.hgain, self.sgain, self.vgain]  # random gains
+            r = np.random.uniform(-1, 1, 3) * [self.hgain, self.sgain, self.vgain]  # 随机增益
             x = np.arange(0, 256, dtype=r.dtype)
-            # lut_hue = ((x * (r[0] + 1)) % 180).astype(dtype)   # original hue implementation from ultralytics<=8.3.78
+            # lut_hue = ((x * (r[0] + 1)) % 180).astype(dtype)   # ultralytics<=8.3.78 中的原始色调实现
             lut_hue = ((x + r[0] * 180) % 180).astype(dtype)
             lut_sat = np.clip(x * (r[1] + 1), 0, 255).astype(dtype)
             lut_val = np.clip(x * (r[2] + 1), 0, 255).astype(dtype)
-            lut_sat[0] = 0  # prevent pure white changing color, introduced in 8.3.79
+            lut_sat[0] = 0  # 防止纯白色发生变色，8.3.79 版本引入
 
             hue, sat, val = cv2.split(cv2.cvtColor(img, cv2.COLOR_BGR2HSV))
             im_hsv = cv2.merge((cv2.LUT(hue, lut_hue), cv2.LUT(sat, lut_sat), cv2.LUT(val, lut_val)))
-            cv2.cvtColor(im_hsv, cv2.COLOR_HSV2BGR, dst=img)  # no return needed
+            cv2.cvtColor(im_hsv, cv2.COLOR_HSV2BGR, dst=img)  # 无需返回值
         return labels
 
 
 class RandomFlip(BaseTransform):
-    """Apply a random horizontal or vertical flip to an image with a given probability.
+    """按照指定概率对图像执行随机水平或垂直翻转。
 
-    This class performs random image flipping and updates corresponding instance annotations such as bounding boxes and
-    keypoints.
+    此类执行随机图像翻转，并同步更新边界框和关键点等对象实例标注。
 
-    Attributes:
-        p (float): Probability of applying the flip. Must be between 0 and 1.
-        direction (str): Direction of flip, either 'horizontal' or 'vertical'.
-        flip_idx (array-like): Index mapping for flipping keypoints, if applicable.
+    属性：
+        p (float): 执行翻转的概率，必须介于 0 和 1 之间。
+        direction (str): 翻转方向，可为 'horizontal' 或 'vertical'。
+        flip_idx (array-like): 翻转关键点时使用的索引映射（如适用）。
 
-    Methods:
-        __call__: Apply the random flip transformation to an image and its annotations.
+    方法：
+        __call__: 对图像及其标注应用随机翻转变换。
 
-    Examples:
+    示例：
         >>> transform = RandomFlip(p=0.5, direction="horizontal")
         >>> result = transform({"img": image, "instances": instances})
         >>> flipped_image = result["img"]
@@ -1509,34 +1474,33 @@ class RandomFlip(BaseTransform):
     """
 
     def __init__(self, p: float = 0.5, direction: str = "horizontal", flip_idx: list[int] | None = None) -> None:
-        """Initialize the RandomFlip class with probability and direction.
+        """使用概率和方向初始化 RandomFlip 类。
 
-        This class applies a random horizontal or vertical flip to an image with a given probability. It also updates
-        any instances (bounding boxes, keypoints, etc.) accordingly.
+        此类按照指定概率对图像执行随机水平或垂直翻转，并相应更新对象实例（边界框、关键点等）。
 
-        Args:
-            p (float): The probability of applying the flip. Must be between 0 and 1.
-            direction (str): The direction to apply the flip. Must be 'horizontal' or 'vertical'.
-            flip_idx (list[int] | None): Index mapping for flipping keypoints, if any.
+        参数：
+            p (float): 执行翻转的概率，必须介于 0 和 1 之间。
+            direction (str): 翻转方向，必须为 'horizontal' 或 'vertical'。
+            flip_idx (list[int] | None): 翻转关键点时使用的索引映射（如有）。
 
-        Raises:
-            AssertionError: If direction is not 'horizontal' or 'vertical', or if p is not between 0 and 1.
+        异常：
+            AssertionError: 当 direction 不是 'horizontal' 或 'vertical'，或 p 不在 0 到 1 之间时抛出。
         """
-        assert direction in {"horizontal", "vertical"}, f"Support direction `horizontal` or `vertical`, got {direction}"
-        assert 0 <= p <= 1.0, f"The probability should be in range [0, 1], but got {p}."
+        assert direction in {"horizontal", "vertical"}, f"方向必须为 `horizontal` 或 `vertical`，但当前为 {direction}"
+        assert 0 <= p <= 1.0, f"概率必须在 [0, 1] 范围内，但当前为 {p}。"
 
         self.p = p
         self.direction = direction
         self.flip_idx = flip_idx
 
     def get_params(self, labels: dict[str, Any]) -> dict[str, Any]:
-        """Compute random flip parameters.
+        """计算随机翻转参数。
 
-        Args:
-            labels (dict[str, Any]): Input labels dictionary containing 'img' and 'instances'.
+        参数：
+            labels (dict[str, Any]): 包含 'img' 和 'instances' 的输入标签字典。
 
-        Returns:
-            (dict): Parameters including 'flip' (bool), 'h', 'w', 'direction', and 'flip_idx'.
+        返回：
+            (dict): 包含 'flip'（bool）、'h'、'w'、'direction' 和 'flip_idx' 的参数字典。
         """
         img = labels["img"]
         instances = labels["instances"]
@@ -1552,14 +1516,14 @@ class RandomFlip(BaseTransform):
         }
 
     def apply_image(self, labels: dict[str, Any], params: dict[str, Any]) -> dict[str, Any]:
-        """Apply flip to the image.
+        """对图像应用翻转。
 
-        Args:
-            labels (dict[str, Any]): Dictionary containing 'img'.
-            params (dict): Parameters from get_params.
+        参数：
+            labels (dict[str, Any]): 包含 'img' 的字典。
+            params (dict): 由 get_params 返回的参数。
 
-        Returns:
-            (dict): Updated labels with flipped (or unchanged) image.
+        返回：
+            (dict): 包含翻转后（或未改变）图像的更新后标签字典。
         """
         img = labels["img"]
         if params["flip"]:
@@ -1571,14 +1535,14 @@ class RandomFlip(BaseTransform):
         return labels
 
     def apply_instances(self, labels: dict[str, Any], params: dict[str, Any]) -> dict[str, Any]:
-        """Apply flip to object instances.
+        """对对象实例应用翻转。
 
-        Args:
-            labels (dict[str, Any]): Dictionary containing 'instances'.
-            params (dict): Parameters from get_params.
+        参数：
+            labels (dict[str, Any]): 包含 'instances' 的字典。
+            params (dict): 由 get_params 返回的参数。
 
-        Returns:
-            (dict): Updated labels with flipped (or unchanged) instances.
+        返回：
+            (dict): 包含翻转后（或未改变）对象实例的更新后标签字典。
         """
         instances = labels.pop("instances")
         instances.convert_bbox(format="xywh")
@@ -1593,14 +1557,14 @@ class RandomFlip(BaseTransform):
         return labels
 
     def apply_semantic(self, labels: dict[str, Any], params: dict[str, Any]) -> dict[str, Any]:
-        """Apply flip to semantic segmentation mask.
+        """对语义分割掩码应用翻转。
 
-        Args:
-            labels (dict[str, Any]): Dictionary containing 'semantic_mask'.
-            params (dict): Parameters from get_params.
+        参数：
+            labels (dict[str, Any]): 包含 'semantic_mask' 的字典。
+            params (dict): 由 get_params 返回的参数。
 
-        Returns:
-            (dict): Updated labels with flipped (or unchanged) semantic mask.
+        返回：
+            (dict): 包含翻转后（或未改变）语义掩码的更新后标签字典。
         """
         if "semantic_mask" not in labels or labels["semantic_mask"] is None:
             return labels
@@ -1612,14 +1576,14 @@ class RandomFlip(BaseTransform):
         return labels
 
     def apply_depth(self, labels: dict[str, Any], params: dict[str, Any]) -> dict[str, Any]:
-        """Apply flip to the paired metric depth map.
+        """对配对的度量深度图应用翻转。
 
-        Args:
-            labels (dict[str, Any]): Dictionary containing 'depth'.
-            params (dict): Parameters from get_params.
+        参数：
+            labels (dict[str, Any]): 包含 'depth' 的字典。
+            params (dict): 由 get_params 返回的参数。
 
-        Returns:
-            (dict): Updated labels with flipped (or unchanged) depth map.
+        返回：
+            (dict): 包含翻转后（或未改变）深度图的更新后标签字典。
         """
         if labels.get("depth") is None:
             return labels
@@ -1632,23 +1596,22 @@ class RandomFlip(BaseTransform):
 
 
 class LetterBox(BaseTransform):
-    """Resize image and padding for detection, instance segmentation, pose.
+    """用于检测、实例分割和姿态估计的图像缩放与填充变换。
 
-    This class resizes and pads images to a specified shape while preserving aspect ratio. It also updates corresponding
-    labels and bounding boxes.
+    此类在保持宽高比的同时将图像缩放并填充到指定尺寸，并同步更新对应的标签和边界框。
 
-    Attributes:
-        new_shape (tuple): Target shape (height, width) for resizing.
-        auto (bool): Whether to use minimum rectangle.
-        scale_fill (bool): Whether to stretch the image to new_shape.
-        scaleup (bool): Whether to allow scaling up. If False, only scale down.
-        stride (int): Stride for rounding padding.
-        center (bool): Whether to center the image or align to top-left.
+    属性：
+        new_shape (tuple): 缩放目标尺寸 (height, width)。
+        auto (bool): 是否使用最小矩形填充。
+        scale_fill (bool): 是否将图像拉伸到 new_shape。
+        scaleup (bool): 是否允许放大图像；为 False 时只缩小图像。
+        stride (int): 用于将填充量取整的步长。
+        center (bool): 是否居中放置图像；为 False 时对齐左上角。
 
-    Methods:
-        __call__: Resize and pad image, update labels and bounding boxes.
+    方法：
+        __call__: 缩放并填充图像，同时更新标签和边界框。
 
-    Examples:
+    示例：
         >>> transform = LetterBox(new_shape=(640, 640))
         >>> result = transform(labels)
         >>> resized_img = result["img"]
@@ -1666,47 +1629,42 @@ class LetterBox(BaseTransform):
         padding_value: int = 114,
         interpolation: int = cv2.INTER_LINEAR,
     ):
-        """Initialize LetterBox object for resizing and padding images.
+        """初始化用于缩放和填充图像的 LetterBox 对象。
 
-        This class is designed to resize and pad images for object detection, instance segmentation, and pose estimation
-        tasks. It supports various resizing modes including auto-sizing, scale-fill, and letterboxing.
+        此类用于对象检测、实例分割和姿态估计任务的图像缩放与填充，支持自动调整尺寸、拉伸填充和保持比例填充等模式。
 
-        Args:
-            new_shape (tuple[int, int]): Target size (height, width) for the resized image.
-            auto (bool): If True, use minimum rectangle to resize. If False, use new_shape directly.
-            scale_fill (bool): If True, stretch the image to new_shape without padding.
-            scaleup (bool): If True, allow scaling up. If False, only scale down.
-            center (bool): If True, center the placed image. If False, place image in top-left corner.
-            stride (int): Stride of the model (e.g., 32 for YOLOv5).
-            padding_value (int): Value for padding the image. Default is 114.
-            interpolation (int): Interpolation method for resizing. Default is cv2.INTER_LINEAR.
+        参数：
+            new_shape (tuple[int, int]): 缩放目标尺寸 (height, width)。
+            auto (bool): 为 True 时使用最小矩形调整尺寸；为 False 时直接使用 new_shape。
+            scale_fill (bool): 为 True 时将图像拉伸到 new_shape，不进行填充。
+            scaleup (bool): 为 True 时允许放大；为 False 时只缩小图像。
+            center (bool): 为 True 时居中放置图像；为 False 时将图像放在左上角。
+            stride (int): 模型步长（例如 YOLOv5 使用 32）。
+            padding_value (int): 图像填充值，默认为 114。
+            interpolation (int): 缩放时使用的插值方法，默认为 cv2.INTER_LINEAR。
         """
         self.new_shape = new_shape
         self.auto = auto
         self.scale_fill = scale_fill
         self.scaleup = scaleup
         self.stride = stride
-        self.center = center  # Put the image in the middle or top-left
+        self.center = center  # 将图像居中或放置在左上角
         self.padding_value = padding_value
         self.interpolation = interpolation
 
     def __call__(self, labels: dict[str, Any] | None = None, image: np.ndarray = None) -> dict[str, Any] | np.ndarray:
-        """Resize and pad an image for object detection, instance segmentation, or pose estimation tasks.
+        """缩放并填充图像，用于对象检测、实例分割或姿态估计任务。
 
-        This method applies letterboxing to the input image, which involves resizing the image while maintaining its
-        aspect ratio and adding padding to fit the new shape. It also updates any associated labels accordingly.
+        此方法对输入图像执行保持宽高比的缩放，并添加填充以适配目标尺寸，同时相应更新关联标签。
 
-        Args:
-            labels (dict[str, Any] | None): A dictionary containing image data and associated labels, or empty dict if
-                None.
-            image (np.ndarray | None): The input image as a numpy array. If None, the image is taken from 'labels'.
+        参数：
+            labels (dict[str, Any] | None): 包含图像数据和关联标签的字典；为 None 时使用空字典。
+            image (np.ndarray | None): NumPy 格式的输入图像；为 None 时从 'labels' 中获取图像。
 
-        Returns:
-            (dict[str, Any] | np.ndarray): If 'labels' is provided, returns an updated dictionary with the resized and
-                padded image, updated labels, and additional metadata. If 'labels' is empty, returns the resized and
-                padded image only.
+        返回：
+            (dict[str, Any] | np.ndarray)：提供 'labels' 时返回包含缩放填充后图像、更新标签和额外元数据的字典；'labels' 为空时仅返回缩放填充后的图像。
 
-        Examples:
+        示例：
             >>> letterbox = LetterBox(new_shape=(640, 640))
             >>> result = letterbox(labels={"img": np.zeros((480, 640, 3)), "instances": Instances(...)})
             >>> resized_img = result["img"]
@@ -1727,38 +1685,38 @@ class LetterBox(BaseTransform):
         return labels
 
     def get_params(self, labels: dict[str, Any]) -> dict[str, Any]:
-        """Compute letterboxing parameters.
+        """计算保持比例填充的参数。
 
-        Args:
-            labels (dict[str, Any]): Input labels dictionary containing 'img'.
+        参数：
+            labels (dict[str, Any]): 包含 'img' 的输入标签字典。
 
-        Returns:
-            (dict): Parameters including 'orig_shape', 'new_shape', 'ratio', padding, and resize info.
+        返回：
+            (dict): 包含 'orig_shape'、'new_shape'、'ratio'、填充量和缩放信息的参数字典。
         """
         img = labels["img"]
-        shape = img.shape[:2]  # current shape [height, width]
+        shape = img.shape[:2]  # 当前尺寸 [height, width]
         new_shape = labels.pop("rect_shape", self.new_shape)
         if isinstance(new_shape, int):
             new_shape = (new_shape, new_shape)
 
-        # Scale ratio (new / old)
+        # 缩放比例（新尺寸 / 旧尺寸）
         r = min(new_shape[0] / shape[0], new_shape[1] / shape[1])
-        if not self.scaleup:  # only scale down, do not scale up (for better val mAP)
+        if not self.scaleup:  # 只缩小，不放大（可获得更好的验证集 mAP）
             r = min(r, 1.0)
 
-        # Compute padding
-        ratio = r, r  # width, height ratios
+        # 计算填充量
+        ratio = r, r  # 宽度和高度缩放比例
         new_unpad = round(shape[1] * r), round(shape[0] * r)
-        dw, dh = new_shape[1] - new_unpad[0], new_shape[0] - new_unpad[1]  # wh padding
-        if self.auto:  # minimum rectangle
-            dw, dh = np.mod(dw, self.stride), np.mod(dh, self.stride)  # wh padding
-        elif self.scale_fill:  # stretch
+        dw, dh = new_shape[1] - new_unpad[0], new_shape[0] - new_unpad[1]  # 宽度和高度填充量
+        if self.auto:  # 最小矩形
+            dw, dh = np.mod(dw, self.stride), np.mod(dh, self.stride)  # 宽度和高度填充量
+        elif self.scale_fill:  # 拉伸
             dw, dh = 0.0, 0.0
             new_unpad = (new_shape[1], new_shape[0])
-            ratio = new_shape[1] / shape[1], new_shape[0] / shape[0]  # width, height ratios
+            ratio = new_shape[1] / shape[1], new_shape[0] / shape[0]  # 宽度和高度缩放比例
 
         if self.center:
-            dw /= 2  # divide padding into 2 sides
+            dw /= 2  # 将宽度填充分配到两侧
             dh /= 2
 
         top, bottom = round(dh - 0.1) if self.center else 0, round(dh + 0.1)
@@ -1776,20 +1734,20 @@ class LetterBox(BaseTransform):
         }
 
     def apply_image(self, labels: dict[str, Any], params: dict[str, Any]) -> dict[str, Any]:
-        """Resize and pad the image.
+        """缩放并填充图像。
 
-        Args:
-            labels (dict[str, Any]): Dictionary containing 'img'.
-            params (dict): Parameters from get_params.
+        参数：
+            labels (dict[str, Any]): 包含 'img' 的字典。
+            params (dict): 由 get_params 返回的参数。
 
-        Returns:
-            (dict): Updated labels with resized and padded image.
+        返回：
+            (dict): 包含缩放填充后图像的更新后标签字典。
         """
         img = labels["img"]
         shape = img.shape[:2]
         new_unpad = params["new_unpad"]
 
-        if shape[::-1] != new_unpad:  # resize
+        if shape[::-1] != new_unpad:  # 缩放
             img = cv2.resize(img, new_unpad, interpolation=self.interpolation)
             if img.ndim == 2:
                 img = img[..., None]
@@ -1801,7 +1759,7 @@ class LetterBox(BaseTransform):
             img = cv2.copyMakeBorder(
                 img, top, bottom, left, right, cv2.BORDER_CONSTANT, value=(self.padding_value,) * 3
             )
-        else:  # multispectral
+        else:  # 多光谱图像
             pad_img = np.full((h + top + bottom, w + left + right, c), fill_value=self.padding_value, dtype=img.dtype)
             pad_img[top : top + h, left : left + w] = img
             img = pad_img
@@ -1811,14 +1769,14 @@ class LetterBox(BaseTransform):
         return labels
 
     def apply_semantic(self, labels: dict[str, Any], params: dict[str, Any]) -> dict[str, Any]:
-        """Apply letterboxing to semantic segmentation mask.
+        """对语义分割掩码应用保持比例填充。
 
-        Args:
-            labels (dict[str, Any]): Dictionary containing 'semantic_mask'.
-            params (dict): Parameters from get_params.
+        参数：
+            labels (dict[str, Any]): 包含 'semantic_mask' 的字典。
+            params (dict): 由 get_params 返回的参数。
 
-        Returns:
-            (dict): Updated labels with resized and padded semantic mask.
+        返回：
+            (dict): 包含缩放填充后语义掩码的更新后标签字典。
         """
         if "semantic_mask" not in labels or labels["semantic_mask"] is None:
             return labels
@@ -1834,14 +1792,14 @@ class LetterBox(BaseTransform):
         return labels
 
     def apply_instances(self, labels: dict[str, Any], params: dict[str, Any]) -> dict[str, Any]:
-        """Update instance coordinates after letterboxing.
+        """在保持比例填充后更新对象实例坐标。
 
-        Args:
-            labels (dict[str, Any]): Dictionary containing 'instances'.
-            params (dict): Parameters from get_params.
+        参数：
+            labels (dict[str, Any]): 包含 'instances' 的字典。
+            params (dict): 由 get_params 返回的参数。
 
-        Returns:
-            (dict): Updated labels with transformed instances.
+        返回：
+            (dict): 包含变换后对象实例的更新后标签字典。
         """
         if "instances" in labels:
             labels = self._update_labels(labels, params["ratio"], params["left"], params["top"], params["orig_shape"])
@@ -1851,29 +1809,28 @@ class LetterBox(BaseTransform):
             labels["ratio_pad"] = (
                 (gain_h * ratio_h, gain_w * ratio_w),
                 (params["left"], params["top"]),
-            )  # for evaluation
+            )  # 用于评估
         return labels
 
     @staticmethod
     def _update_labels(
         labels: dict[str, Any], ratio: tuple[float, float], padw: float, padh: float, orig_shape: tuple[int, int]
     ) -> dict[str, Any]:
-        """Update labels after applying letterboxing to an image.
+        """对图像应用保持比例填充后更新标签。
 
-        This method modifies the bounding box coordinates of instances in the labels to account for resizing and padding
-        applied during letterboxing.
+        此方法根据保持比例填充过程中执行的缩放和填充，修改标签中对象实例的边界框坐标。
 
-        Args:
-            labels (dict[str, Any]): A dictionary containing image labels and instances.
-            ratio (tuple[float, float]): Scaling ratios (width, height) applied to the image.
-            padw (float): Padding width added to the image.
-            padh (float): Padding height added to the image.
-            orig_shape (tuple[int, int]): Original image shape (height, width) before resizing.
+        参数：
+            labels (dict[str, Any]): 包含图像标签和对象实例的字典。
+            ratio (tuple[float, float]): 应用于图像的宽度和高度缩放比例。
+            padw (float): 添加到图像上的宽度填充值。
+            padh (float): 添加到图像上的高度填充值。
+            orig_shape (tuple[int, int]): 缩放前的原始图像尺寸 (height, width)。
 
-        Returns:
-            (dict[str, Any]): Updated labels dictionary with modified instance coordinates.
+        返回：
+            (dict[str, Any]): 对象实例坐标已修改的更新后标签字典。
 
-        Examples:
+        示例：
             >>> letterbox = LetterBox(new_shape=(640, 640))
             >>> labels = {"instances": Instances(...)}
             >>> ratio = (0.5, 0.5)
@@ -1888,38 +1845,38 @@ class LetterBox(BaseTransform):
 
 
 class CopyPaste(BaseMixTransform):
-    """CopyPaste class for applying Copy-Paste augmentation to image datasets.
+    """对图像数据集应用 Copy-Paste 增强的类。
 
-    This class implements the Copy-Paste augmentation technique as described in the paper "Simple Copy-Paste is a Strong
-    Data Augmentation Method for Instance Segmentation" (https://arxiv.org/abs/2012.07177). In `flip` mode it pastes
-    mirrored copies of the image's own objects, in `mixup` mode objects from a randomly sampled dataset entry.
+    此类实现论文《Simple Copy-Paste is a Strong Data Augmentation Method for Instance Segmentation》
+    （https://arxiv.org/abs/2012.07177）中描述的 Copy-Paste 增强技术。`flip` 模式会粘贴当前图像对象的镜像副本，
+    `mixup` 模式会粘贴从随机数据集样本中选取的对象。
 
-    Attributes:
-        dataset (Any): The dataset to which Copy-Paste augmentation will be applied.
-        pre_transform (Callable | None): Optional transform to apply before Copy-Paste.
-        p (float): Fraction of eligible objects pasted; in `mixup` mode also the probability of applying it.
+    属性：
+        dataset (Any): 应用 Copy-Paste 增强的数据集。
+        pre_transform (Callable | None): Copy-Paste 前可选的预处理变换。
+        p (float): 符合条件并被粘贴的对象比例；在 `mixup` 模式下也表示应用增强的概率。
 
-    Methods:
-        get_params: Compute CopyPaste parameters including selected instances and mask.
-        apply_image: Draw contours and paste pixels for CopyPaste.
-        apply_instances: Concatenate selected instances for CopyPaste.
+    方法：
+        get_params: 计算包括选中实例和掩码在内的 Copy-Paste 参数。
+        apply_image: 绘制轮廓并粘贴 Copy-Paste 像素。
+        apply_instances: 拼接选中的 Copy-Paste 对象实例。
 
-    Examples:
+    示例：
         >>> from ultralytics.data.augment import CopyPaste
-        >>> dataset = YourDataset(...)  # Your image dataset
+        >>> dataset = YourDataset(...)  # 你的图像数据集
         >>> copypaste = CopyPaste(dataset, p=0.5)
         >>> augmented_labels = copypaste(original_labels)
     """
 
     def __init__(self, dataset=None, pre_transform=None, p: float = 0.5, mode: str = "flip") -> None:
-        """Initialize CopyPaste object with dataset, pre_transform, paste fraction and mode."""
+        """使用数据集、预处理变换、粘贴比例和模式初始化 CopyPaste 对象。"""
         super().__init__(dataset=dataset, pre_transform=pre_transform, p=p)
         if mode not in ("flip", "mixup"):
             raise ValueError(f"Expected `mode` to be `flip` or `mixup`, but got {mode}.")
         self.mode = mode
 
     def __call__(self, labels: dict[str, Any]) -> dict[str, Any]:
-        """Apply Copy-Paste augmentation to an image and its labels."""
+        """对图像及其标签应用 Copy-Paste 增强。"""
         if len(labels["instances"].segments) == 0 or self.p == 0:
             return labels
         if self.mode == "flip":
@@ -1931,13 +1888,13 @@ class CopyPaste(BaseMixTransform):
         return super().__call__(labels)
 
     def get_params(self, labels: dict[str, Any]) -> dict[str, Any]:
-        """Compute CopyPaste parameters.
+        """计算 Copy-Paste 参数。
 
-        Args:
-            labels (dict[str, Any]): Input labels dictionary.
+        参数：
+            labels (dict[str, Any]): 输入标签字典。
 
-        Returns:
-            (dict[str, Any]): Parameters including 'instances2', 'selected', and 'im_new'.
+        返回：
+            (dict[str, Any]): 包含 'instances2'、'selected' 和 'im_new' 的参数字典。
         """
         params = {}
         if self.mode == "mixup":
@@ -1972,14 +1929,14 @@ class CopyPaste(BaseMixTransform):
         return params
 
     def apply_image(self, labels: dict[str, Any], params: dict[str, Any] | None = None) -> dict[str, Any]:
-        """Apply CopyPaste to the image.
+        """对图像应用 Copy-Paste。
 
-        Args:
-            labels (dict[str, Any]): Dictionary containing 'img'.
-            params (dict | None): Parameters from get_params.
+        参数：
+            labels (dict[str, Any]): 包含 'img' 的字典。
+            params (dict | None): 由 get_params 返回的参数。
 
-        Returns:
-            (dict): Updated labels with pasted objects.
+        返回：
+            (dict): 包含粘贴对象的更新后标签字典。
         """
         im = labels["img"].copy()
 
@@ -2002,14 +1959,14 @@ class CopyPaste(BaseMixTransform):
         return labels
 
     def apply_instances(self, labels: dict[str, Any], params: dict[str, Any] | None = None) -> dict[str, Any]:
-        """Apply CopyPaste to instances.
+        """对对象实例应用 Copy-Paste。
 
-        Args:
-            labels (dict[str, Any]): Dictionary containing 'instances' and 'cls'.
-            params (dict | None): Parameters from get_params.
+        参数：
+            labels (dict[str, Any]): 包含 'instances' 和 'cls' 的字典。
+            params (dict | None): 由 get_params 返回的参数。
 
-        Returns:
-            (dict): Updated labels with concatenated instances.
+        返回：
+            (dict): 包含拼接后对象实例的更新后标签字典。
         """
         instances = params["instances"]
         instances2 = params["instances2"]
@@ -2026,7 +1983,7 @@ class CopyPaste(BaseMixTransform):
         return labels
 
     def apply_semantic(self, labels: dict[str, Any], params: dict[str, Any] | None = None) -> dict[str, Any]:
-        """Apply CopyPaste to semantic segmentation masks."""
+        """对语义分割掩码应用 Copy-Paste。"""
         mask = labels.get("semantic_mask")
         if mask is None:
             return labels
@@ -2042,42 +1999,39 @@ class CopyPaste(BaseMixTransform):
 
 
 class Albumentations(BaseTransform):
-    """Albumentations transformations for image augmentation.
+    """使用 Albumentations 执行图像增强的变换类。
 
-    This class applies various image transformations using the Albumentations library. It includes operations such as
-    Blur, Median Blur, conversion to grayscale, Contrast Limited Adaptive Histogram Equalization (CLAHE), random changes
-    in brightness and contrast, RandomGamma, and image quality reduction through compression.
+    此类使用 Albumentations 库执行多种图像变换，包括模糊、中值模糊、灰度转换、对比度受限自适应直方图均衡化（CLAHE）、
+    随机亮度和对比度调整、RandomGamma，以及通过压缩降低图像质量。
 
-    Attributes:
-        p (float): Probability of applying the transformations.
-        transform (albumentations.Compose): Composed Albumentations transforms.
-        contains_spatial (bool): Indicates if the transforms include spatial operations.
+    属性：
+        p (float): 应用变换的概率。
+        transform (albumentations.Compose): 组合后的 Albumentations 变换。
+        contains_spatial (bool): 指示变换是否包含空间操作。
 
-    Methods:
-        __call__: Apply the Albumentations transformations to the input labels.
+    方法：
+        __call__: 对输入标签应用 Albumentations 变换。
 
-    Examples:
+    示例：
         >>> transform = Albumentations(p=0.5)
         >>> augmented_labels = transform(labels)
 
-    Notes:
-        - Requires Albumentations version 1.0.3 or higher.
-        - Spatial transforms are handled differently to ensure bbox compatibility.
-        - Some transforms are applied with very low probability (0.01) by default.
+    注意：
+        - 需要 Albumentations 1.0.3 或更高版本。
+        - 空间变换会采用特殊处理，以确保边界框兼容性。
+        - 默认情况下，部分变换以很低的概率（0.01）应用。
     """
 
     def __init__(self, p: float = 1.0, transforms: list | None = None, flip_idx: list[int] | None = None) -> None:
-        """Initialize the Albumentations transform object for YOLO bbox formatted parameters.
+        """初始化用于 YOLO 边界框格式参数的 Albumentations 变换对象。
 
-        This class applies various image augmentations using the Albumentations library, including Blur, Median Blur,
-        conversion to grayscale, Contrast Limited Adaptive Histogram Equalization, random changes of brightness and
-        contrast, RandomGamma, and image quality reduction through compression.
+        此类使用 Albumentations 库执行多种图像增强，包括模糊、中值模糊、灰度转换、对比度受限自适应直方图均衡化、
+        随机亮度和对比度调整、RandomGamma，以及通过压缩降低图像质量。
 
-        Args:
-            p (float): Probability of applying the augmentations. Must be between 0 and 1.
-            transforms (list | None): Custom Albumentations transforms, either objects or `A.to_dict()` dicts as stored
-                in checkpoints. If None, uses default transforms.
-            flip_idx (list[int] | None): Keypoint index mapping for reflection transforms.
+        参数：
+            p (float): 应用增强的概率，必须介于 0 和 1 之间。
+            transforms (list | None): 自定义 Albumentations 变换，可以是变换对象或检查点中保存的 `A.to_dict()` 字典；为 None 时使用默认变换。
+            flip_idx (list[int] | None): 反射变换使用的关键点索引映射。
         """
         self.p = p
         self.flip_idx = flip_idx
@@ -2087,23 +2041,23 @@ class Albumentations(BaseTransform):
         try:
             import os
 
-            os.environ["NO_ALBUMENTATIONS_UPDATE"] = "1"  # suppress Albumentations upgrade message
+            os.environ["NO_ALBUMENTATIONS_UPDATE"] = "1"  # 禁止显示 Albumentations 升级提示
             import albumentations as A
 
-            check_version(A.__version__, "1.0.3", hard=True)  # version requirement
+            check_version(A.__version__, "1.0.3", hard=True)  # 版本要求
             if transforms and isinstance(transforms[0], dict):
-                transforms = [A.from_dict(t) for t in transforms]  # restore transforms serialized by the trainer
+                transforms = [A.from_dict(t) for t in transforms]  # 恢复训练器序列化的变换
             topology_changing = getattr(A, "RandomGridShuffle", ())
 
             def transform_types(t) -> tuple[bool, list]:
-                """Return the spatial flag and topology-changing transforms, recursing into compositions."""
+                """递归遍历组合变换，并返回空间变换标志及会改变拓扑的变换。"""
                 nested = [transform_types(x) for x in t.transforms] if isinstance(t, A.BaseCompose) else []
                 return (
                     isinstance(t, A.DualTransform) or any(x[0] for x in nested),
                     ([t] if isinstance(t, topology_changing) else []) + [y for x in nested for y in x[1]],
                 )
 
-            # Transforms, use custom transforms if provided, otherwise use defaults
+            # 如果提供了自定义变换则使用自定义变换，否则使用默认变换
             T = (
                 [
                     A.Blur(p=0.01),
@@ -2118,7 +2072,7 @@ class Albumentations(BaseTransform):
                 else transforms
             )
 
-            # Compose transforms
+            # 组合变换
             transform_types = [transform_types(transform) for transform in T]
             self.contains_spatial = any(x[0] for x in transform_types)
             self.topology_transforms = [transform for x in transform_types for transform in x[1]]
@@ -2134,32 +2088,31 @@ class Albumentations(BaseTransform):
                 else A.Compose(T)
             )
             if hasattr(self.transform, "set_random_seed"):
-                # Required for deterministic transforms in albumentations>=1.4.21
+                # albumentations>=1.4.21 中的确定性变换需要此设置
                 self.transform.set_random_seed(torch.initial_seed())
             LOGGER.info(prefix + ", ".join(f"{x}".replace("always_apply=False, ", "") for x in T if x.p))
-        except ImportError:  # package not installed, skip
+        except ImportError:  # 未安装相关包，跳过
             pass
         except Exception as e:
             LOGGER.info(f"{prefix}{e}")
 
     def __call__(self, labels: dict[str, Any]) -> dict[str, Any]:
-        """Apply Albumentations transformations to input labels.
+        """对输入标签应用 Albumentations 变换。
 
-        This method applies a series of image augmentations using the Albumentations library. It can perform both
-        spatial and non-spatial transformations on the input image and its corresponding labels.
+        此方法使用 Albumentations 库对输入图像及其对应标签执行一系列增强，可同时支持空间变换和非空间变换。
 
-        Args:
-            labels (dict[str, Any]): A dictionary containing image data and annotations. Expected keys are:
-                - 'img': np.ndarray representing the image
-                - 'cls': np.ndarray of class labels
-                - 'instances': object containing bounding boxes and other instance information
-                - 'semantic_mask': optional np.ndarray of semantic class IDs
-                - 'depth': optional np.ndarray of metric depth values
+        参数：
+            labels (dict[str, Any]): 包含图像数据和标注的字典，预期包含以下键：
+                - 'img'：表示图像的 np.ndarray。
+                - 'cls'：类别标签 np.ndarray。
+                - 'instances'：包含边界框和其他实例信息的对象。
+                - 'semantic_mask'：可选的语义类别 ID np.ndarray。
+                - 'depth'：可选的度量深度值 np.ndarray。
 
-        Returns:
-            (dict[str, Any]): The input dictionary with augmented image and updated annotations.
+        返回：
+            (dict[str, Any]): 包含增强后图像和更新后标注的输入字典。
 
-        Examples:
+        示例：
             >>> transform = Albumentations(p=0.5)
             >>> labels = {
             ...     "img": np.random.rand(640, 640, 3),
@@ -2171,16 +2124,16 @@ class Albumentations(BaseTransform):
             >>> augmented = transform(labels)
             >>> assert augmented["img"].shape == (640, 640, 3)
 
-        Notes:
-            - The method applies transformations with probability self.p.
-            - Spatial transforms update bounding boxes, while non-spatial transforms only modify the image.
-            - Requires the Albumentations library to be installed.
+        注意：
+            - 此方法以 self.p 的概率应用变换。
+            - 空间变换会更新边界框，非空间变换只修改图像。
+            - 需要安装 Albumentations 库。
         """
         if self.transform is None or random.random() >= self.p:
             return labels
 
         im = labels["img"]
-        if im.shape[2] != 3:  # Only apply Albumentation on 3-channel images
+        if im.shape[2] != 3:  # 仅对 3 通道图像应用 Albumentations
             return labels
 
         if self.contains_spatial:
@@ -2210,7 +2163,7 @@ class Albumentations(BaseTransform):
                 **({"mask": mask} if mask is not None else {}),
             )
             if (segments.size or keypoints is not None) and new.get("topology"):
-                raise NotImplementedError("RandomGridShuffle cannot preserve polygon or keypoint topology")
+                raise NotImplementedError("RandomGridShuffle 无法保留多边形或关键点拓扑结构")
             if mask is not None or len(new["class_labels"]) or not len(cls):
                 h, w = new["image"].shape[:2]
                 i = np.array(new["idx"], dtype=int)
@@ -2258,33 +2211,33 @@ class Albumentations(BaseTransform):
                 if mask is not None:
                     labels[key] = new["mask"]
         else:
-            labels["img"] = self.transform(image=labels["img"])["image"]  # transformed
+            labels["img"] = self.transform(image=labels["img"])["image"]  # 应用变换
 
         return labels
 
 
 class Format(BaseTransform):
-    """A class for formatting image annotations for object detection, instance segmentation, and pose estimation tasks.
+    """用于格式化对象检测、实例分割和姿态估计任务图像标注的类。
 
-    This class standardizes image and instance annotations to be used by the `collate_fn` in PyTorch DataLoader.
+    此类将图像和实例标注标准化，以便 PyTorch DataLoader 的 `collate_fn` 使用。
 
-    Attributes:
-        bbox_format (str): Format for bounding boxes. Options are 'xywh' or 'xyxy'.
-        normalize (bool): Whether to normalize bounding boxes.
-        return_mask (bool): Whether to return instance masks for segmentation.
-        return_keypoint (bool): Whether to return keypoints for pose estimation.
-        return_obb (bool): Whether to return oriented bounding boxes.
-        mask_ratio (int): Downsample ratio for masks.
-        mask_overlap (bool): Whether to overlap masks.
-        batch_idx (bool): Whether to keep batch indexes.
-        bgr (float): The probability to return BGR images.
+    属性：
+        bbox_format (str): 边界框格式，可选 'xywh' 或 'xyxy'。
+        normalize (bool): 是否归一化边界框。
+        return_mask (bool): 是否返回用于分割的实例掩码。
+        return_keypoint (bool): 是否返回用于姿态估计的关键点。
+        return_obb (bool): 是否返回有向边界框。
+        mask_ratio (int): 掩码下采样比例。
+        mask_overlap (bool): 是否允许掩码重叠。
+        batch_idx (bool): 是否保留批次索引。
+        bgr (float): 返回 BGR 图像的概率。
 
-    Methods:
-        __call__: Format labels dictionary with image, classes, bounding boxes, and optionally masks and keypoints.
-        _format_img: Convert image from Numpy array to PyTorch tensor.
-        _format_segments: Convert polygon points to bitmap masks.
+    方法：
+        __call__: 格式化包含图像、类别、边界框以及可选掩码和关键点的标签字典。
+        _format_img: 将图像从 NumPy 数组转换为 PyTorch 张量。
+        _format_segments: 将多边形点转换为位图掩码。
 
-    Examples:
+    示例：
         >>> formatter = Format(bbox_format="xywh", normalize=True, return_mask=True)
         >>> formatted_labels = formatter(labels)
         >>> img = formatted_labels["img"]
@@ -2304,43 +2257,41 @@ class Format(BaseTransform):
         batch_idx: bool = True,
         bgr: float = 0.0,
     ):
-        """Initialize the Format class with given parameters for image and instance annotation formatting.
+        """使用图像和实例标注格式化参数初始化 Format 类。
 
-        This class standardizes image and instance annotations for object detection, instance segmentation, and pose
-        estimation tasks, preparing them for use in PyTorch DataLoader's `collate_fn`.
+        此类为对象检测、实例分割和姿态估计任务标准化图像与实例标注，使其能够被 PyTorch DataLoader 的 `collate_fn` 使用。
 
-        Args:
-            bbox_format (str): Format for bounding boxes. Options are 'xywh', 'xyxy', etc.
-            normalize (bool): Whether to normalize bounding boxes to [0,1].
-            return_mask (bool): If True, returns instance masks for segmentation tasks.
-            return_keypoint (bool): If True, returns keypoints for pose estimation tasks.
-            return_obb (bool): If True, returns oriented bounding boxes.
-            mask_ratio (int): Downsample ratio for masks.
-            mask_overlap (bool): If True, allows mask overlap.
-            batch_idx (bool): If True, keeps batch indexes.
-            bgr (float): Probability of returning BGR images instead of RGB.
+        参数：
+            bbox_format (str): 边界框格式，可选 'xywh'、'xyxy' 等。
+            normalize (bool): 是否将边界框归一化到 [0,1]。
+            return_mask (bool): 为 True 时返回用于分割任务的实例掩码。
+            return_keypoint (bool): 为 True 时返回用于姿态估计任务的关键点。
+            return_obb (bool): 为 True 时返回有向边界框。
+            mask_ratio (int): 掩码下采样比例。
+            mask_overlap (bool): 为 True 时允许掩码重叠。
+            batch_idx (bool): 为 True 时保留批次索引。
+            bgr (float): 返回 BGR 图像而非 RGB 图像的概率。
         """
         self.bbox_format = bbox_format
         self.normalize = normalize
-        self.return_mask = return_mask  # set False when training detection only
+        self.return_mask = return_mask  # 仅训练检测任务时设为 False
         self.return_keypoint = return_keypoint
         self.return_obb = return_obb
         self.mask_ratio = mask_ratio
         self.mask_overlap = mask_overlap
-        self.batch_idx = batch_idx  # keep the batch indexes
+        self.batch_idx = batch_idx  # 保留批次索引
         self.bgr = bgr
 
     def get_params(self, labels: dict[str, Any]) -> dict[str, Any]:
-        """Compute formatting parameters shared across image and instance formatting.
+        """计算图像和实例格式化之间共享的参数。
 
-        Extracts image dimensions and pops instance annotations from labels, converting bounding box format
-        and denormalizing coordinates for downstream tensor creation.
+        提取图像尺寸，并从标签中取出实例标注；同时转换边界框格式并将坐标反归一化，以便后续创建张量。
 
-        Args:
-            labels (dict[str, Any]): Input labels dictionary containing 'img', 'cls', and 'instances'.
+        参数：
+            labels (dict[str, Any]): 包含 'img'、'cls' 和 'instances' 的输入标签字典。
 
-        Returns:
-            (dict[str, Any]): Parameters including 'h', 'w', 'cls', 'instances', and 'nl'.
+        返回：
+            (dict[str, Any]): 包含 'h'、'w'、'cls'、'instances' 和 'nl' 的参数字典。
         """
         img = labels.get("img")
         h, w = img.shape[:2] if img is not None else (0, 0)
@@ -2352,14 +2303,14 @@ class Format(BaseTransform):
         return {"h": h, "w": w, "cls": cls, "instances": instances, "nl": len(instances) if instances else 0}
 
     def apply_image(self, labels: dict[str, Any], params: dict[str, Any] | None = None) -> dict[str, Any]:
-        """Format image from Numpy array to PyTorch tensor.
+        """将图像从 NumPy 数组格式转换为 PyTorch 张量格式。
 
-        Args:
-            labels (dict[str, Any]): Dictionary containing 'img' as a numpy array.
-            params (dict[str, Any] | None): Unused parameters for API compatibility.
+        参数：
+            labels (dict[str, Any]): 包含 NumPy 数组格式 'img' 的字典。
+            params (dict[str, Any] | None): 为兼容接口保留但未使用的参数。
 
-        Returns:
-            (dict[str, Any]): Updated labels with 'img' as a PyTorch tensor.
+        返回：
+            (dict[str, Any]): 包含 PyTorch 张量格式 'img' 的更新后标签字典。
         """
         img = labels.pop("img", None)
         if img is not None:
@@ -2367,21 +2318,20 @@ class Format(BaseTransform):
         return labels
 
     def apply_instances(self, labels: dict[str, Any], params: dict[str, Any] | None = None) -> dict[str, Any]:
-        """Format instance annotations into PyTorch tensors.
+        """将实例标注格式化为 PyTorch 张量。
 
-        Converts class labels, bounding boxes, masks, and keypoints into tensors suitable for
-        collation in PyTorch DataLoader.
+        将类别标签、边界框、掩码和关键点转换为适合 PyTorch DataLoader 整理的张量。
 
-        Args:
-            labels (dict[str, Any]): Dictionary to populate with formatted tensors.
-            params (dict[str, Any]): Parameters from get_params containing 'h', 'w', 'cls', 'instances', 'nl'.
+        参数：
+            labels (dict[str, Any]): 用于写入格式化张量的字典。
+            params (dict[str, Any]): 由 get_params 返回且包含 'h'、'w'、'cls'、'instances' 和 'nl' 的参数。
 
-        Returns:
-            (dict[str, Any]): Updated labels with formatted instance tensors.
+        返回：
+            (dict[str, Any]): 包含格式化实例张量的更新后标签字典。
         """
         cls = params.get("cls", np.array([]))
         instances = params.get("instances")
-        assert instances is not None, "instances are required for Format.apply_instances"
+        assert instances is not None, "Format.apply_instances 需要 instances。"
         h = params.get("h", 0)
         w = params.get("w", 0)
         nl = params.get("nl", 0)
@@ -2398,15 +2348,15 @@ class Format(BaseTransform):
                 if not masks.shape[0] or not cls_tensor.numel():
                     sem_masks = torch.zeros(h // self.mask_ratio, w // self.mask_ratio)
                 elif self.mask_overlap:
-                    sem_masks = cls_tensor[masks[0].long() - 1]  # (H, W) from (1, H, W) instance indices
+                    sem_masks = cls_tensor[masks[0].long() - 1]  # 从 (1, H, W) 实例索引生成 (H, W)
                 else:
-                    # Create sem_masks consistent with mask_overlap=True
-                    sem_masks = (masks * cls_tensor[:, None, None]).max(0).values  # (H, W) from (N, H, W) binary
+                    # 创建与 mask_overlap=True 一致的语义掩码
+                    sem_masks = (masks * cls_tensor[:, None, None]).max(0).values  # 从 (N, H, W) 二值掩码生成 (H, W)
                     overlap = masks.sum(dim=0) > 1  # (H, W)
                     if overlap.any():
                         weights = masks.sum(axis=(1, 2))
                         weighted_masks = masks * weights[:, None, None]  # (N, H, W)
-                        weighted_masks[masks == 0] = weights.max() + 1  # handle background
+                        weighted_masks[masks == 0] = weights.max() + 1  # 处理背景
                         smallest_idx = weighted_masks.argmin(dim=0)  # (H, W)
                         sem_masks[overlap] = cls_tensor[smallest_idx[overlap]]
             else:
@@ -2425,32 +2375,32 @@ class Format(BaseTransform):
                 labels["keypoints"][..., 1] /= h
         if self.return_obb:
             labels["bboxes"] = xyxyxyxy2xywhr(torch.from_numpy(instances.segments))
-        # NOTE: need to normalize obb in xywhr format for width-height consistency
+        # 注意：需要将 xywhr 格式的有向框归一化，以保持宽高一致性
         if self.normalize:
             labels["bboxes"][:, [0, 2]] /= w
             labels["bboxes"][:, [1, 3]] /= h
-        # Then we can use collate_fn
+        # 之后即可使用 collate_fn
         if self.batch_idx:
             labels["batch_idx"] = torch.zeros(nl)
         return labels
 
     def _format_img(self, img: np.ndarray) -> torch.Tensor:
-        """Format an image for YOLO from a Numpy array to a PyTorch tensor.
+        """将图像从 NumPy 数组格式转换为 YOLO 使用的 PyTorch 张量格式。
 
-        This function performs the following operations:
-        1. Ensures the image has 3 dimensions (adds a channel dimension if needed).
-        2. Transposes the image from HWC to CHW format.
-        3. Optionally reverses the color channels (e.g., BGR to RGB) based on the bgr probability.
-        4. Converts the image to a contiguous array.
-        5. Converts the Numpy array to a PyTorch tensor.
+        此函数执行以下操作：
+        1. 确保图像为 3 维，必要时添加通道维度。
+        2. 将图像从 HWC 转置为 CHW 格式。
+        3. 根据 bgr 概率可选地反转颜色通道（例如从 BGR 转为 RGB）。
+        4. 将图像转换为连续数组。
+        5. 将 NumPy 数组转换为 PyTorch 张量。
 
-        Args:
-            img (np.ndarray): Input image as a Numpy array with shape (H, W, C) or (H, W).
+        参数：
+            img (np.ndarray): NumPy 格式输入图像，形状为 (H, W, C) 或 (H, W)。
 
-        Returns:
-            (torch.Tensor): Formatted image as a PyTorch tensor with shape (C, H, W).
+        返回：
+            (torch.Tensor): 格式化后的 PyTorch 张量，形状为 (C, H, W)。
 
-        Examples:
+        示例：
             >>> import numpy as np
             >>> img = np.random.rand(100, 100, 3)
             >>> formatted_img = self._format_img(img)
@@ -2467,23 +2417,23 @@ class Format(BaseTransform):
     def _format_segments(
         self, instances: Instances, cls: np.ndarray, w: int, h: int
     ) -> tuple[np.ndarray, Instances, np.ndarray]:
-        """Convert polygon segments to bitmap masks.
+        """将多边形分割段转换为位图掩码。
 
-        Args:
-            instances (Instances): Object containing segment information.
-            cls (np.ndarray): Class labels for each instance.
-            w (int): Width of the image.
-            h (int): Height of the image.
+        参数：
+            instances (Instances): 包含分割段信息的对象。
+            cls (np.ndarray): 每个实例的类别标签。
+            w (int): 图像宽度。
+            h (int): 图像高度。
 
-        Returns:
-            masks (np.ndarray): Bitmap masks with shape (N, H, W) or (1, H, W) if mask_overlap is True.
-            instances (Instances): Updated instances object with sorted segments if mask_overlap is True.
-            cls (np.ndarray): Updated class labels, sorted if mask_overlap is True.
+        返回：
+            masks (np.ndarray)：形状为 (N, H, W) 的位图掩码；当 mask_overlap 为 True 时形状为 (1, H, W)。
+            instances (Instances)：更新后的实例对象；当 mask_overlap 为 True 时分割段已排序。
+            cls (np.ndarray)：更新后的类别标签；当 mask_overlap 为 True 时已排序。
 
-        Notes:
-            - If self.mask_overlap is True, masks are overlapped and sorted by area.
-            - If self.mask_overlap is False, each mask is represented separately.
-            - Masks are downsampled according to self.mask_ratio.
+        注意：
+            - 当 self.mask_overlap 为 True 时，掩码会重叠并按面积排序。
+            - 当 self.mask_overlap 为 False 时，每个掩码单独表示。
+            - 掩码会按照 self.mask_ratio 进行下采样。
         """
         segments = instances.segments
         if self.mask_overlap:
@@ -2498,21 +2448,20 @@ class Format(BaseTransform):
 
 
 class SemanticFormat(Format):
-    """Format transform for semantic segmentation that converts images and masks to tensors.
+    """用于语义分割的格式化变换，将图像和掩码转换为张量。
 
-    This transform handles the letterboxed semantic mask by resizing it to match the image dimensions and converts both
-    to the appropriate tensor formats.
+    此变换会将经过保持比例填充的语义掩码调整到与图像相同的尺寸，并将两者转换为适当的张量格式。
     """
 
     def apply_image(self, labels: dict[str, Any], params: dict[str, Any] | None = None) -> dict[str, Any]:
-        """Format image and semantic mask for semantic segmentation.
+        """格式化语义分割所需的图像和语义掩码。
 
-        Args:
-            labels (dict[str, Any]): Dictionary containing 'img' and 'semantic_mask'.
-            params (dict[str, Any] | None): Unused parameters for API compatibility.
+        参数：
+            labels (dict[str, Any]): 包含 'img' 和 'semantic_mask' 的字典。
+            params (dict[str, Any] | None): 为兼容接口保留但未使用的参数。
 
-        Returns:
-            (dict[str, Any]): Updated labels with 'img' and 'semantic_mask' as tensors.
+        返回：
+            (dict[str, Any]): 包含张量格式 'img' 和 'semantic_mask' 的更新后标签字典。
         """
         img = labels.pop("img", None)
         if img is not None:
@@ -2523,14 +2472,14 @@ class SemanticFormat(Format):
         return labels
 
     def apply_instances(self, labels: dict[str, Any], params: dict[str, Any] | None = None) -> dict[str, Any]:
-        """Remove instance-level keys not needed for semantic segmentation.
+        """移除语义分割不需要的实例级键。
 
-        Args:
-            labels (dict[str, Any]): Dictionary to clean up.
-            params (dict[str, Any] | None): Unused parameters for API compatibility.
+        参数：
+            labels (dict[str, Any]): 待清理的字典。
+            params (dict[str, Any] | None): 为兼容接口保留但未使用的参数。
 
-        Returns:
-            (dict[str, Any]): Updated labels with unused keys removed.
+        返回：
+            (dict[str, Any]): 移除无用键后的更新后标签字典。
         """
         for k in ("cls", "instances", "resized_shape", "ori_shape", "ratio_pad"):
             labels.pop(k, None)
@@ -2538,48 +2487,48 @@ class SemanticFormat(Format):
 
 
 class LoadVisualPrompt(BaseTransform):
-    """Create visual prompts from bounding boxes or masks for model input."""
+    """根据边界框或掩码创建供模型输入使用的视觉提示。"""
 
     def __init__(self, scale_factor: float = 1 / 8) -> None:
-        """Initialize the LoadVisualPrompt with a scale factor.
+        """使用缩放因子初始化 LoadVisualPrompt。
 
-        Args:
-            scale_factor (float): Factor to scale the input image dimensions.
+        参数：
+            scale_factor (float): 输入图像尺寸的缩放因子。
         """
         self.scale_factor = scale_factor
 
     @staticmethod
     def make_mask(boxes: torch.Tensor, h: int, w: int) -> torch.Tensor:
-        """Create binary masks from bounding boxes.
+        """根据边界框创建二值掩码。
 
-        Args:
-            boxes (torch.Tensor): Bounding boxes in xyxy format, shape: (N, 4).
-            h (int): Height of the mask.
-            w (int): Width of the mask.
+        参数：
+            boxes (torch.Tensor): xyxy 格式的边界框，形状为 (N, 4)。
+            h (int): 掩码高度。
+            w (int): 掩码宽度。
 
-        Returns:
-            (torch.Tensor): Binary masks with shape (N, h, w).
+        返回：
+            (torch.Tensor): 形状为 (N, h, w) 的二值掩码。
         """
-        x1, y1, x2, y2 = torch.chunk(boxes[:, :, None], 4, 1)  # x1 shape(n,1,1)
-        r = torch.arange(w)[None, None, :]  # rows shape(1,1,w)
-        c = torch.arange(h)[None, :, None]  # cols shape(1,h,1)
+        x1, y1, x2, y2 = torch.chunk(boxes[:, :, None], 4, 1)  # x1 形状为 (n,1,1)
+        r = torch.arange(w)[None, None, :]  # 行坐标，形状为 (1,1,w)
+        c = torch.arange(h)[None, :, None]  # 列坐标，形状为 (1,h,1)
 
         return (r >= x1) * (r < x2) * (c >= y1) * (c < y2)
 
     def get_params(self, labels: dict[str, Any]) -> dict[str, Any]:
-        """Compute visual prompt parameters.
+        """计算视觉提示参数。
 
-        Args:
-            labels (dict[str, Any]): Input labels dictionary.
+        参数：
+            labels (dict[str, Any]): 输入标签字典。
 
-        Returns:
-            (dict): Parameters including 'imgsz', 'bboxes', 'masks', and 'cls'.
+        返回：
+            (dict): 包含 'imgsz'、'bboxes'、'masks' 和 'cls' 的参数字典。
         """
         imgsz = labels["img"].shape[1:]
         bboxes, masks = None, None
         if "bboxes" in labels:
             bboxes = labels["bboxes"]
-            bboxes = xywh2xyxy(bboxes) * torch.tensor(imgsz)[[1, 0, 1, 0]]  # denormalize boxes
+            bboxes = xywh2xyxy(bboxes) * torch.tensor(imgsz)[[1, 0, 1, 0]]  # 将边界框反归一化
         elif "masks" in labels:
             masks = labels["masks"]
 
@@ -2587,14 +2536,14 @@ class LoadVisualPrompt(BaseTransform):
         return {"imgsz": imgsz, "bboxes": bboxes, "masks": masks, "cls": cls}
 
     def apply_image(self, labels: dict[str, Any], params: dict[str, Any]) -> dict[str, Any]:
-        """Create visual prompts and add them to labels.
+        """创建视觉提示并将其添加到标签中。
 
-        Args:
-            labels (dict[str, Any]): Dictionary containing image data and annotations.
-            params (dict): Parameters from get_params.
+        参数：
+            labels (dict[str, Any]): 包含图像数据和标注的字典。
+            params (dict): 由 get_params 返回的参数。
 
-        Returns:
-            (dict): Updated labels with visual prompts added.
+        返回：
+            (dict): 添加视觉提示后的更新后标签字典。
         """
         visuals = self.get_visuals(params["cls"], params["imgsz"], bboxes=params["bboxes"], masks=params["masks"])
         labels["visuals"] = visuals
@@ -2607,19 +2556,19 @@ class LoadVisualPrompt(BaseTransform):
         bboxes: np.ndarray | torch.Tensor = None,
         masks: np.ndarray | torch.Tensor = None,
     ) -> torch.Tensor:
-        """Generate visual masks based on bounding boxes or masks.
+        """根据边界框或掩码生成视觉掩码。
 
-        Args:
-            category (int | np.ndarray | torch.Tensor): The category labels for the objects.
-            shape (tuple[int, int]): The shape of the image (height, width).
-            bboxes (np.ndarray | torch.Tensor, optional): Bounding boxes for the objects, xyxy format.
-            masks (np.ndarray | torch.Tensor, optional): Masks for the objects.
+        参数：
+            category (int | np.ndarray | torch.Tensor): 对象的类别标签。
+            shape (tuple[int, int]): 图像尺寸 (height, width)。
+            bboxes (np.ndarray | torch.Tensor, optional): 对象的 xyxy 格式边界框。
+            masks (np.ndarray | torch.Tensor, optional): 对象掩码。
 
-        Returns:
-            (torch.Tensor): A tensor containing the visual masks for each category.
+        返回：
+            (torch.Tensor): 包含每个类别视觉掩码的张量。
 
-        Raises:
-            ValueError: If neither bboxes nor masks are provided.
+        异常：
+            ValueError: 未提供 bboxes 和 masks 时抛出。
         """
         masksz = (int(shape[0] * self.scale_factor), int(shape[1] * self.scale_factor))
         if bboxes is not None:
@@ -2632,14 +2581,14 @@ class LoadVisualPrompt(BaseTransform):
                 masks = torch.from_numpy(masks)  # (N, H, W)
             masks = F.interpolate(masks.unsqueeze(1), masksz, mode="nearest").squeeze(1).float()
         else:
-            raise ValueError("LoadVisualPrompt must have bboxes or masks in the label")
+            raise ValueError("LoadVisualPrompt 的标签中必须包含 bboxes 或 masks")
         if not isinstance(category, torch.Tensor):
             category = torch.tensor(category, dtype=torch.int)
         cls_unique, inverse_indices = torch.unique(category, sorted=True, return_inverse=True)
-        # NOTE: `cls` indices from RandomLoadText should be continuous.
-        # if len(cls_unique):
-        #     assert len(cls_unique) == cls_unique[-1] + 1, (
-        #         f"Expected a continuous range of class indices, but got {cls_unique}"
+        # 注意：RandomLoadText 生成的 `cls` 索引应当是连续的。
+        # 如果 len(cls_unique)：
+        #     断言 len(cls_unique) == cls_unique[-1] + 1，否则：
+        #         f"类别索引应为连续范围，但当前为 {cls_unique}"
         #     )
         visuals = torch.zeros(cls_unique.shape[0], *masksz)
         for idx, mask in zip(inverse_indices, masks):
@@ -2648,23 +2597,22 @@ class LoadVisualPrompt(BaseTransform):
 
 
 class RandomLoadText(BaseTransform):
-    """Randomly sample positive and negative texts and update class indices accordingly.
+    """随机采样正样本文本和负样本文本，并相应更新类别索引。
 
-    This class is responsible for sampling texts from a given set of class texts, including both positive (present in
-    the image) and negative (not present in the image) samples. It updates the class indices to reflect the sampled
-    texts and can optionally pad the text list to a fixed length.
+    此类从给定的类别文本集合中采样文本，包括图像中存在的正样本和不存在的负样本。它会根据采样文本更新类别索引，
+    还可以选择将文本列表填充到固定长度。
 
-    Attributes:
-        prompt_format (str): Format string for text prompts.
-        neg_samples (tuple[int, int]): Range for randomly sampling negative texts.
-        max_samples (int): Maximum number of different text samples in one image.
-        padding (bool): Whether to pad texts to max_samples.
-        padding_value (list[str]): The text used for padding when padding is True.
+    属性：
+        prompt_format (str): 文本提示的格式字符串。
+        neg_samples (tuple[int, int]): 随机采样负样本的数量范围。
+        max_samples (int): 单张图像中不同文本样本的最大数量。
+        padding (bool): 是否将文本填充到 max_samples。
+        padding_value (list[str]): padding 为 True 时使用的填充文本。
 
-    Methods:
-        __call__: Process the input labels and return updated classes and texts.
+    方法：
+        __call__: 处理输入标签，并返回更新后的类别和文本。
 
-    Examples:
+    示例：
         >>> loader = RandomLoadText(prompt_format="Object: {}", neg_samples=(5, 10), max_samples=20)
         >>> labels = {"cls": [0, 1, 2], "texts": [["cat"], ["dog"], ["bird"]], "instances": [...]}
         >>> updated_labels = loader(labels)
@@ -2680,20 +2628,16 @@ class RandomLoadText(BaseTransform):
         padding: bool = False,
         padding_value: list[str] | None = None,
     ) -> None:
-        """Initialize the RandomLoadText class for randomly sampling positive and negative texts.
+        """初始化 RandomLoadText 类，以随机采样正样本文本和负样本文本。
 
-        This class is designed to randomly sample positive texts and negative texts, and update the class indices
-        accordingly to the number of samples. It can be used for text-based object detection tasks.
+        此类用于随机采样正样本和负样本文本，并根据采样结果相应更新类别索引，可用于基于文本的对象检测任务。
 
-        Args:
-            prompt_format (str): Format string for the prompt. The format string should contain a single pair of curly
-                braces {} where the text will be inserted.
-            neg_samples (tuple[int, int]): A range to randomly sample negative texts. The first integer specifies the
-                minimum number of negative samples, and the second integer specifies the maximum.
-            max_samples (int): The maximum number of different text samples in one image.
-            padding (bool): Whether to pad texts to max_samples. If True, the number of texts will always be equal to
-                max_samples.
-            padding_value (list[str]): The padding text to use when padding is True.
+        参数：
+            prompt_format (str): 提示格式字符串，应包含一对用于插入文本的花括号 {}。
+            neg_samples (tuple[int, int]): 随机采样负样本的数量范围，第一个整数表示最小数量，第二个整数表示最大数量。
+            max_samples (int): 单张图像中不同文本样本的最大数量。
+            padding (bool): 是否将文本填充到 max_samples；为 True 时文本数量始终等于 max_samples。
+            padding_value (list[str]): padding 为 True 时使用的填充文本。
         """
         self.prompt_format = prompt_format
         self.neg_samples = neg_samples
@@ -2702,15 +2646,15 @@ class RandomLoadText(BaseTransform):
         self.padding_value = padding_value if padding_value is not None else [""]
 
     def get_params(self, labels: dict[str, Any]) -> dict[str, Any]:
-        """Compute text sampling parameters.
+        """计算文本采样参数。
 
-        Args:
-            labels (dict[str, Any]): Input labels dictionary containing 'texts', 'cls', and 'instances'.
+        参数：
+            labels (dict[str, Any]): 包含 'texts'、'cls' 和 'instances' 的输入标签字典。
 
-        Returns:
-            (dict): Parameters including 'valid_idx', 'new_cls', and 'texts'.
+        返回：
+            (dict): 包含 'valid_idx'、'new_cls' 和 'texts' 的参数字典。
         """
-        assert "texts" in labels, "No texts found in labels."
+        assert "texts" in labels, "标签中未找到 texts。"
         class_texts = labels["texts"]
         num_classes = len(class_texts)
         cls = np.asarray(labels.pop("cls"), dtype=int)
@@ -2724,7 +2668,7 @@ class RandomLoadText(BaseTransform):
         neg_labels = random.sample(neg_labels, k=neg_samples)
 
         sampled_labels = pos_labels + neg_labels
-        # Randomness
+        # 随机处理
         # random.shuffle(sampled_labels)
 
         label2ids = {label: i for i, label in enumerate(sampled_labels)}
@@ -2736,7 +2680,7 @@ class RandomLoadText(BaseTransform):
             valid_idx[i] = True
             new_cls.append([label2ids[label]])
 
-        # Randomly select one prompt when there's more than one prompts
+        # 当一个类别存在多个提示时，随机选择其中一个
         texts = []
         for label in sampled_labels:
             prompts = class_texts[label]
@@ -2755,14 +2699,14 @@ class RandomLoadText(BaseTransform):
         return {"valid_idx": valid_idx, "new_cls": np.array(new_cls), "texts": texts}
 
     def apply_instances(self, labels: dict[str, Any], params: dict[str, Any]) -> dict[str, Any]:
-        """Filter instances and update class labels based on sampled texts.
+        """根据采样文本筛选对象实例并更新类别标签。
 
-        Args:
-            labels (dict[str, Any]): Dictionary containing 'instances' and 'cls'.
-            params (dict): Parameters from get_params.
+        参数：
+            labels (dict[str, Any]): 包含 'instances' 和 'cls' 的字典。
+            params (dict): 由 get_params 返回的参数。
 
-        Returns:
-            (dict): Updated labels with filtered instances and new class/text entries.
+        返回：
+            (dict): 包含筛选后对象实例以及新类别和文本条目的更新后标签字典。
         """
         labels["instances"] = labels["instances"][params["valid_idx"]]
         labels["cls"] = params["new_cls"]
@@ -2771,21 +2715,19 @@ class RandomLoadText(BaseTransform):
 
 
 def v8_transforms(dataset, imgsz: int, hyp: IterableSimpleNamespace):
-    """Apply a series of image transformations for training.
+    """为训练过程应用一系列图像变换。
 
-    This function creates a composition of image augmentation techniques to prepare images for YOLO training. It
-    includes operations such as mosaic, copy-paste, random perspective, mixup, and various color adjustments.
+    此函数组合多种图像增强技术，为 YOLO 训练准备图像，包括 Mosaic、Copy-Paste、随机透视、MixUp 和多种颜色调整。
 
-    Args:
-        dataset (Dataset): The dataset object containing image data and annotations.
-        imgsz (int): The target image size for resizing.
-        hyp (IterableSimpleNamespace): A namespace of hyperparameters controlling various aspects of the
-            transformations.
+    参数：
+        dataset (Dataset): 包含图像数据和标注的数据集对象。
+        imgsz (int): 缩放目标图像尺寸。
+        hyp (IterableSimpleNamespace): 控制各项变换参数的超参数命名空间。
 
-    Returns:
-        (Compose): A composition of image transformations to be applied to the dataset.
+    返回：
+        (Compose): 应用于数据集的组合图像变换。
 
-    Examples:
+    示例：
         >>> from ultralytics.cfg import DEFAULT_CFG
         >>> from ultralytics.data.dataset import YOLODataset
         >>> from ultralytics.utils import IterableSimpleNamespace
@@ -2803,7 +2745,7 @@ def v8_transforms(dataset, imgsz: int, hyp: IterableSimpleNamespace):
         >>> transforms = v8_transforms(dataset, imgsz=640, hyp=hyp)
         >>> augmented_data = transforms(dataset[0])
 
-        >>> # With custom albumentations
+        >>> # 使用自定义 Albumentations
         >>> import albumentations as A
         >>> augmentations = [A.Blur(p=0.01), A.CLAHE(p=0.01)]
         >>> hyp.augmentations = augmentations
@@ -2832,12 +2774,12 @@ def v8_transforms(dataset, imgsz: int, hyp: IterableSimpleNamespace):
                 mode=hyp.copy_paste_mode,
             )
         )
-    flip_idx = dataset.data.get("flip_idx", [])  # for keypoints augmentation
+    flip_idx = dataset.data.get("flip_idx", [])  # 用于关键点增强
     if getattr(dataset, "use_keypoints", False):
         kpt_shape = dataset.data.get("kpt_shape", None)
         if len(flip_idx) == 0 and (hyp.fliplr > 0.0 or hyp.flipud > 0.0):
-            hyp.fliplr = hyp.flipud = 0.0  # both fliplr and flipud require flip_idx
-            LOGGER.warning("No 'flip_idx' array defined in data.yaml, disabling 'fliplr' and 'flipud' augmentations.")
+            hyp.fliplr = hyp.flipud = 0.0  # fliplr 和 flipud 都需要 flip_idx
+            LOGGER.warning("data.yaml 中未定义 'flip_idx' 数组，将禁用 'fliplr' 和 'flipud' 增强。")
         elif flip_idx and (len(flip_idx) != kpt_shape[0]):
             raise ValueError(f"data.yaml flip_idx={flip_idx} length must be equal to kpt_shape[0]={kpt_shape[0]}")
 
@@ -2851,10 +2793,10 @@ def v8_transforms(dataset, imgsz: int, hyp: IterableSimpleNamespace):
             RandomFlip(direction="vertical", p=hyp.flipud, flip_idx=flip_idx),
             RandomFlip(direction="horizontal", p=hyp.fliplr, flip_idx=flip_idx),
         ]
-    )  # transforms
+    )  # 图像变换
 
 
-# Classification augmentations -----------------------------------------------------------------------------------------
+# 分类数据增强 ---------------------------------------------------------------------------------------------------------
 def classify_transforms(
     size: tuple[int, int] | int = 224,
     mean: tuple[float, float, float] = DEFAULT_MEAN,
@@ -2862,36 +2804,33 @@ def classify_transforms(
     interpolation: str = "BILINEAR",
     crop_fraction: float | None = None,
 ):
-    """Create a composition of image transforms for classification tasks.
+    """创建用于分类任务的组合图像变换。
 
-    This function generates a sequence of torchvision transforms suitable for preprocessing images for classification
-    models during evaluation or inference. The transforms include resizing, center cropping, conversion to tensor, and
-    normalization.
+    此函数生成一组 torchvision 变换，用于在分类模型评估或推理前预处理图像，包括缩放、中心裁剪、张量转换和归一化。
 
-    Args:
-        size (tuple[int, int] | int): The target size for the transformed image. If an int, it defines the shortest
-            edge. If a tuple, it defines (height, width).
-        mean (tuple[float, float, float]): Mean values for each RGB channel used in normalization.
-        std (tuple[float, float, float]): Standard deviation values for each RGB channel used in normalization.
-        interpolation (str): Interpolation method of either 'NEAREST', 'BILINEAR' or 'BICUBIC'.
-        crop_fraction (float | None): Deprecated, will be removed in a future version.
+    参数：
+        size (tuple[int, int] | int): 变换后图像的目标尺寸。为整数时表示短边尺寸；为元组时表示 (height, width)。
+        mean (tuple[float, float, float]): 归一化时使用的各 RGB 通道均值。
+        std (tuple[float, float, float]): 归一化时使用的各 RGB 通道标准差。
+        interpolation (str): 插值方法，可为 'NEAREST'、'BILINEAR' 或 'BICUBIC'。
+        crop_fraction (float | None): 已弃用，未来版本将移除。
 
-    Returns:
-        (torchvision.transforms.Compose): A composition of torchvision transforms.
+    返回：
+        (torchvision.transforms.Compose): 组合后的 torchvision 变换。
 
-    Examples:
+    示例：
         >>> transforms = classify_transforms(size=224)
         >>> img = Image.open("path/to/image.jpg")
         >>> transformed_img = transforms(img)
     """
-    import torchvision.transforms as T  # scope for faster 'import ultralytics'
+    import torchvision.transforms as T  # 局部导入以加快 'import ultralytics'
 
     scale_size = size if isinstance(size, (tuple, list)) and len(size) == 2 else (size, size)
 
     if crop_fraction:
         deprecation_warn("crop_fraction")
 
-    # Square target uses the scalar shortest-edge mode (preserves aspect); non-square resizes to the exact (h, w).
+    # 正方形目标使用标量短边模式（保持宽高比）；非正方形目标缩放到精确的 (h, w)。
     resize = scale_size[0] if scale_size[0] == scale_size[1] else scale_size
     tfl = [
         T.Resize(resize, interpolation=getattr(T.InterpolationMode, interpolation)),
@@ -2902,7 +2841,7 @@ def classify_transforms(
     return T.Compose(tfl)
 
 
-# Classification training augmentations --------------------------------------------------------------------------------
+# 分类训练数据增强 -----------------------------------------------------------------------------------------------------
 def classify_augmentations(
     size: int = 224,
     mean: tuple[float, float, float] = DEFAULT_MEAN,
@@ -2912,48 +2851,47 @@ def classify_augmentations(
     hflip: float = 0.5,
     vflip: float = 0.0,
     auto_augment: str | None = None,
-    hsv_h: float = 0.015,  # image HSV-Hue augmentation (fraction)
-    hsv_s: float = 0.4,  # image HSV-Saturation augmentation (fraction)
-    hsv_v: float = 0.4,  # image HSV-Value augmentation (fraction)
+    hsv_h: float = 0.015,  # 图像 HSV 色调增强（比例）
+    hsv_s: float = 0.4,  # 图像 HSV 饱和度增强（比例）
+    hsv_v: float = 0.4,  # 图像 HSV 明度增强（比例）
     force_color_jitter: bool = False,
     erasing: float = 0.0,
     interpolation: str = "BILINEAR",
 ):
-    """Create a composition of image augmentation transforms for classification tasks.
+    """创建用于分类任务的组合图像增强变换。
 
-    This function generates a set of image transformations suitable for training classification models. It includes
-    options for resizing, flipping, color jittering, auto augmentation, and random erasing.
+    此函数生成适合训练分类模型的图像变换集合，包括缩放、翻转、颜色抖动、自动增强和随机擦除等选项。
 
-    Args:
-        size (int): Target size for the image after transformations.
-        mean (tuple[float, float, float]): Mean values for each RGB channel used in normalization.
-        std (tuple[float, float, float]): Standard deviation values for each RGB channel used in normalization.
-        scale (tuple[float, float] | None): Range of the proportion of the original image area to crop.
-        ratio (tuple[float, float] | None): Range of aspect ratio for the cropped area.
-        hflip (float): Probability of horizontal flip.
-        vflip (float): Probability of vertical flip.
-        auto_augment (str | None): Auto augmentation policy. Can be 'randaugment', 'augmix', 'autoaugment' or None.
-        hsv_h (float): Image HSV-Hue augmentation factor.
-        hsv_s (float): Image HSV-Saturation augmentation factor.
-        hsv_v (float): Image HSV-Value augmentation factor.
-        force_color_jitter (bool): Whether to apply color jitter even if auto augment is enabled.
-        erasing (float): Probability of random erasing.
-        interpolation (str): Interpolation method of either 'NEAREST', 'BILINEAR' or 'BICUBIC'.
+    参数：
+        size (int): 变换后图像的目标尺寸。
+        mean (tuple[float, float, float]): 归一化时使用的各 RGB 通道均值。
+        std (tuple[float, float, float]): 归一化时使用的各 RGB 通道标准差。
+        scale (tuple[float, float] | None): 裁剪区域占原图面积比例的范围。
+        ratio (tuple[float, float] | None): 裁剪区域宽高比的范围。
+        hflip (float): 水平翻转概率。
+        vflip (float): 垂直翻转概率。
+        auto_augment (str | None): 自动增强策略，可为 'randaugment'、'augmix'、'autoaugment' 或 None。
+        hsv_h (float): 图像 HSV 色调增强因子。
+        hsv_s (float): 图像 HSV 饱和度增强因子。
+        hsv_v (float): 图像 HSV 明度增强因子。
+        force_color_jitter (bool): 启用自动增强时是否仍应用颜色抖动。
+        erasing (float): 随机擦除概率。
+        interpolation (str): 插值方法，可为 'NEAREST'、'BILINEAR' 或 'BICUBIC'。
 
-    Returns:
-        (torchvision.transforms.Compose): A composition of image augmentation transforms.
+    返回：
+        (torchvision.transforms.Compose): 组合后的图像增强变换。
 
-    Examples:
+    示例：
         >>> transforms = classify_augmentations(size=224, auto_augment="randaugment")
         >>> augmented_image = transforms(original_image)
     """
-    # Transforms to apply if Albumentations not installed
-    import torchvision.transforms as T  # scope for faster 'import ultralytics'
+    # 未安装 Albumentations 时使用的变换
+    import torchvision.transforms as T  # 局部导入以加快 'import ultralytics'
 
     if not isinstance(size, int):
         raise TypeError(f"classify_augmentations() size {size} must be integer, not (list, tuple)")
-    scale = tuple(scale or (0.08, 1.0))  # default imagenet scale range
-    ratio = tuple(ratio or (3.0 / 4.0, 4.0 / 3.0))  # default imagenet ratio range
+    scale = tuple(scale or (0.08, 1.0))  # ImageNet 默认面积比例范围
+    ratio = tuple(ratio or (3.0 / 4.0, 4.0 / 3.0))  # ImageNet 默认宽高比范围
     interpolation = getattr(T.InterpolationMode, interpolation)
     primary_tfl = [T.RandomResizedCrop(size, scale=scale, ratio=ratio, interpolation=interpolation)]
     if hflip > 0.0:
@@ -2964,33 +2902,32 @@ def classify_augmentations(
     secondary_tfl = []
     disable_color_jitter = False
     if auto_augment:
-        assert isinstance(auto_augment, str), f"Provided argument should be string, but got type {type(auto_augment)}"
-        # color jitter is typically disabled if AA/RA on,
-        # this allows override without breaking old hparm cfgs
+        assert isinstance(auto_augment, str), f"提供的参数必须是字符串，但当前类型为 {type(auto_augment)}"
+        # 启用 AA/RA 时通常会禁用颜色抖动；保留此选项可覆盖该行为而不破坏旧版超参数配置
         disable_color_jitter = not force_color_jitter
 
         if auto_augment == "randaugment":
             if TORCHVISION_0_11:
                 secondary_tfl.append(T.RandAugment(interpolation=interpolation))
             else:
-                LOGGER.warning('"auto_augment=randaugment" requires torchvision >= 0.11.0. Disabling it.')
+                LOGGER.warning('"auto_augment=randaugment" 需要 torchvision >= 0.11.0，已禁用该选项。')
 
         elif auto_augment == "augmix":
             if TORCHVISION_0_13:
                 secondary_tfl.append(T.AugMix(interpolation=interpolation))
             else:
-                LOGGER.warning('"auto_augment=augmix" requires torchvision >= 0.13.0. Disabling it.')
+                LOGGER.warning('"auto_augment=augmix" 需要 torchvision >= 0.13.0，已禁用该选项。')
 
         elif auto_augment == "autoaugment":
             if TORCHVISION_0_10:
                 secondary_tfl.append(T.AutoAugment(interpolation=interpolation))
             else:
-                LOGGER.warning('"auto_augment=autoaugment" requires torchvision >= 0.10.0. Disabling it.')
+                LOGGER.warning('"auto_augment=autoaugment" 需要 torchvision >= 0.10.0，已禁用该选项。')
 
         else:
             raise ValueError(
-                f'Invalid auto_augment policy: {auto_augment}. Should be one of "randaugment", '
-                f'"augmix", "autoaugment" or None'
+                f'无效的 auto_augment 策略：{auto_augment}。应为 "randaugment"、'
+                f'"augmix"、"autoaugment" 或 None'
             )
 
     if not disable_color_jitter:
@@ -3006,22 +2943,22 @@ def classify_augmentations(
 
 
 class DepthFormat(Format):
-    """Format transform for monocular depth estimation: image via Format, depth map resized and tensorized.
+    """用于单目深度估计的格式化变换：通过 Format 处理图像，并缩放和张量化深度图。
 
-    Mirrors SemanticFormat: the base Format.apply_image converts the image (HWC BGR -> CHW RGB tensor), and the
-    apply_depth hook (run after apply_image in BaseTransform.__call__) resizes the paired depth map to the letterboxed
-    image size and emits it as a (1, H, W) float tensor.
+    此变换与 SemanticFormat 类似：基类 Format.apply_image 将图像从 HWC BGR 转换为 CHW RGB 张量，
+    apply_depth 钩子（由 BaseTransform.__call__ 在 apply_image 后调用）将配对深度图调整到填充后图像的尺寸，
+    并输出为形状 (1, H, W) 的浮点张量。
     """
 
     def apply_depth(self, labels: dict[str, Any], params: dict[str, Any] | None = None) -> dict[str, Any]:
-        """Resize depth to the formatted image size (nearest) and emit a (1, H, W) float tensor.
+        """使用最近邻插值将深度图调整到格式化图像尺寸，并输出形状为 (1, H, W) 的浮点张量。
 
-        Args:
-            labels (dict[str, Any]): Dictionary with 'img' (already a CHW tensor) and optionally 'depth'.
-            params (dict[str, Any] | None): Unused parameters for API compatibility.
+        参数：
+            labels (dict[str, Any]): 包含 'img'（已为 CHW 张量）以及可选 'depth' 的字典。
+            params (dict[str, Any] | None): 为兼容接口保留但未使用的参数。
 
-        Returns:
-            (dict[str, Any]): Updated labels with 'depth' as a (1, H, W) float tensor.
+        返回：
+            (dict[str, Any]): 包含形状为 (1, H, W) 浮点张量格式 'depth' 的更新后标签字典。
         """
         depth = labels.get("depth")
         if depth is None or "img" not in labels:
@@ -3033,37 +2970,36 @@ class DepthFormat(Format):
         return labels
 
     def apply_instances(self, labels: dict[str, Any], params: dict[str, Any] | None = None) -> dict[str, Any]:
-        """Remove instance-level keys not needed for depth estimation.
+        """移除深度估计不需要的实例级键。
 
-        Args:
-            labels (dict[str, Any]): Dictionary to clean up.
-            params (dict[str, Any] | None): Unused parameters for API compatibility.
+        参数：
+            labels (dict[str, Any]): 待清理的字典。
+            params (dict[str, Any] | None): 为兼容接口保留但未使用的参数。
 
-        Returns:
-            (dict[str, Any]): Updated labels with unused keys removed.
+        返回：
+            (dict[str, Any]): 移除无用键后的更新后标签字典。
         """
         for k in ("cls", "instances", "resized_shape", "ori_shape", "ratio_pad"):
             labels.pop(k, None)
         return labels
 
 
-# NOTE: keep this class for backward compatibility
+# 注意：保留此类以维持向后兼容
 class ClassifyLetterBox:
-    """A class for resizing and padding images for classification tasks.
+    """用于分类任务图像缩放和填充的类。
 
-    This class is designed to be part of a transformation pipeline, e.g., T.Compose([LetterBox(size), ToTensor()]). It
-    resizes and pads images to a specified size while maintaining the original aspect ratio.
+    此类用于组成变换流程，例如 T.Compose([LetterBox(size), ToTensor()])，会在保持原始宽高比的同时将图像缩放并填充到指定尺寸。
 
-    Attributes:
-        h (int): Target height of the image.
-        w (int): Target width of the image.
-        auto (bool): If True, automatically calculates the short side using stride.
-        stride (int): The stride value, used when 'auto' is True.
+    属性：
+        h (int): 图像目标高度。
+        w (int): 图像目标宽度。
+        auto (bool): 为 True 时根据 stride 自动计算短边。
+        stride (int): 步长值，在 auto 为 True 时使用。
 
-    Methods:
-        __call__: Apply the letterbox transformation to an input image.
+    方法：
+        __call__: 对输入图像应用保持比例填充变换。
 
-    Examples:
+    示例：
         >>> transform = ClassifyLetterBox(size=(640, 640), auto=False, stride=32)
         >>> img = np.random.randint(0, 255, (480, 640, 3), dtype=np.uint8)
         >>> result = transform(img)
@@ -3072,36 +3008,32 @@ class ClassifyLetterBox:
     """
 
     def __init__(self, size: int | tuple[int, int] = (640, 640), auto: bool = False, stride: int = 32):
-        """Initialize the ClassifyLetterBox object for image preprocessing.
+        """初始化用于图像预处理的 ClassifyLetterBox 对象。
 
-        This class is designed to be part of a transformation pipeline for image classification tasks. It resizes and
-        pads images to a specified size while maintaining the original aspect ratio.
+        此类用于分类任务的图像变换流程，在保持原始宽高比的同时将图像缩放并填充到指定尺寸。
 
-        Args:
-            size (int | tuple[int, int]): Target size for the letterboxed image. If an int, a square image of (size,
-                size) is created. If a tuple, it should be (height, width).
-            auto (bool): If True, automatically calculates the short side based on stride.
-            stride (int): The stride value, used when 'auto' is True.
+        参数：
+            size (int | tuple[int, int]): 保持比例填充后的目标尺寸。为整数时创建 (size, size) 的正方形图像；为元组时应为 (height, width)。
+            auto (bool): 为 True 时根据 stride 自动计算短边。
+            stride (int): 步长值，在 auto 为 True 时使用。
         """
         super().__init__()
         self.h, self.w = (size, size) if isinstance(size, int) else size
-        self.auto = auto  # pass max size integer, automatically solve for short side using stride
-        self.stride = stride  # used with auto
+        self.auto = auto  # 传入最大尺寸整数，并根据 stride 自动计算短边
+        self.stride = stride  # 与 auto 配合使用
 
     def __call__(self, im: np.ndarray) -> np.ndarray:
-        """Resize and pad an image using the letterbox method.
+        """使用保持比例填充方法缩放并填充图像。
 
-        This method resizes the input image to fit within the specified dimensions while maintaining its aspect ratio,
-        then pads the resized image to match the target size.
+        此方法在保持宽高比的同时将输入图像缩放到指定尺寸范围内，然后填充缩放后的图像以匹配目标尺寸。
 
-        Args:
-            im (np.ndarray): Input image as a numpy array with shape (H, W, C).
+        参数：
+            im (np.ndarray): NumPy 格式输入图像，形状为 (H, W, C)。
 
-        Returns:
-            (np.ndarray): Resized and padded image as a numpy array with shape (hs, ws, 3), where hs and ws are the
-                target height and width respectively.
+        返回：
+            (np.ndarray): 缩放填充后的 NumPy 图像，形状为 (hs, ws, 3)，其中 hs 和 ws 分别为目标高度和宽度。
 
-        Examples:
+        示例：
             >>> letterbox = ClassifyLetterBox(size=(640, 640))
             >>> image = np.random.randint(0, 255, (720, 1280, 3), dtype=np.uint8)
             >>> resized_image = letterbox(image)
@@ -3109,34 +3041,33 @@ class ClassifyLetterBox:
             (640, 640, 3)
         """
         imh, imw = im.shape[:2]
-        r = min(self.h / imh, self.w / imw)  # ratio of new/old dimensions
-        h, w = round(imh * r), round(imw * r)  # resized image dimensions
+        r = min(self.h / imh, self.w / imw)  # 新旧尺寸比例
+        h, w = round(imh * r), round(imw * r)  # 缩放后图像尺寸
 
-        # Calculate padding dimensions
+        # 计算填充尺寸
         hs, ws = (math.ceil(x / self.stride) * self.stride for x in (h, w)) if self.auto else (self.h, self.w)
         top, left = round((hs - h) / 2 - 0.1), round((ws - w) / 2 - 0.1)
 
-        # Create padded image
+        # 创建填充后的图像
         im_out = np.full((hs, ws, 3), 114, dtype=im.dtype)
         im_out[top : top + h, left : left + w] = cv2.resize(im, (w, h), interpolation=cv2.INTER_LINEAR)
         return im_out
 
 
-# NOTE: keep this class for backward compatibility
+# 注意：保留此类以维持向后兼容
 class CenterCrop:
-    """Apply center cropping to images for classification tasks.
+    """对分类任务图像执行中心裁剪。
 
-    This class performs center cropping on input images, resizing them to a specified size while maintaining the aspect
-    ratio. It is designed to be part of a transformation pipeline, e.g., T.Compose([CenterCrop(size), ToTensor()]).
+    此类从输入图像中心裁剪区域，在保持宽高比的同时将其调整到指定尺寸，用于组成诸如 T.Compose([CenterCrop(size), ToTensor()]) 的变换流程。
 
-    Attributes:
-        h (int): Target height of the cropped image.
-        w (int): Target width of the cropped image.
+    属性：
+        h (int): 裁剪后图像的目标高度。
+        w (int): 裁剪后图像的目标宽度。
 
-    Methods:
-        __call__: Apply the center crop transformation to an input image.
+    方法：
+        __call__: 对输入图像应用中心裁剪变换。
 
-    Examples:
+    示例：
         >>> transform = CenterCrop(640)
         >>> image = np.random.randint(0, 255, (1080, 1920, 3), dtype=np.uint8)
         >>> cropped_image = transform(image)
@@ -3145,103 +3076,96 @@ class CenterCrop:
     """
 
     def __init__(self, size: int | tuple[int, int] = (640, 640)):
-        """Initialize the CenterCrop object for image preprocessing.
+        """初始化用于图像预处理的 CenterCrop 对象。
 
-        This class is designed to be part of a transformation pipeline, e.g., T.Compose([CenterCrop(size), ToTensor()]).
-        It performs a center crop on input images to a specified size.
+        此类用于组成变换流程，例如 T.Compose([CenterCrop(size), ToTensor()])，会从输入图像中心裁剪指定尺寸的区域。
 
-        Args:
-            size (int | tuple[int, int]): The desired output size of the crop. If size is an int, a square crop (size,
-                size) is made. If size is a sequence like (h, w), it is used as the output size.
+        参数：
+            size (int | tuple[int, int]): 裁剪目标尺寸。为整数时执行 (size, size) 的正方形裁剪；为类似 (h, w) 的序列时，将其作为输出尺寸。
         """
         super().__init__()
         self.h, self.w = (size, size) if isinstance(size, int) else size
 
     def __call__(self, im: Image.Image | np.ndarray) -> np.ndarray:
-        """Apply center cropping to an input image.
+        """对输入图像执行中心裁剪。
 
-        This method crops the largest centered square from the image and resizes it to the specified dimensions.
+        此方法从图像中心裁剪最大的正方形区域，并将其缩放到指定尺寸。
 
-        Args:
-            im (np.ndarray | PIL.Image.Image): The input image as a numpy array of shape (H, W, C) or a PIL Image
-                object.
+        参数：
+            im (np.ndarray | PIL.Image.Image): 输入图像，可以是形状为 (H, W, C) 的 NumPy 数组或 PIL 图像对象。
 
-        Returns:
-            (np.ndarray): The center-cropped and resized image as a numpy array of shape (self.h, self.w, C).
+        返回：
+            (np.ndarray): 中心裁剪并缩放后的 NumPy 图像，形状为 (self.h, self.w, C)。
 
-        Examples:
+        示例：
             >>> transform = CenterCrop(size=224)
             >>> image = np.random.randint(0, 255, (640, 480, 3), dtype=np.uint8)
             >>> cropped_image = transform(image)
             >>> assert cropped_image.shape == (224, 224, 3)
         """
-        if isinstance(im, Image.Image):  # convert from PIL to numpy array if required
+        if isinstance(im, Image.Image):  # 必要时将 PIL 图像转换为 NumPy 数组
             im = np.asarray(im)
         imh, imw = im.shape[:2]
-        m = min(imh, imw)  # min dimension
+        m = min(imh, imw)  # 最小尺寸
         top, left = (imh - m) // 2, (imw - m) // 2
         return cv2.resize(im[top : top + m, left : left + m], (self.w, self.h), interpolation=cv2.INTER_LINEAR)
 
 
-# NOTE: keep this class for backward compatibility
+# 注意：保留此类以维持向后兼容
 class ToTensor:
-    """Convert an image from a numpy array to a PyTorch tensor.
+    """将图像从 NumPy 数组转换为 PyTorch 张量。
 
-    This class is designed to be part of a transformation pipeline, e.g., T.Compose([LetterBox(size), ToTensor()]).
+    此类用于组成变换流程，例如 T.Compose([LetterBox(size), ToTensor()])。
 
-    Attributes:
-        half (bool): If True, converts the image to half precision (float16).
+    属性：
+        half (bool): 为 True 时将图像转换为半精度（float16）。
 
-    Methods:
-        __call__: Apply the tensor conversion to an input image.
+    方法：
+        __call__: 将输入图像转换为张量。
 
-    Examples:
+    示例：
         >>> transform = ToTensor(half=True)
         >>> img = np.random.randint(0, 255, (640, 640, 3), dtype=np.uint8)
         >>> tensor_img = transform(img)
         >>> print(tensor_img.shape, tensor_img.dtype)
         torch.Size([3, 640, 640]) torch.float16
 
-    Notes:
-        The input image is expected to be in BGR format with shape (H, W, C).
-        The output tensor will be in BGR format with shape (C, H, W), normalized to [0, 1].
+        注意：
+        输入图像应为 BGR 格式，形状为 (H, W, C)。
+        输出张量为 BGR 格式，形状为 (C, H, W)，并归一化到 [0, 1]。
     """
 
     def __init__(self, half: bool = False):
-        """Initialize the ToTensor object for converting images to PyTorch tensors.
+        """初始化用于将图像转换为 PyTorch 张量的 ToTensor 对象。
 
-        This class is designed to be used as part of a transformation pipeline for image preprocessing in the
-        Ultralytics YOLO framework. It converts numpy arrays or PIL Images to PyTorch tensors, with an option for
-        half-precision (float16) conversion.
+        此类用于 Ultralytics YOLO 框架的图像预处理流程，可将 NumPy 数组或 PIL 图像转换为 PyTorch 张量，并支持转换为半精度（float16）。
 
-        Args:
-            half (bool): If True, converts the tensor to half precision (float16).
+        参数：
+            half (bool): 为 True 时将张量转换为半精度（float16）。
         """
         super().__init__()
         self.half = half
 
     def __call__(self, im: np.ndarray) -> torch.Tensor:
-        """Transform an image from a numpy array to a PyTorch tensor.
+        """将图像从 NumPy 数组转换为 PyTorch 张量。
 
-        This method converts the input image from a numpy array to a PyTorch tensor, applying optional half-precision
-        conversion and normalization. The image is transposed from HWC to CHW format.
+        此方法将输入图像从 NumPy 数组转换为 PyTorch 张量，可选地转换为半精度并执行归一化，同时将图像从 HWC 转置为 CHW 格式。
 
-        Args:
-            im (np.ndarray): Input image as a numpy array with shape (H, W, C) in BGR order.
+        参数：
+            im (np.ndarray): BGR 顺序的 NumPy 输入图像，形状为 (H, W, C)。
 
-        Returns:
-            (torch.Tensor): The transformed image as a PyTorch tensor in float32 or float16, normalized to [0, 1] with
-                shape (C, H, W) in BGR order.
+        返回：
+            (torch.Tensor): 转换后的 PyTorch 张量，类型为 float32 或 float16，归一化到 [0, 1]，形状为 (C, H, W)，并保持 BGR 顺序。
 
-        Examples:
+        示例：
             >>> transform = ToTensor(half=True)
             >>> img = np.random.randint(0, 255, (640, 640, 3), dtype=np.uint8)
             >>> tensor_img = transform(img)
             >>> print(tensor_img.shape, tensor_img.dtype)
             torch.Size([3, 640, 640]) torch.float16
         """
-        im = np.ascontiguousarray(im.transpose((2, 0, 1)))  # HWC to CHW -> contiguous
-        im = torch.from_numpy(im)  # to torch
-        im = im.half() if self.half else im.float()  # uint8 to fp16/32
-        im /= 255.0  # 0-255 to 0.0-1.0
+        im = np.ascontiguousarray(im.transpose((2, 0, 1)))  # HWC 转 CHW，并确保连续
+        im = torch.from_numpy(im)  # 转换为 torch 张量
+        im = im.half() if self.half else im.float()  # uint8 转为 fp16/32
+        im /= 255.0  # 0-255 转为 0.0-1.0
         return im

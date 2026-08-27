@@ -1,15 +1,13 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
-"""Scale-only calibration for monocular depth models.
+"""单目深度模型的仅尺度校准。
 
-The log-depth head predicts relative scene structure (shape); absolute scale is a separate
-two-parameter log-affine ``d' = exp(a·log d + b)`` stored in the head's ``cal_a``/``cal_b``
-buffers. This module fits ``(a, b)`` by closed-form least squares against ground-truth depth
-over a small set of images — no gradient training, decoder weights untouched. It powers both
-the trainer's automatic post-training calibration and the ``Model.calibrate()`` API.
+对数深度头预测场景的相对结构（形状）；绝对尺度由独立的双参数对数仿射变换
+``d' = exp(a·log d + b)`` 表示，并存储在深度头的 ``cal_a``/``cal_b`` 缓冲区中。
+此模块使用少量图像上的真实深度，通过闭式最小二乘拟合 ``(a, b)``，不进行梯度训练，也不修改解码器权重。
+它同时支持训练器的自动后训练校准和 ``Model.calibrate()`` API。
 
-Auto-calibration uses a "calibrate only if it helps" policy (:func:`select_calibration_cv`):
-candidates are scored on held-out images and applied only when they beat the un-calibrated
-output, so the absolute scale is fixed for cross-domain models without harming in-domain ones.
+自动校准采用“只有有帮助时才校准”的策略（:func:`select_calibration_cv`）：
+候选方案在留出的图像上评分，仅当优于未校准输出时才应用，从而修正跨域模型的绝对尺度而不损害域内模型。
 """
 
 from __future__ import annotations
@@ -26,7 +24,7 @@ from ultralytics.utils.torch_utils import smart_inference_mode
 
 
 def _depth_head(model: torch.nn.Module) -> torch.nn.Module | None:
-    """Return the Depth head module that carries ``cal_a``/``cal_b`` buffers, or None."""
+    """返回包含 ``cal_a``/``cal_b`` 缓冲区的 Depth 头模块；不存在时返回 None。"""
     m = model.module if hasattr(model, "module") else model  # unwrap DDP
     seq = getattr(m, "model", None)
     if seq is not None and not isinstance(seq, torch.nn.Sequential):
@@ -36,13 +34,12 @@ def _depth_head(model: torch.nn.Module) -> torch.nn.Module | None:
 
 
 def _rewind(dataloader) -> None:
-    """Rewind a stateful loader to the epoch start before a partial pass.
+    """在部分遍历前将有状态数据加载器回退到 epoch 开始位置。
 
-    The trainer's InfiniteDataLoader keeps one persistent iterator across ``for`` loops, so a previous pass that broke
-    out early (e.g. a fit stopping at ``max_images``) leaves it mid-epoch and the next loop silently resumes there.
-    Every pass here that wants "the first N" must rewind first — the plot pass in particular must see the same leading
-    batches BaseValidator plotted as ``val_batch{ni}.jpg``. Plain DataLoaders and list fixtures restart on every
-    ``__iter__``.
+    训练器的 InfiniteDataLoader 会在多个 ``for`` 循环之间保留同一个迭代器，因此上一次提前结束的遍历
+    （例如拟合在达到 ``max_images`` 时停止）会将迭代器留在 epoch 中间，下一次循环会静默地从该位置继续。
+    所有需要获取“前 N 个”样本的遍历都必须先回退；尤其是绘图遍历必须看到与 BaseValidator 绘制的
+    ``val_batch{ni}.jpg`` 相同的开头批次。普通 DataLoader 和列表测试装置在每次 ``__iter__`` 时都会重启。
     """
     reset = getattr(dataloader, "reset", None)
     if callable(reset):
@@ -50,11 +47,11 @@ def _rewind(dataloader) -> None:
 
 
 def _delta1_none(log_pred: np.ndarray, log_gt: np.ndarray, a: float, b: float) -> float:
-    """δ1 under no per-image alignment after applying ``d' = exp(a·log_pred + b)``.
+    """应用 ``d' = exp(a·log_pred + b)`` 后，在不进行逐图像对齐时计算 δ1。
 
-    δ1 is the fraction of pixels with ``max(d'/gt, gt/d') < 1.25``; in log space that is ``|a·log_pred + b − log_gt| <
-    log(1.25)``. This is the deployment metric (raw absolute scale, the ``align="none"`` protocol) the policy optimizes
-    — the val scoreboard's default ``align="median"`` is scale-invariant and cannot see calibration.
+    δ1 表示满足 ``max(d'/gt, gt/d') < 1.25`` 的像素比例；在对数空间中，该条件等价于
+    ``|a·log_pred + b − log_gt| < log(1.25)``。这是策略优化的部署指标（原始绝对尺度，``align="none"`` 协议）；
+    验证评分默认使用尺度不变的 ``align="median"``，无法反映校准效果。
     """
     ld = (a * np.asarray(log_pred, dtype=np.float64) + b) - np.asarray(log_gt, dtype=np.float64)
     return float(np.mean(np.abs(ld) < np.log(1.25)))
@@ -66,18 +63,16 @@ def select_calibration(
     lp_score: np.ndarray,
     lg_score: np.ndarray,
 ) -> dict[str, Any]:
-    """Pick the calibration that best improves *held-out* raw-scale δ1 — "calibrate only if it helps".
+    """选择最能提升留出集原始尺度 δ1 的校准方案，即“只有有帮助时才校准”。
 
-    Two candidates are fit on the ``*_fit`` log-pixel arrays and scored on the independent ``*_score`` arrays under
-    :func:`_delta1_none`:
-    - ``identity`` (a=1, b=0): no calibration,
-    - ``scale-only`` (a=1, b=mean(log_gt − log_pred)): a global scale.
-    The winner is the highest held-out δ1, with ties favoring identity — so a calibration that does not generalize is
-    rejected and auto-cal does no harm. (An affine log-slope candidate was evaluated and removed: the extra parameter
-    overfits within-dataset cross-validation and harms cross-distribution generalization.)
+    在 ``*_fit`` 对数像素数组上拟合两个候选方案，并根据 :func:`_delta1_none` 在独立的 ``*_score`` 数组上评分：
+    - ``identity``（a=1, b=0）：不校准；
+    - ``scale-only``（a=1, b=mean(log_gt − log_pred)）：全局尺度校准。
+    选择留出集 δ1 最高的方案，并列时优先选择 identity，因此无法泛化的校准会被拒绝，不会损害自动校准。
+    （曾评估过对数斜率仿射候选方案，但其额外参数会在数据集内交叉验证中过拟合，损害跨分布泛化，因此已移除。）
 
-    Returns:
-        dict with ``a``, ``b`` (floats of the winner), ``name``, and ``scores`` (per-candidate δ1).
+    返回：
+        包含获胜方案 ``a``、``b``（浮点数）、``name`` 和 ``scores``（各候选方案 δ1）的字典。
     """
     lp_fit = np.asarray(lp_fit, dtype=np.float64)
     lg_fit = np.asarray(lg_fit, dtype=np.float64)
@@ -95,16 +90,15 @@ def select_calibration_cv(
     margin: float = 0.0,
     folds: int = 2,
 ) -> dict[str, Any]:
-    """Cross-validated "calibrate only if it helps": choose a candidate by K-fold held-out δ1.
+    """交叉验证“只有有帮助时才校准”：根据 K 折留出集 δ1 选择候选方案。
 
-    ``pairs`` is a list of per-image ``(log_pred, log_gt)`` arrays. Each candidate type is scored on every fold while
-    held out (fit on the rest) via :func:`select_calibration`, and the per-type held-out δ1 is averaged across folds —
-    so every image contributes to scoring exactly once and a candidate that only wins on one noisy split cannot be
-    selected. The winning *type* must beat identity's mean held-out δ1 by ``margin`` (ties favor the simpler type); the
-    final ``(a, b)`` is then refit on all pairs.
+    ``pairs`` 是逐图像 ``(log_pred, log_gt)`` 数组列表。通过 :func:`select_calibration` 在每一折留出数据上评分各候选类型
+    （使用其余数据拟合），再对各类型的留出 δ1 跨折求平均。因此每张图像恰好参与一次评分，
+    只在某个噪声划分上获胜的候选方案不会被选中。获胜类型的平均留出 δ1 必须超过 identity 至少 ``margin``（并列时选择更简单的类型），
+    最终 ``(a, b)`` 再使用全部 pairs 重新拟合。
 
-    Returns:
-        dict with ``a``, ``b`` (floats), ``name``, and ``cv_scores`` (mean held-out δ1 per type).
+    返回：
+        包含 ``a``、``b``（浮点数）、``name`` 和 ``cv_scores``（各类型平均留出 δ1）的字典。
     """
     names = ["identity", "scale-only"]
     k = max(2, min(folds, len(pairs)))
@@ -127,7 +121,7 @@ def select_calibration_cv(
     for n in names[1:]:
         if cv[n] > cv[best] + margin:
             best = n
-    # refit the chosen type on all pairs (CV selects the type; all data sets the parameters)
+    # 在所有样本对上重新拟合选定类型（交叉验证选择类型，全部数据用于确定参数）。
     if best == "identity":
         a, b = 1.0, 0.0
     else:  # scale-only
@@ -141,12 +135,12 @@ def select_calibration_cv(
 def _collect_logpairs(
     model: torch.nn.Module, dataloader, device: torch.device | str, max_images: int, max_depth: float = 100.0
 ) -> list[tuple[np.ndarray, np.ndarray]]:
-    """Run the model over the loader and return a list of per-image ``(log_pred, log_gt)`` arrays.
+    """运行模型遍历数据加载器，并返回逐图像 ``(log_pred, log_gt)`` 数组列表。
 
-    One entry per image (each subsampled to ≤20k valid pixels) so callers can split images into independent fit/score
-    sets. Only GT inside ``(0.001, max_depth)`` is collected — the same population ``DepthMetrics`` evaluates (Eigen
-    protocol), so invalid far GT cannot steer the fitted scale or the held-out δ1 the selection policy trusts.
-    Calibration buffers are reset to identity for the duration so the fit sees the raw output, then restored.
+    每张图像对应一项（每项最多采样 20,000 个有效像素），调用方可以将图像划分为独立的拟合集和评分集。
+    仅收集 ``(0.001, max_depth)`` 范围内的真实深度，这与 ``DepthMetrics`` 评估的样本范围（Eigen 协议）一致，
+    因此无效的远距离真实深度不会影响拟合尺度或选择策略依赖的留出集 δ1。
+    运行期间将校准缓冲区重置为单位变换，使拟合使用原始输出，完成后再恢复。
     """
     head = _depth_head(model)
     a0, b0 = float(head.cal_a), float(head.cal_b)
@@ -182,7 +176,7 @@ def _collect_logpairs(
             if seen >= max_images:
                 break
     finally:
-        # A failed pass must not wipe the model's existing calibration; callers set the chosen value explicitly.
+        # 失败的遍历不能清除模型已有的校准；调用方会显式设置选中的值。
         head.cal_a.fill_(a0)
         head.cal_b.fill_(b0)
     return pairs
@@ -196,27 +190,26 @@ def fit_calibration_selective(
     margin: float = 0.002,
     max_depth: float = 100.0,
 ) -> dict[str, Any] | None:
-    """Select and apply calibration via "calibrate only if it helps" (see :func:`select_calibration_cv`).
+    """通过“只有有帮助时才校准”策略选择并应用校准（参见 :func:`select_calibration_cv`）。
 
-    Collects per-image ``(log_pred, log_gt)`` over the loader, splits images into independent fit/score folds (no
-    leakage), chooses identity / scale-only by cross-validated raw-scale δ1, and writes the winner into the head's
-    ``cal_a``/``cal_b``.
+    遍历数据加载器收集逐图像 ``(log_pred, log_gt)``，将图像划分为独立的拟合折和评分折（避免数据泄漏），
+    依据交叉验证的原始尺度 δ1 选择 identity 或 scale-only，并将获胜方案写入深度头的 ``cal_a``/``cal_b``。
 
-    Returns:
-        (dict | None): The :func:`select_calibration_cv` result dict, or None if no Depth head / too few images.
+    返回：
+        (dict | None): :func:`select_calibration_cv` 的结果字典；没有深度头或有效图像过少时返回 None。
     """
     head = _depth_head(model)
     if head is None:
-        LOGGER.warning("calibrate: no Depth head with cal buffers found; skipping.")
+        LOGGER.warning("校准：未找到包含 cal 缓冲区的深度头，跳过校准。")
         return None
     pairs = _collect_logpairs(model, dataloader, device, max_images, max_depth)
     if len(pairs) < 2:
-        LOGGER.warning("calibrate: fewer than 2 valid images for fit/score split; calibration skipped.")
+        LOGGER.warning("校准：有效图像少于 2 张，无法划分拟合集和评分集，跳过校准。")
         return None
     res = select_calibration_cv(pairs, margin=margin)
     res["images"] = len(pairs)
-    # On CUDA the buffers are inference tensors (the device move ran under inference_mode); reassign instead
-    # of an in-place fill_ so the write is legal and the buffers stay normal/saveable for model.save().
+    # 在 CUDA 上缓冲区是推理张量（设备移动在 inference_mode 下执行）；使用重新赋值而不是原地 fill_，
+    # 这样写入合法，并确保缓冲区保持普通张量，可由 model.save() 保存。
     head.cal_a = torch.full_like(head.cal_a, res["a"])
     head.cal_b = torch.full_like(head.cal_b, res["b"])
     scores = " ".join(f"{n}={v:.4f}" for n, v in res["cv_scores"].items())
@@ -237,13 +230,13 @@ def _plot_calibrated_batches(
     max_batches: int = 3,
     max_images: int = 4,
 ) -> None:
-    """Write ``val_batch{ni}_calibrated.jpg`` panels (RGB | GT | raw | calibrated) to ``plot_dir``.
+    """将 ``val_batch{ni}_calibrated.jpg`` 面板（RGB | GT | 原始 | 校准后）写入 ``plot_dir``。
 
-    Runs the model with calibration buffers at identity to get the raw prediction; the calibrated column is its
-    deterministic affine ``exp(a·log(raw) + b)`` — no second forward. The first ``max_batches`` batches are the same
-    ones BaseValidator plots as ``val_batch{ni}.jpg`` (val loaders are not shuffled), so the files are directly
-    comparable. With the "only if it helps" policy the selected ``name`` may be ``identity``; the panels are still
-    written (raw == calibrated), which documents that calibration was a no-op. Buffers are restored afterwards.
+    将校准缓冲区设为单位变换运行模型以获取原始预测；校准列是对原始预测执行确定性仿射变换
+    ``exp(a·log(raw) + b)`` 的结果，不需要第二次前向传播。前 ``max_batches`` 个批次与 BaseValidator 绘制的
+    ``val_batch{ni}.jpg`` 相同（验证加载器未打乱），因此文件可以直接比较。
+    根据“只有有帮助时才校准”策略，选中的 ``name`` 可能是 ``identity``；此时仍会写入面板（raw == calibrated），
+    以记录校准未产生实际变化。完成后恢复缓冲区。
     """
     from ultralytics.utils.plotting import plot_depth_panels
 
@@ -256,7 +249,7 @@ def _plot_calibrated_batches(
     plot_dir = Path(plot_dir)
     _rewind(dataloader)
     with torch.no_grad():
-        # zip stops on range exhaustion without pulling an extra batch from the stateful iterator
+        # zip 在 range 耗尽时停止，不会从有状态迭代器额外读取一个批次
         for ni, batch in zip(range(max_batches), dataloader):
             img = batch["img"].to(device).float() / 255
             gt = batch["depth"].to(device).float()
@@ -286,22 +279,22 @@ def calibrate_checkpoint(
     validation_split: str | None = None,
     max_depth: float = 100.0,
 ) -> dict | None:
-    """Fit calibration for a saved checkpoint in place (used by automatic post-training calibration).
+    """原地为已保存的检查点拟合校准参数（用于自动后训练校准）。
 
-    Loads the checkpoint, selects calibration with the "calibrate only if it helps" policy
-    (:func:`fit_calibration_selective`) on ``dataloader`` using a float copy on ``device``, writes the chosen buffers
-    into the stored model, and re-saves — preserving the rest of the checkpoint.
+    加载检查点，在 ``device`` 上使用浮点副本和“只有有帮助时才校准”策略
+    （:func:`fit_calibration_selective`）从 ``dataloader`` 选择校准方案，将选中的缓冲区写入已保存模型并重新保存，
+    同时保留检查点的其余内容。
 
-    Args:
-        ckpt_path (str | Path): Path to the ``.pt`` checkpoint file to calibrate in place.
-        dataloader (object): Yields batches with ``img`` (uint8, Bx3xHxW) and ``depth`` (BxHxW meters).
-        device (str | torch.device): Torch device to run inference on.
-        plot_dir (str | Path, optional): If set, also write ``val_batch{ni}_calibrated.jpg`` comparison panels (RGB | GT
-            | raw | calibrated) for the first val batches into this directory.
-        dataset_hash (str, optional): Immutable dataset manifest identity used for calibration.
-        validation_split (str, optional): Dataset-root-relative split used to collect calibration images.
-        max_depth (float): Maximum valid GT depth in meters; pixels beyond it are excluded from the fit and the held-out
-            δ1 scoring, matching the val metrics' Eigen protocol.
+    参数：
+        ckpt_path (str | Path): 要原地校准的 ``.pt`` 检查点文件路径。
+        dataloader (对象): 产生包含 ``img``（uint8，Bx3xHxW）和 ``depth``（BxHxW，单位米）的批次。
+        device (str | torch.device): 执行推理的 Torch 设备。
+        plot_dir (str | Path, 可选): 设置后，将前几个验证批次的 ``val_batch{ni}_calibrated.jpg`` 对比面板
+            （RGB | GT | 原始 | 校准后）写入此目录。
+        dataset_hash (str, 可选): 用于校准的不可变数据集清单标识。
+        validation_split (str, 可选): 用于收集校准图像、相对于数据集根目录的划分名称。
+        max_depth (float): 有效真实深度的最大值，单位为米；超过此值的像素会从拟合和留出集 δ1 评分中排除，
+            与验证指标的 Eigen 协议保持一致。
     """
     from copy import deepcopy
 

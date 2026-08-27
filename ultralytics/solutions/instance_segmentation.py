@@ -7,27 +7,26 @@ from ultralytics.solutions.solutions import BaseSolution, SolutionResults
 
 
 class InstanceSegmentation(BaseSolution):
-    """A class to manage instance segmentation in images or video streams.
+    """管理图像或视频流中实例分割任务的类。
 
-    This class extends the BaseSolution class and provides functionality for performing instance segmentation, including
-    drawing segmented masks with bounding boxes and labels.
+    此类扩展 BaseSolution，提供实例分割功能，包括绘制分割掩码、边界框和标签。
 
-    Attributes:
-        model (YOLO): The segmentation model instance used for inference.
-        line_width (int): Width of the bounding box and text lines.
-        names (dict[int, str]): Dictionary mapping class indices to class names.
-        clss (list[int]): List of detected class indices.
-        track_ids (list[int]): List of track IDs for detected instances.
-        masks (list[np.ndarray]): List of segmentation masks for detected instances.
-        show_conf (bool): Whether to display confidence scores.
-        show_labels (bool): Whether to display class labels.
-        show_boxes (bool): Whether to display bounding boxes.
+    属性：
+        model (YOLO): 用于推理的分割模型实例。
+        line_width (int): 边界框和文本线宽。
+        names (dict[int, str]): 类别索引到类别名称的映射。
+        clss (列表[int]): 检测到的类别索引列表。
+        track_ids (列表[int]): 检测实例的跟踪 ID 列表。
+        masks (列表[np.ndarray]): 检测实例的分割掩码列表。
+        show_conf (bool): 是否显示置信度分数。
+        show_labels (bool): 是否显示类别标签。
+        show_boxes (bool): 是否显示边界框。
 
-    Methods:
-        process: Process the input image to perform instance segmentation and annotate results.
-        extract_tracks: Extract tracks including bounding boxes, classes, and masks from model predictions.
+    方法：
+        process: 处理输入图像，执行实例分割并标注结果。
+        extract_tracks: 从模型预测结果中提取边界框、类别和掩码等跟踪信息。
 
-    Examples:
+    示例：
         >>> segmenter = InstanceSegmentation()
         >>> frame = cv2.imread("frame.jpg")
         >>> results = segmenter.process(frame)
@@ -35,11 +34,11 @@ class InstanceSegmentation(BaseSolution):
     """
 
     def __init__(self, **kwargs: Any) -> None:
-        """Initialize the InstanceSegmentation class for detecting and annotating segmented instances.
+        """初始化 InstanceSegmentation 类，用于检测和标注分割实例。
 
-        Args:
-            **kwargs (Any): Keyword arguments passed to the BaseSolution parent class including:
-                - model (str): Model name or path, defaults to "yolo26n-seg.pt".
+        参数：
+            **kwargs (Any): 传递给 BaseSolution 父类的关键字参数，包括：
+                - model (str): 模型名称或路径，默认为 "yolo26n-seg.pt"。
         """
         kwargs["model"] = kwargs.get("model", "yolo26n-seg.pt")
         super().__init__(**kwargs)
@@ -49,24 +48,24 @@ class InstanceSegmentation(BaseSolution):
         self.show_boxes = self.CFG.get("show_boxes", True)
 
     def process(self, im0) -> SolutionResults:
-        """Perform instance segmentation on the input image and annotate the results.
+        """在输入图像上执行实例分割并标注结果。
 
-        Args:
-            im0 (np.ndarray): The input image for segmentation.
+        参数：
+            im0 (np.ndarray): 用于分割的输入图像。
 
-        Returns:
-            (SolutionResults): Object containing the annotated image and total number of tracked instances.
+        返回：
+            (SolutionResults): 包含标注图像和跟踪实例总数的对象。
 
-        Examples:
+        示例：
             >>> segmenter = InstanceSegmentation()
             >>> frame = cv2.imread("image.jpg")
             >>> summary = segmenter.process(frame)
             >>> print(summary)
         """
-        self.extract_tracks(im0)  # Extract tracks (bounding boxes, classes, and masks)
+        self.extract_tracks(im0)  # 提取跟踪结果（边界框、类别和掩码）
         self.masks = getattr(self.tracks, "masks", None)
 
-        # Iterate over detected classes, track IDs, and segmentation masks
+        # 遍历检测到的类别、跟踪 ID 和分割掩码
         if self.masks is None:
             self.LOGGER.warning("No masks detected! Ensure you're using a supported Ultralytics segmentation model.")
             plot_im = im0
@@ -80,7 +79,7 @@ class InstanceSegmentation(BaseSolution):
                 color_mode="instance",
             )
 
-        self.display_output(plot_im)  # Display the annotated output using the base class function
+        self.display_output(plot_im)  # 使用基类函数显示标注后的输出
 
-        # Return SolutionResults
+        # 返回 SolutionResults
         return SolutionResults(plot_im=plot_im, total_tracks=len(self.track_ids))

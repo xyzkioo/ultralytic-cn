@@ -1,11 +1,10 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
-"""Shared ReID encoder used by BoT-SORT, Deep OC-SORT, and TrackTrack.
+"""BoT-SORT、Deep OC-SORT 和 TrackTrack 共享的 ReID 编码器。
 
-* `.pt` YOLO checkpoints — loaded via `YOLO()`; embeddings are pulled from the second-to-last
-layer through the predictor's `embed=[...]` argument (works with classification and ReID
-backbones).
-* Any other extension (`.torchscript`, `.onnx`, `.engine`, `.openvino`, …) — loaded via
-`AutoBackend`; the model is expected to output the embedding tensor directly.
+* `.pt` YOLO 检查点通过 `YOLO()` 加载；通过预测器的 `embed=[...]` 参数从倒数第二层提取嵌入
+（适用于分类和 ReID 主干网络）。
+* 其他扩展名（`.torchscript`、`.onnx`、`.engine`、`.openvino` 等）通过 `AutoBackend` 加载；
+  模型应直接输出嵌入张量。
 """
 
 from __future__ import annotations
@@ -21,18 +20,16 @@ REID_ASSETS = frozenset(f"yolo26{k}-reid.onnx" for k in "nsmlx")
 
 
 class ReID:
-    """ReID encoder. Routes `.pt` to the YOLO predictor path; everything else to `AutoBackend`."""
+    """ReID 编码器。`.pt` 文件通过 YOLO 预测器处理，其他格式通过 `AutoBackend` 处理。"""
 
     def __init__(self, model: str, imgsz: int = 224, device: str | torch.device | None = None, fp16: bool = False):
-        """Initialize encoder for re-identification.
+        """初始化用于重识别的编码器。
 
-        Args:
-            model (str): Path to a ReID model. `.pt` runs through the YOLO predictor (embed-layer extraction); other
-                extensions go through `AutoBackend`.
-            imgsz (int): Square input size used for crop preprocessing on the AutoBackend path. Overridden by the
-                model's own static input size when one is detected.
-            device (str | torch.device | None): Inference device; defaults to CUDA if available.
-            fp16 (bool): Use half precision when the backend supports it.
+        参数：
+            model (str): ReID 模型路径。`.pt` 通过 YOLO 预测器提取嵌入，其他扩展名通过 `AutoBackend` 处理。
+            imgsz (int): AutoBackend 路径裁剪预处理使用的正方形输入尺寸；检测到模型静态输入尺寸时会覆盖该值。
+            device (str | torch.device | None): 推理设备；默认在可用时使用 CUDA。
+            fp16 (bool): 后端支持时是否使用半精度。
         """
         self.imgsz = imgsz
         self.batch_size = None
@@ -45,7 +42,7 @@ class ReID:
             from ultralytics import YOLO
 
             self.model = YOLO(model)
-            # Initialize predictor with embed=[idx] so subsequent calls return embeddings.
+            # 使用 embed=[idx] 初始化预测器，使后续调用返回嵌入。
             self.model(embed=[len(self.model.model.model) - 2], device=self.device, verbose=False, save=False)
             self.fp16 = False
         else:
@@ -58,7 +55,7 @@ class ReID:
             self.model = AutoBackend(str(model), device=self.device, fp16=fp16, verbose=False)
             self.fp16 = self.model.fp16
 
-            # Get model's input size for a fixed batch and crop size or detect dynamic batch and crop sizes.
+            # 获取模型输入尺寸，用于固定批次和裁剪尺寸，或检测动态批次和裁剪尺寸。
             session = getattr(self.model, "session", None)
             shape = session.get_inputs()[0].shape if session is not None else ()
             if len(shape) == 4:
@@ -69,19 +66,19 @@ class ReID:
 
     @staticmethod
     def _crop_detections(img: np.ndarray, dets: np.ndarray) -> list[np.ndarray]:
-        """Crop detection regions from image, converting xywh to xyxy first.
+        """从图像中裁剪检测区域，并先将 xywh 转换为 xyxy。
 
-        Args:
-            img (np.ndarray): BGR image.
-            dets (np.ndarray): Detections in xywh format (first 4 columns used).
+        参数：
+            img (np.ndarray): BGR 图像。
+            dets (np.ndarray): xywh 格式的检测结果（使用前 4 列）。
 
-        Returns:
-            (list[np.ndarray]): Cropped image patches.
+        返回：
+            (列表[np.ndarray]): 裁剪后的图像块。
         """
         return [save_one_box(det, img, save=False) for det in xywh2xyxy(torch.from_numpy(dets[:, :4]))]
 
     def _crops_to_tensor(self, crops: list[np.ndarray]) -> torch.Tensor:
-        """Stack a list of valid image crops into a normalized BCHW float tensor at self.imgsz."""
+        """将有效图像裁剪块列表堆叠为 self.imgsz 尺寸的归一化 BCHW 浮点张量。"""
         batch = torch.empty(len(crops), 3, self.imgsz, self.imgsz, dtype=torch.float32)
         for i, c in enumerate(crops):
             t = torch.from_numpy(np.ascontiguousarray(c[..., ::-1])).permute(2, 0, 1).unsqueeze(0).float() / 255.0
@@ -93,7 +90,7 @@ class ReID:
 
     @torch.no_grad()
     def __call__(self, img: np.ndarray, dets: np.ndarray) -> list[np.ndarray | None]:
-        """Extract embeddings for detected objects."""
+        """提取检测对象的嵌入。"""
         crops = self._crop_detections(img, dets)
         valid = [bool(c.size) for c in crops]
         valid_crops = [crop for crop, keep in zip(crops, valid) if keep]
@@ -103,14 +100,14 @@ class ReID:
         if self.is_pt:
             feats = self.model.predictor(valid_crops)
             if len(feats) != len(valid_crops) and feats[0].shape[0] == len(valid_crops):
-                feats = feats[0]  # batched prediction with non-PyTorch backend
+                feats = feats[0]  # 非 PyTorch 后端的批量预测结果
             valid_feats = [f.cpu().numpy() for f in feats]
         else:
             batch = self._crops_to_tensor(valid_crops)
             bs, n = self.batch_size, batch.shape[0]
             if bs is None or n == bs:
                 feats = self.model(batch)
-            else:  # fixed-batch model (e.g. static ONNX): run in chunks of bs, padding the last partial chunk
+            else:  # 固定批次模型（例如静态 ONNX）：按 bs 分块运行，并填充最后一个不完整批次
                 outs = []
                 for s in range(0, n, bs):
                     chunk = batch[s : s + bs]
@@ -125,16 +122,16 @@ class ReID:
 
 
 def build_encoder(with_reid: bool, model: str | None, device: str | torch.device | None = None):
-    """Return a ReID encoder, the native-features pass-through, or None.
+    """返回 ReID 编码器、原生特征直通编码器或 None。
 
-    Args:
-        with_reid (bool): Whether ReID is enabled at all.
-        model (str | None): `"auto"` returns a callable that converts pre-extracted backbone features to numpy arrays;
-            any other value loads a `ReID` model from that path. Ignored when `with_reid` is False.
-        device (str | torch.device | None): Inference device for the ReID model; defaults to CUDA if available.
+    参数：
+        with_reid (bool): 是否启用 ReID。
+        model (str | None): `"auto"` 返回将预提取主干特征转换为 NumPy 数组的可调用对象；
+            其他值从对应路径加载 `ReID` 模型。`with_reid` 为 False 时忽略该参数。
+        device (str | torch.device | None): ReID 模型推理设备；默认在可用时使用 CUDA。
 
-    Returns:
-        (Callable | None): A `(img, dets) -> list[np.ndarray | None]` encoder, or None when ReID is disabled.
+    返回：
+        (Callable | None): `(img, dets) -> list[np.ndarray | None]` 编码器；禁用 ReID 时返回 None。
     """
     if not with_reid:
         return None
@@ -152,20 +149,20 @@ def build_encoder(with_reid: bool, model: str | None, device: str | torch.device
 def smooth_feature(
     feat: np.ndarray, smooth: np.ndarray | None, alpha: float
 ) -> tuple[np.ndarray | None, np.ndarray | None]:
-    """L2-normalize `feat` and blend it into `smooth` via exponential moving average.
+    """对 `feat` 执行 L2 归一化，并通过指数移动平均将其融合到 `smooth`。
 
-    Args:
-        feat (np.ndarray): New (un-normalized) appearance feature.
-        smooth (np.ndarray | None): Current smoothed feature, or None on the first update.
-        alpha (float): EMA weight on the existing `smooth` (``1.0`` keeps it unchanged).
+    参数：
+        feat (np.ndarray): 新的未归一化外观特征。
+        smooth (np.ndarray | None): 当前平滑特征，首次更新时为 None。
+        alpha (float): 现有 `smooth` 的 EMA 权重（``1.0`` 表示保持不变）。
 
-    Returns:
-        curr (np.ndarray | None): The normalized float32 feature, or None when `feat` has zero norm.
-        smooth (np.ndarray | None): The updated, normalized float32 feature.
+    返回：
+        curr (np.ndarray | None): 归一化后的 float32 特征；`feat` 范数为零时返回 None。
+        smooth (np.ndarray | None): 更新并归一化后的 float32 特征。
     """
-    feat = np.asarray(feat, dtype=np.float32)  # the stored state is float32 whatever dtype the ReID backend returned
+    feat = np.asarray(feat, dtype=np.float32)  # 无论 ReID 后端返回何种类型，保存状态均为 float32
     norm = np.linalg.norm(feat)
-    if norm < 1e-12:  # zero-norm feature has no appearance info; signal the caller to keep its current features
+    if norm < 1e-12:  # 零范数特征不包含外观信息，通知调用方保留当前特征
         return None, smooth
     feat = feat / norm
     if smooth is None:

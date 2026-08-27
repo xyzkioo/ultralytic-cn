@@ -1,6 +1,6 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
-# Publish pip package to PyPI https://pypi.org/project/ultralytics/
+# 将 pip 软件包发布到 PyPI：https://pypi.org/project/ultralytics/
 
 name: Publish to PyPI
 

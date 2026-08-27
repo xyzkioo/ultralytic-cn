@@ -1,14 +1,12 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 """
-Module provides functionalities for hyperparameter tuning of the Ultralytics YOLO models for object detection, instance
-segmentation, image classification, and pose estimation.
+本模块提供 Ultralytics YOLO 模型的超参数调优功能，适用于目标检测、实例分割、图像分类和姿态估计。
 
-Hyperparameter tuning is the process of systematically searching for the optimal set of hyperparameters
-that yield the best model performance. This is particularly crucial in deep learning models like YOLO,
-where small changes in hyperparameters can lead to significant differences in model accuracy and efficiency.
+超参数调优是系统地搜索最佳超参数组合的过程，以获得最佳模型性能。
+这对于 YOLO 等深度学习模型尤其重要，因为超参数的微小变化可能会显著影响模型的准确率和效率。
 
-Examples:
-    Tune hyperparameters for YOLO26n on COCO8 at imgsz=640 and epochs=10 for 300 tuning iterations.
+示例：
+    在 COCO8 数据集上以 imgsz=640、epochs=10 的设置，为 YOLO26n 调优超参数并执行 300 次迭代。
     >>> from ultralytics import YOLO
     >>> model = YOLO("yolo26n.pt")
     >>> model.tune(data="coco8.yaml", epochs=10, iterations=300, optimizer="AdamW", plots=False, save=False, val=False)
@@ -37,28 +35,27 @@ from ultralytics.utils.plotting import plot_tune_results
 
 
 class Tuner:
-    """A class for hyperparameter tuning of YOLO models.
+    """用于 YOLO 模型超参数调优的类。
 
-    The class evolves YOLO model hyperparameters over a given number of iterations by mutating them according to the
-    search space and retraining the model to evaluate their performance. Supports both local NDJSON storage and
-    distributed MongoDB Atlas coordination for multi-machine hyperparameter optimization.
+    此类会在指定迭代次数内，根据搜索空间改变 YOLO 模型的超参数并重新训练模型，以评估模型性能。
+    同时支持本地 NDJSON 存储，以及使用 MongoDB Atlas 在多台机器之间协同进行分布式超参数优化。
 
-    Attributes:
-        space (dict[str, tuple]): Hyperparameter search space containing bounds and scaling factors for mutation.
-        tune_dir (Path): Directory where evolution logs and results will be saved.
-        tune_file (Path): Path to the NDJSON file where evolution logs are saved.
-        args (SimpleNamespace): Configuration arguments for the tuning process.
-        callbacks (dict): Callback functions to be executed during tuning.
-        prefix (str): Prefix string for logging messages.
-        mongodb (MongoClient): Optional MongoDB client for distributed tuning.
-        collection (Collection): MongoDB collection for storing tuning results.
+    属性：
+        space (dict[str, tuple]): 超参数搜索空间，包含变异所需的上下界和缩放因子。
+        tune_dir (Path): 保存迭代日志和结果的目录。
+        tune_file (Path): 保存迭代日志的 NDJSON 文件路径。
+        args (SimpleNamespace): 调优过程的配置参数。
+        callbacks (dict): 调优过程中执行的回调函数。
+        prefix (str): 日志消息的前缀字符串。
+        mongodb (MongoClient): 用于分布式调优的可选 MongoDB 客户端。
+        collection (Collection): 保存调优结果的 MongoDB 集合。
 
-    Methods:
-        _mutate: Mutate hyperparameters based on bounds and scaling factors.
-        __call__: Execute the hyperparameter evolution across multiple iterations.
+    方法：
+        _mutate: 根据上下界和缩放因子改变超参数。
+        __call__: 执行多次迭代的超参数演化过程。
 
-    Examples:
-        Tune hyperparameters for YOLO26n on COCO8 at imgsz=640 and epochs=10 for 300 tuning iterations.
+    示例：
+        在 COCO8 数据集上以 imgsz=640、epochs=10 的设置，为 YOLO26n 调优超参数并执行 300 次迭代。
         >>> from ultralytics import YOLO
         >>> model = YOLO("yolo26n.pt")
         >>> model.tune(
@@ -70,7 +67,7 @@ class Tuner:
         >>>     val=False
         >>> )
 
-        Tune with distributed MongoDB Atlas coordination across multiple machines:
+        使用 MongoDB Atlas 在多台机器之间进行分布式协同调优：
         >>> model.tune(
         >>>     data="coco8.yaml",
         >>>     epochs=10,
@@ -80,60 +77,60 @@ class Tuner:
         >>>     mongodb_collection="tune_results"
         >>> )
 
-        Tune with custom search space:
+        使用自定义搜索空间进行调优：
         >>> model.tune(space={"lr0": (1e-5, 1e-2), "momentum": (0.7, 0.98)})
     """
 
     def __init__(self, args=DEFAULT_CFG, _callbacks: dict | None = None):
-        """Initialize the Tuner with configurations.
+        """使用配置初始化 Tuner。
 
-        Args:
-            args (dict): Configuration for hyperparameter evolution.
-            _callbacks (dict | None, optional): Callback functions to be executed during tuning.
+        参数：
+            args (dict): 超参数演化的配置。
+            _callbacks (dict | None, 可选): 调优过程中执行的回调函数。
         """
-        self.space = args.pop("space", None) or {  # key: (min, max, gain(optional))
-            # 'optimizer': tune.choice(['SGD', 'Adam', 'AdamW', 'NAdam', 'RAdam', 'RMSProp']),
-            "lr0": (1e-5, 1e-2),  # initial learning rate (i.e. SGD=1E-2, Adam=1E-3)
-            "lrf": (0.01, 1.0),  # final OneCycleLR learning rate (lr0 * lrf)
-            "momentum": (0.7, 0.98, 0.3),  # SGD momentum/Adam beta1
-            "weight_decay": (0.0, 0.001),  # optimizer weight decay 5e-4
-            "warmup_epochs": (0.0, 5.0),  # warmup epochs (fractions ok)
-            "warmup_momentum": (0.0, 0.95),  # warmup initial momentum
-            "box": (1.0, 20.0),  # box loss gain
-            "cls": (0.1, 4.0),  # cls loss gain (scale with pixels)
-            "cls_pw": (0.0, 1.0),  # cls power weight
-            "dfl": (0.4, 12.0),  # dfl loss gain
-            "hsv_h": (0.0, 0.1),  # image HSV-Hue augmentation (fraction)
-            "hsv_s": (0.0, 0.9),  # image HSV-Saturation augmentation (fraction)
-            "hsv_v": (0.0, 0.9),  # image HSV-Value augmentation (fraction)
-            "degrees": (0.0, 45.0),  # image rotation (+/- deg)
-            "translate": (0.0, 0.9),  # image translation (+/- fraction)
-            "scale": (0.0, 0.95),  # image scale (+/- gain)
-            "shear": (0.0, 10.0),  # image shear (+/- deg)
-            "perspective": (0.0, 0.001),  # image perspective (+/- fraction), range 0-0.001
-            "flipud": (0.0, 1.0),  # image flip up-down (probability)
-            "fliplr": (0.0, 1.0),  # image flip left-right (probability)
-            "bgr": (0.0, 1.0),  # image channel bgr (probability)
-            "mosaic": (0.0, 1.0),  # image mosaic (probability)
-            "mixup": (0.0, 1.0),  # image mixup (probability)
-            "cutmix": (0.0, 1.0),  # image cutmix (probability)
-            "copy_paste": (0.0, 1.0),  # segment copy-paste (object fraction)
-            "close_mosaic": (0.0, 10.0),  # close dataloader mosaic (epochs)
+        self.space = args.pop("space", None) or {  # 键对应 (最小值、最大值、增益（可选）)
+            # '优化器': tune.choice(['SGD', 'Adam', 'AdamW', 'NAdam', 'RAdam', 'RMSProp']),
+            "lr0": (1e-5, 1e-2),  # 初始学习率（例如 SGD=1E-2、Adam=1E-3）
+            "lrf": (0.01, 1.0),  # 最终 OneCycleLR 学习率（lr0 * lrf）
+            "momentum": (0.7, 0.98, 0.3),  # SGD 动量或 Adam beta1
+            "weight_decay": (0.0, 0.001),  # 优化器 权重衰减 5e-4
+            "warmup_epochs": (0.0, 5.0),  # 预热周期（允许使用小数）
+            "warmup_momentum": (0.0, 0.95),  # 预热初始动量
+            "box": (1.0, 20.0),  # 边界框 损失 gain
+            "cls": (0.1, 4.0),  # cls 损失增益（按像素缩放）
+            "cls_pw": (0.0, 1.0),  # cls 幂权重
+            "dfl": (0.4, 12.0),  # dfl 损失增益
+            "hsv_h": (0.0, 0.1),  # 图像 HSV 色调增强（比例）
+            "hsv_s": (0.0, 0.9),  # 图像 HSV 饱和度增强（比例）
+            "hsv_v": (0.0, 0.9),  # 图像 HSV 明度增强（比例）
+            "degrees": (0.0, 45.0),  # 图像旋转（正负角度）
+            "translate": (0.0, 0.9),  # 图像平移（正负比例）
+            "scale": (0.0, 0.95),  # 图像缩放（正负增益）
+            "shear": (0.0, 10.0),  # 图像剪切（正负角度）
+            "perspective": (0.0, 0.001),  # 图像透视变换（正负比例），范围 0 到 0.001
+            "flipud": (0.0, 1.0),  # 图像上下翻转（概率）
+            "fliplr": (0.0, 1.0),  # 图像左右翻转（概率）
+            "bgr": (0.0, 1.0),  # 图像 通道 bgr (概率)
+            "mosaic": (0.0, 1.0),  # 图像 mosaic (概率)
+            "mixup": (0.0, 1.0),  # 图像 mixup (概率)
+            "cutmix": (0.0, 1.0),  # 图像 cutmix (概率)
+            "copy_paste": (0.0, 1.0),  # 分割段复制粘贴（目标比例）
+            "close_mosaic": (0.0, 10.0),  # 关闭数据加载器中的 mosaic（周期）
         }
         mongodb_uri = args.pop("mongodb_uri", None)
         mongodb_db = args.pop("mongodb_db", "ultralytics")
         mongodb_collection = args.pop("mongodb_collection", "tuner_results")
 
         self.args = get_cfg(overrides=args)
-        self.args.exist_ok = self.args.resume  # resume w/ same tune_dir
+        self.args.exist_ok = self.args.resume  # 恢复训练时使用相同的 tune_dir
         self.tune_dir = get_save_dir(self.args, name=self.args.name or "tune")
-        self.args.name, self.args.exist_ok, self.args.resume = (None, False, False)  # reset to not affect training
+        self.args.name, self.args.exist_ok, self.args.resume = (None, False, False)  # 重置，避免影响训练
         self.tune_file = self.tune_dir / "tune_results.ndjson"
         self.callbacks = _callbacks or callbacks.get_default_callbacks()
         self.prefix = colorstr("Tuner: ")
         callbacks.add_integration_callbacks(self)
 
-        # MongoDB Atlas support (optional)
+        # MongoDB Atlas 支持（可选）
         self.mongodb = None
         if mongodb_uri:
             self._init_mongodb(mongodb_uri, mongodb_db, mongodb_collection)
@@ -144,14 +141,14 @@ class Tuner:
         )
 
     def _connect(self, uri: str = "", max_retries: int = 3):
-        """Create MongoDB client with exponential backoff retry on connection failures.
+        """创建 MongoDB 客户端，并在连接失败时使用指数退避进行重试。
 
-        Args:
-            uri (str): MongoDB connection string with credentials and cluster information.
-            max_retries (int): Maximum number of connection attempts before giving up.
+        参数：
+            uri (str): 包含凭据和集群信息的 MongoDB 连接字符串。
+            max_retries (int): 放弃前允许尝试连接的最大次数。
 
-        Returns:
-            (MongoClient): Connected MongoDB client instance.
+        返回：
+            (MongoClient): 已连接的 MongoDB 客户端实例。
         """
         check_requirements("pymongo")
 
@@ -171,7 +168,7 @@ class Tuner:
                     minPoolSize=3,
                     maxIdleTimeMS=60000,
                 )
-                client.admin.command("ping")  # Test connection
+                client.admin.command("ping")  # 测试连接
                 LOGGER.info(f"{self.prefix}Connected to MongoDB Atlas (attempt {attempt + 1})")
                 return client
             except (ConnectionFailure, ServerSelectionTimeoutError):
@@ -184,20 +181,20 @@ class Tuner:
                 time.sleep(wait_time)
 
     def _init_mongodb(self, mongodb_uri="", mongodb_db="", mongodb_collection=""):
-        """Initialize MongoDB connection for distributed tuning.
+        """初始化用于分布式调优的 MongoDB 连接。
 
-        Connects to MongoDB Atlas for distributed hyperparameter optimization across multiple machines. Each worker
-        saves results to a shared collection and reads the latest best hyperparameters from all workers for evolution.
+        连接 MongoDB Atlas，以便在多台机器之间进行分布式超参数优化。每个工作进程将结果保存到共享集合中，
+        并读取所有工作进程产生的最新最佳超参数，用于后续演化。
 
-        Args:
-            mongodb_uri (str): MongoDB connection string.
-            mongodb_db (str, optional): Database name.
-            mongodb_collection (str, optional): Collection name.
+        参数：
+            mongodb_uri (str): MongoDB 连接字符串。
+            mongodb_db (str, 可选): 数据库名称。
+            mongodb_collection (str, 可选): 集合名称。
 
-        Notes:
-            - Creates a fitness index for fast queries of top results
-            - Falls back to local NDJSON mode if connection fails
-            - Uses connection pooling and retry logic for production reliability
+        注意：
+            - 创建 fitness 索引，以便快速查询最佳结果。
+            - 如果连接失败，则回退到本地 NDJSON 模式。
+            - 使用连接池和重试逻辑，提高生产环境的可靠性。
         """
         self.mongodb = self._connect(mongodb_uri)
         self.collection = self.mongodb[mongodb_db][mongodb_collection]
@@ -205,13 +202,13 @@ class Tuner:
         LOGGER.info(f"{self.prefix}Using MongoDB Atlas for distributed tuning")
 
     def _get_mongodb_results(self, n: int = 5) -> list:
-        """Get top N results from MongoDB sorted by fitness.
+        """从 MongoDB 获取按 fitness 排序的前 N 个结果。
 
-        Args:
-            n (int): Number of top results to retrieve.
+        参数：
+            n (int): 要获取的最佳结果数量。
 
-        Returns:
-            (list[dict]): List of result documents with fitness scores and hyperparameters.
+        返回：
+            (列表[dict]): 包含 fitness 分数和超参数的结果文档列表。
         """
         try:
             return list(self.collection.find().sort("fitness", -1).limit(n))
@@ -220,7 +217,7 @@ class Tuner:
 
     @staticmethod
     def _json_default(x):
-        """Convert tensor-like values for JSON serialization."""
+        """将张量类值转换为可进行 JSON 序列化的值。"""
         return x.item() if hasattr(x, "item") else str(x)
 
     def _result_record(
@@ -231,7 +228,7 @@ class Tuner:
         datasets: dict[str, dict],
         save_dirs: dict[str, str] | None = None,
     ) -> dict:
-        """Build one local tuning result record."""
+        """构建一条本地调优结果记录。"""
         result = {
             "iteration": iteration,
             "fitness": round(fitness, 5),
@@ -250,14 +247,14 @@ class Tuner:
         datasets: dict[str, dict],
         iteration: int,
     ):
-        """Save results to MongoDB with proper type conversion.
+        """转换类型后，将结果保存到 MongoDB。
 
-        Args:
-            fitness (float): Fitness score achieved with these hyperparameters.
-            hyperparameters (dict[str, float]): Dictionary of hyperparameter values.
-            metrics (dict): Complete training metrics dictionary (mAP, precision, recall, losses, etc.).
-            datasets (dict[str, dict]): Per-dataset metrics for the iteration.
-            iteration (int): Current iteration number.
+        参数：
+            fitness (float): 使用这些超参数得到的 fitness 分数。
+            hyperparameters (dict[str, float]): 超参数值字典。
+            metrics (dict): 完整的训练指标字典（mAP、precision、recall、损失等）。
+            datasets (dict[str, dict]): 本次迭代中各数据集对应的指标。
+            iteration (int): 当前迭代次数。
         """
         try:
             self.collection.insert_one(
@@ -274,10 +271,10 @@ class Tuner:
             LOGGER.warning(f"{self.prefix}MongoDB save failed: {e}")
 
     def _sync_mongodb_to_file(self):
-        """Sync MongoDB results to the local NDJSON tuning log.
+        """将 MongoDB 结果同步到本地 NDJSON 调优日志。
 
-        Downloads all results from MongoDB and writes them to the local NDJSON file in chronological order. This keeps
-        resume, mutation, and plotting on the same local source of truth when using distributed tuning.
+        从 MongoDB 下载所有结果，并按时间顺序写入本地 NDJSON 文件。
+        使用分布式调优时，这可以让恢复训练、超参数变异和绘图共享同一个本地数据源。
         """
         try:
             all_results = list(self.collection.find().sort("iteration", 1))
@@ -304,14 +301,14 @@ class Tuner:
             LOGGER.warning(f"{self.prefix}MongoDB to NDJSON sync failed: {e}")
 
     def _load_local_results(self) -> list[dict]:
-        """Load local tuning results from the NDJSON log."""
+        """从 NDJSON 日志加载本地调优结果。"""
         if not self.tune_file.exists():
             return []
         with open(self.tune_file, encoding="utf-8") as f:
             return [json.loads(line) for line in f if line.strip()]
 
     def _local_results_to_array(self, results: list[dict], n: int | None = None) -> np.ndarray | None:
-        """Convert local NDJSON records to a fitness-plus-hyperparameters numpy array."""
+        """将本地 NDJSON 记录转换为包含 fitness 和超参数的 NumPy 数组。"""
         if not results:
             return None
         x = np.array(
@@ -328,13 +325,13 @@ class Tuner:
         return x[order][:n]
 
     def _save_local_result(self, result: dict):
-        """Append one tuning result to the local NDJSON log."""
+        """将一条调优结果追加到本地 NDJSON 日志。"""
         with open(self.tune_file, "a", encoding="utf-8") as f:
             f.write(json.dumps(result, default=self._json_default) + "\n")
 
     @staticmethod
     def _best_metrics(result: dict) -> dict | None:
-        """Summarize best-result metrics for logging."""
+        """汇总最佳结果的指标，用于记录日志。"""
         datasets = result.get("datasets", {})
         if len(datasets) == 1:
             return next(iter(datasets.values()))
@@ -344,19 +341,19 @@ class Tuner:
 
     @staticmethod
     def _has_training_metrics(result: dict, require_all: bool = False) -> bool:
-        """Return whether a tuning result contains training metrics."""
+        """返回调优结果是否包含训练指标。"""
         datasets = result.get("datasets", {})
         return bool(datasets) and (all(datasets.values()) if require_all else any(datasets.values()))
 
     @classmethod
     def _best_result_index(cls, results: list[dict], fitness: np.ndarray) -> int:
-        """Return the best result index, preferring rows with training metrics."""
+        """返回最佳结果的索引，并优先选择包含训练指标的记录。"""
         valid = [i for i, result in enumerate(results) if cls._has_training_metrics(result)]
         return valid[int(fitness[valid].argmax())] if valid else int(fitness.argmax())
 
     @staticmethod
     def _dataset_names(data: list) -> list[str]:
-        """Create stable unique dataset names for logging and per-run directories."""
+        """创建稳定且唯一的数据集名称，用于记录日志和区分每次运行的目录。"""
         stems = [Path(str(d)).stem for d in data]
         totals, seen = Counter(stems), Counter()
         names = []
@@ -367,17 +364,17 @@ class Tuner:
 
     @staticmethod
     def _crossover(x: np.ndarray, alpha: float = 0.2, k: int = 9) -> np.ndarray:
-        """BLX-α crossover from up to top-k parents (x[:,0]=fitness, rest=genes)."""
+        """对最多前 k 个父代执行 BLX-α 交叉（x[:,0]=fitness，其余列为基因）。"""
         k = min(k, len(x))
-        # fitness weights (shifted to >0); fallback to uniform if degenerate
+        # fitness 权重（平移到大于 0）；如果权重退化，则回退到均匀权重
         weights = x[:, 0] - x[:, 0].min() + 1e-6
         if not np.isfinite(weights).all() or weights.sum() == 0:
             weights = np.ones_like(weights)
         idxs = random.choices(range(len(x)), weights=weights, k=k)
-        parents_mat = np.stack([x[i][1:] for i in idxs], 0)  # (k, ng) strip fitness
+        parents_mat = np.stack([x[i][1:] for i in idxs], 0)  # (k, ng)，去掉 fitness 列
         lo, hi = parents_mat.min(0), parents_mat.max(0)
         span = hi - lo
-        # given a small value when span is zero to avoid no mutation
+        # 当范围为零时提供一个小值，避免无法产生变异
         span = np.where(span == 0, np.random.uniform(0.01, 0.1, span.shape), span)
         return np.random.uniform(lo - alpha * span, hi + alpha * span)
 
@@ -387,47 +384,47 @@ class Tuner:
         mutation: float = 0.5,
         sigma: float = 0.2,
     ) -> dict[str, float]:
-        """Mutate hyperparameters based on bounds and scaling factors specified in `self.space`.
+        """根据 `self.space` 中指定的上下界和缩放因子改变超参数。
 
-        Args:
-            n (int): Number of top parents to consider.
-            mutation (float): Probability of a parameter mutation in any given iteration.
-            sigma (float): Standard deviation for Gaussian random number generator.
+        参数：
+            n (int): 要考虑的最佳父代数量。
+            mutation (float): 每次迭代中改变任意参数的概率。
+            sigma (float): 高斯随机数生成器的标准差。
 
-        Returns:
-            (dict[str, float]): A dictionary containing mutated hyperparameters.
+        返回：
+            (dict[str, float]): 包含变异后超参数的字典。
         """
         x = None
 
-        # Try MongoDB first if available
+        # 如果 MongoDB 可用，优先从 MongoDB 获取结果
         if self.mongodb:
             if results := self._get_mongodb_results(n):
-                # MongoDB already sorted by fitness DESC, so results[0] is best
+                # MongoDB 已按 fitness 降序排序，因此结果[0] 最佳
                 x = np.array(
                     [
                         [r["fitness"]] + [r["hyperparameters"].get(k, self.args.get(k)) for k in self.space]
                         for r in results
                     ]
                 )
-            elif self.collection.name in self.collection.database.list_collection_names():  # Tuner started elsewhere
+            elif self.collection.name in self.collection.database.list_collection_names():  # Tuner 在其他位置启动
                 x = np.array([[0.0] + [getattr(self.args, k) for k in self.space]])
 
-        # Fall back to local NDJSON if MongoDB unavailable or empty
+        # 如果 MongoDB 不可用或没有结果，则回退到本地 NDJSON
         if x is None:
             x = self._local_results_to_array(self._load_local_results(), n=n)
 
-        # Mutate if we have data, otherwise use defaults
+        # 如果存在历史数据则进行变异，否则使用默认值
         if x is not None:
             rng = np.random.default_rng()
             ng = len(self.space)
 
-            # Crossover
+            # 交叉
             genes = self._crossover(x)
 
-            # Mutation
-            gains = np.array([v[2] if len(v) == 3 else 1.0 for v in self.space.values()])  # gains 0-1
+            # 变异
+            gains = np.array([v[2] if len(v) == 3 else 1.0 for v in self.space.values()])  # 增益范围为 0 到 1
             factors = np.ones(ng)
-            while np.all(factors == 1):  # mutate until a change occurs (prevent duplicates)
+            while np.all(factors == 1):  # 持续变异，直到产生变化（避免重复结果）
                 mask = rng.random(ng) < mutation
                 step = rng.standard_normal(ng) * (sigma * gains)
                 factors = np.where(mask, np.exp(step), 1.0).clip(0.25, 4.0)
@@ -435,11 +432,11 @@ class Tuner:
         else:
             hyp = {k: getattr(self.args, k) for k in self.space}
 
-        # Constrain to limits
+        # 限制在上下界内
         for k, bounds in self.space.items():
             hyp[k] = round(min(max(hyp[k], bounds[0]), bounds[1]), 5)
 
-        # Update types
+        # 更新参数类型
         if "close_mosaic" in hyp:
             hyp["close_mosaic"] = round(hyp["close_mosaic"])
         if "epochs" in hyp:
@@ -448,26 +445,26 @@ class Tuner:
         return hyp
 
     def __call__(self, iterations: int = 10, cleanup: bool = True):
-        """Execute the hyperparameter evolution process when the Tuner instance is called.
+        """调用 Tuner 实例时执行超参数演化过程。
 
-        This method iterates through the specified number of iterations, performing the following steps:
-        1. Sync MongoDB results to local NDJSON (if using distributed mode)
-        2. Mutate hyperparameters using the best previous results or defaults
-        3. Train a YOLO model with the mutated hyperparameters
-        4. Log fitness scores and hyperparameters to MongoDB and/or NDJSON
-        5. Track the best performing configuration across all iterations
+        此方法会执行指定次数的迭代，步骤如下：
+        1. 将 MongoDB 结果同步到本地 NDJSON（使用分布式模式时）。
+        2. 根据之前的最佳结果或默认值改变超参数。
+        3. 使用变异后的超参数训练 YOLO 模型。
+        4. 将 fitness 分数和超参数记录到 MongoDB 和/或 NDJSON。
+        5. 跟踪所有迭代中的最佳配置。
 
-        Args:
-            iterations (int): The number of generations to run the evolution for.
-            cleanup (bool): Whether to delete iteration weights to reduce storage space during tuning.
+        参数：
+            iterations (int): 要执行的演化迭代次数。
+            cleanup (bool): 是否删除每次迭代的权重，以减少调优过程中的存储空间占用。
         """
         t0 = time.time()
         self.tune_dir.mkdir(parents=True, exist_ok=True)
         (self.tune_dir / "weights").mkdir(parents=True, exist_ok=True)
         best_save_dirs = {}
-        n_successful = 0  # iters with real training metrics in this invocation (excludes resumed/MongoDB rows)
+        n_successful = 0  # 本次调用中包含真实训练指标的迭代次数（不包括恢复训练或 MongoDB 中已有的记录）
 
-        # Sync MongoDB to local NDJSON at startup for proper resume logic
+        # 启动时将 MongoDB 同步到本地 NDJSON，以便正确恢复训练
         if self.mongodb:
             self._sync_mongodb_to_file()
 
@@ -476,11 +473,11 @@ class Tuner:
             start = len(self._load_local_results())
             LOGGER.info(f"{self.prefix}Resuming tuning run {self.tune_dir} from iteration {start + 1}...")
         for i in range(start, iterations):
-            # Linearly decay sigma from 0.2 → 0.1 over first 300 iterations
+            # 前 300 次迭代中，将 sigma 从 0.2 线性衰减到 0.1
             frac = min(i / 300.0, 1.0)
             sigma_i = 0.2 - 0.1 * frac
 
-            # Mutate hyperparameters
+            # 改变超参数
             mutated_hyp = self._mutate(sigma=sigma_i)
             LOGGER.info(f"{self.prefix}Starting iteration {i + 1}/{iterations} with hyperparameters: {mutated_hyp}")
 
@@ -502,15 +499,15 @@ class Tuner:
                 metrics_i = {}
                 try:
                     train_args["data"] = d
-                    train_args["save_dir"] = str(save_dir[j])  # pass save_dir to subprocess to ensure same path is used
-                    # Train YOLO model with mutated hyperparameters (run in subprocess to avoid dataloader hang)
+                    train_args["save_dir"] = str(save_dir[j])  # 将 save_dir 传给子进程，确保使用相同路径
+                    # 使用变异后的超参数训练 YOLO 模型（在子进程中运行，以避免数据加载器卡死）
                     cmd = [*_YOLO_CLI_COMMAND, "train", *(f"{k}={v}" for k, v in train_args.items())]
                     subprocess.run(cmd, check=True)
                     ckpt_file = weights_dir[j] / ("best.pt" if (weights_dir[j] / "best.pt").exists() else "last.pt")
                     metrics_i = torch_load(ckpt_file)["train_metrics"]
                     metrics = metrics_i
 
-                    # Cleanup
+                    # 清理资源
                     time.sleep(1)
                     gc.collect()
                     torch.cuda.empty_cache()
@@ -518,7 +515,7 @@ class Tuner:
                 except Exception as e:
                     LOGGER.error(f"training failure for hyperparameter tuning iteration {i + 1}\n{e}")
 
-                # Save results - MongoDB takes precedence
+                # 保存结果；MongoDB 优先
                 dataset_metrics[dataset] = metrics_i
                 all_fitness.append(metrics_i.get("fitness") or 0.0)
             fitness = sum(all_fitness) / len(all_fitness)
@@ -541,13 +538,13 @@ class Tuner:
             else:
                 self._save_local_result(result)
 
-            # Get best results
+            # 获取最佳结果
             results = self._load_local_results()
             x = self._local_results_to_array(results)
-            fitness = x[:, 0]  # first column
+            fitness = x[:, 0]  # 第一列
             best_idx = self._best_result_index(results, fitness)
             best_result = results[best_idx]
-            n_attempted = (i + 1) - start  # iters tried in this invocation
+            n_attempted = (i + 1) - start  # 本次调用已尝试的迭代次数
             current_best_save_dirs = best_result.get("save_dirs", {})
             best_is_current = best_idx == i
             if best_is_current:
@@ -565,13 +562,13 @@ class Tuner:
                 best_save_dirs = current_best_save_dirs
             elif cleanup:
                 for s in save_dir:
-                    shutil.rmtree(s, ignore_errors=True)  # remove iteration dirs to reduce storage space
+                            shutil.rmtree(s, ignore_errors=True)  # 删除迭代目录，以减少存储空间占用
                 best_save_dirs = current_best_save_dirs
 
-            # Plot tune results
+            # 绘制调优结果
             plot_tune_results(str(self.tune_file))
 
-            # Save and print tune results
+            # 保存并打印调优结果
             if n_successful == n_attempted:
                 status = "complete ✅"
             elif n_successful == 0:

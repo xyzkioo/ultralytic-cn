@@ -27,58 +27,58 @@ import torch
 
 from ultralytics import __version__
 from ultralytics.utils.git import GitRepo
-from ultralytics.utils.patches import imread as imread  # re-export for backwards compatibility
-from ultralytics.utils.patches import imread_unicode, imshow, imwrite, torch_save  # for patches
+from ultralytics.utils.patches import imread as imread  # 重新导出以保持向后兼容
+from ultralytics.utils.patches import imread_unicode, imshow, imwrite, torch_save  # 补丁函数
 from ultralytics.utils.tqdm import TQDM  # noqa
 
 
 def env_bool(name: str, default: bool = False) -> bool:
-    """Parse a boolean environment variable, accepting common truthy strings.
+    """解析布尔环境变量，并接受常见的真值字符串。
 
-    Accepts "1", "true", "yes", "on", "y", "t" (case-insensitive, whitespace-trimmed) as True; any other set value is
-    False. The default is returned only when the variable is unset, not when it is set to an empty string.
+    接受 `"1"`、`"true"`、`"yes"`、`"on"`、`"y"` 和 `"t"`（不区分大小写并去除空白）作为 True；
+    其他已设置的值均为 False。仅当环境变量未设置时返回默认值，设置为空字符串时不会返回默认值。
 
-    Args:
-        name (str): Environment variable name.
-        default (bool): Value returned when the variable is unset.
+    参数：
+        name (str): 环境变量名称。
+        default (bool): 环境变量未设置时返回的值。
 
-    Returns:
-        (bool): Parsed boolean value.
+    返回：
+        (bool): 解析后的布尔值。
 
-    Examples:
-        >>> env_bool("YOLO_UNSET_EXAMPLE_VAR", True)  # returns the default when the variable is unset
+    示例：
+        >>> env_bool("YOLO_UNSET_EXAMPLE_VAR", True)  # 环境变量未设置时返回默认值
         True
     """
     v = os.environ.get(name)
     return default if v is None else v.strip().lower() in {"1", "true", "yes", "on", "y", "t"}
 
 
-# PyTorch Multi-GPU DDP Constants, trusted only in real DDP workers, i.e. WORLD_SIZE > 1 (#16446)
+# PyTorch 多 GPU DDP 常量，仅在真实 DDP 工作进程（即 WORLD_SIZE > 1）中可信（#16446）
 WORLD_SIZE = int(os.getenv("WORLD_SIZE", "1"))
 RANK = int(os.getenv("RANK", "-1")) if WORLD_SIZE > 1 else -1
 LOCAL_RANK = int(os.getenv("LOCAL_RANK", "-1")) if WORLD_SIZE > 1 else -1
 
-# Other Constants
+# 其他常量
 ARGV = sys.argv or ["", ""]  # sometimes sys.argv = []
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[1]  # YOLO
-ASSETS = ROOT / "assets"  # default images
+ASSETS = ROOT / "assets"  # 默认图像
 ASSETS_URL = "https://github.com/ultralytics/assets/releases/download/v0.0.0"  # assets GitHub URL
-# Configurable Platform URL for debugging (e.g. ULTRALYTICS_PLATFORM_URL=http://localhost:3000)
+# 可配置的 Platform 调试 URL（例如 ULTRALYTICS_PLATFORM_URL=http://localhost:3000）
 PLATFORM_URL = os.getenv("ULTRALYTICS_PLATFORM_URL", "https://platform.ultralytics.com").rstrip("/")
 PLATFORM_API_URL = os.getenv("PLATFORM_API_URL", f"{PLATFORM_URL}/api/webhooks")
 DEFAULT_CFG_PATH = ROOT / "cfg/default.yaml"
-NUM_THREADS = min(8, max(1, os.cpu_count() - 1))  # number of YOLO multiprocessing threads
-AUTOINSTALL = env_bool("YOLO_AUTOINSTALL", True)  # global auto-install mode
-VERBOSE = env_bool("YOLO_VERBOSE", True)  # global verbose mode
-SAFE_LOAD = env_bool("ULTRALYTICS_SAFE_LOAD")  # opt-in weights_only model loading
+NUM_THREADS = min(8, max(1, os.cpu_count() - 1))  # YOLO 多进程线程数量
+AUTOINSTALL = env_bool("YOLO_AUTOINSTALL", True)  # 全局自动安装模式
+VERBOSE = env_bool("YOLO_VERBOSE", True)  # 全局详细输出模式
+SAFE_LOAD = env_bool("ULTRALYTICS_SAFE_LOAD")  # 可选启用 weights_only 模型加载
 LOGGING_NAME = "ultralytics"
 MACOS, LINUX, WINDOWS = (platform.system() == x for x in ["Darwin", "Linux", "Windows"])  # environment booleans
 MACOS_VERSION = platform.mac_ver()[0] if MACOS else None
 NOT_MACOS14 = not (MACOS and MACOS_VERSION.startswith("14."))
 ARM64 = platform.machine() in {"arm64", "aarch64"}  # ARM64 booleans
 PYTHON_VERSION = platform.python_version()
-TORCH_VERSION = str(torch.__version__)  # Normalize torch.__version__ (PyTorch>1.9 returns TorchVersion objects)
+TORCH_VERSION = str(torch.__version__)  # Normalize torch.__version__ (PyTorch>1.9 返回 TorchVersion 对象)
 TORCHVISION_VERSION = importlib.metadata.version("torchvision")  # faster than importing torchvision
 IS_VSCODE = os.environ.get("TERM_PROGRAM") == "vscode"
 RKNN_CHIPS = frozenset(
@@ -95,7 +95,7 @@ RKNN_CHIPS = frozenset(
         "rk2118",
         "rv1126b",
     }
-)  # Rockchip processors available for export
+)  # 可用于导出的 Rockchip 处理器
 QNN_HTP_TARGETS = {
     "68": ("htp_arch", "68"),  # Snapdragon 888
     "69": ("htp_arch", "69"),  # Snapdragon 8 Gen 1
@@ -105,7 +105,7 @@ QNN_HTP_TARGETS = {
     "81": ("htp_arch", "81"),  # Snapdragon 8 Elite Gen 5
     "iq-8275": ("soc_model", "82"),  # Dragonwing IQ-8275
     "qcs8275": ("soc_model", "82"),
-}  # Qualcomm Hexagon HTP targets and their ONNX Runtime QNN provider option
+}  # Qualcomm Hexagon HTP 目标及其 ONNX Runtime QNN provider 选项
 HELP_MSG = """
     Examples for running Ultralytics:
 
@@ -117,15 +117,15 @@ HELP_MSG = """
 
         from ultralytics import YOLO
 
-        # Load a model
-        model = YOLO("yolo26n.yaml")  # build a new model from scratch
-        model = YOLO("yolo26n.pt")  # load a pretrained model (recommended for training)
+        # 加载模型
+        model = YOLO("yolo26n.yaml")  # 从头构建新模型
+        model = YOLO("yolo26n.pt")  # 加载预训练模型（推荐用于训练）
 
-        # Use the model
-        results = model.train(data="coco8.yaml", epochs=3)  # train the model
-        results = model.val()  # evaluate model performance on the validation set
-        results = model("https://ultralytics.com/images/bus.jpg")  # predict on an image
-        success = model.export(format="onnx")  # export the model to ONNX format
+        # 使用模型
+        results = model.train(data="coco8.yaml", epochs=3)  # 训练模型
+        results = model.val()  # 在验证集上评估模型性能
+        results = model("https://ultralytics.com/images/bus.jpg")  # 对图像进行预测
+        success = model.export(format="onnx")  # 将模型导出为 ONNX 格式
 
     3. Use the command line interface (CLI):
 
@@ -138,19 +138,19 @@ HELP_MSG = """
                     ARGS (optional) are any number of custom "arg=value" pairs like "imgsz=320" that override defaults.
                         See all ARGS at https://docs.ultralytics.com/usage/cfg or with "yolo cfg"
 
-        - Train a detection model for 10 epochs with an initial learning_rate of 0.01
+        - 使用初始学习率 0.01 训练检测模型 10 个周期
             yolo detect train data=coco8.yaml model=yolo26n.pt epochs=10 lr0=0.01
 
-        - Predict a YouTube video using a pretrained segmentation model at image size 320:
+        - 使用预训练分割模型以图像尺寸 320 预测 YouTube 视频：
             yolo segment predict model=yolo26n-seg.pt source='https://youtu.be/LNwODJXcvt4' imgsz=320
 
-        - Val a pretrained detection model at batch-size 1 and image size 640:
+        - 使用批次大小 1、图像尺寸 640 验证预训练检测模型：
             yolo detect val model=yolo26n.pt data=coco8.yaml batch=1 imgsz=640
 
-        - Export a YOLO26n classification model to ONNX format at image size 224 by 128 (no TASK required)
+        - 将 YOLO26n 分类模型以 224×128 的图像尺寸导出为 ONNX 格式（无需指定 TASK）
             yolo export model=yolo26n-cls.pt format=onnx imgsz=224,128
 
-        - Run special commands:
+        - 运行特殊命令：
             yolo help
             yolo checks
             yolo version
@@ -163,43 +163,42 @@ HELP_MSG = """
     GitHub: https://github.com/ultralytics/ultralytics
     """
 
-# Settings and Environment Variables
+# 设置和环境变量
 torch.set_printoptions(linewidth=320, precision=4, profile="default")
-np.set_printoptions(linewidth=320, formatter={"float_kind": "{:11.5g}".format})  # format short g, %precision=5
-cv2.setNumThreads(0)  # prevent OpenCV from multithreading (incompatible with PyTorch DataLoader)
+np.set_printoptions(linewidth=320, formatter={"float_kind": "{:11.5g}".format})  # 使用短格式 g，精度为 5 位
+cv2.setNumThreads(0)  # 防止 OpenCV 多线程（与 PyTorch DataLoader 不兼容）
 os.environ["NUMEXPR_MAX_THREADS"] = str(NUM_THREADS)  # NumExpr max threads
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"  # suppress verbose TF compiler warnings in Colab
-os.environ["TORCH_CPP_LOG_LEVEL"] = "ERROR"  # suppress "NNPACK.cpp could not initialize NNPACK" warnings
-os.environ["KINETO_LOG_LEVEL"] = "5"  # suppress verbose PyTorch profiler output when computing FLOPs
+os.environ["TORCH_CPP_LOG_LEVEL"] = "ERROR"  # 抑制 "NNPACK.cpp could not initialize NNPACK" 警告
+os.environ["KINETO_LOG_LEVEL"] = "5"  # 计算 FLOPs 时抑制 PyTorch profiler 的详细输出
 
-# Centralized warning suppression
+# 集中抑制警告
 warnings.filterwarnings("ignore", message="torch.distributed.reduce_op is deprecated")  # PyTorch deprecation
 warnings.filterwarnings("ignore", message="The figure layout has changed to tight")  # matplotlib>=3.7.2
-warnings.filterwarnings("ignore", category=FutureWarning, module="timm")  # mobileclip timm.layers deprecation
+warnings.filterwarnings("ignore", category=FutureWarning, module="timm")  # mobileclip timm.层 deprecation
 warnings.filterwarnings("ignore", category=torch.jit.TracerWarning)  # ONNX/TorchScript export tracer warnings
-warnings.filterwarnings("ignore", category=UserWarning, message=".*prim::Constant.*")  # ONNX shape warning
+warnings.filterwarnings("ignore", category=UserWarning, message=".*prim::Constant.*")  # ONNX 形状 warning
 warnings.filterwarnings("ignore", category=DeprecationWarning, module="coremltools")  # CoreML np.bool deprecation
-logging.getLogger("coremltools").setLevel(logging.ERROR)  # Suppress native binary load failures on non-macOS
+logging.getLogger("coremltools").setLevel(logging.ERROR)  # 抑制非 macOS 上的原生二进制加载失败信息
 
-# Precompiled type tuples for faster isinstance() checks
+# 预编译类型元组，用于加速 isinstance() 检查
 FLOAT_OR_INT = (float, int)
 STR_OR_PATH = (str, Path)
 
 
 class DataExportMixin:
-    """Mixin class for exporting validation metrics or prediction results in various formats.
+    """用于将验证指标或预测结果导出为多种格式的混入类。
 
-    This class provides utilities to export performance metrics (e.g., mAP, precision, recall) or prediction results
-    from classification, object detection, segmentation, or pose estimation tasks into various formats: Polars
-    DataFrame, CSV, and JSON.
+    此类提供工具，可将分类、目标检测、分割或姿态估计任务的性能指标（例如 mAP、精确率、召回率）或预测结果
+    导出为 Polars DataFrame、CSV 和 JSON 等格式。
 
-    Methods:
-        to_df: Convert summary to a Polars DataFrame.
-        to_csv: Export results as a CSV string.
-        to_json: Export results as a JSON string.
-        tojson: Deprecated alias for `to_json()`.
+    方法：
+        to_df: 将摘要转换为 Polars DataFrame。
+        to_csv: 将结果导出为 CSV 字符串。
+        to_json: 将结果导出为 JSON 字符串。
+        tojson: `to_json()` 的弃用别名。
 
-    Examples:
+    示例：
         >>> model = YOLO("yolo26n.pt")
         >>> results = model("image.jpg")
         >>> df = results.to_df()
@@ -208,28 +207,28 @@ class DataExportMixin:
     """
 
     def to_df(self, normalize=False, decimals=5):
-        """Create a Polars DataFrame from the prediction results summary or validation metrics.
+        """根据预测结果摘要或验证指标创建 Polars DataFrame。
 
-        Args:
-            normalize (bool, optional): Normalize numerical values for easier comparison.
-            decimals (int, optional): Decimal places to round floats.
+        参数：
+            normalize (bool, 可选): 是否归一化数值，以便进行比较。
+            decimals (int, 可选): 浮点数保留的小数位数。
 
-        Returns:
-            (polars.DataFrame): Polars DataFrame containing the summary data.
+        返回：
+            (polars.DataFrame): 包含摘要数据的 Polars DataFrame。
         """
         import polars as pl  # scope for faster 'import ultralytics'
 
         return pl.DataFrame(self.summary(normalize=normalize, decimals=decimals))
 
     def to_csv(self, normalize=False, decimals=5):
-        """Export results or metrics to CSV string format.
+        """将结果或指标导出为 CSV 字符串。
 
-        Args:
-            normalize (bool, optional): Normalize numeric values.
-            decimals (int, optional): Decimal precision.
+        参数：
+            normalize (bool, 可选): 是否归一化数值。
+            decimals (int, 可选): 小数精度。
 
-        Returns:
-            (str): CSV content as string.
+        返回：
+            (str): CSV 内容字符串。
         """
         import polars as pl
 
@@ -238,7 +237,7 @@ class DataExportMixin:
         try:
             return df.write_csv()
         except Exception:
-            # Minimal string conversion for any remaining complex types
+            # 将剩余复杂类型转换为最简字符串
             def _to_str_simple(v):
                 if v is None:
                     return ""
@@ -253,30 +252,29 @@ class DataExportMixin:
             return df_str.write_csv()
 
     def to_json(self, normalize=False, decimals=5):
-        """Export results to JSON format.
+        """将结果导出为 JSON 格式。
 
-        Args:
-            normalize (bool, optional): Normalize numeric values.
-            decimals (int, optional): Decimal precision.
+        参数：
+            normalize (bool, 可选): 是否归一化数值。
+            decimals (int, 可选): 小数精度。
 
-        Returns:
-            (str): JSON-formatted string of the results.
+        返回：
+            (str): JSON 格式的结果字符串。
         """
         return self.to_df(normalize=normalize, decimals=decimals).write_json()
 
 
 class SimpleClass:
-    """A simple base class for creating objects with string representations of their attributes.
+    """用于创建可将属性转换为字符串表示的对象的简单基类。
 
-    This class provides a foundation for creating objects that can be easily printed or represented as strings, showing
-    all their non-callable attributes. It's useful for debugging and introspection of object states.
+    此类为创建易于打印或转换为字符串的对象提供基础，并显示所有不可调用属性，适用于调试和检查对象状态。
 
-    Methods:
-        __str__: Return a human-readable string representation of the object.
-        __repr__: Return a machine-readable string representation of the object.
-        __getattr__: Provide a custom attribute access error message with helpful information.
+    方法：
+        __str__: 返回对象的可读字符串表示。
+        __repr__: 返回对象的机器可读字符串表示。
+        __getattr__: 提供包含有用信息的自定义属性访问错误消息。
 
-    Examples:
+    示例：
         >>> class MyClass(SimpleClass):
         ...     def __init__(self):
         ...         self.x = 10
@@ -284,20 +282,20 @@ class SimpleClass:
         >>> obj = MyClass()
         >>> text = str(obj)  # "<module>.MyClass object with attributes:" followed by "x: 10" and "y: 'hello'"
 
-    Notes:
-        - This class is designed to be subclassed. It provides a convenient way to inspect object attributes.
-        - The string representation includes the module and class name of the object.
-        - Callable attributes and attributes starting with an underscore are excluded from the string representation.
+    注意：
+        - 此类用于被继承，为检查对象属性提供便利方式。
+        - 字符串表示中包含对象的模块和类名称。
+        - 可调用属性以及以下划线开头的属性不会出现在字符串表示中。
     """
 
     def __str__(self):
-        """Return a human-readable string representation of the object."""
+        """返回对象的可读字符串表示。"""
         attr = []
         for a in dir(self):
             v = getattr(self, a)
             if not callable(v) and not a.startswith("_"):
                 if isinstance(v, SimpleClass):
-                    # Display only the module and class name for subclasses
+                    # 对子类仅显示模块和类名称
                     s = f"{a}: {v.__module__}.{v.__class__.__name__} object"
                 else:
                     s = f"{a}: {v!r}"
@@ -305,29 +303,27 @@ class SimpleClass:
         return f"{self.__module__}.{self.__class__.__name__} object with attributes:\n\n" + "\n".join(attr)
 
     def __repr__(self):
-        """Return a machine-readable string representation of the object."""
+        """返回对象的机器可读字符串表示。"""
         return self.__str__()
 
     def __getattr__(self, attr):
-        """Provide a custom attribute access error message with helpful information."""
+        """提供包含有用信息的自定义属性访问错误消息。"""
         name = self.__class__.__name__
         raise AttributeError(f"'{name}' object has no attribute '{attr}'. See valid attributes below.\n{self.__doc__}")
 
 
 class IterableSimpleNamespace(SimpleNamespace):
-    """An iterable SimpleNamespace class that provides enhanced functionality for attribute access and iteration.
+    """可迭代的 SimpleNamespace 类，为属性访问和迭代提供增强功能。
 
-    This class extends the SimpleNamespace class with additional methods for iteration, string representation, and
-    attribute access. It is designed to be used as a convenient container for storing and accessing configuration
-    parameters.
+    此类扩展 SimpleNamespace，增加了迭代、字符串表示和属性访问方法，适合作为便捷的配置参数容器。
 
-    Methods:
-        __iter__: Return an iterator of key-value pairs from the namespace's attributes.
-        __str__: Return a human-readable string representation of the object.
-        __getattr__: Provide a custom attribute access error message with helpful information.
-        get: Retrieve the value of a specified key, or a default value if the key doesn't exist.
+    方法：
+        __iter__: 返回命名空间属性的键值对迭代器。
+        __str__: 返回对象的可读字符串表示。
+        __getattr__: 提供包含有用信息的自定义属性访问错误消息。
+        get: 获取指定键的值；键不存在时返回默认值。
 
-    Examples:
+    示例：
         >>> cfg = IterableSimpleNamespace(a=1, b=2, c=3)
         >>> for k, v in cfg:
         ...     print(f"{k}: {v}")
@@ -343,21 +339,20 @@ class IterableSimpleNamespace(SimpleNamespace):
         >>> cfg.get("d", "default")
         'default'
 
-    Notes:
-        This class is particularly useful for storing configuration parameters in a more accessible
-        and iterable format compared to a standard dictionary.
+    注意：
+        与标准字典相比，此类特别适合以更易访问且可迭代的形式存储配置参数。
     """
 
     def __iter__(self):
-        """Return an iterator of key-value pairs from the namespace's attributes."""
+        """返回命名空间属性的键值对迭代器。"""
         return iter(vars(self).items())
 
     def __str__(self):
-        """Return a human-readable string representation of the object."""
+        """返回对象的可读字符串表示。"""
         return "\n".join(f"{k}={v}" for k, v in vars(self).items())
 
     def __getattr__(self, attr):
-        """Provide a custom attribute access error message with helpful information."""
+        """提供包含有用信息的自定义属性访问错误消息。"""
         name = self.__class__.__name__
         raise AttributeError(
             f"""
@@ -369,21 +364,21 @@ class IterableSimpleNamespace(SimpleNamespace):
         )
 
     def get(self, key, default=None):
-        """Return the value of the specified key if it exists; otherwise, return the default value."""
+        """如果指定键存在则返回其值，否则返回默认值。"""
         return getattr(self, key, default)
 
 
 def plt_settings(rcparams=None, backend="Agg"):
-    """Decorator to temporarily set rc parameters and the backend for a plotting function.
+    """临时设置绘图函数 rc 参数和后端的装饰器。
 
-    Args:
-        rcparams (dict, optional): Dictionary of rc parameters to set.
-        backend (str, optional): Name of the backend to use.
+    参数：
+        rcparams (dict, 可选): 要设置的 rc 参数字典。
+        backend (str, 可选): 要使用的后端名称。
 
-    Returns:
-        (Callable): Decorated function with temporarily set rc parameters and backend.
+    返回：
+        (Callable): 已设置临时 rc 参数和后端的装饰函数。
 
-    Examples:
+    示例：
         >>> @plt_settings({"font.size": 12})
         ... def plot_function():
         ...     plt.figure()
@@ -399,17 +394,17 @@ def plt_settings(rcparams=None, backend="Agg"):
         rcparams = {"font.size": 11}
 
     def decorator(func):
-        """Decorator to apply temporary rc parameters and backend to a function."""
+        """将临时 rc 参数和后端应用到函数的装饰器。"""
 
         def wrapper(*args, **kwargs):
-            """Set rc parameters and backend, call the original function, and restore the settings."""
+            """设置 rc 参数和后端，调用原函数，然后恢复原设置。"""
             import matplotlib.pyplot as plt  # scope for faster 'import ultralytics'
 
-            # Prepend Arial Unicode for non-Latin text (CJK, Arabic, etc.); matplotlib falls back if missing
+            # 为非拉丁文本（中文、阿拉伯文等）优先添加 Arial Unicode；缺少时由 Matplotlib 使用后备字体
             if "font.sans-serif" not in rcparams and not wrapper._fonts_registered:
                 from matplotlib import font_manager
 
-                # Register any fonts in Ultralytics config dir (e.g. Arial.Unicode.ttf) with matplotlib
+                # 将 Ultralytics 配置目录中的字体（例如 Arial.Unicode.ttf）注册到 Matplotlib
                 known = {f.fname for f in font_manager.fontManager.ttflist}
                 for f in USER_CONFIG_DIR.glob("*.ttf"):
                     if str(f) not in known:
@@ -424,10 +419,10 @@ def plt_settings(rcparams=None, backend="Agg"):
             original_backend = plt.get_backend()
             switch = backend.lower() != original_backend.lower()
             if switch:
-                plt.close("all")  # auto-close()ing of figures upon backend switching is deprecated since 3.8
+                plt.close("all")  # 自 3.8 起，切换后端时自动关闭图形的行为已弃用
                 plt.switch_backend(backend)
 
-            # Plot with backend and always revert to original backend
+            # 使用指定后端绘图，并始终恢复原始后端
             try:
                 with plt.rc_context(rc):
                     result = func(*args, **kwargs)
@@ -444,36 +439,35 @@ def plt_settings(rcparams=None, backend="Agg"):
 
 
 def set_logging(name="LOGGING_NAME", verbose=True):
-    """Set up logging with UTF-8 encoding and configurable verbosity.
+    """使用 UTF-8 编码和可配置的详细程度设置日志记录。
 
-    This function configures logging for the Ultralytics library, setting the appropriate logging level and formatter
-    based on the verbosity flag and the current process rank. It handles special cases for Windows environments where
-    UTF-8 encoding might not be the default.
+    此函数为 Ultralytics 库配置日志，根据详细输出标志和当前进程秩设置合适的日志级别与格式化器，
+    并处理 Windows 环境中默认编码可能不是 UTF-8 的特殊情况。
 
-    Args:
-        name (str): Name of the logger.
-        verbose (bool): Flag to set logging level to INFO if True, ERROR otherwise.
+    参数：
+        name (str): 日志记录器名称。
+        verbose (bool): 为 True 时将日志级别设为 INFO，否则设为 ERROR。
 
-    Returns:
-        (logging.Logger): Configured logger object.
+    返回：
+        (logging.Logger): 配置完成的日志记录器对象。
 
-    Examples:
+    示例：
         >>> set_logging(name="ultralytics", verbose=True)
         >>> logger = logging.getLogger("ultralytics")
-        >>> logger.info("This is an info message")
+        >>> logger.info("这是一条信息日志")
 
-    Notes:
-        - On Windows, this function attempts to reconfigure stdout to use UTF-8 encoding if possible.
-        - If reconfiguration is not possible, it falls back to a custom formatter that handles non-UTF-8 environments.
-        - The function sets up a StreamHandler with the appropriate formatter and level.
-        - The logger's propagate flag is set to False to prevent duplicate logging in parent loggers.
+    注意：
+        - 在 Windows 上，此函数会尽可能重新配置 stdout，使其使用 UTF-8 编码。
+        - 如果无法重新配置，则退回到可处理非 UTF-8 环境的自定义格式化器。
+        - 此函数使用适当的格式化器和级别设置 StreamHandler。
+        - 记录器的 propagate 标志设为 False，以避免日志在父记录器中重复输出。
     """
-    level = logging.INFO if verbose and RANK in {-1, 0} else logging.ERROR  # rank in world for Multi-GPU trainings
+    level = logging.INFO if verbose and RANK in {-1, 0} else logging.ERROR  # 多 GPU 训练中的进程秩
 
     class PrefixFormatter(logging.Formatter):
         def format(self, record):
-            """Format log records with prefixes based on level."""
-            # Apply prefixes based on log level
+            """根据日志级别为日志记录添加前缀。"""
+            # 根据日志级别添加前缀
             if record.levelno == logging.WARNING:
                 prefix = "WARNING" if WINDOWS else "WARNING ⚠️"
                 record.msg = f"{prefix} {record.msg}"
@@ -481,31 +475,31 @@ def set_logging(name="LOGGING_NAME", verbose=True):
                 prefix = "ERROR" if WINDOWS else "ERROR ❌"
                 record.msg = f"{prefix} {record.msg}"
 
-            # Handle emojis in message based on platform
+            # 根据平台处理消息中的表情符号
             formatted_message = super().format(record)
             return emojis(formatted_message)
 
     formatter = PrefixFormatter("%(message)s")
 
-    # Handle Windows UTF-8 encoding issues
+    # 处理 Windows UTF-8 编码问题
     if WINDOWS and hasattr(sys.stdout, "encoding") and sys.stdout.encoding != "utf-8":
         with contextlib.suppress(Exception):
-            # Attempt to reconfigure stdout to use UTF-8 encoding if possible
+            # 尽可能重新配置 stdout，使其使用 UTF-8 编码
             if hasattr(sys.stdout, "reconfigure"):
                 sys.stdout.reconfigure(encoding="utf-8")
-            # For environments where reconfigure is not available, wrap stdout in a TextIOWrapper
+            # reconfigure 不可用时，将 stdout 包装为 TextIOWrapper
             elif hasattr(sys.stdout, "buffer"):
                 import io
 
                 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
 
-    # Create and configure the StreamHandler with the appropriate formatter and level
+    # 使用适当的格式化器和级别创建并配置 StreamHandler
     stream_handler = logging.StreamHandler(sys.stdout)
     stream_handler.set_name("ultralytics.utils.set_logging")
     stream_handler.setFormatter(formatter)
     stream_handler.setLevel(level)
 
-    # Set up the logger
+    # 设置日志记录器
     logger = logging.getLogger(name)
     for h in [h for h in logger.handlers if h.name == stream_handler.name]:
         logger.removeHandler(h)
@@ -515,26 +509,25 @@ def set_logging(name="LOGGING_NAME", verbose=True):
     return logger
 
 
-# Set logger
-LOGGER = set_logging(LOGGING_NAME, verbose=VERBOSE)  # define globally (used in train.py, val.py, predict.py, etc.)
+# 设置日志记录器
+LOGGER = set_logging(LOGGING_NAME, verbose=VERBOSE)  # 全局定义，供 train.py、val.py、predict.py 等使用
 logging.getLogger("sentry_sdk").setLevel(logging.CRITICAL + 1)
 
 
 def emojis(string=""):
-    """Return platform-dependent emoji-safe version of string."""
+    """返回适配当前平台、可安全处理表情符号的字符串版本。"""
     return string.encode().decode("ascii", "ignore") if WINDOWS else string
 
 
 class ThreadingLocked:
-    """A decorator class for ensuring thread-safe execution of a function or method.
+    """确保函数或方法以线程安全方式执行的装饰器类。
 
-    This class can be used as a decorator to make sure that if the decorated function is called from multiple threads,
-    only one thread at a time will be able to execute the function.
+    此类可作为装饰器使用，确保被装饰函数即使被多个线程调用，也只有一个线程能同时执行该函数。
 
-    Attributes:
-        lock (threading.Lock): A lock object used to manage access to the decorated function.
+    属性：
+        lock (threading.Lock): 用于管理被装饰函数访问权限的锁对象。
 
-    Examples:
+    示例：
         >>> from ultralytics.utils import ThreadingLocked
         >>> @ThreadingLocked()
         ... def my_function():
@@ -542,16 +535,16 @@ class ThreadingLocked:
     """
 
     def __init__(self):
-        """Initialize the decorator class with a threading lock."""
+        """使用线程锁初始化装饰器类。"""
         self.lock = threading.Lock()
 
     def __call__(self, f):
-        """Run thread-safe execution of function or method."""
+        """以线程安全方式执行函数或方法。"""
         from functools import wraps
 
         @wraps(f)
         def decorated(*args, **kwargs):
-            """Apply thread-safety to the decorated function or method."""
+            """将线程安全机制应用到被装饰函数或方法。"""
             with self.lock:
                 return f(*args, **kwargs)
 
@@ -559,26 +552,24 @@ class ThreadingLocked:
 
 
 class YAML:
-    """YAML utility class for efficient file operations with automatic C-implementation detection.
+    """高效文件操作的 YAML 工具类，并自动检测 C 实现。
 
-    This class provides optimized YAML loading and saving operations using PyYAML's fastest available implementation
-    (C-based when possible). It implements a singleton pattern with lazy initialization, allowing direct class method
-    usage without explicit instantiation. The class handles file path creation, validation, and character encoding
-    issues automatically.
+    此类使用 PyYAML 可用的最快实现（尽可能使用基于 C 的实现）优化 YAML 加载和保存操作。
+    它采用单例模式和延迟初始化，无需显式实例化即可直接调用类方法，并自动处理文件路径创建、验证和字符编码问题。
 
-    The implementation prioritizes performance through:
-        - Automatic C-based loader/dumper selection when available
-        - Singleton pattern to reuse the same instance
-        - Lazy initialization to defer import costs until needed
-        - Fallback mechanisms for handling problematic YAML content
+    此实现通过以下方式优先保证性能：
+        - 可用时自动选择基于 C 的加载器和转储器
+        - 使用单例模式复用同一实例
+        - 使用延迟初始化，将导入开销推迟到实际需要时
+        - 使用回退机制处理有问题的 YAML 内容
 
-    Attributes:
-        _instance: Internal singleton instance storage.
-        yaml: Reference to the PyYAML module.
-        SafeLoader: Best available YAML loader (CSafeLoader if available).
-        SafeDumper: Best available YAML dumper (CSafeDumper if available).
+    属性：
+        _instance: 内部单例实例存储。
+        yaml: PyYAML 模块引用。
+        SafeLoader: 可用的最佳 YAML 加载器（如果可用则为 CSafeLoader）。
+        SafeDumper: 可用的最佳 YAML 转储器（如果可用则为 CSafeDumper）。
 
-    Examples:
+    示例：
         >>> data = YAML.load("config.yaml")
         >>> data["new_value"] = 123
         >>> YAML.save("updated_config.yaml", data)
@@ -589,17 +580,17 @@ class YAML:
 
     @classmethod
     def _get_instance(cls):
-        """Initialize singleton instance on first use."""
+        """首次使用时初始化单例实例。"""
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance
 
     def __init__(self):
-        """Initialize with optimal YAML implementation (C-based when available)."""
+        """使用最佳 YAML 实现进行初始化（可用时使用基于 C 的实现）。"""
         import yaml
 
         self.yaml = yaml
-        # Use C-based implementation if available for better performance
+        # 可用时使用基于 C 的实现以提升性能
         try:
             self.SafeLoader = yaml.CSafeLoader
             self.SafeDumper = yaml.CSafeDumper
@@ -609,28 +600,28 @@ class YAML:
 
     @classmethod
     def save(cls, file="data.yaml", data=None, header=""):
-        """Save Python object as YAML file.
+        """将 Python 对象保存为 YAML 文件。
 
-        Args:
-            file (str | Path): Path to save YAML file.
-            data (dict | None): Dict or compatible object to save.
-            header (str): Optional string to add at file beginning.
+        参数：
+            file (str | Path): 要保存的 YAML 文件路径。
+            data (dict | None): 要保存的字典或兼容对象。
+            header (str): 可选的文件头字符串，将添加到文件开头。
         """
         instance = cls._get_instance()
         if data is None:
             data = {}
 
-        # Create parent directories if needed
+        # 必要时创建父目录
         file = Path(file)
         file.parent.mkdir(parents=True, exist_ok=True)
 
-        # Convert non-serializable objects to strings
+        # 将不可序列化对象转换为字符串
         valid_types = int, float, str, bool, list, tuple, dict, type(None)
         for k, v in data.items():
             if not isinstance(v, valid_types):
                 data[k] = str(v)
 
-        # Write YAML file
+        # 写入 YAML 文件
         with open(file, "w", errors="ignore", encoding="utf-8") as f:
             if header:
                 f.write(header)
@@ -638,27 +629,27 @@ class YAML:
 
     @classmethod
     def load(cls, file="data.yaml", append_filename=False):
-        """Load YAML file to Python object with robust error handling.
+        """将 YAML 文件加载为 Python 对象，并提供稳健的错误处理。
 
-        Args:
-            file (str | Path): Path to YAML file.
-            append_filename (bool): Whether to add filename to returned dict.
+        参数：
+            file (str | Path): YAML 文件路径。
+            append_filename (bool): 是否将文件名添加到返回字典中。
 
-        Returns:
-            (dict): Loaded YAML content.
+        返回：
+            (dict): 加载后的 YAML 内容。
         """
         instance = cls._get_instance()
         assert str(file).endswith((".yaml", ".yml")), f"Not a YAML file: {file}"
 
-        # Read file content
+        # 读取文件内容
         with open(file, errors="ignore", encoding="utf-8") as f:
             s = f.read()
 
-        # Try loading YAML with fallback for problematic characters
+        # 尝试加载 YAML；遇到异常字符时使用回退方案
         try:
             data = instance.yaml.load(s, Loader=instance.SafeLoader)
         except Exception as e:
-            # Remove problematic characters and retry
+            # 移除异常字符后重试
             s = re.sub(r"[^\x09\x0A\x0D\x20-\x7E\x85\xA0-\uD7FF\uE000-\uFFFD\U00010000-\U0010ffff]+", "", s)
             try:
                 data = instance.yaml.load(s, Loader=instance.SafeLoader)
@@ -667,14 +658,14 @@ class YAML:
                     f"YAML syntax error in '{file}': {e}\nVerify YAML with https://ray.run/tools/yaml-formatter"
                 ) from None
 
-        if data is None:  # empty file, comments only, or explicit 'null'
+        if data is None:  # 空文件、仅包含注释的文件或显式的 'null'
             data = {}
-        elif not isinstance(data, dict):  # reject non-mapping YAML (scalar/list) with a clear error, not a cryptic one
+        elif not isinstance(data, dict):  # 拒绝非映射 YAML（标量或列表），并提供清晰错误信息
             raise ValueError(
                 f"'{file}' is not a valid YAML mapping. Verify YAML with https://ray.run/tools/yaml-formatter"
             )
 
-        # Check for accidental user-error None strings (should be 'null' in YAML)
+        # 检查用户误写的 None 字符串（YAML 中应使用 'null'）
         if "None" in data.values():
             data = {k: None if v == "None" else v for k, v in data.items()}
 
@@ -684,42 +675,42 @@ class YAML:
 
     @classmethod
     def print(cls, yaml_file):
-        """Pretty print YAML file or object to console.
+        """将 YAML 文件或对象格式化后输出到控制台。
 
-        Args:
-            yaml_file (str | Path | dict): Path to YAML file or dict to print.
+        参数：
+            yaml_file (str | Path | dict): 要输出的 YAML 文件路径或字典。
         """
         instance = cls._get_instance()
 
-        # Load file if path provided
+        # 提供路径时加载文件
         yaml_dict = cls.load(yaml_file) if isinstance(yaml_file, (str, Path)) else yaml_file
 
-        # Use -1 for unlimited width in C implementation
+        # 基于 C 的实现中使用 -1 表示不限制宽度
         dump = instance.yaml.dump(yaml_dict, sort_keys=False, allow_unicode=True, width=-1, Dumper=instance.SafeDumper)
 
         LOGGER.info(f"Printing '{colorstr('bold', 'black', yaml_file)}'\n\n{dump}")
 
 
-# Default configuration
+# 默认 配置
 DEFAULT_CFG_DICT = YAML.load(DEFAULT_CFG_PATH)
 DEFAULT_CFG_KEYS = DEFAULT_CFG_DICT.keys()
 DEFAULT_CFG = IterableSimpleNamespace(**DEFAULT_CFG_DICT)
 
 
 def read_device_model() -> str:
-    """Read the device model information from the system.
+    """读取系统中的设备型号信息。
 
-    Returns:
-        (str): Platform release string in lowercase, used to identify device models like Jetson or Raspberry Pi.
+    返回：
+        (str): 小写的平台版本字符串，用于识别 Jetson 或 Raspberry Pi 等设备型号。
     """
     return platform.release().lower()
 
 
 def is_ubuntu() -> bool:
-    """Check if the OS is Ubuntu.
+    """检查操作系统是否为 Ubuntu。
 
-    Returns:
-        (bool): True if OS is Ubuntu, False otherwise.
+    返回：
+        (bool): 操作系统为 Ubuntu 时返回 True，否则返回 False。
     """
     try:
         with open("/etc/os-release") as f:
@@ -729,15 +720,13 @@ def is_ubuntu() -> bool:
 
 
 def is_debian(codenames: list[str] | str | None = None) -> list[bool] | bool:
-    """Check if the OS is Debian.
+    """检查操作系统是否为 Debian。
 
-    Args:
-        codenames (list[str] | None | str): Specific Debian codename to check for (e.g., 'buster', 'bullseye'). If None,
-            only checks for Debian.
+    参数：
+        codenames (列表[str] | None | str): 要检查的 Debian 代号（例如 'buster'、'bullseye'）。为 None 时仅检查是否为 Debian。
 
-    Returns:
-        (list[bool] | bool): List of booleans indicating if OS matches each Debian codename, or a single boolean if no
-            codenames provided.
+    返回：
+        (列表[bool] | bool): 表示操作系统是否匹配每个 Debian 代号的布尔值列表；未提供代号时返回单个布尔值。
     """
     try:
         with open("/etc/os-release") as f:
@@ -755,50 +744,50 @@ def is_debian(codenames: list[str] | str | None = None) -> list[bool] | bool:
 
 
 def is_colab():
-    """Check if the current script is running inside a Google Colab notebook.
+    """检查当前脚本是否运行在 Google Colab 笔记本中。
 
-    Returns:
-        (bool): True if running inside a Colab notebook, False otherwise.
+    返回：
+        (bool): 运行在 Colab 笔记本中时返回 True，否则返回 False。
     """
     return "COLAB_RELEASE_TAG" in os.environ or "COLAB_BACKEND_VERSION" in os.environ
 
 
 def is_kaggle():
-    """Check if the current script is running inside a Kaggle kernel.
+    """检查当前脚本是否运行在 Kaggle 内核中。
 
-    Returns:
-        (bool): True if running inside a Kaggle kernel, False otherwise.
+    返回：
+        (bool): 运行在 Kaggle 内核中时返回 True，否则返回 False。
     """
     return os.environ.get("PWD") == "/kaggle/working" and os.environ.get("KAGGLE_URL_BASE") == "https://www.kaggle.com"
 
 
 def is_jupyter():
-    """Check if the current script is running inside a Jupyter Notebook.
+    """检查当前脚本是否运行在 Jupyter Notebook 中。
 
-    Returns:
-        (bool): True if running inside a Jupyter Notebook, False otherwise.
+    返回：
+        (bool): 运行在 Jupyter Notebook 中时返回 True，否则返回 False。
 
-    Notes:
-        - Only works on Colab and Kaggle, other environments like Jupyterlab and Paperspace are not reliably detectable.
-        - "get_ipython" in globals() method suffers false positives when IPython package installed manually.
+    注意：
+        - 此方法仅对 Colab 和 Kaggle 有效，无法可靠检测 JupyterLab 和 Paperspace 等其他环境。
+        - 当手动安装 IPython 包时，globals() 中的 "get_ipython" 方法可能产生误报。
     """
     return IS_COLAB or IS_KAGGLE
 
 
 def is_runpod():
-    """Check if the current script is running inside a RunPod container.
+    """检查当前脚本是否运行在 RunPod 容器中。
 
-    Returns:
-        (bool): True if running in RunPod, False otherwise.
+    返回：
+        (bool): 运行在 RunPod 中时返回 True，否则返回 False。
     """
     return "RUNPOD_POD_ID" in os.environ
 
 
 def is_docker() -> bool:
-    """Determine if the script is running inside a Docker container.
+    """判断当前脚本是否运行在 Docker 容器中。
 
-    Returns:
-        (bool): True if the script is running inside a Docker container, False otherwise.
+    返回：
+        (bool): 运行在 Docker 容器中时返回 True，否则返回 False。
     """
     try:
         return os.path.exists("/.dockerenv")
@@ -807,29 +796,29 @@ def is_docker() -> bool:
 
 
 def is_raspberrypi() -> bool:
-    """Determine if the Python environment is running on a Raspberry Pi.
+    """判断 Python 环境是否运行在 Raspberry Pi 上。
 
-    Returns:
-        (bool): True if running on a Raspberry Pi, False otherwise.
+    返回：
+        (bool): 运行在 Raspberry Pi 上时返回 True，否则返回 False。
     """
     return "rpi" in DEVICE_MODEL
 
 
 @lru_cache(maxsize=3)
 def is_jetson(jetpack=None) -> bool:
-    """Determine if the Python environment is running on an NVIDIA Jetson device.
+    """判断 Python 环境是否运行在 NVIDIA Jetson 设备上。
 
-    Args:
-        jetpack (int | None): If specified, check for specific JetPack version (4, 5, 6).
+    参数：
+        jetpack (int | None): 如果指定，则检查特定的 JetPack 版本（4、5、6）。
 
-    Returns:
-        (bool): True if running on an NVIDIA Jetson device, False otherwise.
+    返回：
+        (bool): 运行在 NVIDIA Jetson 设备上时返回 True，否则返回 False。
     """
     jetson = "tegra" in DEVICE_MODEL
     if jetson and jetpack:
         try:
             content = Path("/etc/nv_tegra_release").read_text()
-            version_map = {4: "R32", 5: "R35", 6: "R36", 7: "R38"}  # JetPack to L4T major version mapping
+            version_map = {4: "R32", 5: "R35", 6: "R36", 7: "R38"}  # JetPack 到 L4T 主版本的映射
             return jetpack in version_map and version_map[jetpack] in content
         except Exception:
             return False
@@ -837,10 +826,10 @@ def is_jetson(jetpack=None) -> bool:
 
 
 def is_dgx() -> bool:
-    """Check if the current script is running inside a DGX (NVIDIA Data Center GPU), DGX-Ready or DGX Spark system.
+    """检查当前脚本是否运行在 DGX（NVIDIA Data Center GPU）、DGX-Ready 或 DGX Spark 系统中。
 
-    Returns:
-        (bool): True if running in a DGX or DGX-Ready or DGX Spark system, False otherwise.
+    返回：
+        (bool): 运行在 DGX、DGX-Ready 或 DGX Spark 系统中时返回 True，否则返回 False。
     """
     try:
         with open("/etc/dgx-release") as f:
@@ -850,10 +839,10 @@ def is_dgx() -> bool:
 
 
 def is_online() -> bool:
-    """Fast online check using DNS (v4/v6) resolution (Cloudflare + Google).
+    """使用 DNS（IPv4/IPv6）解析快速检查网络连接（Cloudflare + Google）。
 
-    Returns:
-        (bool): True if connection is successful, False otherwise.
+    返回：
+        (bool): 连接成功时返回 True，否则返回 False。
     """
     if env_bool("YOLO_OFFLINE"):
         return False
@@ -868,71 +857,71 @@ def is_online() -> bool:
 
 
 def is_pip_package(filepath: str = __name__) -> bool:
-    """Determine if the file at the given filepath is part of a pip package.
+    """判断给定路径中的文件是否属于 pip 包。
 
-    Args:
-        filepath (str): The filepath to check.
+    参数：
+        filepath (str): 要检查的文件路径。
 
-    Returns:
-        (bool): True if the file is part of a pip package, False otherwise.
+    返回：
+        (bool): 文件属于 pip 包时返回 True，否则返回 False。
     """
     import importlib.util
 
-    # Get the spec for the module
+    # 获取模块规格
     spec = importlib.util.find_spec(filepath)
 
-    # Return whether the spec is not None and the origin is not None (indicating it is a package)
+    # 返回规格和来源均不为 None 的结果，表示它是一个包
     return spec is not None and spec.origin is not None
 
 
 def is_dir_writeable(dir_path: str | Path) -> bool:
-    """Check if a directory is writable.
+    """检查目录是否可写。
 
-    Args:
-        dir_path (str | Path): The path to the directory.
+    参数：
+        dir_path (str | Path): 目录路径。
 
-    Returns:
-        (bool): True if the directory is writable, False otherwise.
+    返回：
+        (bool): 目录可写时返回 True，否则返回 False。
     """
     return os.access(str(dir_path), os.W_OK)
 
 
 def is_pytest_running():
-    """Determine whether pytest is currently running or not.
+    """判断 pytest 当前是否正在运行。
 
-    Returns:
-        (bool): True if pytest is running, False otherwise.
+    返回：
+        (bool): pytest 正在运行时返回 True，否则返回 False。
     """
     return ("PYTEST_CURRENT_TEST" in os.environ) or ("pytest" in sys.modules) or ("pytest" in Path(ARGV[0]).stem)
 
 
 def is_github_action_running() -> bool:
-    """Determine if the current environment is a GitHub Actions runner.
+    """判断当前环境是否为 GitHub Actions 运行器。
 
-    Returns:
-        (bool): True if the current environment is a GitHub Actions runner, False otherwise.
+    返回：
+        (bool): 当前环境为 GitHub Actions 运行器时返回 True，否则返回 False。
     """
     return "GITHUB_ACTIONS" in os.environ and "GITHUB_WORKFLOW" in os.environ and "RUNNER_OS" in os.environ
 
 
 def get_default_args(func):
-    """Return a dictionary of default arguments for a function.
+    """返回函数的默认参数字典。
 
-    Args:
-        func (callable): The function to inspect.
+    参数：
+        func (callable): 要检查的函数。
 
-    Returns:
-        (dict): A dictionary where each key is a parameter name, and each value is the default value of that parameter.
+    返回：
+        (dict): 参数名称到参数默认值的字典。
     """
     signature = inspect.signature(func)
     return {k: v.default for k, v in signature.parameters.items() if v.default is not inspect.Parameter.empty}
 
 
 def get_ubuntu_version():
-    """Retrieve the Ubuntu version if the OS is Ubuntu.
+    """如果操作系统为 Ubuntu，则获取 Ubuntu 版本。
 
-    Returns:
-        (str): Ubuntu version or None if not an Ubuntu OS.
+    返回：
+        (str): Ubuntu 版本；如果不是 Ubuntu 系统则返回 None。
     """
     if is_ubuntu():
         try:
@@ -943,13 +932,13 @@ def get_ubuntu_version():
 
 
 def get_user_config_dir(sub_dir="Ultralytics"):
-    """Return a writable config dir, preferring YOLO_CONFIG_DIR and being OS-aware.
+    """返回可写配置目录，优先使用 YOLO_CONFIG_DIR，并根据操作系统选择路径。
 
-    Args:
-        sub_dir (str): The name of the subdirectory to create.
+    参数：
+        sub_dir (str): 要创建的子目录名称。
 
-    Returns:
-        (Path): The path to the user config directory.
+    返回：
+        (Path): 用户配置目录路径。
     """
     if env_dir := os.getenv("YOLO_CONFIG_DIR"):
         p = Path(env_dir).expanduser() / sub_dir
@@ -962,13 +951,13 @@ def get_user_config_dir(sub_dir="Ultralytics"):
     else:
         raise ValueError(f"Unsupported operating system: {platform.system()}")
 
-    if p.exists():  # already created → trust it
+    if p.exists():  # 已创建，直接使用
         return p
-    if is_dir_writeable(p.parent):  # create if possible
+    if is_dir_writeable(p.parent):  # 可能时创建目录
         p.mkdir(parents=True, exist_ok=True)
         return p
 
-    # Fallbacks for Docker, GCP/AWS functions where only /tmp is writable
+    # Docker、GCP/AWS 等仅有 /tmp 可写时使用的回退路径
     for alt in [Path("/tmp") / sub_dir, Path.cwd() / sub_dir]:
         if alt.exists():
             return alt
@@ -979,14 +968,14 @@ def get_user_config_dir(sub_dir="Ultralytics"):
             )
             return alt
 
-    # Last fallback → CWD
+    # 最后回退到当前工作目录
     p = Path.cwd() / sub_dir
     p.mkdir(parents=True, exist_ok=True)
     return p
 
 
-# Define constants (required below)
-DEVICE_MODEL = read_device_model()  # is_jetson() and is_raspberrypi() depend on this constant
+# 定义常量（下面的代码需要使用）
+DEVICE_MODEL = read_device_model()  # is_jetson() 和 is_raspberrypi() 依赖此常量
 ONLINE = is_online()
 IS_COLAB = is_colab()
 IS_KAGGLE = is_kaggle()
@@ -998,43 +987,42 @@ IS_RASPBERRYPI = is_raspberrypi()
 IS_DEBIAN, IS_DEBIAN_BOOKWORM, IS_DEBIAN_TRIXIE = is_debian([None, "bookworm", "trixie"])
 IS_UBUNTU = is_ubuntu()
 GIT = GitRepo()
-USER_CONFIG_DIR = get_user_config_dir()  # Ultralytics settings dir
+USER_CONFIG_DIR = get_user_config_dir()  # Ultralytics 设置目录
 SETTINGS_FILE = USER_CONFIG_DIR / "settings.json"
 
 
 def colorstr(*input):
-    r"""Color a string based on the provided color and style arguments using ANSI escape codes.
+    r"""根据给定的颜色和样式参数，使用 ANSI 转义码为字符串添加颜色。
 
-    This function can be called in two ways:
+    此函数有两种调用方式：
         - colorstr('color', 'style', 'your string')
         - colorstr('your string')
 
-    In the second form, 'blue' and 'bold' will be applied by default.
+    第二种形式默认应用 'blue' 和 'bold' 样式。
 
-    Args:
-        *input (str | Path): A sequence of strings where the first n-1 strings are color and style arguments, and the
-            last string is the one to be colored.
+    参数：
+        *input (str | Path): 字符串序列，前 n-1 个字符串为颜色和样式参数，最后一个字符串为要着色的内容。
 
-    Returns:
-        (str): The input string wrapped with ANSI escape codes for the specified color and style.
+    返回：
+        (str): 使用指定颜色和样式的 ANSI 转义码包装后的输入字符串。
 
-    Examples:
+    示例：
         >>> colorstr("blue", "bold", "hello world")
         '\x1b[34m\x1b[1mhello world\x1b[0m'
 
-    Notes:
-        Supported Colors and Styles:
-        - Basic Colors: 'black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white'
-        - Bright Colors: 'bright_black', 'bright_red', 'bright_green', 'bright_yellow',
-                       'bright_blue', 'bright_magenta', 'bright_cyan', 'bright_white'
-        - Misc: 'end', 'bold', 'underline'
+    注意：
+        支持的颜色和样式：
+        - 基本颜色：'black'、'red'、'green'、'yellow'、'blue'、'magenta'、'cyan'、'white'
+        - 亮色：'bright_black'、'bright_red'、'bright_green'、'bright_yellow'、
+          'bright_blue'、'bright_magenta'、'bright_cyan'、'bright_white'
+        - 其他样式：'end'、'bold'、'underline'
 
-    References:
+    参考：
         https://en.wikipedia.org/wiki/ANSI_escape_code
     """
-    *args, string = input if len(input) > 1 else ("blue", "bold", input[0])  # color arguments, string
+    *args, string = input if len(input) > 1 else ("blue", "bold", input[0])  # 颜色参数和字符串
     colors = {
-        "black": "\033[30m",  # basic colors
+        "black": "\033[30m",  # 基本颜色
         "red": "\033[31m",
         "green": "\033[32m",
         "yellow": "\033[33m",
@@ -1042,7 +1030,7 @@ def colorstr(*input):
         "magenta": "\033[35m",
         "cyan": "\033[36m",
         "white": "\033[37m",
-        "bright_black": "\033[90m",  # bright colors
+        "bright_black": "\033[90m",  # 亮色
         "bright_red": "\033[91m",
         "bright_green": "\033[92m",
         "bright_yellow": "\033[93m",
@@ -1050,7 +1038,7 @@ def colorstr(*input):
         "bright_magenta": "\033[95m",
         "bright_cyan": "\033[96m",
         "bright_white": "\033[97m",
-        "end": "\033[0m",  # misc
+        "end": "\033[0m",  # 其他样式
         "bold": "\033[1m",
         "underline": "\033[4m",
     }
@@ -1058,15 +1046,15 @@ def colorstr(*input):
 
 
 def remove_colorstr(input_string):
-    """Remove ANSI escape codes from a string, effectively un-coloring it.
+    """移除字符串中的 ANSI 转义码，使其恢复为无颜色文本。
 
-    Args:
-        input_string (str): The string to remove color and style from.
+    参数：
+        input_string (str): 要移除颜色和样式的字符串。
 
-    Returns:
-        (str): A new string with all ANSI escape codes removed.
+    返回：
+        (str): 移除所有 ANSI 转义码后的新字符串。
 
-    Examples:
+    示例：
         >>> remove_colorstr(colorstr("blue", "bold", "hello world"))
         'hello world'
     """
@@ -1075,74 +1063,73 @@ def remove_colorstr(input_string):
 
 
 class TryExcept(contextlib.ContextDecorator):
-    """Ultralytics TryExcept class for handling exceptions gracefully.
+    """用于平稳处理异常的 Ultralytics TryExcept 类。
 
-    This class can be used as a decorator or context manager to catch exceptions and optionally print warning messages.
-    It allows code to continue execution even when exceptions occur, which is useful for non-critical operations.
+    此类可作为装饰器或上下文管理器捕获异常，并按需打印警告消息。即使发生异常，也可以让代码继续执行，
+    适用于非关键操作。
 
-    Attributes:
-        msg (str): Optional message to display when an exception occurs.
-        verbose (bool): Whether to print the exception message.
+    属性：
+        msg (str): 发生异常时要显示的可选消息。
+        verbose (bool): 是否打印异常消息。
 
-    Examples:
-        As a decorator:
+    示例：
+        作为装饰器：
         >>> @TryExcept(msg="Error occurred in func", verbose=True)
         ... def func():
         ...     # Function logic here
         ...     pass
 
-        As a context manager:
+        作为上下文管理器：
         >>> with TryExcept(msg="Error occurred in block", verbose=True):
         ...     # Code block here
         ...     pass
     """
 
     def __init__(self, msg="", verbose=True):
-        """Initialize TryExcept class with optional message and verbosity settings."""
+        """使用可选消息和详细输出设置初始化 TryExcept 类。"""
         self.msg = msg
         self.verbose = verbose
 
     def __enter__(self):
-        """Execute when entering TryExcept context, initialize instance."""
+        """进入 TryExcept 上下文时执行并初始化实例。"""
 
     def __exit__(self, exc_type, value, traceback):
-        """Define behavior when exiting a 'with' block, print error message if necessary."""
+        """定义退出 with 代码块时的行为，并在需要时打印错误消息。"""
         if self.verbose and value:
             LOGGER.warning(f"{self.msg}{': ' if self.msg else ''}{value}")
         return True
 
 
 class Retry(contextlib.ContextDecorator):
-    """Retry class for function execution with exponential backoff.
+    """使用指数退避重试函数执行的 Retry 类。
 
-    This decorator can be used to retry a function on exceptions, up to a specified number of times with an
-    exponentially increasing delay between retries. It's useful for handling transient failures in network operations or
-    other unreliable processes.
+    此装饰器可在函数发生异常时重试，最多重试指定次数，并在每次重试之间逐步增加等待时间。
+    它适用于处理网络操作或其他不稳定流程中的临时故障。
 
-    Attributes:
-        times (int): Maximum number of retry attempts.
-        delay (int): Initial delay between retries in seconds.
+    属性：
+        times (int): 最大重试次数。
+        delay (int): 重试之间的初始等待时间，单位为秒。
 
-    Examples:
-        Example usage as a decorator:
+    示例：
+        作为装饰器使用：
         >>> @Retry(times=3, delay=2)
         ... def test_func():
-        ...     # Replace with function logic that may raise exceptions
+        ...     # 替换为可能抛出异常的函数逻辑
         ...     return True
     """
 
     def __init__(self, times=3, delay=2, verbose=True):
-        """Initialize Retry class with specified number of retries and delay."""
+        """使用指定的重试次数和延迟初始化 Retry 类。"""
         self.times = times
         self.delay = delay
-        self.verbose = verbose  # False when the caller's own logging would feed back into its retries
+        self.verbose = verbose  # 调用方自己的日志会反馈到重试流程时设为 False
         self._attempts = 0
 
     def __call__(self, func):
-        """Decorator implementation for Retry with exponential backoff."""
+        """实现带指数退避的 Retry 装饰器。"""
 
         def wrapped_func(*args, **kwargs):
-            """Apply retries to the decorated function or method."""
+            """对被装饰函数或方法执行重试。"""
             self._attempts = 0
             while self._attempts < self.times:
                 try:
@@ -1153,39 +1140,37 @@ class Retry(contextlib.ContextDecorator):
                         LOGGER.warning(f"Retry {self._attempts}/{self.times} failed: {e}")
                     if self._attempts >= self.times:
                         raise
-                    time.sleep(self.delay * (2**self._attempts))  # exponential backoff delay
+                    time.sleep(self.delay * (2**self._attempts))  # 指数退避延迟
 
         return wrapped_func
 
 
 def threaded(func):
-    """Multi-thread a target function by default and return the thread or function result.
+    """默认在多线程中运行目标函数，并返回线程对象或函数结果。
 
-    This decorator provides flexible execution of the target function, either in a separate thread or synchronously. By
-    default, the function runs in a thread, but this can be controlled via the 'threaded=False' keyword argument which
-    is removed from kwargs before calling the function.
+    此装饰器支持在独立线程中或同步执行目标函数。默认在线程中运行，也可以通过 `threaded=False` 关键字参数控制；
+    该参数会在调用函数前从 kwargs 中移除。
 
-    Args:
-        func (callable): The function to be potentially executed in a separate thread.
+    参数：
+        func (callable): 可能在独立线程中执行的函数。
 
-    Returns:
-        (callable): A wrapper function that either returns a thread or the direct function result. The thread is
-            non-daemon so interpreter shutdown joins it before module teardown, avoiding teardown races.
+    返回：
+        (callable): 包装函数；它返回线程对象或直接返回函数结果。线程不是守护线程，因此解释器关闭时会先等待线程结束，
+            避免模块清理期间发生竞争。
 
-    Examples:
+    示例：
         >>> @threaded
         ... def process_data(data):
         ...     return data
         >>>
-        >>> thread = process_data(my_data)  # Runs in background thread
-        >>> result = process_data(my_data, threaded=False)  # Runs synchronously, returns function result
+        >>> thread = process_data(my_data)  # 在线程后台运行
+        >>> result = process_data(my_data, threaded=False)  # 同步运行并返回函数结果
     """
 
     def wrapper(*args, **kwargs):
-        """Multi-thread a given function based on 'threaded' kwarg and return the thread or function result."""
-        if kwargs.pop("threaded", True):  # run in thread
-            # Non-daemon so interpreter shutdown joins the thread before module teardown; a daemon thread still
-            # running at exit can be killed mid-C-call, aborting the process (e.g. 'FATAL: exception not rethrown').
+        """根据 `threaded` 关键字参数多线程运行函数，并返回线程对象或函数结果。"""
+        if kwargs.pop("threaded", True):  # 在线程中运行
+            # 使用非守护线程，使解释器关闭时先等待线程结束；守护线程可能在 C 调用中途被终止，导致进程异常退出。
             thread = threading.Thread(target=func, args=args, kwargs=kwargs, daemon=False)
             thread.start()
             return thread
@@ -1196,20 +1181,19 @@ def threaded(func):
 
 
 def set_sentry():
-    """Initialize the Sentry SDK for error tracking and reporting.
+    """初始化 Sentry SDK，用于错误跟踪和报告。
 
-    Only used if sentry_sdk package is installed and sync=True in settings. Run 'yolo settings' to see and update
-    settings.
+    仅当已安装 sentry_sdk 包且设置中的 sync=True 时使用。运行 `yolo settings` 可查看和更新设置。
 
-    Conditions required to send errors (ALL conditions must be met or no errors will be reported):
-        - sentry_sdk package is installed
-        - sync=True in YOLO settings
-        - pytest is not running
-        - running in a pip package installation
-        - running in a non-git directory
-        - running with rank -1 or 0
-        - online environment
-        - CLI used to run package (checked with 'yolo' as the name of the main CLI command)
+    发送错误所需条件（必须全部满足，否则不会报告错误）：
+        - 已安装 sentry_sdk 包
+        - YOLO 设置中的 sync=True
+        - pytest 未运行
+        - 运行于 pip 安装的包中
+        - 运行于非 git 目录
+        - 进程秩为 -1 或 0
+        - 处于联网环境
+        - 使用 CLI 运行包（通过主 CLI 命令名称为 'yolo' 判断）
     """
     if (
         not SETTINGS["sync"]
@@ -1221,26 +1205,26 @@ def set_sentry():
         or GIT.is_repo
     ):
         return
-    # If sentry_sdk package is not installed then return and do not use Sentry
+    # 未安装 sentry_sdk 包时直接返回，不使用 Sentry
     try:
         import sentry_sdk
     except ImportError:
         return
 
     def before_send(event, hint):
-        """Modify the event before sending it to Sentry based on specific exception types and messages.
+        """根据特定异常类型和消息，在将事件发送到 Sentry 前修改事件。
 
-        Args:
-            event (dict): The event dictionary containing information about the error.
-            hint (dict): A dictionary containing additional information about the error.
+        参数：
+            event (dict): 包含错误信息的事件字典。
+            hint (dict): 包含错误附加信息的字典。
 
-        Returns:
-            (dict | None): The modified event or None if the event should not be sent to Sentry.
+        返回：
+            (dict | None): 修改后的事件；不应发送到 Sentry 时返回 None。
         """
         if "exc_info" in hint:
             exc_type, exc_value, _ = hint["exc_info"]
             if exc_type in {KeyboardInterrupt, FileNotFoundError} or "out of memory" in str(exc_value):
-                return None  # do not send event
+                return None  # 不发送事件
 
         event["tags"] = {
             "sys_argv": ARGV[0],
@@ -1264,46 +1248,45 @@ def set_sentry():
 
 
 class JSONDict(dict):
-    """A dictionary-like class that provides JSON persistence for its contents.
+    """为内容提供 JSON 持久化功能的类字典对象。
 
-    This class extends the built-in dictionary to automatically save its contents to a JSON file whenever they are
-    modified. It ensures thread-safe operations using a lock and handles JSON serialization of Path objects.
+    此类扩展内置字典，在内容修改时自动保存到 JSON 文件。它使用锁确保操作线程安全，并处理 Path 对象的 JSON 序列化。
 
-    Attributes:
-        file_path (Path): The path to the JSON file used for persistence.
-        lock (threading.Lock): A lock object to ensure thread-safe operations.
+    属性：
+        file_path (Path): 用于持久化的 JSON 文件路径。
+        lock (threading.Lock): 确保操作线程安全的锁对象。
 
-    Methods:
-        _load: Load the data from the JSON file into the dictionary.
-        _save: Save the current state of the dictionary to the JSON file.
-        __setitem__: Store a key-value pair and persist it to disk.
-        __delitem__: Remove an item and update the persistent storage.
-        update: Update the dictionary and persist changes.
-        clear: Clear all entries and update the persistent storage.
+    方法：
+        _load: 从 JSON 文件将数据加载到字典。
+        _save: 将字典当前状态保存到 JSON 文件。
+        __setitem__: 保存键值对并持久化到磁盘。
+        __delitem__: 移除项目并更新持久化存储。
+        update: 更新字典并持久化修改。
+        clear: 清空所有条目并更新持久化存储。
 
-    Examples:
+    示例：
         >>> json_dict = JSONDict("data.json")
         >>> json_dict["key"] = "value"
         >>> print(json_dict["key"])
-        value
+        值
         >>> del json_dict["key"]
         >>> json_dict.update({"new_key": "new_value"})
         >>> json_dict.clear()
     """
 
     def __init__(self, file_path: str | Path = "data.json"):
-        """Initialize a JSONDict object with a specified file path for JSON persistence."""
+        """使用指定的文件路径初始化 JSONDict 对象，以进行 JSON 持久化。"""
         super().__init__()
         self.file_path = Path(file_path)
         self.lock = Lock()
         self._load()
 
     def _load(self):
-        """Load the data from the JSON file into the dictionary."""
+        """从 JSON 文件将数据加载到字典。"""
         try:
             if self.file_path.exists():
                 with open(self.file_path) as f:
-                    # Use the base dict update to avoid persisting during reads
+                    # 使用基类字典的 update，避免读取时触发持久化
                     super().update(json.load(f))
         except json.JSONDecodeError:
             LOGGER.warning(f"Error decoding JSON from {self.file_path}. Starting with an empty dictionary.")
@@ -1311,7 +1294,7 @@ class JSONDict(dict):
             LOGGER.error(f"Error reading from {self.file_path}: {e}")
 
     def _save(self):
-        """Save the current state of the dictionary to the JSON file."""
+        """将字典当前状态保存到 JSON 文件。"""
         try:
             self.file_path.parent.mkdir(parents=True, exist_ok=True)
             with open(self.file_path, "w", encoding="utf-8") as f:
@@ -1321,61 +1304,60 @@ class JSONDict(dict):
 
     @staticmethod
     def _json_default(obj):
-        """Handle JSON serialization of Path objects."""
+        """处理 Path 对象的 JSON 序列化。"""
         if isinstance(obj, Path):
             return str(obj)
         raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
 
     def __setitem__(self, key, value):
-        """Store a key-value pair and persist to disk."""
+        """保存键值对并持久化到磁盘。"""
         with self.lock:
             super().__setitem__(key, value)
             self._save()
 
     def __delitem__(self, key):
-        """Remove an item and update the persistent storage."""
+        """移除项目并更新持久化存储。"""
         with self.lock:
             super().__delitem__(key)
             self._save()
 
     def __str__(self):
-        """Return a pretty-printed JSON string representation of the dictionary."""
+        """返回字典的格式化 JSON 字符串表示。"""
         contents = json.dumps(dict(self), indent=2, ensure_ascii=False, default=self._json_default)
         return f'JSONDict("{self.file_path}"):\n{contents}'
 
     def update(self, *args, **kwargs):
-        """Update the dictionary and persist changes."""
+        """更新字典并持久化修改。"""
         with self.lock:
             super().update(*args, **kwargs)
             self._save()
 
     def clear(self):
-        """Clear all entries and update the persistent storage."""
+        """清空所有条目并更新持久化存储。"""
         with self.lock:
             super().clear()
             self._save()
 
 
 class SettingsManager(JSONDict):
-    """SettingsManager class for managing and persisting Ultralytics settings.
+    """用于管理和持久化 Ultralytics 设置的 SettingsManager 类。
 
-    This class extends JSONDict to provide JSON persistence for settings, ensuring thread-safe operations and default
-    values. It validates settings on initialization and provides methods to update or reset settings. The settings
-    include directories for datasets, weights, and runs, as well as various integration flags.
+    此类扩展 JSONDict，为设置提供 JSON 持久化，确保操作线程安全并提供默认值。初始化时会验证设置，
+    并提供更新或重置设置的方法。设置包括数据集、权重和运行结果目录，以及各种集成开关。
 
-    Attributes:
-        file (Path): The path to the JSON file used for persistence.
-        version (str): The version of the settings schema.
-        defaults (dict): A dictionary containing default settings.
-        help_msg (str): A help message for users on how to view and update settings.
+    属性：
+        file (Path): 用于持久化的 JSON 文件路径。
+        version (str): 设置架构版本。
+        defaults (dict): 包含默认设置的字典。
+        help_msg (str): 指导用户查看和更新设置的帮助消息。
 
-    Methods:
-        _validate_settings: Validate the current settings and reset if necessary.
-        update: Update settings, validating keys and types.
-        reset: Reset the settings to default and save them.
+    方法：
+        _validate_settings: 验证当前设置，并在需要时重置设置。
+        update: 验证键和值类型后更新设置。
+        reset: 将设置重置为默认值并保存。
 
-    Examples:
-        Initialize and update settings:
+    示例：
+        初始化 and update settings:
         >>> settings = SettingsManager()
         >>> settings.update(runs_dir="/new/runs/dir")
         >>> print(settings["runs_dir"])
@@ -1383,7 +1365,7 @@ class SettingsManager(JSONDict):
     """
 
     def __init__(self, file=SETTINGS_FILE, version="0.0.7"):
-        """Initialize the SettingsManager with default settings and load user settings."""
+        """使用默认设置初始化 SettingsManager，并加载用户设置。"""
         import hashlib
         import uuid
 
@@ -1395,24 +1377,24 @@ class SettingsManager(JSONDict):
         self.file = Path(file)
         self.version = version
         self.defaults = {
-            "settings_version": version,  # Settings schema version
-            "datasets_dir": str(datasets_root / "datasets"),  # Datasets directory
-            "weights_dir": str(root / "weights"),  # Model weights directory
-            "runs_dir": str(root / "runs"),  # Experiment runs directory
-            "uuid": hashlib.sha256(str(uuid.getnode()).encode()).hexdigest(),  # SHA-256 anonymized UUID hash
-            "sync": True,  # Enable synchronization
-            "api_key": "",  # Ultralytics API Key
-            "openai_api_key": "",  # OpenAI API Key
-            "clearml": True,  # ClearML integration
-            "comet": True,  # Comet integration
-            "dvc": True,  # DVC integration
-            "mlflow": True,  # MLflow integration
-            "neptune": True,  # Neptune integration
-            "raytune": True,  # Ray Tune integration
-            "tensorboard": False,  # TensorBoard logging
-            "wandb": False,  # Weights & Biases logging
-            "vscode_msg": True,  # VSCode message
-            "openvino_msg": True,  # OpenVINO export on Intel CPU message
+            "settings_version": version,  # 设置架构版本
+            "datasets_dir": str(datasets_root / "datasets"),  # 数据集目录
+            "weights_dir": str(root / "weights"),  # 模型权重目录
+            "runs_dir": str(root / "runs"),  # 实验运行目录
+            "uuid": hashlib.sha256(str(uuid.getnode()).encode()).hexdigest(),  # 匿名 UUID 的 SHA-256 哈希
+            "sync": True,  # 启用同步
+            "api_key": "",  # Ultralytics API 密钥
+            "openai_api_key": "",  # OpenAI API 密钥
+            "clearml": True,  # ClearML 集成
+            "comet": True,  # Comet 集成
+            "dvc": True,  # DVC 集成
+            "mlflow": True,  # MLflow 集成
+            "neptune": True,  # Neptune 集成
+            "raytune": True,  # Ray Tune 集成
+            "tensorboard": False,  # TensorBoard 日志
+            "wandb": False,  # Weights & Biases 日志
+            "vscode_msg": True,  # VS Code 消息
+            "openvino_msg": True,  # Intel CPU 上 OpenVINO 导出消息
         }
 
         self.help_msg = (
@@ -1424,14 +1406,14 @@ class SettingsManager(JSONDict):
         with torch_distributed_zero_first(LOCAL_RANK):
             super().__init__(self.file)
 
-            if not self.file.exists() or not self:  # Check if file doesn't exist or is empty
+            if not self.file.exists() or not self:  # 检查文件是否不存在或为空
                 LOGGER.info(f"Creating new Ultralytics Settings v{version} file ✅ {self.help_msg}")
                 self.reset()
 
             self._validate_settings()
 
     def _validate_settings(self):
-        """Validate settings and migrate valid values to the current schema."""
+        """验证设置，并将有效值迁移到当前架构。"""
         correct_keys = frozenset(self.keys()) == frozenset(self.defaults.keys())
         correct_types = all(isinstance(self.get(k), type(v)) for k, v in self.defaults.items())
         correct_version = self.get("settings_version", "") == self.version
@@ -1448,7 +1430,7 @@ class SettingsManager(JSONDict):
                         f"Legacy API key removed. Get a Platform API key from {PLATFORM_URL}/settings?tab=api-keys "
                         "and run 'yolo login API_KEY'."
                     )
-                valid["api_key"] = ""  # discard legacy keys, which cannot authenticate with Platform
+            valid["api_key"] = ""  # 丢弃无法通过 Platform 身份验证的旧密钥
             valid["settings_version"] = self.version
             self.clear()
             self.update({**self.defaults, **valid})
@@ -1461,11 +1443,11 @@ class SettingsManager(JSONDict):
             )
 
     def __setitem__(self, key, value):
-        """Update one key: value pair."""
+        """更新一个键值对。"""
         self.update({key: value})
 
     def update(self, *args, **kwargs):
-        """Update settings, validating keys and types."""
+        """验证键和值类型后更新设置。"""
         for arg in args:
             if isinstance(arg, dict):
                 kwargs.update(arg)
@@ -1480,13 +1462,13 @@ class SettingsManager(JSONDict):
         super().update(*args, **kwargs)
 
     def reset(self):
-        """Reset the settings to default and save them."""
+        """将设置重置为默认值并保存。"""
         self.clear()
         self.update(self.defaults)
 
 
 def deprecation_warn(arg, new_arg=None):
-    """Issue a deprecation warning when a deprecated argument is used, suggesting an updated argument."""
+    """使用弃用参数时发出弃用警告，并建议使用更新后的参数。"""
     msg = f"'{arg}' is deprecated and will be removed in the future."
     if new_arg is not None:
         msg += f" Use '{new_arg}' instead."
@@ -1494,33 +1476,33 @@ def deprecation_warn(arg, new_arg=None):
 
 
 def clean_url(url):
-    """Strip auth from URL, i.e. `https://example.com/path/file.txt?auth` -> `https://example.com/path/file.txt`."""
-    url = Path(url).as_posix().replace(":/", "://")  # Pathlib turns :// -> :/, as_posix() for Windows
-    return unquote(url).split("?", 1)[0]  # '%2F' to '/', split authentication query strings
+    """移除 URL 中的身份验证信息，例如将 `https://example.com/path/file.txt?auth` 转为 `https://example.com/path/file.txt`。"""
+    url = Path(url).as_posix().replace(":/", "://")  # Pathlib 会将 :// 转为 :/，as_posix() 用于 Windows
+    return unquote(url).split("?", 1)[0]  # 将 '%2F' 转为 '/'，并去除认证查询字符串
 
 
 def url2file(url):
-    """Convert URL to filename, i.e. `https://example.com/path/file.txt?auth` -> `file.txt`."""
+    """将 URL 转换为文件名，例如将 `https://example.com/path/file.txt?auth` 转为 `file.txt`。"""
     return Path(clean_url(url)).name or "download"
 
 
 def vscode_msg(ext="ultralytics.ultralytics-snippets") -> str:
-    """Display a message to install Ultralytics-Snippets for VS Code if not already installed."""
+    """如果尚未安装 Ultralytics-Snippets，则显示安装 VS Code 扩展的提示。"""
     path = (USER_CONFIG_DIR.parents[2] if WINDOWS else USER_CONFIG_DIR.parents[1]) / ".vscode/extensions"
-    obs_file = path / ".obsolete"  # file tracks uninstalled extensions, while source directory remains
+    obs_file = path / ".obsolete"  # 该文件记录已卸载的扩展，而源目录仍可能保留
     installed = any(path.glob(f"{ext}*")) and ext not in (obs_file.read_text("utf-8") if obs_file.exists() else "")
     url = "https://docs.ultralytics.com/integrations/vscode"
     return "" if installed else f"{colorstr('VS Code:')} view Ultralytics VS Code Extension ⚡ at {url}"
 
 
-# Run below code on utils init ------------------------------------------------------------------------------------
+# 在 utils 初始化时运行以下代码 ------------------------------------------------------------------------------------
 
-# Check first-install steps
+# 检查首次安装步骤
 PREFIX = colorstr("Ultralytics: ")
-SETTINGS = SettingsManager()  # initialize settings
-DATASETS_DIR = Path(SETTINGS["datasets_dir"])  # global datasets directory
-WEIGHTS_DIR = Path(SETTINGS["weights_dir"])  # global weights directory
-RUNS_DIR = Path(SETTINGS["runs_dir"])  # global runs directory
+SETTINGS = SettingsManager()  # 初始化设置
+DATASETS_DIR = Path(SETTINGS["datasets_dir"])  # global datasets 目录
+WEIGHTS_DIR = Path(SETTINGS["weights_dir"])  # global 权重 目录
+RUNS_DIR = Path(SETTINGS["runs_dir"])  # global runs 目录
 ENVIRONMENT = (
     "Colab"
     if IS_COLAB
@@ -1535,8 +1517,8 @@ ENVIRONMENT = (
 TESTS_RUNNING = is_pytest_running() or is_github_action_running()
 set_sentry()
 
-# Apply monkey patches
+# 应用猴子补丁
 torch.save = torch_save
 if WINDOWS:
-    # Apply cv2 patches for non-ASCII and non-UTF characters in image paths
+    # 为图像路径中的非 ASCII 和非 UTF 字符应用 cv2 补丁
     cv2.imread, cv2.imwrite, cv2.imshow = imread_unicode, imwrite, imshow

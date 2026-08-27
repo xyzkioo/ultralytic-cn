@@ -12,31 +12,31 @@ from .val import FastSAMValidator
 
 
 class FastSAM(Model):
-    """FastSAM model interface for Segment Anything tasks.
+    """用于 Segment Anything 任务的 FastSAM 模型接口。
 
-    This class extends the base Model class to provide specific functionality for the FastSAM (Fast Segment Anything
-    Model) implementation, allowing for efficient and accurate image segmentation with optional prompting support.
+    此类继承基础 Model 类，为 FastSAM（Fast Segment Anything Model）实现提供专用功能，
+    支持高效、准确的图像分割以及可选提示。
 
-    Attributes:
-        model (str): Path to the pre-trained FastSAM model file.
-        task (str): The task type, set to "segment" for FastSAM models.
+    属性：
+        模型 (str): 预训练 FastSAM 模型文件路径。
+        task (str): 任务类型，FastSAM 模型设置为 "分割段"。
 
-    Methods:
-        predict: Perform segmentation prediction on image or video source with optional prompts.
-        task_map: Returns mapping of segment task to predictor and validator classes.
+    方法：
+        predict: 对图像或视频源执行分割预测，支持可选提示。
+        task_map: 返回将分割任务映射到预测器和验证器类的映射。
 
-    Examples:
-        Initialize FastSAM model and run prediction
+    示例：
+        初始化 FastSAM 模型并执行预测
         >>> from ultralytics import FastSAM
         >>> model = FastSAM("FastSAM-x.pt")
         >>> results = model.predict("ultralytics/assets/bus.jpg")
 
-        Run prediction with bounding box prompts
+        使用边界框提示执行预测
         >>> results = model.predict("image.jpg", bboxes=[[100, 100, 200, 200]])
     """
 
     def __init__(self, model: str | Path = "FastSAM-x.pt"):
-        """Initialize the FastSAM model with the specified pre-trained weights."""
+        """使用指定的预训练权重初始化 FastSAM 模型。"""
         if str(model) == "FastSAM.pt":
             model = "FastSAM-x.pt"
         assert Path(model).suffix not in {".yaml", ".yml"}, "FastSAM only supports pre-trained weights."
@@ -52,28 +52,27 @@ class FastSAM(Model):
         texts: list | None = None,
         **kwargs: Any,
     ):
-        """Perform segmentation prediction on image or video source.
+        """对图像或视频源执行分割预测。
 
-        Supports prompted segmentation with bounding boxes, points, labels, and texts. The method packages these prompts
-        and passes them to the parent class predict method for processing.
+        支持使用边界框、点、标签和文本进行提示分割。此方法会打包这些提示，
+        并将其传递给父类的 predict 方法处理。
 
-        Args:
-            source (str | PIL.Image | np.ndarray): Input source for prediction, can be a file path, URL, PIL image, or
-                numpy array.
-            stream (bool): Whether to enable real-time streaming mode for video inputs.
-            bboxes (list, optional): Bounding box coordinates for prompted segmentation in format [[x1, y1, x2, y2]].
-            points (list, optional): Point coordinates for prompted segmentation in format [[x, y]].
-            labels (list, optional): Class labels for prompted segmentation.
-            texts (list, optional): Text prompts for segmentation guidance.
-            **kwargs (Any): Additional keyword arguments passed to the predictor.
+        参数：
+            source (str | PIL.Image | np.ndarray): 预测输入源，可以是文件路径、URL、PIL 图像或 numpy 数组。
+            stream (bool): 是否为视频输入启用实时流式模式。
+            bboxes (列表, 可选): 提示分割使用的边界框坐标，格式为 [[x1, y1, x2, y2]]。
+            points (列表, 可选): 提示分割使用的点坐标，格式为 [[x, y]]。
+            labels (列表, 可选): 提示分割使用的类别标签。
+            texts (列表, 可选): 用于分割引导的文本提示。
+            **kwargs (Any): 传递给预测器的其他关键字参数。
 
-        Returns:
-            (list): List of Results objects containing the prediction results.
+        返回：
+            (列表): 包含预测结果的 Results 对象列表。
         """
         prompts = {"bboxes": bboxes, "points": points, "labels": labels, "texts": texts}
         return super().predict(source, stream, prompts=prompts, **kwargs)
 
     @property
     def task_map(self) -> dict[str, dict[str, Any]]:
-        """Returns a dictionary mapping segment task to corresponding predictor and validator classes."""
+        """返回将 segment 任务映射到对应预测器和验证器类的字典。"""
         return {"segment": {"predictor": FastSAMPredictor, "validator": FastSAMValidator}}

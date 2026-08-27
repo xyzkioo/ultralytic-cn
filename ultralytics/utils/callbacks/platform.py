@@ -29,14 +29,14 @@ _executor = ThreadPoolExecutor(max_workers=10)
 
 
 def slugify(text):
-    """Convert text to URL-safe slug (e.g., 'My Project 1' -> 'my-project-1')."""
+    """将文本转换为 URL 安全的 slug（例如 'My Project 1' -> 'my-project-1'）。"""
     if not text:
         return text
     return re.sub(r"-+", "-", re.sub(r"[^a-z0-9\s-]", "", str(text).lower()).replace(" ", "-")).strip("-")[:128]
 
 
 def _interp_plot(plot, n=101):
-    """Interpolate plot curve data to n points to reduce storage size."""
+    """将绘图曲线数据插值到 n 个点，以减少存储大小。"""
     import numpy as np
 
     if not plot.get("x") or not plot.get("y"):
@@ -46,25 +46,25 @@ def _interp_plot(plot, n=101):
     if len(x) <= n:
         return plot  # Already small enough
 
-    # New x values (101 points gives clean 0.01 increments: 0, 0.01, 0.02, ..., 1.0)
+    # 新的 x 值（101 个点可得到整齐的 0.01 增量：0、0.01、0.02、...、1.0）
     x_new = np.linspace(x[0], x[-1], n)
 
-    # Interpolate y values (handle both 1D and 2D arrays)
+    # 插值 y 值（同时处理一维和二维数组）
     if y.ndim == 1:
         y_new = np.interp(x_new, x, y)
     else:
         y_new = np.array([np.interp(x_new, x, yi) for yi in y])
 
-    # Also interpolate ap if present (for PR curves)
+    # 如果存在 ap，也进行插值（用于 PR 曲线）
     result = {**plot, "x": x_new.tolist(), "y": y_new.tolist()}
     if "ap" in plot:
-        result["ap"] = plot["ap"]  # Keep AP values as-is (per-class scalars)
+        result["ap"] = plot["ap"]  # 保持 AP 值不变（每类别标量）
 
     return result
 
 
 def _validation_payload(image_metrics, sample_limit=5_000, extremes_limit=100):
-    """Return exact F1 extremes and an evenly ranked sample for correlation analysis."""
+    """返回精确的 F1 极值和均匀排序的样本，用于相关性分析。"""
     ranked = sorted(image_metrics.items(), key=lambda item: (item[1]["f1"], item[0]))
     if len(ranked) > sample_limit:
         sample = [ranked[round(i * (len(ranked) - 1) / (sample_limit - 1))] for i in range(sample_limit)]
@@ -83,18 +83,18 @@ def _validation_payload(image_metrics, sample_limit=5_000, extremes_limit=100):
 
 
 def _sanitize_json_value(value):
-    """Replace non-finite floats in payloads with None so requests JSON encoding succeeds."""
+    """将负无穷、正无穷和 NaN 浮点数替换为 None，确保 requests JSON 编码成功。"""
     if isinstance(value, dict):
         return {k: _sanitize_json_value(v) for k, v in value.items()}
     if isinstance(value, (list, tuple)):
         return [_sanitize_json_value(v) for v in value]
     if isinstance(value, float):
-        return value if isfinite(value) else None  # avoid "Out of range float values are not JSON compliant" warnings
+        return value if isfinite(value) else None  # 避免出现“超出范围的浮点值不符合 JSON 规范”警告
     return value
 
 
 def _send(event, data, project, name, model_id=None, retry=2, timeout=30):
-    """Send event to Platform endpoint with retry logic."""
+    """使用重试逻辑向 Platform 地址发送事件。"""
     if not _api_key:
         return None
     import requests  # scoped as slow import
@@ -118,19 +118,19 @@ def _send(event, data, project, name, model_id=None, retry=2, timeout=30):
                 msg = r.json().get("error", r.reason)
             except Exception:
                 msg = r.reason
-            # Only 401 is credential-scoped; 403/404 concern one run and must not disable the process.
+            # 只有 401 与凭据相关；403/404 只影响单次运行，不应禁用整个进程。
             if r.status_code == 401:
                 _api_key = None
-            # A console_output failure must not be logged: ConsoleLogger flushes the warning back as the
-            # next chunk, which fails again. 401 is safe — the cleared key short-circuits _send.
+            # 不得记录 console_output 失败：ConsoleLogger 会将警告作为下一批内容再次刷新回来，导致再次失败。
+            # 401 是安全的，因为清除的键会让 _send 提前返回。
             if event != "console_output" or r.status_code == 401:
                 LOGGER.warning(f"{PREFIX}{msg}")
-            return None  # Don't retry client errors (except 408 timeout, 429 rate limit)
+            return None  # 不重试客户端错误（408 超时和 429 速率限制除外）
         r.raise_for_status()
         return r.json()
 
-    # Same loop as above, so a console_output send stays silent at every level — including Retry's
-    # per-attempt warning. It must still retry: _flush_buffer clears the buffer before calling us.
+    # 与上面相同的循环，因此 console_output 发送在每个级别都保持静默，包括 Retry 的级别。
+    # 每次尝试都记录警告。仍然必须重试：_flush_buffer 会在调用此函数前清空缓冲区。
     quiet = event == "console_output"
     try:
         return Retry(times=retry, delay=1, verbose=not quiet)(send_once)()
@@ -141,9 +141,9 @@ def _send(event, data, project, name, model_id=None, retry=2, timeout=30):
 
 
 def _handle_control_response(trainer, ctx, response):
-    """Apply centralized stop signals returned by Platform webhook responses.
+    """应用 centralized stop signals returned by Platform webhook responses.
 
-    Notes:
+    注意：
         ``ctx["cancelled"]`` is the durable cancellation signal. During startup, trainer setup later resets
         ``trainer.stop``, so early stop requests still rely on ``on_pretrain_routine_end()`` to reapply the flag after
         setup completes.
@@ -155,7 +155,7 @@ def _handle_control_response(trainer, ctx, response):
 
 
 def _upload_model(model_path, project, name, progress=False, retry=1, model_id=None, run_id=None):
-    """Publish a model checkpoint to its configured Platform storage location."""
+    """将模型检查点发布到配置的 Platform 存储位置。"""
     from ultralytics.utils.uploads import safe_upload
 
     if not _api_key:
@@ -169,7 +169,7 @@ def _upload_model(model_path, project, name, progress=False, retry=1, model_id=N
         return {"modelPath": str(model_path.resolve()), "modelSize": model_size}
     import requests  # scoped as slow import
 
-    # Get signed upload URL from Platform (server sanitizes filename for storage safety)
+    # 从 Platform 获取签名上传 URL（服务端会清理文件名以确保存储安全）
     @Retry(times=3, delay=2)
     def get_signed_url():
         payload = {"filename": model_path.name}
@@ -194,7 +194,7 @@ def _upload_model(model_path, project, name, progress=False, retry=1, model_id=N
         LOGGER.warning(f"{PREFIX}Failed to get upload URL: {e}")
         return None
 
-    # Upload to GCS using safe_upload with retry logic and optional progress bar
+    # 使用带重试逻辑的 safe_upload 上传到 GCS，并可选显示进度条
     if safe_upload(file=model_path, url=data["uploadUrl"], retry=retry, progress=progress):
         gcs_path = data.get("gcsPath")
         if gcs_path and run_id:
@@ -216,7 +216,7 @@ def _upload_model(model_path, project, name, progress=False, retry=1, model_id=N
 
 
 def _get_environment_info():
-    """Collect comprehensive environment info using existing ultralytics utilities."""
+    """使用现有 Ultralytics 工具收集完整的环境信息。"""
     import shutil
 
     import psutil
@@ -225,7 +225,7 @@ def _get_environment_info():
     from ultralytics import __version__
     from ultralytics.utils.torch_utils import get_cpu_info, get_gpu_info
 
-    # Get RAM and disk totals
+    # 获取内存和磁盘总量
     memory = psutil.virtual_memory()
     disk_usage = shutil.disk_usage("/")
 
@@ -243,7 +243,7 @@ def _get_environment_info():
         "totalDiskGb": round(disk_usage.total / (1 << 30), 1),  # Total disk in GB
     }
 
-    # Git info using cached GIT singleton (no subprocess calls)
+    # 使用缓存的 GIT 单例获取 Git 信息（不调用子进程）。
     try:
         if GIT.is_repo:
             if GIT.origin:
@@ -257,7 +257,7 @@ def _get_environment_info():
     except Exception:
         pass
 
-    # GPU info
+    # GPU 信息
     try:
         if torch.cuda.is_available():
             env["gpuCount"] = torch.cuda.device_count()
@@ -269,7 +269,7 @@ def _get_environment_info():
 
 
 def _get_project_name(trainer):
-    """Get slugified project and name from trainer args."""
+    """从训练器参数获取转换为 slug 的项目和名称。"""
     raw = str(trainer.args.project)
     parts = raw.split("/", 1)
     project = f"{parts[0]}/{slugify(parts[1].replace('/', '-'))}" if len(parts) == 2 else slugify(raw)
@@ -277,7 +277,7 @@ def _get_project_name(trainer):
 
 
 def on_pretrain_routine_start(trainer):
-    """Initialize Platform logging at training start."""
+    """在训练开始时初始化 Platform 日志。"""
     global _api_key
     if TESTS_RUNNING or not trainer.args.project:
         return
@@ -290,7 +290,7 @@ def on_pretrain_routine_start(trainer):
 
     from ultralytics.utils.logger import ConsoleLogger
 
-    # Single dict for all platform callback state
+    # 用单个字典保存所有平台回调状态。
     ctx = {
         "model_id": None,
         "run_id": None,
@@ -302,9 +302,9 @@ def on_pretrain_routine_start(trainer):
     }
     trainer.platform = ctx
 
-    # Create callback to send console output to Platform
+    # 创建将控制台输出发送到 Platform 的回调。
     def send_console_output(content, line_count, chunk_id):
-        """Send batched console output to Platform webhook."""
+        """将批量控制台输出发送到 Platform webhook。"""
         _executor.submit(
             _send,
             "console_output",
@@ -314,20 +314,20 @@ def on_pretrain_routine_start(trainer):
             ctx["model_id"],
         )
 
-    # Console capture with batching (5 lines or 5 seconds). Built here, but not started until Platform
-    # has accepted the run below: capturing first left the user's stdout redirected through a dead
-    # integration whenever training_started failed, and its final flush would post a console chunk
-    # carrying no model_id.
+    # 按批次捕获控制台输出（5 行或 5 秒）。在此处创建，但只有 Platform 接受下面的运行任务后才启动：
+    # 如果在 training_started 失败前就开始捕获，用户的 stdout 会一直重定向到失效的集成，
+    # 最终刷新还会发送一批控制台内容。
+    # 不携带 model_id。
     ctx["console_logger"] = ConsoleLogger(batch_size=5, flush_interval=5.0, on_flush=send_console_output)
 
-    # Collect environment info (W&B-style metadata)
+    # 收集环境信息（W&B 风格的元数据）。
     environment = _get_environment_info()
 
-    # Build trainArgs - callback runs before get_dataset() so args.data is still original (e.g., ul:// URIs)
-    # Note: model_info is sent later in on_fit_epoch_end (epoch 0) when the model is actually loaded
+    # 构建 trainArgs：回调在 get_dataset() 之前运行，因此 args.data 仍为原始值（例如 ul:// URI）。
+    # 注意：model_info 会在模型真正加载后的 on_fit_epoch_end（第 0 个 epoch）中发送。
     train_args = {k: str(v) for k, v in vars(trainer.args).items()}
 
-    # Send synchronously to get modelId for subsequent webhooks (critical, more retries)
+    # 同步发送以获取后续 Webhook 所需的 modelId（该步骤很关键，因此重试次数更多）。
     response = _send(
         "training_started",
         {
@@ -343,13 +343,13 @@ def on_pretrain_routine_start(trainer):
     if response and response.get("modelId"):
         ctx["model_id"] = response["modelId"]
         ctx["run_id"] = response.get("runId")
-        # Server returns actual slug (may differ from requested name due to auto-increment, e.g. "train" → "train-2")
+        # 服务器返回实际 slug（由于自动递增可能与请求名称不同，例如“train”→“train-2”）。
         if response.get("modelSlug"):
             ctx["model_slug"] = response["modelSlug"]
             url = f"{PLATFORM_URL}/{project}/{ctx['model_slug']}"
             LOGGER.info(f"{PREFIX}View model at {url}")
-        ctx["console_logger"].start_capture()  # only now: the run is tracked and model_id is known
-        # Note: trainer.stop is set in on_pretrain_routine_end (after _setup_train resets it)
+        ctx["console_logger"].start_capture()  # 此时运行已被跟踪且 model_id 已知
+        # 注意：trainer.stop 在 on_pretrain_routine_end 中设置（_setup_train 重置它之后）。
         _handle_control_response(trainer, ctx, response)
     else:
         LOGGER.warning(f"{PREFIX}Training will not be tracked on Platform")
@@ -357,7 +357,7 @@ def on_pretrain_routine_start(trainer):
 
 
 def on_pretrain_routine_end(trainer):
-    """Apply pre-start cancellation after _setup_train resets trainer.stop."""
+    """应用 pre-start cancellation after _setup_train resets trainer.stop."""
     ctx = getattr(trainer, "platform", None)
     if ctx and ctx["cancelled"]:
         LOGGER.info(f"{PREFIX}Training cancelled from Platform before starting ✅")
@@ -365,7 +365,7 @@ def on_pretrain_routine_end(trainer):
 
 
 def on_fit_epoch_end(trainer):
-    """Log training and system metrics at epoch end."""
+    """在周期结束时记录训练和系统指标。"""
     ctx = getattr(trainer, "platform", None)
     if not ctx:
         return
@@ -376,7 +376,7 @@ def on_fit_epoch_end(trainer):
     if trainer.optimizer and trainer.optimizer.param_groups:
         metrics["lr"] = trainer.optimizer.param_groups[0]["lr"]
 
-    # Extract model info at epoch 0 (sent as separate field, not in metrics)
+    # 在第 0 个 epoch 提取模型信息（作为独立字段发送，而不是放入指标中）。
     model_info = None
     if trainer.epoch == 0:
         try:
@@ -391,7 +391,7 @@ def on_fit_epoch_end(trainer):
         except Exception:
             pass
 
-    # Get system metrics (cache SystemLogger in platform context for efficiency)
+    # 获取系统指标（在平台上下文中缓存 SystemLogger 以提高效率）。
     system = {}
     try:
         if not ctx["system_logger"]:
@@ -413,7 +413,7 @@ def on_fit_epoch_end(trainer):
         payload["modelInfo"] = model_info
 
     def _send_and_check_cancel():
-        """Send epoch_end and check response for cancellation (runs in background thread)."""
+        """发送 epoch_end，并检查响应中是否要求取消（在后台线程运行）。"""
         response = _send("epoch_end", payload, project, name, ctx["model_id"], retry=1)
         _handle_control_response(trainer, ctx, response)
 
@@ -421,11 +421,11 @@ def on_fit_epoch_end(trainer):
 
 
 def on_model_save(trainer):
-    """Upload model checkpoint (rate limited to every 15 min)."""
+    """上传模型检查点（速率限制为每 15 分钟一次）。"""
     ctx = getattr(trainer, "platform", None)
     if not ctx:
         return
-    # Rate limit to every 15 minutes (900 seconds)
+    # 限制频率为每 15 分钟一次（900 秒）。
     if time() - ctx["last_upload"] < 900:
         return
     if ctx["checkpoint_upload"] and not ctx["checkpoint_upload"].done():
@@ -443,8 +443,8 @@ def on_model_save(trainer):
 
 
 def on_train_end(trainer):
-    """Log final training results and upload the best model to Platform."""
-    ctx = getattr(trainer, "platform", None)  # set only by on_pretrain_routine_start, so unset without an API key
+    """记录最终训练结果，并将最佳模型上传到 Platform。"""
+    ctx = getattr(trainer, "platform", None)  # 仅由 on_pretrain_routine_start 设置，没有 API 密钥时为空
     if not ctx:
         return
 
@@ -453,12 +453,12 @@ def on_train_end(trainer):
     if ctx["cancelled"]:
         LOGGER.info(f"{PREFIX}Uploading partial results for cancelled training")
 
-    # Stop console capture
+    # 停止控制台捕获
     if ctx["console_logger"]:
         ctx["console_logger"].stop_capture()
         ctx["console_logger"] = None
 
-    # Upload best model (blocking with progress bar to ensure it completes)
+    # 上传最佳模型（阻塞并显示进度条，以确保上传完成）。
     artifact = None
     if trainer.best and Path(trainer.best).exists():
         if ctx["checkpoint_upload"]:
@@ -475,7 +475,7 @@ def on_train_end(trainer):
         if not artifact:
             LOGGER.warning(f"{PREFIX}Model will not be available for download on Platform (upload failed)")
 
-    # Collect plots from trainer and validator, deduplicating by type
+    # 收集训练器和验证器生成的图，并按类型去重。
     plots_by_type = {}
     for info in getattr(trainer, "plots", {}).values():
         if info.get("data") and info["data"].get("type"):
@@ -483,13 +483,13 @@ def on_train_end(trainer):
     for info in getattr(getattr(trainer, "validator", None), "plots", {}).values():
         if info.get("data") and info["data"].get("type"):
             plots_by_type.setdefault(info["data"]["type"], info["data"])  # Don't overwrite trainer plots
-    plots = [_interp_plot(p) for p in plots_by_type.values()]  # Interpolate curves to reduce size
+    plots = [_interp_plot(p) for p in plots_by_type.values()]  # 插值曲线以减少尺寸
 
-    # Get class names
+    # 获取 类别 名称
     names = getattr(getattr(trainer, "validator", None), "names", None) or (trainer.data or {}).get("names")
     class_names = list(names.values()) if isinstance(names, dict) else list(names) if names else None
 
-    # stopper.best_epoch is 1-indexed; -1 aligns with the 0-indexed `epoch` field
+    # stopper.best_epoch 从 1 开始计数；减 1 后与从 0 开始计数的 `epoch` 字段对齐。
     best_epoch = max(0, getattr(getattr(trainer, "stopper", None), "best_epoch", trainer.epoch + 1) - 1)
 
     image_metrics = trainer.validator.metrics.box.image_metrics if trainer.args.task == "detect" else {}

@@ -20,27 +20,26 @@ from .val import YOLOEDetectValidator, YOLOESegValidator
 
 
 class YOLOETrainer(DetectionTrainer):
-    """A trainer class for YOLOE object detection models.
+    """用于 YOLOE 目标检测模型的训练器。
 
-    This class extends DetectionTrainer to provide specialized training functionality for YOLOE models, including custom
-    model initialization, validation, and dataset building with multi-modal support.
+    此类扩展 DetectionTrainer，为 YOLOE 模型提供专用训练功能，包括自定义模型初始化、验证以及支持多模态的数据集构建。
 
-    Attributes:
-        loss_names (tuple): Names of loss components, derived from the loss dict returned by the criterion.
+    属性：
+        loss_names (tuple): 损失分量名称，来源于损失准则返回的损失字典。
 
-    Methods:
-        get_model: Initialize and return a task-appropriate YOLOE model.
-        get_validator: Return a task-appropriate YOLOE validator.
-        build_dataset: Build YOLO dataset with multi-modal support for training.
+    方法：
+        get_model：初始化并返回适合当前任务的 YOLOE 模型。
+        get_validator：返回适合当前任务的 YOLOE 验证器。
+        build_dataset：构建支持多模态的 YOLO 训练数据集。
     """
 
     def __init__(self, cfg=DEFAULT_CFG, overrides: dict | None = None, _callbacks: dict | None = None):
-        """Initialize the YOLOE Trainer with specified configurations.
+        """使用指定配置初始化 YOLOE 训练器。
 
-        Args:
-            cfg (dict): Configuration dictionary with default training settings from DEFAULT_CFG.
-            overrides (dict, optional): Dictionary of parameter overrides for the default configuration.
-            _callbacks (dict, optional): Dictionary of callback functions to be applied during training.
+        参数：
+            cfg (dict): 来自 DEFAULT_CFG 的默认训练设置配置字典。
+            overrides (dict, 可选): 默认配置的参数覆盖字典。
+            _callbacks (dict, 可选): 训练期间要执行的回调函数字典。
         """
         if overrides is None:
             overrides = {}
@@ -49,24 +48,22 @@ class YOLOETrainer(DetectionTrainer):
         super().__init__(cfg, overrides, _callbacks)
 
     def get_model(self, cfg=None, weights=None, verbose: bool = True):
-        """Return a task-appropriate YOLOE model initialized with the specified configuration and weights.
+        """使用指定配置和权重初始化并返回适合当前任务的 YOLOE 模型。
 
-        Args:
-            cfg (dict | str, optional): Model configuration. Can be a dictionary containing a 'yaml_file' key, a direct
-                path to a YAML file, or None to use default configuration.
-            weights (str | Path, optional): Path to pretrained weights file to load into the model.
-            verbose (bool): Whether to display model information during initialization.
+        参数：
+            cfg (dict | str, 可选): 模型配置，可以是包含 'yaml_file' 键的字典、YAML 文件路径或 None（使用默认配置）。
+            weights (str | Path, 可选): 要加载到模型中的预训练权重文件路径。
+            verbose (bool): 是否在初始化期间显示模型信息。
 
-        Returns:
-            (YOLOEModel | YOLOESegModel): The initialized YOLOE model.
+        返回：
+            (YOLOEModel | YOLOESegModel): 初始化后的 YOLOE 模型。
 
-        Notes:
-            - The number of classes (nc) is hard-coded to a maximum of 80 following the official configuration.
-            - The nc parameter here represents the maximum number of different text samples in one image,
-              rather than the actual number of classes.
+        注意：
+            - 根据官方配置，类别数量（nc）硬编码为最大 80。
+            - 此处的 nc 参数表示单张图像中不同文本样本的最大数量，而不是实际类别数量。
         """
-        # NOTE: This `nc` here is the max number of different text samples in one image, rather than the actual `nc`.
-        # NOTE: Following the official config, nc hard-coded to 80 for now.
+        # 注意：此处的 nc 是单张图像中不同文本样本的最大数量，而不是实际的 `nc`。
+        # 注意：遵循官方配置，当前将 nc 硬编码为 80。
         model = (YOLOESegModel if self.args.task == "segment" else YOLOEModel)(
             cfg["yaml_file"] if isinstance(cfg, dict) else cfg,
             ch=self.data["channels"],
@@ -79,20 +76,20 @@ class YOLOETrainer(DetectionTrainer):
         return model
 
     def get_validator(self):
-        """Return a task-appropriate YOLOE validator."""
+        """返回适合当前任务的 YOLOE 验证器。"""
         validator = YOLOESegValidator if self.args.task == "segment" else YOLOEDetectValidator
         return validator(self.test_loader, save_dir=self.save_dir, args=copy(self.args), _callbacks=self.callbacks)
 
     def build_dataset(self, img_path: str, mode: str = "train", batch: int | None = None):
-        """Build YOLO Dataset.
+        """构建 YOLO Dataset.
 
-        Args:
-            img_path (str): Path to the folder containing images.
-            mode (str): 'train' mode or 'val' mode, users are able to customize different augmentations for each mode.
-            batch (int, optional): Size of batches, this is for rectangular training.
+        参数：
+            img_path (str): 包含图像的文件夹路径。
+            mode (str): 'train' 或 'val' 模式，用户可以为每种模式自定义不同的数据增强。
+            batch (int, 可选): 批次大小，用于矩形训练。
 
-        Returns:
-            (Dataset): YOLO dataset configured for training or validation.
+        返回：
+            (Dataset): 配置完成的 YOLO 训练或验证数据集。
         """
         gs = max(int(unwrap_model(self.model).stride.max() if self.model else 0), 32)
         return build_yolo_dataset(
@@ -101,26 +98,25 @@ class YOLOETrainer(DetectionTrainer):
 
 
 class YOLOEPETrainer(DetectionTrainer):
-    """Fine-tune YOLOE model using linear probing approach.
+    """使用线性探测方法微调 YOLOE 模型。
 
-    This trainer freezes most model layers and only trains specific projection layers for efficient fine-tuning on new
-    datasets while preserving pretrained features.
+    此训练器冻结大部分模型层，只训练特定投影层，从而在保留预训练特征的同时高效适配新数据集。
 
-    Methods:
-        get_model: Initialize a YOLOE model with frozen layers except projection layers.
-        get_validator: Return a task-appropriate validator.
+    方法：
+        get_model：初始化除投影层外均被冻结的 YOLOE 模型。
+        get_validator：返回适合当前任务的验证器。
     """
 
     def get_model(self, cfg=None, weights=None, verbose: bool = True):
-        """Return a task-appropriate YOLOE model initialized with specified config and weights.
+        """使用指定配置和权重初始化并返回适合当前任务的 YOLOE 模型。
 
-        Args:
-            cfg (dict | str, optional): Model configuration.
-            weights (str, optional): Path to pretrained weights.
-            verbose (bool): Whether to display model information.
+        参数：
+            cfg (dict | str, 可选): 模型配置。
+            weights (str, 可选): 预训练权重路径。
+            verbose (bool): 是否显示模型信息。
 
-        Returns:
-            (YOLOEModel | YOLOESegModel): Initialized model with frozen layers except for specific projection layers.
+        返回：
+            (YOLOEModel | YOLOESegModel): 初始化后的模型，除特定投影层外其余层均被冻结。
         """
         model = (YOLOESegModel if self.args.task == "segment" else YOLOEModel)(
             cfg["yaml_file"] if isinstance(cfg, dict) else cfg,
@@ -137,11 +133,11 @@ class YOLOEPETrainer(DetectionTrainer):
 
         model.eval()
         names = list(self.data["names"].values())
-        # NOTE: `get_text_pe` related to text model and YOLOEDetect.reprta,
-        # it'd get correct results as long as loading proper pretrained weights.
+        # 注意：`get_text_pe` 与文本模型和 YOLOEDetect.reprta 相关，
+        # 只要加载正确的预训练权重，就能得到正确结果。
         tpe = model.get_text_pe(names)
         model.set_classes(names, tpe)
-        model.model[-1].fuse(model.pe)  # fuse text embeddings to classify head
+        model.model[-1].fuse(model.pe)  # 将文本嵌入融合到分类检测头
         model.model[-1].cv3[0][2] = deepcopy(model.model[-1].cv3[0][2]).requires_grad_(True)
         model.model[-1].cv3[1][2] = deepcopy(model.model[-1].cv3[1][2]).requires_grad_(True)
         model.model[-1].cv3[2][2] = deepcopy(model.model[-1].cv3[2][2]).requires_grad_(True)
@@ -156,48 +152,46 @@ class YOLOEPETrainer(DetectionTrainer):
         return model
 
     def get_validator(self):
-        """Return a task-appropriate validator without the text prompts the YOLOE validators require."""
+        """返回不需要 YOLOE 验证器所要求文本提示的适合当前任务的验证器。"""
         validator = SegmentationValidator if self.args.task == "segment" else DetectionValidator
         return validator(self.test_loader, save_dir=self.save_dir, args=copy(self.args), _callbacks=self.callbacks)
 
 
 class YOLOETrainerFromScratch(YOLOETrainer, WorldTrainerFromScratch):
-    """Train YOLOE models from scratch with text embedding support.
+    """从头训练支持文本嵌入的 YOLOE 模型。
 
-    This trainer combines YOLOE training capabilities with world training features, enabling training from scratch with
-    text embeddings and grounding datasets.
+    此训练器结合 YOLOE 训练能力与 World 训练特征，支持使用文本嵌入和 grounding 数据集从头训练。
 
-    Methods:
-        build_dataset: Build datasets for training with grounding support.
-        generate_text_embeddings: Generate and cache text embeddings for training.
+    方法：
+        build_dataset：构建支持 grounding 的训练数据集。
+        generate_text_embeddings：生成并缓存训练所需的文本嵌入。
     """
 
     def build_dataset(self, img_path: list[str] | str, mode: str = "train", batch: int | None = None):
-        """Build YOLO Dataset for training or validation.
+        """构建用于训练或验证的 YOLO 数据集。
 
-        This method constructs appropriate datasets based on the mode and input paths, handling both standard YOLO
-        datasets and grounding datasets with different formats.
+        此方法根据模式和输入路径构建合适的数据集，同时处理标准 YOLO 数据集和不同格式的 grounding 数据集。
 
-        Args:
-            img_path (list[str] | str): Path to the folder containing images or list of paths.
-            mode (str): 'train' mode or 'val' mode, allowing customized augmentations for each mode.
-            batch (int, optional): Size of batches, used for rectangular training/validation.
+        参数：
+            img_path (列表[str] | str): 包含图像的文件夹路径或路径列表。
+            mode (str): 'train' 或 'val' 模式，可为每种模式自定义数据增强。
+            batch (int, 可选): 批次大小，用于矩形训练或验证。
 
-        Returns:
-            (YOLOConcatDataset | Dataset): The constructed dataset for training or validation.
+        返回：
+            (YOLOConcatDataset | Dataset): 构建完成的训练或验证数据集。
         """
         return WorldTrainerFromScratch.build_dataset(self, img_path, mode, batch)
 
     def generate_text_embeddings(self, texts: list[str], batch: int, cache_dir: Path):
-        """Generate text embeddings for a list of text samples.
+        """为文本样本列表生成文本嵌入。
 
-        Args:
-            texts (list[str]): List of text samples to encode.
-            batch (int): Batch size for processing.
-            cache_dir (Path): Directory to save/load cached embeddings.
+        参数：
+            texts (列表[str]): 要编码的文本样本列表。
+            batch (int): 处理批次大小。
+            cache_dir (Path): 保存和加载缓存嵌入的目录。
 
-        Returns:
-            (dict): Dictionary mapping text samples to their embeddings.
+        返回：
+            (dict): 将文本样本映射到其嵌入的字典。
         """
         model = unwrap_model(self.model).text_model
         cache_path = cache_dir / f"text_embeddings_{model.replace(':', '_').replace('/', '_')}.pt"
@@ -214,50 +208,47 @@ class YOLOETrainerFromScratch(YOLOETrainer, WorldTrainerFromScratch):
 
 
 class YOLOEPEFreeTrainer(YOLOEPETrainer, YOLOETrainerFromScratch):
-    """Train prompt-free YOLOE model.
+    """训练无提示的 YOLOE 模型。
 
-    This trainer combines linear probing capabilities with from-scratch training for prompt-free YOLOE models that don't
-    require text prompts during inference.
+    此训练器结合线性探测能力和从头训练能力，用于训练推理期间不需要文本提示的无提示 YOLOE 模型。
 
-    Methods:
-        preprocess_batch: Preprocess batches without text features.
-        set_text_embeddings: Set text embeddings for datasets (no-op for prompt-free).
+    方法：
+        preprocess_batch：预处理不包含文本特征的批次。
+        set_text_embeddings：为数据集设置文本嵌入（无提示模式下为空操作）。
     """
 
     def preprocess_batch(self, batch):
-        """Preprocess a batch of images for YOLOE training, adjusting formatting and dimensions as needed."""
+        """预处理 YOLOE 训练图像批次，并根据需要调整格式和维度。"""
         return DetectionTrainer.preprocess_batch(self, batch)
 
     def set_text_embeddings(self, datasets, batch: int):
-        """No-op override for prompt-free training that does not require text embeddings.
+        """无提示训练不需要文本嵌入，因此此处为空操作覆盖。
 
-        Args:
-            datasets (list[Dataset]): List of datasets containing category names to process.
-            batch (int): Batch size for processing text embeddings.
+        参数：
+            datasets (列表[Dataset]): 包含待处理类别名称的数据集列表。
+            batch (int): 处理文本嵌入时的批次大小。
         """
 
 
 class YOLOEVPTrainer(YOLOETrainerFromScratch):
-    """Train YOLOE model with visual prompts.
+    """使用视觉提示训练 YOLOE 模型。
 
-    This trainer extends YOLOETrainerFromScratch to support visual prompt-based training, where visual cues are provided
-    alongside images to guide the detection process.
+    此训练器扩展 YOLOETrainerFromScratch，支持基于视觉提示的训练，在图像之外提供视觉线索以引导检测过程。
 
-    Methods:
-        build_dataset: Build dataset with visual prompt loading transforms.
+    方法：
+        build_dataset：构建包含视觉提示加载变换的数据集。
     """
 
     def build_dataset(self, img_path: list[str] | str, mode: str = "train", batch: int | None = None):
-        """Build YOLO Dataset for training or validation with visual prompts.
+        """构建包含视觉提示、用于训练或验证的 YOLO 数据集。
 
-        Args:
-            img_path (list[str] | str): Path to the folder containing images or list of paths.
-            mode (str): 'train' mode or 'val' mode, allowing customized augmentations for each mode.
-            batch (int, optional): Size of batches, used for rectangular training/validation.
+        参数：
+            img_path (列表[str] | str): 包含图像的文件夹路径或路径列表。
+            mode (str): 'train' 或 'val' 模式，可为每种模式自定义数据增强。
+            batch (int, 可选): 批次大小，用于矩形训练或验证。
 
-        Returns:
-            (YOLOConcatDataset | Dataset): YOLO dataset configured for training or validation, with visual prompts for
-                training mode.
+        返回：
+            (YOLOConcatDataset | Dataset): 配置完成的训练或验证 YOLO 数据集，训练模式下包含视觉提示。
         """
         dataset = super().build_dataset(img_path, mode, batch)
         if isinstance(dataset, YOLOConcatDataset):
@@ -268,7 +259,7 @@ class YOLOEVPTrainer(YOLOETrainerFromScratch):
         return dataset
 
     def _close_dataloader_mosaic(self):
-        """Close mosaic augmentation and add visual prompt loading to the training dataset."""
+        """关闭马赛克增强，并向训练数据集添加视觉提示加载。"""
         super()._close_dataloader_mosaic()
         if isinstance(self.train_loader.dataset, YOLOConcatDataset):
             for d in self.train_loader.dataset.datasets:

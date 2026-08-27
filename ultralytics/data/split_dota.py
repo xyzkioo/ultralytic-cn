@@ -18,26 +18,26 @@ from ultralytics.utils.checks import check_requirements
 
 
 def bbox_iof(polygon1: np.ndarray, bbox2: np.ndarray, eps: float = 1e-6) -> np.ndarray:
-    """Calculate Intersection over Foreground (IoF) between polygons and bounding boxes.
+    """计算多边形与边界框之间的前景交并比（IoF）。
 
-    Args:
-        polygon1 (np.ndarray): Polygon coordinates with shape (N, 8).
-        bbox2 (np.ndarray): Bounding boxes with shape (M, 4).
-        eps (float, optional): Small value to prevent division by zero.
+    参数：
+        polygon1 (np.ndarray): 形状为 (N, 8) 的多边形坐标。
+        bbox2 (np.ndarray): 形状为 (M, 4) 的边界框。
+        eps (float, 可选): 用于防止除零的小值。
 
-    Returns:
-        (np.ndarray): IoF scores with shape (N, M).
+    返回：
+        (np.ndarray): IoF 分数，形状为 (N, M)。
 
-    Notes:
-        Polygon format: [x1, y1, x2, y2, x3, y3, x4, y4].
-        Bounding box format: [x_min, y_min, x_max, y_max].
+    注意：
+        多边形格式：[x1, y1, x2, y2, x3, y3, x4, y4]。
+        边界框格式：[x_min, y_min, x_max, y_max]。
     """
     check_requirements("shapely>=2.0.0")
     from shapely.geometry import Polygon
 
     polygon1 = polygon1.reshape(-1, 4, 2)
-    lt_point = np.min(polygon1, axis=-2)  # left-top
-    rb_point = np.max(polygon1, axis=-2)  # right-bottom
+    lt_point = np.min(polygon1, axis=-2)  # 左上角
+    rb_point = np.max(polygon1, axis=-2)  # 右下角
     bbox1 = np.concatenate([lt_point, rb_point], axis=-1)
 
     lt = np.maximum(bbox1[:, None, :2], bbox2[..., :2])
@@ -64,22 +64,22 @@ def bbox_iof(polygon1: np.ndarray, bbox2: np.ndarray, eps: float = 1e-6) -> np.n
 
 
 def load_yolo_dota(data_root: str, split: str = "train") -> list[dict[str, Any]]:
-    """Load DOTA dataset annotations and image information.
+    """加载 DOTA 数据集标注和图像信息。
 
-    Args:
-        data_root (str): Data root directory.
-        split (str, optional): The split data set, could be 'train' or 'val'.
+    参数：
+        data_root (str): 数据集根目录。
+        split (str, 可选): 数据集拆分，可以是 'train' 或 'val'。
 
-    Returns:
-        (list[dict[str, Any]]): List of annotation dictionaries containing image information.
+    返回：
+        (列表[dict[str, Any]]): 包含图像信息的标注字典列表。
 
-    Notes:
-        The directory structure assumed for the DOTA dataset:
+    注意：
+        DOTA 数据集的目录结构应为：
             - data_root
-                - images
+                - 图像
                     - train
                     - val
-                - labels
+                - 标签
                     - train
                     - val
     """
@@ -105,17 +105,17 @@ def get_windows(
     im_rate_thr: float = 0.6,
     eps: float = 0.01,
 ) -> np.ndarray:
-    """Get the coordinates of sliding windows for image cropping.
+    """获取用于裁剪图像的滑动窗口坐标。
 
-    Args:
-        im_size (tuple[int, int]): Original image size, (H, W).
-        crop_sizes (tuple[int, ...], optional): Crop size of windows.
-        gaps (tuple[int, ...], optional): Gap between crops.
-        im_rate_thr (float, optional): Threshold for the ratio of image area within a window to the total window area.
-        eps (float, optional): Epsilon value for math operations.
+    参数：
+        im_size (tuple[int, int]): 原始图像尺寸 (H, W)。
+        crop_sizes (tuple[int, ...], 可选): 窗口裁剪尺寸。
+        gaps (tuple[int, ...], 可选): 裁剪窗口之间的间隔。
+        im_rate_thr (float, 可选): 窗口内图像区域与窗口总面积之比的阈值。
+        eps (float, 可选): 数学运算使用的 epsilon 值。
 
-    Returns:
-        (np.ndarray): Array of window coordinates of shape (N, 4) where each row is [x_start, y_start, x_stop, y_stop].
+    返回：
+        (np.ndarray): 形状为 (N, 4) 的窗口坐标数组，每行格式为 [x_start, y_start, x_stop, y_stop]。
     """
     h, w = im_size
     windows = []
@@ -151,17 +151,17 @@ def get_windows(
 
 
 def get_window_obj(anno: dict[str, Any], windows: np.ndarray, iof_thr: float = 0.7) -> list[np.ndarray]:
-    """Get objects for each window based on IoF threshold."""
+    """根据 IoF 阈值获取每个窗口中的目标。"""
     h, w = anno["ori_size"]
     label = anno["label"]
     if len(label):
         label[:, 1::2] *= w
         label[:, 2::2] *= h
         iofs = bbox_iof(label[:, 1:], windows)
-        # Unnormalized and misaligned coordinates
-        return [(label[iofs[:, i] >= iof_thr]) for i in range(len(windows))]  # window_anns
+        # 未归一化且未对齐的坐标
+        return [(label[iofs[:, i] >= iof_thr]) for i in range(len(windows))]  # 窗口标注
     else:
-        return [np.zeros((0, 9), dtype=np.float32) for _ in range(len(windows))]  # window_anns
+        return [np.zeros((0, 9), dtype=np.float32) for _ in range(len(windows))]  # 窗口标注
 
 
 def crop_and_save(
@@ -172,23 +172,23 @@ def crop_and_save(
     lb_dir: str,
     allow_background_images: bool = True,
 ) -> None:
-    """Crop images and save new labels for each window.
+    """裁剪图像，并为每个窗口保存新的标签。
 
-    Args:
-        anno (dict[str, Any]): Annotation dict, including 'filepath', 'label', 'ori_size' as its keys.
-        windows (np.ndarray): Array of windows coordinates with shape (N, 4).
-        window_objs (list[np.ndarray]): A list of labels inside each window.
-        im_dir (str): The output directory path of images.
-        lb_dir (str): The output directory path of labels.
-        allow_background_images (bool, optional): Whether to include background images without labels.
+    参数：
+        anno (dict[str, Any]): 标注字典，包含 'filepath'、'label' 和 'ori_size' 键。
+        windows (np.ndarray): 形状为 (N, 4) 的窗口坐标数组。
+        window_objs (列表[np.ndarray]): 每个窗口内的标签列表。
+        im_dir (str): 图像输出目录路径。
+        lb_dir (str): 标签输出目录路径。
+        allow_background_images (bool, 可选): 是否包含没有标签的背景图像。
 
-    Notes:
-        The directory structure assumed for the DOTA dataset:
+    注意：
+        DOTA 数据集的目录结构应为：
             - data_root
-                - images
+                - 图像
                     - train
                     - val
-                - labels
+                - 标签
                     - train
                     - val
     """
@@ -222,27 +222,27 @@ def split_images_and_labels(
     crop_sizes: tuple[int, ...] = (1024,),
     gaps: tuple[int, ...] = (200,),
 ) -> None:
-    """Split both images and labels for a given dataset split.
+    """拆分指定数据集中的图像和标签。
 
-    Args:
-        data_root (str): Root directory of the dataset.
-        save_dir (str): Directory to save the split dataset.
-        split (str, optional): The split data set, could be 'train' or 'val'.
-        crop_sizes (tuple[int, ...], optional): Tuple of crop sizes.
-        gaps (tuple[int, ...], optional): Tuple of gaps between crops.
+    参数：
+        data_root (str): 数据集根目录。
+        save_dir (str): 保存拆分后数据集的目录。
+        split (str, 可选): 数据集拆分，可以是 'train' 或 'val'。
+        crop_sizes (tuple[int, ...], 可选): 裁剪尺寸元组。
+        gaps (tuple[int, ...], 可选): 裁剪窗口之间的间隔元组。
 
-    Notes:
-        The directory structure assumed for the DOTA dataset:
+    注意：
+        DOTA 数据集的目录结构应为：
             - data_root
-                - images
+                - 图像
                     - split
-                - labels
+                - 标签
                     - split
-        and the output directory structure is:
+        输出目录结构为：
             - save_dir
-                - images
+                - 图像
                     - split
-                - labels
+                - 标签
                     - split
     """
     im_dir = Path(save_dir) / "images" / split
@@ -260,30 +260,30 @@ def split_images_and_labels(
 def split_trainval(
     data_root: str, save_dir: str, crop_size: int = 1024, gap: int = 200, rates: tuple[float, ...] = (1.0,)
 ) -> None:
-    """Split train and val sets of DOTA dataset with multiple scaling rates.
+    """使用多个缩放比例拆分 DOTA 数据集的 train 和 val 集。
 
-    Args:
-        data_root (str): Root directory of the dataset.
-        save_dir (str): Directory to save the split dataset.
-        crop_size (int, optional): Base crop size.
-        gap (int, optional): Base gap between crops.
-        rates (tuple[float, ...], optional): Scaling rates for crop_size and gap.
+    参数：
+        data_root (str): 数据集根目录。
+        save_dir (str): 保存拆分后数据集的目录。
+        crop_size (int, 可选): 基础裁剪尺寸。
+        gap (int, 可选): 裁剪窗口之间的基础间隔。
+        rates (tuple[float, ...], 可选): crop_size 和 gap 的缩放比例。
 
-    Notes:
-        The directory structure assumed for the DOTA dataset:
+    注意：
+        DOTA 数据集的目录结构应为：
             - data_root
-                - images
+                - 图像
                     - train
                     - val
-                - labels
+                - 标签
                     - train
                     - val
-        and the output directory structure is:
+        输出目录结构为：
             - save_dir
-                - images
+                - 图像
                     - train
                     - val
-                - labels
+                - 标签
                     - train
                     - val
     """
@@ -298,23 +298,23 @@ def split_trainval(
 def split_test(
     data_root: str, save_dir: str, crop_size: int = 1024, gap: int = 200, rates: tuple[float, ...] = (1.0,)
 ) -> None:
-    """Split test set of DOTA dataset, labels are not included within this set.
+    """拆分 DOTA 数据集的测试集，该集合不包含标签。
 
-    Args:
-        data_root (str): Root directory of the dataset.
-        save_dir (str): Directory to save the split dataset.
-        crop_size (int, optional): Base crop size.
-        gap (int, optional): Base gap between crops.
-        rates (tuple[float, ...], optional): Scaling rates for crop_size and gap.
+    参数：
+        data_root (str): 数据集根目录。
+        save_dir (str): 保存拆分后数据集的目录。
+        crop_size (int, 可选): 基础裁剪尺寸。
+        gap (int, 可选): 裁剪窗口之间的基础间隔。
+        rates (tuple[float, ...], 可选): crop_size 和 gap 的缩放比例。
 
-    Notes:
-        The directory structure assumed for the DOTA dataset:
+    注意：
+        DOTA 数据集的目录结构应为：
             - data_root
-                - images
+                - 图像
                     - test
-        and the output directory structure is:
+        输出目录结构为：
             - save_dir
-                - images
+                - 图像
                     - test
     """
     crop_sizes, gaps = [], []

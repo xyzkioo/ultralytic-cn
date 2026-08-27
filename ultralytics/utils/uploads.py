@@ -1,5 +1,5 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
-"""Upload utilities for Ultralytics, mirroring downloads.py patterns."""
+"""Ultralytics 上传工具，沿用 downloads.py 的实现模式。"""
 
 from __future__ import annotations
 
@@ -11,26 +11,26 @@ from ultralytics.utils import LOGGER, TQDM
 
 
 class _ProgressReader:
-    """File wrapper that reports read progress for upload monitoring."""
+    """报告读取进度、用于监控上传过程的文件包装器。"""
 
     def __init__(self, file_path, pbar):
-        self.file = open(file_path, "rb")  # noqa: SIM115  # kept open for streamed upload reads
+        self.file = open(file_path, "rb")  # noqa: SIM115  # 流式上传读取期间保持打开
         self.pbar = pbar
         self._size = os.path.getsize(file_path)
 
     def read(self, size=-1):
-        """Read data and update progress bar."""
+        """读取数据并更新进度条。"""
         data = self.file.read(size)
         if data and self.pbar:
             self.pbar.update(len(data))
         return data
 
     def __len__(self):
-        """Return file size for Content-Length header."""
+        """返回文件大小，用于设置 Content-Length 标头。"""
         return self._size
 
     def close(self):
-        """Close the file."""
+        """关闭文件。"""
         self.file.close()
 
 
@@ -42,20 +42,20 @@ def safe_upload(
     timeout: int = 600,
     progress: bool = False,
 ) -> bool:
-    """Upload a file to a URL with retry logic and optional progress bar.
+    """将文件上传到 URL，支持失败重试和可选进度条。
 
-    Args:
-        file (str | Path): Path to the file to upload.
-        url (str): The URL endpoint to upload the file to (e.g., signed GCS URL).
-        headers (dict, optional): Additional headers to include in the request.
-        retry (int, optional): Number of retry attempts on failure (default: 2 for 3 total attempts).
-        timeout (int, optional): Request timeout in seconds.
-        progress (bool, optional): Whether to display a progress bar during upload.
+    参数：
+        file (str | Path): 要上传的文件路径。
+        url (str): 文件上传地址（例如签名后的 GCS URL）。
+        headers (dict, 可选): 要添加到请求中的其他标头。
+        retry (int, 可选): 失败时的重试次数（默认 2 次，即总共尝试 3 次）。
+        timeout (int, 可选): 请求超时时间，单位为秒。
+        progress (bool, 可选): 上传期间是否显示进度条。
 
-    Returns:
-        (bool): True if upload succeeded, False otherwise.
+    返回：
+        (bool): 上传成功返回 True，否则返回 False。
 
-    Examples:
+    示例：
         >>> from ultralytics.utils.uploads import safe_upload
         >>> success = safe_upload("model.pt", "https://storage.googleapis.com/...", progress=True)
     """
@@ -68,7 +68,7 @@ def safe_upload(
     file_size = file.stat().st_size
     desc = f"Uploading {file.name}"
 
-    # Prepare headers (Content-Length set automatically from file size)
+    # 准备请求标头（Content-Length 会根据文件大小自动设置）
     upload_headers = {"Content-Type": "application/octet-stream"}
     if headers:
         upload_headers.update(headers)

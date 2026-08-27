@@ -1,12 +1,12 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
-# Builds ultralytics/ultralytics:latest-cpu image on DockerHub https://hub.docker.com/r/ultralytics/ultralytics
-# Lightweight CPU image optimized for inference (extends latest-python)
+# 在 Docker Hub 上构建 ultralytics/ultralytics:latest-cpu 镜像：https://hub.docker.com/r/ultralytics/ultralytics
+# 适用于推理的轻量级 CPU 镜像（基于 latest-python 扩展）
 
-# Build from Ultralytics Python image
+# 基于 Ultralytics Python 镜像构建
 FROM ultralytics/ultralytics:latest-python
 
-# Set default command to bash
+# 将默认命令设置为 bash
 CMD ["/bin/bash"]
 
 # Usage --------------------------------------------------------------------------------------------------------------

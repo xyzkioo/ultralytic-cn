@@ -14,17 +14,17 @@ from .base import BaseBackend
 
 
 class PaddleBackend(BaseBackend):
-    """Baidu PaddlePaddle inference backend.
+    """百度 PaddlePaddle 推理后端。
 
-    Loads and runs inference with Baidu PaddlePaddle models (*_paddle_model/ directories). Supports both CPU and GPU
-    execution with automatic device configuration and memory pool initialization.
+    加载并执行百度 PaddlePaddle 模型（*_paddle_model/ 目录）推理。
+    支持 CPU 和 GPU 执行，并自动配置设备和初始化内存池。
     """
 
     def load_model(self, weight: str | Path) -> None:
-        """Load a Baidu PaddlePaddle model from a directory containing .json and .pdiparams files.
+        """从包含 .json 和 .pdiparams 文件的目录加载百度 PaddlePaddle 模型。
 
-        Args:
-            weight (str | Path): Path to the model directory or .pdiparams file.
+        参数：
+            weight (str | Path): 模型目录或 .pdiparams 文件的路径。
         """
         cuda = isinstance(self.device, torch.device) and torch.cuda.is_available() and self.device.type != "cpu"
         LOGGER.info(f"Loading {weight} for PaddlePaddle inference...")
@@ -61,13 +61,13 @@ class PaddleBackend(BaseBackend):
         self.apply_metadata(self.read_metadata(w))
 
     def forward(self, im: torch.Tensor) -> list[np.ndarray]:
-        """Run Baidu PaddlePaddle inference.
+        """执行百度 PaddlePaddle 推理。
 
-        Args:
-            im (torch.Tensor): Input image tensor in BCHW format, normalized to [0, 1].
+        参数：
+            im (torch.Tensor): 输入图像 张量 in BCHW format, normalized to [0, 1].
 
-        Returns:
-            (list[np.ndarray]): Model predictions as a list of numpy arrays, one per output handle.
+        返回：
+            (列表[np.ndarray]): NumPy 数组列表形式的模型预测结果，每个输出句柄对应一个数组。
         """
         self.input_handle.copy_from_cpu(im.cpu().numpy().astype(np.float32, copy=False))
         self.predictor.run()

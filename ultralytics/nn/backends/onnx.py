@@ -12,7 +12,7 @@ from ultralytics.utils.checks import check_requirements
 
 from .base import BaseBackend
 
-# ONNX Runtime output type string -> (torch dtype, numpy dtype) for IO binding.
+# ONNX Runtime 输出类型字符串 -> (torch dtype, numpy dtype)，用于 IO 绑定。
 _ORT_DTYPES = {
     "tensor(float16)": (torch.float16, np.float16),
     "tensor(float)": (torch.float32, np.float32),
@@ -25,11 +25,10 @@ _ORT_DTYPES = {
 
 
 class ONNXBackend(BaseBackend):
-    """Microsoft ONNX Runtime inference backend with optional OpenCV DNN support.
+    """支持可选 OpenCV DNN 的 Microsoft ONNX Runtime 推理后端。
 
-    Loads and runs inference with ONNX models (.onnx files) using either Microsoft ONNX Runtime with CUDA/CoreML
-    execution providers, or OpenCV DNN for lightweight CPU inference. Supports IO binding for optimized GPU inference
-    with static input shapes.
+    使用带 CUDA/CoreML 执行提供程序的 Microsoft ONNX Runtime，或使用 OpenCV DNN 执行轻量级 CPU 推理，
+    加载并执行 ONNX 模型（.onnx 文件）。支持静态输入形状下用于优化 GPU 推理的 IO 绑定。
     """
 
     def __init__(
@@ -40,14 +39,14 @@ class ONNXBackend(BaseBackend):
         format: str = "onnx",
         session_options: object | None = None,
     ):
-        """Initialize the ONNX backend.
+        """初始化 ONNX 后端。
 
-        Args:
-            weight (str | Path): Path to the .onnx model file.
-            device (torch.device): Device to run inference on.
-            fp16 (bool): Whether to use FP16 half-precision inference.
+        参数：
+            weight (str | Path): .onnx 模型文件路径。
+            device (torch.device): 执行推理的设备。
+            fp16 (bool): 是否使用 FP16 半精度推理。
             format (str): Inference engine, either "onnx" for ONNX Runtime or "dnn" for OpenCV DNN.
-            session_options (object | None): Optional ONNX Runtime session options.
+            session_options (对象 | None): 可选 ONNX Runtime session options.
         """
         assert format in {"onnx", "dnn"}, f"Unsupported ONNX format: {format}."
         self.format = format
@@ -55,28 +54,28 @@ class ONNXBackend(BaseBackend):
         super().__init__(weight, device, fp16)
 
     def load_model(self, weight: str | Path) -> None:
-        """Load an ONNX model using ONNX Runtime or OpenCV DNN.
+        """使用 ONNX Runtime 或 OpenCV DNN 加载 ONNX 模型。
 
-        Args:
-            weight (str | Path): Path to the .onnx model file.
+        参数：
+            weight (str | Path): .onnx 模型文件路径。
         """
         cuda = isinstance(self.device, torch.device) and torch.cuda.is_available() and self.device.type != "cpu"
 
         self.apply_metadata(self.read_metadata(weight))
 
         if self.format == "dnn":
-            # OpenCV DNN
+            # OpenCV DNN 后端
             LOGGER.info(f"Loading {weight} for ONNX OpenCV DNN inference...")
             import cv2
 
             self.net = cv2.dnn.readNetFromONNX(weight)
         else:
-            # ONNX Runtime
+            # ONNX Runtime 后端
             LOGGER.info(f"Loading {weight} for ONNX Runtime inference...")
             check_requirements(("onnx", "onnxruntime-gpu" if cuda else "onnxruntime"))
             import onnxruntime
 
-            # Select execution provider
+            # 选择执行提供程序
             available = onnxruntime.get_available_providers()
             if cuda and "CUDAExecutionProvider" in available:
                 providers = [("CUDAExecutionProvider", {"device_id": self.device.index}), "CPUExecutionProvider"]
@@ -97,9 +96,8 @@ class ONNXBackend(BaseBackend):
             try:
                 self.session = onnxruntime.InferenceSession(weight, self.session_options, providers=providers)
             except onnxruntime.capi.onnxruntime_pybind11_state.InvalidProtobuf as e:
-                # ONNX Runtime reports an unparsable graph as a raw protobuf error naming neither the problem
-                # nor a remedy. Only this one type is caught: other load failures are execution-provider or
-                # model-support issues, where the runtime's own message is the useful one.
+                # ONNX Runtime 会将无法解析的图报告为原始 protobuf 错误，既不说明问题，也不提供解决办法。
+                # 这里只捕获这一种错误；其他加载失败通常与执行提供程序或模型支持有关，此时应保留运行时自己的错误信息。
                 raise TypeError(
                     f"ERROR ❌️ {weight} is not a loadable ONNX model — the file is empty, truncated or corrupted "
                     f"({type(e).__name__}: {e}).\nRecommend fixes are to re-export it with "
@@ -107,11 +105,11 @@ class ONNXBackend(BaseBackend):
                 ) from e
             self.output_names = [x.name for x in self.session.get_outputs()]
 
-            # Check if dynamic shapes
+                # 检查是否为动态形状
             self.dynamic = isinstance(self.session.get_outputs()[0].shape[0], str)
             self.fp16 = "float16" in self.session.get_inputs()[0].type
 
-            # Setup IO binding for CUDA
+            # 为 CUDA 设置 IO 绑定
             self.use_io_binding = not self.dynamic and cuda
             if self.use_io_binding:
                 self.io = self.session.io_binding()
@@ -132,22 +130,22 @@ class ONNXBackend(BaseBackend):
     def forward(
         self, im: torch.Tensor | dict[str, torch.Tensor | np.ndarray]
     ) -> torch.Tensor | list[torch.Tensor] | np.ndarray:
-        """Run ONNX inference using IO binding (CUDA) or standard session execution.
+        """使用 IO 绑定（CUDA）或标准会话执行来运行 ONNX 推理。
 
-        Args:
-            im (torch.Tensor | dict): Input image tensor in BCHW format, normalized to [0, 1], or a dictionary mapping
-                input names to tensors/arrays for multi-input ONNX Runtime models.
+        参数：
+            im (torch.Tensor | dict): 输入图像张量，格式为 BCHW 且归一化到 [0, 1]；也可以是字典映射
+                将输入名称映射到张量/数组，用于多输入 ONNX Runtime 模型。
 
-        Returns:
-            (torch.Tensor | list[torch.Tensor] | np.ndarray): Model predictions as tensor(s) or numpy array(s).
+        返回：
+            (torch.Tensor | 列表[torch.Tensor] | np.ndarray): 张量或 NumPy 数组形式的模型预测结果。
         """
         if self.format == "dnn":
-            # OpenCV DNN
+        # OpenCV DNN 后端
             self.net.setInput(im.cpu().numpy())
             return self.net.forward()
 
-        # ONNX Runtime
-        if isinstance(im, dict):  # multi-input model
+        # ONNX Runtime 后端
+        if isinstance(im, dict):  # multi-输入 模型
             im = {k: v.cpu().numpy() if isinstance(v, torch.Tensor) else v for k, v in im.items()}
             return self.session.run(self.output_names, im)
 
@@ -169,17 +167,17 @@ class ONNXBackend(BaseBackend):
 
 
 class ONNXIMXBackend(ONNXBackend):
-    """ONNX IMX inference backend for NXP i.MX processors.
+    """用于 NXP i.MX 处理器的 ONNX IMX 推理后端。
 
-    Extends `ONNXBackend` with support for quantized models targeting NXP i.MX edge devices. Uses MCT (Model Compression
-    Toolkit) quantizers and custom NMS operations for optimized inference.
+    扩展 `ONNXBackend`，支持面向 NXP i.MX 边缘设备的量化模型。
+    使用 MCT（Model Compression Toolkit）量化器和自定义 NMS 操作来优化推理。
     """
 
     def load_model(self, weight: str | Path) -> None:
-        """Load a quantized ONNX model from an IMX model directory.
+        """从 IMX 模型目录加载量化的 ONNX 模型。
 
-        Args:
-            weight (str | Path): Path to the IMX model directory containing the .onnx file.
+        参数：
+            weight (str | Path): 包含 .onnx 文件的 IMX 模型目录路径。
         """
         check_requirements(("model-compression-toolkit>=2.4.1", "edge-mdt-cl<1.1.0", "onnxruntime-extensions"))
         check_requirements(("onnx", "onnxruntime"))
@@ -201,21 +199,21 @@ class ONNXIMXBackend(ONNXBackend):
         self.apply_metadata(self.read_metadata(w))
 
     def forward(self, im: torch.Tensor) -> np.ndarray | list[np.ndarray] | tuple[np.ndarray, ...]:
-        """Run IMX inference with task-specific output concatenation for detect, pose, and segment tasks.
+        """执行 IMX 推理，并针对检测、姿态和分割任务拼接对应输出。
 
-        Args:
-            im (torch.Tensor): Input image tensor in BCHW format, normalized to [0, 1].
+        参数：
+            im (torch.Tensor): 输入图像 张量 in BCHW format, normalized to [0, 1].
 
-        Returns:
-            (np.ndarray | list[np.ndarray] | tuple[np.ndarray, ...]): Task-formatted model predictions.
+        返回：
+            (np.ndarray | 列表[np.ndarray] | tuple[np.ndarray, ...]): Task-formatted 模型 预测结果.
         """
         y = self.session.run(self.output_names, {self.session.get_inputs()[0].name: im.cpu().numpy()})
 
         if self.task == "detect":
-            # boxes, conf, cls
+            # 边界框, conf, cls
             return np.concatenate([y[0], y[1][:, :, None], y[2][:, :, None]], axis=-1)
         elif self.task == "pose":
-            # boxes, conf, kpts
+            # 边界框, conf, kpts
             return np.concatenate([y[0], y[1][:, :, None], y[2][:, :, None], y[3]], axis=-1, dtype=y[0].dtype)
         elif self.task == "segment":
             return (

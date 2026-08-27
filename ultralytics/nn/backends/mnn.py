@@ -16,17 +16,16 @@ from .base import BaseBackend
 
 
 class MNNBackend(BaseBackend):
-    """MNN (Mobile Neural Network) inference backend.
+    """MNN（Mobile Neural Network）推理后端。
 
-    Loads and runs inference with MNN models (.mnn files) using the Alibaba MNN framework. Optimized for mobile and edge
-    deployment with configurable thread count and precision.
+    使用阿里巴巴 MNN 框架加载并运行 MNN 模型（.mnn 文件），针对移动端和边缘部署进行优化，并支持配置线程数和精度。
     """
 
     def load_model(self, weight: str | Path) -> None:
-        """Load an Alibaba MNN model from a .mnn file.
+        """从 .mnn 文件加载阿里巴巴 MNN 模型。
 
-        Args:
-            weight (str | Path): Path to the .mnn model file.
+        参数：
+            weight (str | Path): .mnn 模型文件路径。
         """
         LOGGER.info(f"Loading {weight} for MNN inference...")
         check_requirements("MNN")
@@ -37,7 +36,7 @@ class MNNBackend(BaseBackend):
         self.net = MNN.nn.load_module_from_file(weight, [], [], runtime_manager=rt, rearrange=True)
         self.expr = MNN.expr
 
-        # Load metadata from bizCode
+        # 从 bizCode 加载元数据
         info = self.net.get_info()
         if "bizCode" in info:
             try:
@@ -46,17 +45,17 @@ class MNNBackend(BaseBackend):
                 pass
 
     def forward(self, im: torch.Tensor) -> list:
-        """Run inference using the MNN runtime.
+        """使用 MNN 运行时执行推理。
 
-        Args:
-            im (torch.Tensor): Input image tensor in BCHW format, normalized to [0, 1].
+        参数：
+            im (torch.Tensor): 输入图像 张量 in BCHW format, normalized to [0, 1].
 
-        Returns:
-            (list): Model predictions as a list of numpy arrays.
+        返回：
+            (列表): NumPy 数组列表形式的模型预测结果。
         """
         input_var = self.expr.const(im.data_ptr(), im.shape)
         output_var = self.net.onForward([input_var])
-        # NOTE: need this copy(), or it'd get incorrect results on ARM devices
+        # 注意：必须执行 copy()，否则在 ARM 设备上可能得到错误结果
         if output_var:
             return [x.read().copy() for x in output_var]
         if self.metadata.get("args", {}).get("nms") and self.task in {"detect", "pose"}:

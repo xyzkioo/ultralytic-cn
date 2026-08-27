@@ -24,11 +24,11 @@ from ultralytics.utils.files import increment_path
 
 
 def coco91_to_coco80_class() -> list[int]:
-    """Convert 91-index COCO class IDs to 80-index COCO class IDs.
+    """将 91 索引的 COCO 类别 ID 转换为 80 索引的 COCO 类别 ID。
 
-    Returns:
-        (list[int | None]): A list of 91 elements where the index represents the 91-index class ID and the value is the
-            corresponding 80-index class ID, or None if there is no mapping.
+    返回：
+        (列表[int | None]): 长度为 91 的列表，索引表示 91 索引的类别 ID，值表示对应的 80 索引类别 ID；
+            如果没有对应映射，则为 None。
     """
     return [
         0,
@@ -126,23 +126,23 @@ def coco91_to_coco80_class() -> list[int]:
 
 
 def coco80_to_coco91_class() -> list[int]:
-    r"""Convert 80-index (val2014) to 91-index (paper).
+    r"""将 80 索引（val2014）的类别 ID 转换为 91 索引（论文）的类别 ID。
 
-    Returns:
-        (list[int]): A list of 80 class IDs where each value is the corresponding 91-index class ID.
+    返回：
+        (list[int]): 80 个类别 ID 组成的列表，每个值都是对应的 91 索引类别 ID。
 
-    Examples:
+    示例：
         >>> import numpy as np
         >>> a = np.loadtxt("data/coco.names", dtype="str", delimiter="\n")
         >>> b = np.loadtxt("data/coco_paper.names", dtype="str", delimiter="\n")
 
-        Convert the darknet to COCO format
+        将 darknet 格式转换为 COCO 格式
         >>> x1 = [list(a[i] == b).index(True) + 1 for i in range(80)]
 
-        Convert the COCO to darknet format
+        将 COCO 格式转换为 darknet 格式
         >>> x2 = [list(b[i] == a).index(True) if any(b[i] == a) else None for i in range(91)]
 
-    References:
+    参考：
         https://tech.amikelive.com/node-718/what-object-categories-labels-are-in-coco-dataset/
     """
     return [
@@ -237,56 +237,56 @@ def convert_coco(
     cls91to80: bool = True,
     lvis: bool = False,
 ):
-    """Convert COCO dataset annotations to a YOLO annotation format suitable for training YOLO models.
+    """将 COCO 数据集标注转换为适用于训练 YOLO 模型的 YOLO 标注格式。
 
-    Args:
-        labels_dir (str, optional): Path to directory containing COCO dataset annotation files.
-        save_dir (str, optional): Path to directory to save results to.
-        use_segments (bool, optional): Whether to include segmentation masks in the output.
-        use_keypoints (bool, optional): Whether to include keypoint annotations in the output.
-        cls91to80 (bool, optional): Whether to map 91 COCO class IDs to the corresponding 80 COCO class IDs.
-        lvis (bool, optional): Whether to convert data in lvis dataset way.
+    参数：
+        labels_dir (str, 可选): COCO 数据集标注文件所在目录的路径。
+        save_dir (str, 可选): 保存结果的目录路径。
+        use_segments (bool, 可选): 是否在输出中包含分割掩码。
+        use_keypoints (bool, 可选): 是否在输出中包含关键点标注。
+        cls91to80 (bool, 可选): 是否将 91 个 COCO 类别 ID 映射为对应的 80 个 COCO 类别 ID。
+        lvis (bool, 可选): 是否按照 LVIS 数据集方式转换数据。
 
-    Examples:
+    示例：
         >>> from ultralytics.data.converter import convert_coco
 
-        Convert COCO annotations to YOLO format
+        将 COCO 标注转换为 YOLO 格式
         >>> convert_coco("coco/annotations/", use_segments=True, use_keypoints=False, cls91to80=False)
 
-        Convert LVIS annotations to YOLO format
+        将 LVIS 标注转换为 YOLO 格式
         >>> convert_coco("lvis/annotations/", use_segments=True, use_keypoints=False, cls91to80=False, lvis=True)
     """
-    # Create dataset directory
-    save_dir = increment_path(save_dir)  # increment if save directory already exists
+    # 创建数据集目录
+    save_dir = increment_path(save_dir)  # 如果保存目录已存在，则递增目录名称
     for p in save_dir / "labels", save_dir / "images":
-        p.mkdir(parents=True, exist_ok=True)  # make dir
+        p.mkdir(parents=True, exist_ok=True)  # 创建目录
 
-    # Convert classes
+    # 转换类别
     coco80 = coco91_to_coco80_class()
 
-    # Import json
+    # 导入 json
     for json_file in sorted(Path(labels_dir).resolve().glob("*.json")):
         lname = "" if lvis else json_file.stem.replace("instances_", "")
-        fn = Path(save_dir) / "labels" / lname  # folder name
+        fn = Path(save_dir) / "labels" / lname  # 文件夹名称
         fn.mkdir(parents=True, exist_ok=True)
         if lvis:
-            # NOTE: create folders for both train and val in advance,
-            # since LVIS val set contains images from COCO 2017 train in addition to the COCO 2017 val split.
+            # 注意：预先为 train 和 val 创建文件夹，因为 LVIS 验证集除了包含 COCO 2017 验证集图像，
+            # 还包含来自 COCO 2017 训练集的图像。
             (fn / "train2017").mkdir(parents=True, exist_ok=True)
             (fn / "val2017").mkdir(parents=True, exist_ok=True)
         with open(json_file, encoding="utf-8") as f:
             data = json.load(f)
 
-        # Create image dict
+        # 创建图像字典
         images = {f"{x['id']:d}": x for x in data["images"]}
-        # Create image-annotations dict
+        # 创建图像与标注的对应字典
         annotations = defaultdict(list)
         for ann in data["annotations"]:
             annotations[ann["image_id"]].append(ann)
 
         image_txt = []
         dropped = False
-        # Write labels file
+        # 写入标签文件
         for img_id, anns in TQDM(annotations.items(), desc=f"Annotations {json_file}"):
             img = images[f"{img_id:d}"]
             h, w = img["height"], img["width"]
@@ -300,15 +300,15 @@ def convert_coco(
             for ann in anns:
                 if ann.get("iscrowd", False):
                     continue
-                # The COCO box format is [top left x, top left y, width, height]
+                # COCO 边界框格式为 [左上角 x, 左上角 y, 宽度, 高度]
                 box = np.array(ann["bbox"], dtype=np.float64)
-                box[:2] += box[2:] / 2  # xy top-left corner to center
-                box[[0, 2]] /= w  # normalize x
-                box[[1, 3]] /= h  # normalize y
-                if box[2] <= 0 or box[3] <= 0:  # if w <= 0 and h <= 0
+                box[:2] += box[2:] / 2  # 从左上角坐标转换为中心坐标
+                box[[0, 2]] /= w  # 归一化 x 坐标
+                box[[1, 3]] /= h  # 归一化 y 坐标
+                if box[2] <= 0 or box[3] <= 0:  # 如果宽度或高度小于等于 0
                     continue
 
-                cls = coco80[ann["category_id"] - 1] if cls91to80 else ann["category_id"] - 1  # class
+                cls = coco80[ann["category_id"] - 1] if cls91to80 else ann["category_id"] - 1  # 类别
                 box = [cls, *box.tolist()]
                 if box not in bboxes:
                     if use_keypoints:
@@ -342,20 +342,20 @@ def convert_coco(
                             s = (np.concatenate(s, axis=0) / np.array([w, h])).reshape(-1).tolist()
                             segments.append([cls, *s])
                         else:
-                            s = [j for i in polygons for j in i]  # all segments concatenated
+                            s = [j for i in polygons for j in i]  # 拼接所有分割段
                             s = (np.array(s).reshape(-1, 2) / np.array([w, h])).reshape(-1).tolist()
                             segments.append([cls, *s])
 
-            # Write
+            # 写入标签内容
             with open((fn / f).with_suffix(".txt"), "a", encoding="utf-8") as file:
                 for i in range(len(bboxes)):
                     if use_keypoints:
-                        line = (*(keypoints[i]),)  # cls, box, keypoints
+                        line = (*(keypoints[i]),)  # cls, 边界框, 关键点
                     else:
-                        line = (*(segments[i] if use_segments else bboxes[i]),)  # cls, box or segments
+                        line = (*(segments[i] if use_segments else bboxes[i]),)  # cls、边界框或分割段
                     file.write(("%g " * len(line)).rstrip() % line + "\n")
 
-        if dropped and not use_keypoints:  # segments are unused when keypoints own the output
+        if dropped and not use_keypoints:  # 关键点拥有独立输出时，不使用分割段
             LOGGER.warning(
                 f"{json_file}: annotations without a usable polygon, because the segmentation is missing, "
                 "empty, or not a point list such as an RLE mask, use a segment shaped like their bounding box."
@@ -370,32 +370,32 @@ def convert_coco(
 
 
 def convert_segment_masks_to_yolo_seg(masks_dir: str, output_dir: str, classes: int):
-    """Convert a dataset of segmentation mask images to the YOLO segmentation format.
+    """将分割掩码图像数据集转换为 YOLO 分割格式。
 
-    This function takes the directory containing the binary format mask images and converts them into YOLO segmentation
-    format. The converted masks are saved in the specified output directory.
+    此函数读取包含二值掩码图像的目录，并将其转换为 YOLO 分割格式。
+    转换后的掩码会保存到指定的输出目录。
 
-    Args:
-        masks_dir (str): The path to the directory where all mask images (png, jpg) are stored.
-        output_dir (str): The path to the directory where the converted YOLO segmentation masks will be stored.
-        classes (int): Total number of classes in the dataset, e.g., 80 for COCO.
+    参数：
+        masks_dir (str): 保存所有掩码图像（png、jpg）的目录路径。
+        output_dir (str): 保存转换后 YOLO 分割掩码的目录路径。
+        classes (int): 数据集中的类别总数，例如 COCO 有 80 个类别。
 
-    Examples:
+    示例：
         >>> from ultralytics.data.converter import convert_segment_masks_to_yolo_seg
 
-        The classes here is the total classes in the dataset, for COCO dataset we have 80 classes
+        这里的 classes 是数据集中的类别总数，COCO 数据集有 80 个类别
         >>> convert_segment_masks_to_yolo_seg("path/to/masks_directory", "path/to/output/directory", classes=80)
 
-    Notes:
-        The expected directory structure for the masks is:
+    注意：
+        掩码的目录结构应为：
 
-            - masks
+            - 掩码
                 ├─ mask_image_01.png or mask_image_01.jpg
                 ├─ mask_image_02.png or mask_image_02.jpg
                 ├─ mask_image_03.png or mask_image_03.jpg
                 └─ mask_image_04.png or mask_image_04.jpg
 
-        After execution, the labels will be organized in the following structure:
+        执行后，标签将整理为以下结构：
 
             - output_dir
                 ├─ mask_yolo_01.txt
@@ -408,36 +408,36 @@ def convert_segment_masks_to_yolo_seg(masks_dir: str, output_dir: str, classes: 
     output_dir.mkdir(parents=True, exist_ok=True)
     for mask_path in sorted(Path(masks_dir).iterdir()):
         if mask_path.suffix in {".png", ".jpg"}:
-            mask = cv2.imread(str(mask_path), cv2.IMREAD_GRAYSCALE)  # Read the mask image in grayscale
-            img_height, img_width = mask.shape  # Get image dimensions
+            mask = cv2.imread(str(mask_path), cv2.IMREAD_GRAYSCALE)  # 以灰度模式读取掩码图像
+            img_height, img_width = mask.shape  # 获取 图像 维度
             LOGGER.info(f"Processing {mask_path} imgsz = {img_height} x {img_width}")
 
-            unique_values = np.unique(mask)  # Get unique pixel values representing different classes
+            unique_values = np.unique(mask)  # 获取表示不同类别的唯一像素值
             yolo_format_data = []
 
             for value in unique_values:
                 if value == 0:
-                    continue  # Skip background
+                    continue  # 跳过背景
                 class_index = pixel_to_class_mapping.get(value, -1)
                 if class_index == -1:
                     LOGGER.warning(f"Unknown class for pixel value {value} in file {mask_path}, skipping.")
                     continue
 
-                # Create a binary mask for the current class and find contours
+                # 为当前类别创建二值掩码并查找轮廓
                 contours, _ = cv2.findContours(
                     (mask == value).astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
-                )  # Find contours
+                )  # 查找轮廓
 
                 for contour in contours:
-                    if len(contour) >= 3:  # YOLO requires at least 3 points for a valid segmentation
-                        contour = contour.squeeze()  # Remove single-dimensional entries
+                    if len(contour) >= 3:  # YOLO 有效分割至少需要 3 个点
+                        contour = contour.squeeze()  # 删除单维度条目
                         yolo_format = [class_index]
                         for point in contour:
-                            # Normalize the coordinates
-                            yolo_format.append(round(point[0] / img_width, 6))  # Rounding to 6 decimal places
+                            # 归一化坐标
+                            yolo_format.append(round(point[0] / img_width, 6))  # 四舍五入到 6 位小数
                             yolo_format.append(round(point[1] / img_height, 6))
                         yolo_format_data.append(yolo_format)
-            # Save Ultralytics YOLO format data to file
+            # 将 Ultralytics YOLO 格式数据保存到文件
             output_path = output_dir / f"{mask_path.stem}.txt"
             with open(output_path, "w", encoding="utf-8") as file:
                 for item in yolo_format_data:
@@ -447,39 +447,39 @@ def convert_segment_masks_to_yolo_seg(masks_dir: str, output_dir: str, classes: 
 
 
 def convert_dota_to_yolo_obb(dota_root_path: str):
-    """Convert DOTA dataset annotations to YOLO OBB (Oriented Bounding Box) format.
+    """将 DOTA 数据集标注转换为 YOLO OBB（定向边界框）格式。
 
-    The function processes images in the 'train' and 'val' folders of the DOTA dataset. For each image, it reads the
-    associated label from the original labels directory and writes new labels in YOLO OBB format to a new directory.
+    此函数处理 DOTA 数据集 'train' 和 'val' 文件夹中的图像。对于每张图像，函数从原始标签目录读取对应标签，
+    再将新的 YOLO OBB 格式标签写入新目录。
 
-    Args:
-        dota_root_path (str): The root directory path of the DOTA dataset.
+    参数：
+        dota_root_path (str): DOTA 数据集根目录的路径。
 
-    Examples:
+    示例：
         >>> from ultralytics.data.converter import convert_dota_to_yolo_obb
         >>> convert_dota_to_yolo_obb("path/to/DOTA")
 
-    Notes:
-        The directory structure assumed for the DOTA dataset:
+    注意：
+        DOTA 数据集的目录结构应为：
 
             - DOTA
-                ├─ images
+                ├─ 图像
                 │   ├─ train
                 │   └─ val
-                └─ labels
+                └─ 标签
                     ├─ train_original
                     └─ val_original
 
-        After execution, the function will organize the labels into:
+        执行后，函数会将标签整理为：
 
             - DOTA
-                └─ labels
+                └─ 标签
                     ├─ train
                     └─ val
     """
     dota_root_path = Path(dota_root_path)
 
-    # Class names to indices mapping
+    # 类别名称到索引的映射
     class_mapping = {
         "plane": 0,
         "ship": 1,
@@ -502,7 +502,7 @@ def convert_dota_to_yolo_obb(dota_root_path: str):
     }
 
     def convert_label(image_name: str, image_width: int, image_height: int, orig_label_dir: Path, save_dir: Path):
-        """Convert a single image's DOTA annotation to YOLO OBB format and save it to a specified directory."""
+        """将单张图像的 DOTA 标注转换为 YOLO OBB 格式，并保存到指定目录。"""
         orig_label_path = orig_label_dir / f"{image_name}.txt"
         save_path = save_dir / f"{image_name}.txt"
 
@@ -539,56 +539,55 @@ def convert_dota_to_yolo_obb(dota_root_path: str):
 
 
 def min_index(arr1: np.ndarray, arr2: np.ndarray):
-    """Find a pair of indexes with the shortest distance between two arrays of 2D points.
+    """查找两个二维点数组之间距离最短的一对索引。
 
-    Args:
-        arr1 (np.ndarray): A NumPy array of shape (N, 2) representing N 2D points.
-        arr2 (np.ndarray): A NumPy array of shape (M, 2) representing M 2D points.
+    参数：
+        arr1 (np.ndarray): 形状为 (N, 2) 的 NumPy 数组，表示 N 个二维点。
+        arr2 (np.ndarray): 形状为 (M, 2) 的 NumPy 数组，表示 M 个二维点。
 
-    Returns:
-        (tuple[int, int]): A tuple (idx1, idx2) where idx1 is the index in arr1 and idx2 is the index in arr2 of the
-            pair with the shortest distance.
+    返回：
+        (tuple[int, int]): 元组 (idx1, idx2)，其中 idx1 是 arr1 中的索引，idx2 是 arr2 中的索引，
+            两者对应的点之间距离最短。
     """
     dis = ((arr1[:, None, :] - arr2[None, :, :]) ** 2).sum(-1)
     return np.unravel_index(np.argmin(dis, axis=None), dis.shape)
 
 
 def merge_multi_segment(segments: list[list]):
-    """Merge multiple segments into one list by connecting the coordinates with the minimum distance between each
-    segment.
+    """通过连接各分割段之间距离最短的坐标，将多个分割段合并为一个列表。
 
-    This function connects these coordinates with a thin line to merge all segments into one.
+    此函数用细线连接这些坐标，将所有分割段合并为一个分割段。
 
-    Args:
-        segments (list[list]): Original segmentations in COCO's JSON file. Each element is a list of coordinates, like
-            [segmentation1, segmentation2,...].
+    参数：
+        segments (列表[列表]): COCO JSON 文件中的原始分割数据。每个元素都是坐标列表，例如
+            [segmentation1, segmentation2, ...]。
 
-    Returns:
-        (list[np.ndarray]): A list of connected segments represented as NumPy arrays.
+    返回：
+        (列表[np.ndarray]): 由 NumPy 数组表示的已连接分割段列表。
     """
     s = []
     segments = [np.array(i).reshape(-1, 2) for i in segments]
     idx_list = [[] for _ in range(len(segments))]
 
-    # Record the indexes with min distance between each segment
+    # 记录每个分割段之间距离最短的索引
     for i in range(1, len(segments)):
         idx1, idx2 = min_index(segments[i - 1], segments[i])
         idx_list[i - 1].append(idx1)
         idx_list[i].append(idx2)
 
-    # Use two round to connect all the segments
+    # 分两轮连接所有分割段
     for k in range(2):
-        # Forward connection
+        # 正向连接
         if k == 0:
             for i, idx in enumerate(idx_list):
-                # Middle segments have two indexes, reverse the index of middle segments
+                # 中间分割段有两个索引；反转中间分割段的索引
                 if len(idx) == 2 and idx[0] > idx[1]:
                     idx = idx[::-1]
                     segments[i] = segments[i][::-1, :]
 
                 segments[i] = np.roll(segments[i], -idx[0], axis=0)
                 segments[i] = np.concatenate([segments[i], segments[i][:1]])
-                # Deal with the first segment and the last one
+                # 处理第一个和最后一个分割段
                 if i in {0, len(idx_list) - 1}:
                     s.append(segments[i])
                 else:
@@ -605,25 +604,25 @@ def merge_multi_segment(segments: list[list]):
 
 
 def yolo_bbox2segment(im_dir: str | Path, save_dir: str | Path | None = None, sam_model: str = "sam_b.pt", device=None):
-    """Convert existing object detection dataset (bounding boxes) to segmentation dataset in YOLO format.
+    """将现有的目标检测数据集（边界框）转换为 YOLO 格式的分割数据集。
 
-    Generates segmentation data using SAM auto-annotator as needed.
+    必要时使用 SAM 自动标注器生成分割数据。
 
-    Args:
-        im_dir (str | Path): Path to image directory to convert.
-        save_dir (str | Path, optional): Path to save the generated labels, labels will be saved into `labels-segment`
-            in the same directory level of `im_dir` if save_dir is None.
-        sam_model (str): Segmentation model to use for intermediate segmentation data.
-        device (int | str, optional): The specific device to run SAM models.
+    参数：
+        im_dir (str | Path): 待转换图像目录的路径。
+        save_dir (str | Path, 可选): 保存生成标签的路径。如果为 None，标签会保存到与 `im_dir` 同级的
+            `labels-segment` 目录。
+        sam_model (str): 用于生成中间分割数据的分割模型。
+        device (int | str, 可选): 运行 SAM 模型的指定设备。
 
-    Notes:
-        The input directory structure assumed for dataset:
+    注意：
+        数据集的输入目录结构应为：
 
             - im_dir
                 ├─ 001.jpg
                 ├─ ...
                 └─ NNN.jpg
-            - labels
+            - 标签
                 ├─ 001.txt
                 ├─ ...
                 └─ NNN.txt
@@ -632,9 +631,9 @@ def yolo_bbox2segment(im_dir: str | Path, save_dir: str | Path | None = None, sa
     from ultralytics.data import YOLODataset
     from ultralytics.utils.ops import xywh2xyxy
 
-    # NOTE: add placeholder to pass class index check
+    # 注意：添加占位类别，以通过类别索引检查
     dataset = YOLODataset(im_dir, data={"names": list(range(1000)), "channels": 3})
-    if len(dataset.labels[0]["segments"]) > 0:  # if it's segment data
+    if len(dataset.labels[0]["segments"]) > 0:  # 如果已经存在分割数据
         LOGGER.info("Segmentation labels detected, no need to generate new ones!")
         return
 
@@ -643,7 +642,7 @@ def yolo_bbox2segment(im_dir: str | Path, save_dir: str | Path | None = None, sa
     for label in TQDM(dataset.labels, total=len(dataset.labels), desc="Generating segment labels"):
         h, w = label["shape"]
         boxes = label["bboxes"]
-        if len(boxes) == 0:  # skip empty labels
+        if len(boxes) == 0:  # 跳过空标签
             continue
         boxes[:, [0, 2]] *= w
         boxes[:, [1, 3]] *= h
@@ -659,7 +658,7 @@ def yolo_bbox2segment(im_dir: str | Path, save_dir: str | Path | None = None, sa
         txt_file = save_dir / lb_name
         cls = label["cls"]
         for i, s in enumerate(label["segments"]):
-            if len(s) < 3:  # fewer than 3 points is not a polygon, and writes a row no loader accepts
+            if len(s) < 3:  # 少于 3 个点不是多边形，写入后数据加载器也无法接受
                 continue
             line = (int(cls[i]), *s.reshape(-1))
             texts.append(("%g " * len(line)).rstrip() % line)
@@ -669,25 +668,24 @@ def yolo_bbox2segment(im_dir: str | Path, save_dir: str | Path | None = None, sa
 
 
 def create_synthetic_coco_dataset():
-    """Create a synthetic COCO dataset with random images based on filenames from label lists.
+    """根据标签列表中的文件名创建包含随机图像的合成 COCO 数据集。
 
-    This function downloads COCO labels, reads image filenames from label list files, creates synthetic images for
-    train2017 and val2017 subsets, and organizes them in the COCO dataset structure. It uses multithreading to generate
-    images efficiently.
+    此函数下载 COCO 标签，读取标签列表文件中的图像文件名，为 train2017 和 val2017 子集创建合成图像，
+    并将其整理为 COCO 数据集结构。函数使用多线程高效生成图像。
 
-    Examples:
+    示例：
         >>> from ultralytics.data.converter import create_synthetic_coco_dataset
         >>> create_synthetic_coco_dataset()
 
-    Notes:
-        - Requires internet connection to download label files.
-        - Generates random RGB images of varying sizes (480x480 to 640x640 pixels).
-        - Existing test2017 directory is removed as it's not needed.
-        - Reads image filenames from train2017.txt and val2017.txt files.
+    注意：
+        - 下载标签文件需要网络连接。
+        - 生成尺寸不同的随机 RGB 图像（480x480 到 640x640 像素）。
+        - 删除不需要的现有 test2017 目录。
+        - 从 train2017.txt 和 val2017.txt 文件读取图像文件名。
     """
 
     def create_synthetic_image(image_file: Path):
-        """Generate a synthetic image with random size and color for dataset augmentation or testing purposes."""
+        """生成具有随机尺寸和颜色的合成图像，用于数据集增强或测试。"""
         if not image_file.exists():
             size = (random.randint(480, 640), random.randint(480, 640))
             Image.new(
@@ -696,27 +694,27 @@ def create_synthetic_coco_dataset():
                 color=(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)),
             ).save(image_file)
 
-    # Download labels
+    # 下载标签
     dir = DATASETS_DIR / "coco"
     download([f"{ASSETS_URL}/coco2017labels-segments.zip"], dir=dir.parent)
 
-    # Create synthetic images
-    shutil.rmtree(dir / "labels" / "test2017", ignore_errors=True)  # Remove test2017 directory as not needed
+    # 创建合成图像
+    shutil.rmtree(dir / "labels" / "test2017", ignore_errors=True)  # 删除不需要的 test2017 目录
     with ThreadPoolExecutor(max_workers=NUM_THREADS) as executor:
         for subset in ("train2017", "val2017"):
             subset_dir = dir / "images" / subset
             subset_dir.mkdir(parents=True, exist_ok=True)
 
-            # Read image filenames from label list file
+            # 从标签列表文件读取图像文件名
             label_list_file = dir / f"{subset}.txt"
             if label_list_file.exists():
                 with open(label_list_file, encoding="utf-8") as f:
                     image_files = [dir / line.strip() for line in f]
 
-                # Submit all tasks
+                # 提交所有任务
                 futures = [executor.submit(create_synthetic_image, image_file) for image_file in image_files]
                 for _ in TQDM(as_completed(futures), total=len(futures), desc=f"Generating images for {subset}"):
-                    pass  # The actual work is done in the background
+                    pass  # 实际工作在后台完成
             else:
                 LOGGER.warning(f"Labels file {label_list_file} does not exist. Skipping image creation for {subset}.")
 
@@ -724,29 +722,29 @@ def create_synthetic_coco_dataset():
 
 
 def convert_to_multispectral(path: str | Path, n_channels: int = 10, replace: bool = False, zip: bool = False):
-    """Convert RGB images to multispectral images by interpolating across wavelength bands.
+    """通过在波长带之间进行插值，将 RGB 图像转换为多光谱图像。
 
-    This function takes RGB images and interpolates them to create multispectral images with a specified number of
-    channels. It can process either a single image or a directory of images.
+    此函数对 RGB 图像进行插值，生成具有指定通道数量的多光谱图像。
+    函数可以处理单张图像或图像目录。
 
-    Args:
-        path (str | Path): Path to an image file or directory containing images to convert.
-        n_channels (int): Number of spectral channels to generate in the output image.
-        replace (bool): Whether to replace the original image file with the converted one.
-        zip (bool): Whether to zip the converted images into a zip file.
+    参数：
+        path (str | Path): 待转换图像文件或包含待转换图像的目录路径。
+        n_channels (int): 输出图像要生成的光谱通道数量。
+        replace (bool): 是否使用转换后的文件替换原始图像文件。
+        zip (bool): 是否将转换后的图像压缩为 zip 文件。
 
-    Examples:
-        Convert a single image
+    示例：
+        转换单张图像
         >>> convert_to_multispectral("path/to/image.jpg", n_channels=10)
 
-        Convert a dataset
+        转换数据集
         >>> convert_to_multispectral("coco8", n_channels=10)
     """
     from ultralytics.data.utils import IMG_FORMATS
 
     path = Path(path)
     if path.is_dir():
-        # Process directory
+        # 处理目录
         im_files = [f for ext in (IMG_FORMATS - {"tif", "tiff"}) for f in path.rglob(f"*.{ext}")]
         for im_path in im_files:
             try:
@@ -759,17 +757,17 @@ def convert_to_multispectral(path: str | Path, n_channels: int = 10, replace: bo
         if zip:
             zip_directory(path)
     else:
-        # Process a single image
+        # 处理单张图像
         output_path = path.with_suffix(".tiff")
         img = cv2.cvtColor(cv2.imread(str(path)), cv2.COLOR_BGR2RGB)
 
-        # Interpolate all pixels at once with linear interpolation and extrapolation across RGB wavelengths
-        rgb_wavelengths = np.array([650, 510, 475])  # R, G, B wavelengths (nm)
+        # 使用线性插值和外推，一次性在 RGB 波长范围内处理所有像素
+        rgb_wavelengths = np.array([650, 510, 475])  # R、G、B 波长（nm）
         target_wavelengths = np.linspace(450, 700, n_channels)
-        order = np.argsort(rgb_wavelengths)  # ascending wavelengths for segment lookup
+        order = np.argsort(rgb_wavelengths)  # 按升序排列波长，以便查找分段
         xp = rgb_wavelengths[order]
-        seg = np.clip(np.searchsorted(xp, target_wavelengths) - 1, 0, len(xp) - 2)  # segment per target
-        w = (target_wavelengths - xp[seg]) / (xp[seg + 1] - xp[seg])  # weights (<0 or >1 -> extrapolation)
+        seg = np.clip(np.searchsorted(xp, target_wavelengths) - 1, 0, len(xp) - 2)  # 每个目标波长对应的分段
+        w = (target_wavelengths - xp[seg]) / (xp[seg + 1] - xp[seg])  # 权重（<0 或 >1 表示外推）
         img = img[..., order]
         multispectral = img[..., seg] * (1 - w) + img[..., seg + 1] * w
         cv2.imwritemulti(str(output_path), np.clip(multispectral, 0, 255).astype(np.uint8).transpose(2, 0, 1))
@@ -777,19 +775,19 @@ def convert_to_multispectral(path: str | Path, n_channels: int = 10, replace: bo
 
 
 def _infer_ndjson_kpt_shape(image_records: list) -> list:
-    """Infer kpt_shape [num_keypoints, dims] from NDJSON pose annotations.
+    """根据 NDJSON 姿态标注推断 kpt_shape [关键点数量, 维度数]。
 
-    Scans up to 50 pose annotations across image records. Annotation format is [classId, cx, cy, w, h, kp1_x, kp1_y,
-    kp1_vis, ...] so keypoint values start at index 5.
+    扫描图像记录中最多 50 条姿态标注。标注格式为 [classId, cx, cy, w, h, kp1_x, kp1_y, kp1_vis, ...]，
+    因此关键点值从索引 5 开始。
 
-    Tries dims=3 first (x, y, visibility) with visibility validation ({0, 1, 2}), then falls back to dims=2 (x, y only)
-    when values are unambiguously not divisible by 3.
+    函数首先尝试维度数为 3（x、y、可见性），并验证可见性取值是否为 {0, 1, 2}；
+    当值明确不能被 3 整除时，再回退到维度数为 2（仅 x、y）。
     """
     kpt_lengths = []
-    samples = []  # raw keypoint value slices for visibility checking
+    samples = []  # 用于检查可见性的原始关键点值片段
     for record in image_records:
         for ann in record.get("annotations", {}).get("pose", []):
-            kpt_len = len(ann) - 5  # subtract classId + bbox (4 values)
+            kpt_len = len(ann) - 5  # 减去 classId 和边界框（4 个值）
             if kpt_len > 0:
                 kpt_lengths.append(kpt_len)
                 samples.append(ann[5:])
@@ -803,11 +801,11 @@ def _infer_ndjson_kpt_shape(image_records: list) -> list:
 
     n = kpt_lengths[0]
 
-    # Try dims=3: requires divisible by 3 and every 3rd value (visibility) in {0, 1, 2}
+    # 尝试维度数为 3：长度必须能被 3 整除，且每三个值中的第三个值（可见性）必须属于 {0, 1, 2}
     if n % 3 == 0 and all(v in (0, 1, 2) for s in samples for v in s[2::3]):
         return [n // 3, 3]
 
-    # Try dims=2: only when NOT divisible by 3 (avoids misclassifying dims=3 data)
+    # 尝试维度数为 2：仅当长度不能被 3 整除时使用，避免将维度数为 3 的数据误判
     if n % 2 == 0 and n % 3 != 0:
         return [n // 2, 2]
 
@@ -815,34 +813,33 @@ def _infer_ndjson_kpt_shape(image_records: list) -> list:
 
 
 async def convert_ndjson_to_yolo(ndjson_path: str | Path, output_path: str | Path | None = None) -> Path:
-    """Convert NDJSON dataset format to Ultralytics YOLO dataset structure.
+    """将 NDJSON 数据集格式转换为 Ultralytics YOLO 数据集结构。
 
-    This function converts datasets stored in NDJSON (Newline Delimited JSON) format to the standard YOLO format. For
-    detection/segmentation/pose/obb tasks, it creates separate directories for images and labels. Depth datasets use
-    parallel images/ and depth/ trees with scaled uint16 PNG targets. Classification tasks use the ImageNet-style
-    {split}/{class_name}/ folder structure. Downloads run concurrently.
+    此函数将以 NDJSON（按行分隔的 JSON）格式存储的数据集转换为标准 YOLO 格式。
+    对于检测、分割、姿态、OBB 任务，会分别创建图像目录和标签目录；深度数据集使用平行的 images/ 和 depth/
+    目录树，并保存经过缩放的 uint16 PNG 目标；分类任务使用 ImageNet 风格的 {split}/{class_name}/ 目录结构。
+    文件下载会并发执行。
 
-    The NDJSON format consists of:
-    - First line: Dataset metadata with class names, task type, and configuration
-    - Subsequent lines: Individual image records with annotations and optional URLs
+    NDJSON 格式由以下内容组成：
+    - 第一行：包含类别名称、任务类型和配置的数据集元数据。
+    - 后续各行：包含标注和可选 URL 的单张图像记录。
 
-    Args:
-        ndjson_path (str | Path): Path to the input NDJSON file containing dataset information.
-        output_path (str | Path | None, optional): Directory where the converted YOLO dataset will be saved. If None,
-            uses the DATASETS_DIR directory. Defaults to None.
+    参数：
+        ndjson_path (str | Path): 包含数据集信息的输入 NDJSON 文件路径。
+        output_path (str | Path | None, 可选): 保存转换后 YOLO 数据集的目录。如果为 None，则使用 DATASETS_DIR 目录。
 
-    Returns:
-        (Path): Path to the generated data.yaml file (detection) or dataset directory (classification).
+    返回：
+        (Path): 生成的 data.yaml 文件路径（检测任务），或数据集目录（分类任务）。
 
-    Examples:
-        Convert a local NDJSON file:
+    示例：
+        转换本地 NDJSON 文件：
         >>> yaml_path = await convert_ndjson_to_yolo("dataset.ndjson")
         >>> print(f"Dataset converted to: {yaml_path}")
 
-        Convert with custom output directory:
+        使用自定义输出目录转换：
         >>> yaml_path = await convert_ndjson_to_yolo("dataset.ndjson", output_path="./converted_datasets")
 
-        Use with YOLO training
+        用于 YOLO 训练：
         >>> from ultralytics import YOLO
         >>> model = YOLO("yolo26n.pt")
         >>> model.train(data="https://github.com/ultralytics/assets/releases/download/v0.0.0/coco8-ndjson.ndjson")
@@ -877,7 +874,7 @@ async def convert_ndjson_to_yolo(ndjson_path: str | Path, output_path: str | Pat
 
 
 async def _convert_ndjson_to_yolo(ndjson_path: Path, output_path: Path, local: bool) -> Path:
-    """Convert a resolved NDJSON source while its conversion lock is held."""
+    """在持有转换锁时，将已解析的 NDJSON 源转换为 YOLO 数据集。"""
     from ultralytics.utils.checks import check_requirements
 
     check_requirements("aiohttp")
@@ -905,7 +902,7 @@ async def _convert_ndjson_to_yolo(ndjson_path: Path, output_path: Path, local: b
 
     local_path = dataset_record.pop("path", None) if local and not (is_classification or is_depth) else None
 
-    # Hash stable content plus source identity. Query strings are excluded because signed URLs change on every export.
+    # 对稳定内容和源标识进行哈希。排除查询字符串，因为签名 URL 在每次导出时都会变化。
     _h = hashlib.sha256()
     for i, r in enumerate(lines):
         if i:
@@ -918,8 +915,8 @@ async def _convert_ndjson_to_yolo(ndjson_path: Path, output_path: Path, local: b
                 if source_name != Path(source_name).name:
                     raise ValueError(f"Invalid NDJSON image name: {source_name!r}")
                 r["url"] = (ndjson_path.parent / local_path / "images" / split / source_name).resolve()
-            # Preserve safe content hashes already present in the filename or URL while indexes prevent collisions.
-            # Depth targets use the same stem, so image and target URLs follow the same output mechanics.
+            # 保留文件名或 URL 中已有的安全内容哈希，同时使用索引避免冲突。
+            # 深度目标使用相同的主干名称，因此图像和目标 URL 遵循相同的输出机制。
             suffix = source_name.rsplit(".", 1)[-1]
             stems = (Path(clean_url(r.get("url") or "")).stem, Path(source_name).stem)
             content_hash = next(
@@ -945,15 +942,14 @@ async def _convert_ndjson_to_yolo(ndjson_path: Path, output_path: Path, local: b
     class_dirs = {class_id: f"{i:06d}" for i, class_id in enumerate(sorted(classification_ids))}
     classification_names = {i: class_names.get(class_id, str(class_id)) for i, class_id in enumerate(class_dirs)}
 
-    # Depth adds one sibling URL per image record; file naming, caching, and retries remain shared.
+    # 深度任务为每条图像记录增加一个同级 URL；文件命名、缓存和重试机制保持共用。
     if is_depth:
         for record in image_records:
             depth = record.get("depth")
             if not isinstance(depth, dict) or not isinstance(depth.get("url"), str) or not depth["url"]:
                 raise ValueError(f"Depth record '{record.get('file', '<unknown>')}' is missing depth.url")
 
-    # Hash-qualified dirs allow identical datasets to reuse downloads while preventing changed datasets from mutating
-    # files that another training job may still be reading.
+    # 带哈希的目录允许相同数据集复用下载结果，同时防止数据集变化时修改其他训练任务仍在读取的文件。
     dataset_dir = output_path / f"{ndjson_path.stem}-{_hash}"
     metadata_path = dataset_dir / (".ndjson.yaml" if is_classification else "data.yaml")
     if metadata_path.is_file():
@@ -973,7 +969,7 @@ async def _convert_ndjson_to_yolo(ndjson_path: Path, output_path: Path, local: b
                     f"Dataset has only {len(train_records)} image(s) and no 'val' split. "
                     f"Need at least 2 images to auto-split into train/val."
                 )
-            random.Random(0).shuffle(train_records)  # local RNG to avoid mutating global training seed
+            random.Random(0).shuffle(train_records)  # 使用本地随机数生成器，避免修改全局训练随机种子
             val_count = max(1, len(train_records) // 10)
             for r in train_records[:val_count]:
                 r["split"] = "val"
@@ -1008,7 +1004,7 @@ async def _convert_ndjson_to_yolo(ndjson_path: Path, output_path: Path, local: b
     data_yaml = None
 
     if not is_classification:
-        # Detection/segmentation/pose/obb/depth: prepare YAML and create base structure
+        # 检测、分割、姿态、OBB、深度：准备 YAML 并创建基础目录结构
         if is_depth:
             data_yaml = {"task": "depth", "nc": 1, "names": {0: "depth"}, "depth_scale": depth_scale}
         else:
@@ -1018,14 +1014,14 @@ async def _convert_ndjson_to_yolo(ndjson_path: Path, output_path: Path, local: b
             elif inferred_nc is not None:
                 data_yaml["nc"] = inferred_nc
         data_yaml.pop("class_names", None)
-        data_yaml.pop("type", None)  # Remove NDJSON-specific fields
+        data_yaml.pop("type", None)  # 删除 NDJSON 专用字段
         for split in sorted(splits):
             (dataset_dir / "images" / split).mkdir(parents=True, exist_ok=True)
             (dataset_dir / ("depth" if is_depth else "labels") / split).mkdir(parents=True, exist_ok=True)
             data_yaml[split] = f"images/{split}"
 
     async def ensure_file(session, path, url):
-        """Return True when the file exists locally, otherwise download one URL with the retry policy."""
+        """文件在本地存在时返回 True，否则按照重试策略从 URL 下载文件。"""
         if path.exists():
             return True
         if not url:
@@ -1050,7 +1046,7 @@ async def _convert_ndjson_to_yolo(ndjson_path: Path, output_path: Path, local: b
                     return False
             except (aiohttp.ClientError, asyncio.TimeoutError) as e:
                 error = e
-            except Exception as e:  # OSError, disk full, permissions — not transient, don't retry
+            except Exception as e:  # OSError、磁盘空间不足或权限错误不是临时错误，不进行重试
                 LOGGER.warning(f"Failed to save {clean_url(url)}: {e}")
                 return False
             if attempt < 2:
@@ -1062,13 +1058,13 @@ async def _convert_ndjson_to_yolo(ndjson_path: Path, output_path: Path, local: b
         return False
 
     async def process_record(session, semaphore, record):
-        """Process single image record with async session."""
+        """使用异步会话处理单条图像记录。"""
         async with semaphore:
             split, original_name = record["split"], record["file"]
             annotations = record.get("annotations", {})
 
             if is_classification:
-                # Classification: place image in {split}/{class_name}/ folder
+                # 分类任务：将图像放入 {split}/{class_name}/ 文件夹
                 class_ids = annotations.get("classification", [])
                 class_id = class_ids[0] if class_ids else 0
                 class_name = class_dirs[class_id]
@@ -1097,7 +1093,7 @@ async def _convert_ndjson_to_yolo(ndjson_path: Path, output_path: Path, local: b
                 return False
             return True
 
-    # Keep download concurrency high without creating one live coroutine per record for very large datasets.
+    # 在大型数据集中保持较高下载并发度，同时避免为每条记录创建一个持续运行的协程。
     semaphore = asyncio.Semaphore(min(128, len(image_records)))
     async with aiohttp.ClientSession(trust_env=True) as session:
         pbar = TQDM(
@@ -1116,17 +1112,17 @@ async def _convert_ndjson_to_yolo(ndjson_path: Path, output_path: Path, local: b
             success_count += sum(results)
         pbar.close()
 
-    # Validate images were downloaded successfully
+    # 验证图像是否已成功下载
     if not image_records or success_count < len(image_records):
         raise RuntimeError(f"Downloaded {success_count}/{len(image_records)} images from {ndjson_path}")
 
     if is_classification:
-        # Classification: return dataset directory (check_cls_dataset expects a directory path)
-        # Keep class paths safe while check_cls_dataset restores the original display names.
+        # 分类任务：返回数据集目录（check_cls_dataset 需要目录路径）
+        # 保持类别路径安全，同时由 check_cls_dataset 恢复原始显示名称。
         YAML.save(metadata_path, {"names": classification_names, "hash": _hash, "complete": True})
         return dataset_dir
     else:
-        # Detection: write data.yaml with hash for future change detection
+        # 检测任务：写入带哈希的数据.yaml，以便后续检测数据是否发生变化
         data_yaml.update(hash=_hash, complete=True)
         YAML.save(metadata_path, data_yaml)
         return metadata_path

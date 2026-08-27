@@ -294,12 +294,12 @@ def crop_and_pad(frame: np.ndarray, box: list[float], margin_percent: int) -> np
     x1, y1, x2, y2 = map(int, box)
     w, h = x2 - x1, y2 - y1
 
-    # Add margin
+    # 添加边距
     margin_x, margin_y = int(w * margin_percent / 100), int(h * margin_percent / 100)
     x1, y1 = max(0, x1 - margin_x), max(0, y1 - margin_y)
     x2, y2 = min(frame.shape[1], x2 + margin_x), min(frame.shape[0], y2 + margin_y)
 
-    # Take square crop from frame
+    # 从帧中裁剪正方形区域
     size = max(y2 - y1, x2 - x1)
     center_y, center_x = (y1 + y2) // 2, (x1 + x2) // 2
     half_size = size // 2
@@ -349,7 +349,7 @@ def run(
             "cooking",
             "sitting",
         ]
-    # Initialize models and device
+    # 初始化模型和设备
     device = select_device(device)
     yolo_model = YOLO(weights).to(device)
     if video_classifier_model in TorchVisionVideoClassifier.available_model_names():
@@ -363,24 +363,24 @@ def run(
             labels, model_name=video_classifier_model, device=device, fp16=fp16
         )
 
-    # Initialize video capture
+    # 初始化视频捕获
     if source.startswith("http") and urlparse(source).hostname in {"www.youtube.com", "youtube.com", "youtu.be"}:
         source = get_best_youtube_url(source)
     elif not source.endswith(".mp4"):
         raise ValueError("Invalid source. Supported sources are YouTube URLs and MP4 files.")
     cap = cv2.VideoCapture(source)
 
-    # Get video properties
+    # 获取视频属性
     frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     fps = cap.get(cv2.CAP_PROP_FPS)
 
-    # Initialize VideoWriter
+    # 初始化 VideoWriter
     if output_path is not None:
         fourcc = cv2.VideoWriter_fourcc(*"mp4v")
         out = cv2.VideoWriter(output_path, fourcc, fps, (frame_width, frame_height))
 
-    # Initialize track history
+    # 初始化轨迹历史
     track_history = defaultdict(list)
     frame_counter = 0
 
@@ -396,14 +396,14 @@ def run(
 
         frame_counter += 1
 
-        # Run YOLO tracking
+        # 运行 YOLO 跟踪
         results = yolo_model.track(frame, persist=True, classes=[0])  # Track only person class
 
         if results[0].boxes.is_track:
             boxes = results[0].boxes.xyxy.cpu().numpy()
             track_ids = results[0].boxes.id.cpu().numpy()
 
-            # Visualize prediction
+            # 可视化预测结果
             annotator = Annotator(frame, line_width=3, font_size=10, pil=False)
 
             if frame_counter % skip_frame == 0:
@@ -447,11 +447,11 @@ def run(
                     label_text = " | ".join([f"{label} ({conf:.2f})" for label, conf in top2_preds])
                     annotator.box_label(box, label_text, color=(0, 0, 255))
 
-        # Write the annotated frame to the output video
+        # 将标注后的帧写入输出视频
         if output_path is not None:
             out.write(frame)
 
-        # Display the annotated frame
+        # 显示标注后的帧
         cv2.imshow("YOLOv8 Tracking with S3D Classification", frame)
 
         if cv2.waitKey(1) & 0xFF == ord("q"):

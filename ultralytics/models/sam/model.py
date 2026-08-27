@@ -1,17 +1,16 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 """
-SAM model interface.
+SAM 模型接口。
 
-This module provides an interface to the Segment Anything Model (SAM) from Ultralytics, designed for real-time image
-segmentation tasks. The SAM model allows for promptable segmentation with unparalleled versatility in image analysis,
-and has been trained on the SA-1B dataset. It features zero-shot performance capabilities, enabling it to adapt to new
-image distributions and tasks without prior knowledge.
+此模块提供 Ultralytics Segment Anything Model（SAM）接口，用于实时图像分割。
+SAM 模型支持灵活的提示分割，已在 SA-1B 数据集上训练，并具备零样本能力，
+能够在没有先验知识的情况下适应新的图像分布和任务。
 
-Key Features:
-    - Promptable segmentation
-    - Real-time performance
-    - Zero-shot transfer capabilities
-    - Trained on SA-1B dataset
+主要特性：
+    - 支持提示的分割
+    - 实时性能
+    - 零样本迁移能力
+    - 在 SA-1B 数据集上训练
 """
 
 from __future__ import annotations
@@ -25,22 +24,21 @@ from .predict import Predictor, SAM2Predictor, SAM3Predictor
 
 
 class SAM(Model):
-    """SAM (Segment Anything Model) interface class for real-time image segmentation tasks.
+    """用于实时图像分割任务的 SAM（Segment Anything Model）接口类。
 
-    This class provides an interface to the Segment Anything Model (SAM) from Ultralytics, designed for promptable
-    segmentation with versatility in image analysis. It supports various prompts such as bounding boxes, points, or
-    labels, and features zero-shot performance capabilities.
+    此类提供 Ultralytics Segment Anything Model（SAM）接口，支持基于提示的灵活图像分析。
+    它支持边界框、点和标签等多种提示，并具备零样本能力。
 
-    Attributes:
-        model (torch.nn.Module): The loaded SAM model.
-        is_sam2 (bool): Indicates whether the model is SAM2 variant.
-        task (str): The task type, set to "segment" for SAM models.
+    属性：
+        model (torch.nn.Module): 已加载的 SAM 模型。
+        is_sam2 (bool): 指示模型是否为 SAM2 变体。
+        task (str): 任务类型；SAM 模型设置为 "segment"。
 
-    Methods:
-        predict: Perform segmentation prediction on the given image or video source.
-        info: Log information about the SAM model.
+    方法：
+        predict: 对给定图像或视频源执行分割预测。
+        info: 记录 SAM 模型信息。
 
-    Examples:
+    示例：
         >>> sam = SAM("sam_b.pt")
         >>> results = sam.predict("image.jpg", points=[[500, 375]])
         >>> for r in results:
@@ -48,13 +46,13 @@ class SAM(Model):
     """
 
     def __init__(self, model: str = "sam_b.pt") -> None:
-        """Initialize the SAM (Segment Anything Model) instance.
+        """初始化 SAM（Segment Anything Model）实例。
 
-        Args:
-            model (str): Path to the pre-trained SAM model file. File should have a .pt or .pth extension.
+        参数：
+            model (str): 预训练 SAM 模型文件路径，扩展名应为 .pt 或 .pth。
 
-        Raises:
-            NotImplementedError: If the model file extension is not .pt or .pth.
+        异常：
+            NotImplementedError: 模型文件扩展名不是 .pt 或 .pth 时抛出。
         """
         if model and Path(model).suffix not in {".pt", ".pth"}:
             raise NotImplementedError("SAM prediction requires pre-trained *.pt or *.pth model.")
@@ -63,13 +61,13 @@ class SAM(Model):
         super().__init__(model=model, task="segment")
 
     def _load(self, weights: str, task=None):
-        """Load the specified weights into the SAM model.
+        """将指定权重加载到 SAM 模型中。
 
-        Args:
-            weights (str): Path to the weights file. Should be a .pt or .pth file containing the model parameters.
-            task (str | None): Task name. If provided, it specifies the particular task the model is being loaded for.
+        参数：
+            weights (str): 权重文件路径，应为包含模型参数的 .pt 或 .pth 文件。
+            task (str | None): 任务名称。若提供，则指定要加载模型的具体任务。
 
-        Examples:
+        示例：
             >>> sam = SAM("sam_b.pt")
             >>> sam._load("path/to/custom_weights.pt")
         """
@@ -83,21 +81,20 @@ class SAM(Model):
             self.model = build_sam(weights)
 
     def predict(self, source, stream: bool = False, bboxes=None, points=None, labels=None, **kwargs):
-        """Perform segmentation prediction on the given image or video source.
+        """对给定图像或视频源执行分割预测。
 
-        Args:
-            source (str | PIL.Image | np.ndarray): Path to the image or video file, or a PIL.Image object, or a
-                np.ndarray object.
-            stream (bool): If True, enables real-time streaming.
-            bboxes (list[list[float]] | None): List of bounding box coordinates for prompted segmentation.
-            points (list[list[float]] | None): List of points for prompted segmentation.
-            labels (list[int] | None): List of labels for prompted segmentation.
-            **kwargs (Any): Additional keyword arguments for prediction.
+        参数：
+            source (str | PIL.Image | np.ndarray): 图像或视频文件路径、PIL.Image 对象或 np.ndarray 对象。
+            stream (bool): 为 True 时启用实时流式处理。
+            bboxes (列表[列表[float]] | None): 用于提示分割的边界框坐标列表。
+            points (列表[列表[float]] | None): 用于提示分割的点列表。
+            labels (列表[int] | None): 用于提示分割的标签列表。
+            **kwargs (Any): 传递给预测过程的其他关键字参数。
 
-        Returns:
-            (list): The model predictions.
+        返回：
+            (列表): 模型预测结果。
 
-        Examples:
+        示例：
             >>> sam = SAM("sam_b.pt")
             >>> results = sam.predict("image.jpg", points=[[500, 375]])
             >>> for r in results:
@@ -109,24 +106,22 @@ class SAM(Model):
         return super().predict(source, stream, prompts=prompts, **kwargs)
 
     def __call__(self, source=None, stream: bool = False, bboxes=None, points=None, labels=None, **kwargs):
-        """Perform segmentation prediction on the given image or video source.
+        """对给定图像或视频源执行分割预测。
 
-        This method is an alias for the 'predict' method, providing a convenient way to call the SAM model for
-        segmentation tasks.
+        此方法是 'predict' 方法的别名，为调用 SAM 模型执行分割任务提供便捷方式。
 
-        Args:
-            source (str | PIL.Image | np.ndarray | None): Path to the image or video file, or a PIL.Image object, or a
-                np.ndarray object.
-            stream (bool): If True, enables real-time streaming.
-            bboxes (list[list[float]] | None): List of bounding box coordinates for prompted segmentation.
-            points (list[list[float]] | None): List of points for prompted segmentation.
-            labels (list[int] | None): List of labels for prompted segmentation.
-            **kwargs (Any): Additional keyword arguments to be passed to the predict method.
+        参数：
+            source (str | PIL.Image | np.ndarray | None): 图像或视频文件路径、PIL.Image 对象或 np.ndarray 对象。
+            stream (bool): 为 True 时启用实时流式处理。
+            bboxes (列表[列表[float]] | None): 用于提示分割的边界框坐标列表。
+            points (列表[列表[float]] | None): 用于提示分割的点列表。
+            labels (列表[int] | None): 用于提示分割的标签列表。
+            **kwargs (Any): 要传递给 predict 方法的其他关键字参数。
 
-        Returns:
-            (list): The model predictions, typically containing segmentation masks and other relevant information.
+        返回：
+            (列表): 模型预测结果，通常包含分割掩码和其他相关信息。
 
-        Examples:
+        示例：
             >>> sam = SAM("sam_b.pt")
             >>> results = sam("image.jpg", points=[[500, 375]])
             >>> print(f"Detected {len(results[0].masks)} masks")
@@ -134,35 +129,35 @@ class SAM(Model):
         return self.predict(source, stream, bboxes, points, labels, **kwargs)
 
     def info(self, detailed: bool = False, verbose: bool = True):
-        """Log information about the SAM model.
+        """记录 SAM 模型信息。
 
-        Args:
-            detailed (bool): If True, displays detailed information about the model layers and operations.
-            verbose (bool): If True, prints the information to the console.
+        参数：
+            detailed (bool): 为 True 时显示模型层和操作的详细信息。
+            verbose (bool): 为 True 时将信息输出到控制台。
 
-        Returns:
-            (tuple): A tuple containing the model's information (string representations of the model).
+        返回：
+            (tuple): 包含模型信息的元组（模型的字符串表示）。
 
-        Examples:
+        示例：
             >>> sam = SAM("sam_b.pt")
             >>> info = sam.info()
-            >>> print(info[0])  # Print summary information
+            >>> print(info[0])  # 打印摘要信息
         """
         return model_info(self.model, detailed=detailed, verbose=verbose)
 
     @property
     def task_map(self) -> dict[str, dict[str, type[Predictor]]]:
-        """Provide a mapping from the 'segment' task to its corresponding 'Predictor'.
+        """提供从 'segment' 任务到对应 'Predictor' 的映射。
 
-        Returns:
-            (dict[str, dict[str, type[Predictor]]]): A dictionary mapping the 'segment' task to its corresponding
-                Predictor class. For SAM2 models, it maps to SAM2Predictor, otherwise to the standard Predictor.
+        返回：
+            (dict[str, dict[str, type[Predictor]]]): 将 'segment' 任务映射到对应 Predictor 类的字典。
+                对于 SAM2 模型，该映射指向 SAM2Predictor，否则指向标准 Predictor。
 
-        Examples:
+        示例：
             >>> sam = SAM("sam_b.pt")
             >>> task_map = sam.task_map
             >>> print(task_map)
-            {'segment': {'predictor': <class 'ultralytics.models.sam.predict.Predictor'>}}
+            {'分割段': {'predictor': <类别 'ultralytics.models.sam.predict.Predictor'>}}
         """
         return {
             "segment": {"predictor": SAM2Predictor if self.is_sam2 else SAM3Predictor if self.is_sam3 else Predictor}

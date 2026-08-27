@@ -10,27 +10,26 @@ from ultralytics.utils.plotting import colors
 
 
 class ObjectCounter(BaseSolution):
-    """A class to manage the counting of objects in a real-time video stream based on their tracks.
+    """根据跟踪结果管理实时视频流中对象计数的类。
 
-    This class extends the BaseSolution class and provides functionality for counting objects moving in and out of a
-    specified region in a video stream. It supports both polygonal and linear regions for counting.
+    此类扩展 BaseSolution，提供统计视频流中进出指定区域对象数量的功能，同时支持多边形区域和线性区域计数。
 
-    Attributes:
-        in_count (int): Counter for objects moving inward.
-        out_count (int): Counter for objects moving outward.
-        counted_ids (set[int]): IDs of objects that have been counted.
-        classwise_count (dict[str, dict[str, int]]): Dictionary for counts, categorized by object class.
-        region_initialized (bool): Flag indicating whether the counting region has been initialized.
-        show_in (bool): Flag to control display of inward count.
-        show_out (bool): Flag to control display of outward count.
-        margin (int): Margin for background rectangle size to display counts properly.
+    属性：
+        in_count (int): 向内移动对象的计数。
+        out_count (int): 向外移动对象的计数。
+        counted_ids (set[int]): 已计数对象的 ID 集合。
+        classwise_count (dict[str, dict[str, int]]): 按对象类别统计数量的字典。
+        region_initialized (bool): 表示计数区域是否已初始化的标志。
+        show_in (bool): 是否显示向内计数。
+        show_out (bool): 是否显示向外计数。
+        margin (int): 用于正确显示计数的背景矩形边距。
 
-    Methods:
-        count_objects: Count objects within a polygonal or linear region based on their tracks.
-        display_counts: Display object counts on the frame.
-        process: Process input data and update counts.
+    方法：
+        count_objects: 根据跟踪结果统计多边形或线性区域内的对象。
+        display_counts: 在帧上显示对象计数。
+        process: 处理输入数据并更新计数。
 
-    Examples:
+    示例：
         >>> counter = ObjectCounter()
         >>> frame = cv2.imread("frame.jpg")
         >>> results = counter.process(frame)
@@ -38,18 +37,18 @@ class ObjectCounter(BaseSolution):
     """
 
     def __init__(self, **kwargs: Any) -> None:
-        """Initialize the ObjectCounter class for real-time object counting in video streams."""
+        """初始化 ObjectCounter 类，用于实时视频流中的对象计数。"""
         super().__init__(**kwargs)
 
-        self.in_count = 0  # Counter for objects moving inward
-        self.out_count = 0  # Counter for objects moving outward
-        self.counted_ids = set()  # IDs of objects that have been counted
-        self.classwise_count = defaultdict(lambda: {"IN": 0, "OUT": 0})  # Dictionary for counts, categorized by class
-        self.region_initialized = False  # Flag indicating whether the region has been initialized
+        self.in_count = 0  # 向内移动对象的计数
+        self.out_count = 0  # 向外移动对象的计数
+        self.counted_ids = set()  # 已计数对象的 ID
+        self.classwise_count = defaultdict(lambda: {"IN": 0, "OUT": 0})  # 按类别统计数量
+        self.region_initialized = False  # 区域初始化标志
 
         self.show_in = self.CFG["show_in"]
         self.show_out = self.CFG["show_out"]
-        self.margin = self.line_width * 2  # Scales the background rectangle size to display counts properly
+        self.margin = self.line_width * 2  # 调整背景矩形边距以正确显示计数
 
     def count_objects(
         self,
@@ -58,48 +57,48 @@ class ObjectCounter(BaseSolution):
         prev_position: tuple[float, float] | None,
         cls: int,
     ) -> None:
-        """Count objects within a polygonal or linear region based on their tracks.
+        """根据跟踪结果统计多边形或线性区域内的对象。
 
-        Args:
-            current_centroid (tuple[float, float]): Current centroid coordinates (x, y) in the current frame.
-            track_id (int): Unique identifier for the tracked object.
-            prev_position (tuple[float, float], optional): Last frame position coordinates (x, y) of the track.
-            cls (int): Class index for classwise count updates.
+        参数：
+            current_centroid (tuple[float, float]): 当前帧中的中心点坐标 `(x, y)`。
+            track_id (int): 跟踪对象的唯一标识符。
+            prev_position (tuple[float, float], 可选): 跟踪对象上一帧的位置坐标 `(x, y)`。
+            cls (int): 用于更新分类计数的类别索引。
 
-        Examples:
+        示例：
             >>> counter = ObjectCounter()
             >>> track_line = {1: [100, 200], 2: [110, 210], 3: [120, 220]}
             >>> box = [130, 230, 150, 250]
             >>> track_id_num = 1
             >>> previous_position = (120, 220)
-            >>> class_to_count = 0  # In COCO model, class 0 = person
+            >>> class_to_count = 0  # 在 COCO 模型中，类别 0 表示人
             >>> counter.count_objects((140, 240), track_id_num, previous_position, class_to_count)
         """
         if prev_position is None or track_id in self.counted_ids:
             return
 
-        if len(self.region) == 2:  # Linear region (defined as a line segment)
+        if len(self.region) == 2:  # 线性区域（由线段定义）
             if self.r_s.intersects(self.LineString([prev_position, current_centroid])):
-                # Determine orientation of the region (vertical or horizontal)
+                # 判断区域方向（垂直或水平）
                 if abs(self.region[0][0] - self.region[1][0]) < abs(self.region[0][1] - self.region[1][1]):
-                    # Vertical region: Compare x-coordinates to determine direction
-                    if current_centroid[0] > prev_position[0]:  # Moving right
+                    # 垂直区域：比较 x 坐标判断方向
+                    if current_centroid[0] > prev_position[0]:  # 向右移动
                         self.in_count += 1
                         self.classwise_count[self.names[cls]]["IN"] += 1
-                    else:  # Moving left
+                    else:  # 向左移动
                         self.out_count += 1
                         self.classwise_count[self.names[cls]]["OUT"] += 1
-                # Horizontal region: Compare y-coordinates to determine direction
-                elif current_centroid[1] > prev_position[1]:  # Moving downward
+                # 水平区域：比较 y 坐标判断方向
+                elif current_centroid[1] > prev_position[1]:  # 向下移动
                     self.in_count += 1
                     self.classwise_count[self.names[cls]]["IN"] += 1
-                else:  # Moving upward
+                else:  # 向上移动
                     self.out_count += 1
                     self.classwise_count[self.names[cls]]["OUT"] += 1
                 self.counted_ids.add(track_id)
 
-        # An object fast enough to straddle the region leaves no centroid inside it, so count a crossing segment
-        # too, but only from outside: a track already inside has had the containment check since it entered.
+        # 移动过快的对象可能跨过区域而没有中心点落在区域内，因此也要统计穿越线段的情况；
+        # 但只从区域外开始统计，因为已经在区域内的跟踪对象自进入后一直执行包含检查。
         elif len(self.region) > 2 and (
             self.r_s.contains(self.Point(current_centroid))
             or (
@@ -107,35 +106,34 @@ class ObjectCounter(BaseSolution):
                 and self.r_s.crosses(self.LineString([prev_position, current_centroid]))
             )
         ):
-            # Judge direction by the object's dominant motion axis over its recent track, not by the
-            # region's shape; a ~5-frame baseline is robust to tracker jitter where a 1-frame delta is not.
-            # The baseline is the oldest recent point OUTSIDE the region, so the entry vector is not
-            # polluted by an uncounted first frame that spawned inside (quick exit and re-entry).
+            # 根据对象近期跟踪轨迹中的主运动轴判断方向，而不是根据区域形状判断；约 5 帧的基线
+            # 比单帧差分更能抵抗跟踪抖动。基线取区域外最近历史点中最早的一个，避免对象在区域内生成时
+            # 未计数的第一帧污染进入向量（快速离开后重新进入的情况）。
             window = self.track_history[track_id][-5:] or [prev_position]
             baseline = next((p for p in window if not self.r_s.contains(self.Point(p))), window[0])
             dx = current_centroid[0] - baseline[0]
             dy = current_centroid[1] - baseline[1]
-            moving_in = dx > 0 if abs(dx) > abs(dy) else dy > 0  # moving right or downward
+            moving_in = dx > 0 if abs(dx) > abs(dy) else dy > 0  # 向右或向下移动
             if moving_in:
                 self.in_count += 1
                 self.classwise_count[self.names[cls]]["IN"] += 1
-            else:  # Moving left or upward
+            else:  # 向左或向上移动
                 self.out_count += 1
                 self.classwise_count[self.names[cls]]["OUT"] += 1
             self.counted_ids.add(track_id)
 
     def forget_tracks(self, track_ids: list[int]) -> None:
-        """Drop retired IDs from `counted_ids` so it doesn't grow across a 24/7 stream (see BaseSolution)."""
+        """从 `counted_ids` 中移除已结束的 ID，避免全天候视频流中的集合无限增长（参见 BaseSolution）。"""
         super().forget_tracks(track_ids)
         self.counted_ids.difference_update(track_ids)
 
     def display_counts(self, plot_im) -> None:
-        """Display object counts on the input image or frame.
+        """在输入图像或帧上显示对象计数。
 
-        Args:
-            plot_im (np.ndarray): The image or frame to display counts on.
+        参数：
+            plot_im (np.ndarray): 要显示计数的图像或帧。
 
-        Examples:
+        示例：
             >>> counter = ObjectCounter()
             >>> frame = cv2.imread("image.jpg")
             >>> counter.display_counts(frame)
@@ -150,20 +148,18 @@ class ObjectCounter(BaseSolution):
             self.annotator.display_analytics(plot_im, labels_dict, (104, 31, 17), (255, 255, 255), self.margin)
 
     def process(self, im0) -> SolutionResults:
-        """Process input data (frames or object tracks) and update object counts.
+        """处理输入数据（帧或对象跟踪结果）并更新对象计数。
 
-        This method initializes the counting region, extracts tracks, draws bounding boxes and regions, updates object
-        counts, and displays the results on the input image.
+        此方法初始化计数区域、提取跟踪结果、绘制边界框和区域、更新对象计数，并在输入图像上显示结果。
 
-        Args:
-            im0 (np.ndarray): The input image or frame to be processed.
+        参数：
+            im0 (np.ndarray): 要处理的输入图像或帧。
 
-        Returns:
-            (SolutionResults): Contains processed image `plot_im`, 'in_count' (int, count of objects entering the
-                region), 'out_count' (int, count of objects exiting the region), 'classwise_count' (dict, per-class
-                object count), and 'total_tracks' (int, total number of tracked objects).
+        返回：
+            (SolutionResults): 包含处理后的图像 `plot_im`、进入区域对象数 `in_count`、离开区域对象数 `out_count`、
+                按类别统计的对象数量 `classwise_count` 和跟踪对象总数 `total_tracks`。
 
-        Examples:
+        示例：
             >>> counter = ObjectCounter()
             >>> frame = cv2.imread("path/to/image.jpg")
             >>> results = counter.process(frame)
@@ -172,30 +168,30 @@ class ObjectCounter(BaseSolution):
             self.initialize_region()
             self.region_initialized = True
 
-        self.extract_tracks(im0)  # Extract tracks
-        self.annotator = SolutionAnnotator(im0, line_width=self.line_width)  # Initialize annotator
+        self.extract_tracks(im0)  # 提取跟踪结果
+        self.annotator = SolutionAnnotator(im0, line_width=self.line_width)  # 初始化标注器
 
         self.annotator.draw_region(
             reg_pts=self.region, color=(104, 0, 123), thickness=self.line_width * 2
-        )  # Draw region
+        )  # 绘制区域
 
-        # Iterate over bounding boxes, track ids and classes index
+        # 遍历边界框、跟踪 ID 和类别索引
         for box, track_id, cls, conf in zip(self.boxes, self.track_ids, self.clss, self.confs):
-            # Draw bounding box and counting region
+            # 绘制边界框并处理计数区域
             self.annotator.box_label(box, label=self.adjust_box_label(cls, conf, track_id), color=colors(cls, True))
-            self.store_tracking_history(track_id, box)  # Store track history
+            self.store_tracking_history(track_id, box)  # 保存跟踪历史
 
-            # Store previous position of track for object counting
+            # 保存跟踪对象上一位置，用于对象计数
             prev_position = None
             if len(self.track_history[track_id]) > 1:
                 prev_position = self.track_history[track_id][-2]
-            self.count_objects(self.track_history[track_id][-1], track_id, prev_position, cls)  # object counting
+            self.count_objects(self.track_history[track_id][-1], track_id, prev_position, cls)  # 对象 counting
 
         plot_im = self.annotator.result()
-        self.display_counts(plot_im)  # Display the counts on the frame
-        self.display_output(plot_im)  # Display output with base class function
+        self.display_counts(plot_im)  # 在帧上显示计数
+        self.display_output(plot_im)  # 使用基类函数显示输出
 
-        # Return SolutionResults
+        # 返回 SolutionResults
         return SolutionResults(
             plot_im=plot_im,
             in_count=self.in_count,

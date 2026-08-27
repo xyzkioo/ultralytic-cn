@@ -11,15 +11,14 @@ from ultralytics.utils import DEFAULT_CFG, RANK
 
 
 class SegmentationTrainer(yolo.detect.DetectionTrainer):
-    """A class extending the DetectionTrainer class for training based on a segmentation model.
+    """继承 DetectionTrainer、用于训练分割模型的训练器类。
 
-    This trainer specializes in handling segmentation tasks, extending the detection trainer with segmentation-specific
-    functionality including model initialization, validation, and visualization.
+    此训练器专门处理分割任务，在检测训练器基础上扩展模型初始化、验证和可视化等分割专用功能。
 
-    Attributes:
-        loss_names (tuple[str]): Names of the loss components, derived from the loss dict returned by the criterion.
+    属性：
+        loss_names (tuple[str]): 损失组件名称，来自 criterion 返回的损失字典。
 
-    Examples:
+    示例：
         >>> from ultralytics.models.yolo.segment import SegmentationTrainer
         >>> args = dict(model="yolo26n-seg.pt", data="coco8-seg.yaml", epochs=3)
         >>> trainer = SegmentationTrainer(overrides=args)
@@ -27,12 +26,12 @@ class SegmentationTrainer(yolo.detect.DetectionTrainer):
     """
 
     def __init__(self, cfg=DEFAULT_CFG, overrides: dict | None = None, _callbacks: dict | None = None):
-        """Initialize a SegmentationTrainer object.
+        """初始化 a SegmentationTrainer 对象.
 
-        Args:
-            cfg (dict): Configuration dictionary with default training settings.
-            overrides (dict, optional): Dictionary of parameter overrides for the default configuration.
-            _callbacks (dict, optional): Dictionary of callback functions to be executed during training.
+        参数：
+            cfg (dict): Configuration 字典 with default 训练 settings.
+            overrides (dict, 可选): Dictionary of 参数 overrides for the default 配置.
+            _callbacks (dict, 可选): Dictionary of callback functions to be executed 训练期间.
         """
         if overrides is None:
             overrides = {}
@@ -40,17 +39,17 @@ class SegmentationTrainer(yolo.detect.DetectionTrainer):
         super().__init__(cfg, overrides, _callbacks)
 
     def get_model(self, cfg: dict | str | None = None, weights: str | Path | None = None, verbose: bool = True):
-        """Initialize and return a SegmentationModel with specified configuration and weights.
+        """使用指定配置和权重初始化并返回 SegmentationModel。
 
-        Args:
-            cfg (dict | str, optional): Model configuration. Can be a dictionary, a path to a YAML file, or None.
-            weights (str | Path, optional): Path to pretrained weights file.
-            verbose (bool): Whether to display model information during initialization.
+        参数：
+            cfg (dict | str, 可选): Model 配置. Can be a 字典, a 路径 to a YAML 文件, or None.
+            权重 (str | Path, 可选): 路径： pretrained 权重 文件.
+            verbose (bool): Whether to display 模型 information during initialization.
 
-        Returns:
-            (SegmentationModel): Initialized segmentation model with loaded weights if specified.
+        返回：
+            (SegmentationModel): Initialized segmentation 模型 with loaded 权重 if specified.
 
-        Examples:
+        示例：
             >>> trainer = SegmentationTrainer()
             >>> model = trainer.get_model(cfg="yolo26n-seg.yaml")
             >>> model = trainer.get_model(weights="yolo26n-seg.pt", verbose=False)
@@ -64,7 +63,7 @@ class SegmentationTrainer(yolo.detect.DetectionTrainer):
         return model
 
     def get_validator(self):
-        """Return an instance of SegmentationValidator for validation of YOLO model."""
+        """返回用于验证 YOLO 模型的 SegmentationValidator 实例。"""
         return yolo.segment.SegmentationValidator(
             self.test_loader, save_dir=self.save_dir, args=copy(self.args), _callbacks=self.callbacks
         )

@@ -5,8 +5,8 @@ from pathlib import Path
 from ultralytics.utils import LOGGER, SETTINGS, TESTS_RUNNING, checks
 
 try:
-    assert not TESTS_RUNNING  # do not log pytest
-    assert SETTINGS["dvc"] is True  # verify integration is enabled
+    assert not TESTS_RUNNING  # 不记录 pytest 测试
+    assert SETTINGS["dvc"] is True  # 确认已启用集成
     import dvclive
 
     assert checks.check_version("dvclive", "2.11.0", verbose=True)
@@ -14,12 +14,11 @@ try:
     import os
     import re
 
-    # DVCLive logger instance
+    # DVCLive 日志记录器实例
     live = None
     _processed_plots = {}
 
-    # `on_fit_epoch_end` is called on final validation (probably need to be fixed) for now this is the way we
-    # distinguish final evaluation of the best model vs last epoch validation
+    # `on_fit_epoch_end` 会在最终验证时调用（可能需要修复）；目前通过此变量区分最佳模型的最终评估和最后一个周期的验证
     _training_epoch = False
 
 except (ImportError, AssertionError, TypeError):
@@ -27,24 +26,23 @@ except (ImportError, AssertionError, TypeError):
 
 
 def _log_images(path: Path, prefix: str = "") -> None:
-    """Log images at specified path with an optional prefix using DVCLive.
+    """使用 DVCLive 记录指定路径中的图像，并支持可选前缀。
 
-    This function logs images found at the given path to DVCLive, organizing them by batch to enable slider
-    functionality in the UI. It processes image filenames to extract batch information and restructures the path
-    accordingly.
+    此函数会将给定路径中的图像记录到 DVCLive，并按批次组织图像，以便在界面中使用滑块查看。
+    函数会从图像文件名中提取批次信息，并据此重新组织路径。
 
-    Args:
-        path (Path): Path to the image file to be logged.
-        prefix (str, optional): Optional prefix to add to the image name when logging.
+    参数：
+        path (Path): 要记录的图像文件路径。
+        prefix (str, 可选): 记录时添加到图像名称前的可选前缀。
 
-    Examples:
+    示例：
         >>> from pathlib import Path
         >>> _log_images(Path("runs/train/exp/val_batch0_pred.jpg"), prefix="validation")
     """
     if live:
         name = path.name
 
-        # Group images by batch to enable sliders in UI
+        # 按批次分组图像，以便在界面中启用滑块
         if m := re.search(r"_batch(\d+)", name):
             ni = m[1]
             new_stem = re.sub(r"_batch(\d+)", "_batch", path.stem)
@@ -54,11 +52,11 @@ def _log_images(path: Path, prefix: str = "") -> None:
 
 
 def _log_plots(plots: dict, prefix: str = "") -> None:
-    """Log plot images for training progress if they have not been previously processed.
+    """如果绘图图像尚未处理，则记录它们以展示训练进度。
 
-    Args:
-        plots (dict): Dictionary containing plot information with timestamps.
-        prefix (str, optional): Optional prefix to add to the logged image paths.
+    参数：
+        plots (dict): 包含绘图信息和时间戳的字典。
+        prefix (str, 可选): 添加到已记录图像路径中的可选前缀。
     """
     for name, params in plots.items():
         timestamp = params["timestamp"]
@@ -68,14 +66,13 @@ def _log_plots(plots: dict, prefix: str = "") -> None:
 
 
 def _log_confusion_matrix(validator) -> None:
-    """Log confusion matrix for a validator using DVCLive.
+    """使用 DVCLive 记录验证器中的混淆矩阵。
 
-    This function processes the confusion matrix from a validator object and logs it to DVCLive by converting the matrix
-    into lists of target and prediction labels.
+    此函数处理验证器对象中的混淆矩阵，并将矩阵转换为目标标签和预测标签列表后记录到 DVCLive。
 
-    Args:
-        validator (BaseValidator): The validator object containing the confusion matrix and class names. Must have
-            attributes confusion_matrix.matrix, confusion_matrix.task, and names.
+    参数：
+        validator (BaseValidator): 包含混淆矩阵和类别名称的验证器对象。该对象必须具有
+            `confusion_matrix.matrix`、`confusion_matrix.task` 和 `names` 属性。
     """
     targets = []
     preds = []
@@ -93,7 +90,7 @@ def _log_confusion_matrix(validator) -> None:
 
 
 def on_pretrain_routine_start(trainer) -> None:
-    """Initialize DVCLive logger for training metadata during pre-training routine."""
+    """在预训练流程期间初始化用于训练元数据的 DVCLive 日志记录器。"""
     try:
         global live
         live = dvclive.Live(save_dvc_exp=True, cache_images=True)
@@ -103,35 +100,34 @@ def on_pretrain_routine_start(trainer) -> None:
 
 
 def on_pretrain_routine_end(trainer) -> None:
-    """Log plots related to the training process at the end of the pretraining routine."""
+    """在预训练流程结束时记录与训练过程相关的绘图。"""
     _log_plots(trainer.plots, "train")
 
 
 def on_train_start(trainer) -> None:
-    """Log the training parameters if DVCLive logging is active."""
+    """如果 DVCLive 日志处于启用状态，则记录训练参数。"""
     if live:
         live.log_params(trainer.args)
 
 
 def on_train_epoch_start(trainer) -> None:
-    """Set the global variable _training_epoch value to True at the start of each training epoch."""
+    """在每个训练周期开始时将全局变量 _training_epoch 设置为 True。"""
     global _training_epoch
     _training_epoch = True
 
 
 def on_fit_epoch_end(trainer) -> None:
-    """Log training metrics, model info, and advance to next step at the end of each fit epoch.
+    """在每个 fit 周期结束时记录训练指标和模型信息，并推进到下一步。
 
-    This function is called at the end of each fit epoch during training. It logs various metrics including training
-    loss items, validation metrics, and learning rates. On the first epoch, it also logs model
-    information. Additionally, it logs training and validation plots and advances the DVCLive step counter.
+    此函数会在每个 fit 训练周期结束时调用，记录各种指标，包括训练损失项、验证指标和学习率。
+    在第一个周期，它还会记录模型信息。此外，它会记录训练和验证绘图，并推进 DVCLive 步数计数器。
 
-    Args:
-        trainer (BaseTrainer): The trainer object containing training state, metrics, and plots.
+    参数：
+        trainer (BaseTrainer): 包含训练状态、指标和绘图的训练器对象。
 
-    Notes:
-        This function only performs logging operations when DVCLive logging is active and during a training epoch.
-        The global variable _training_epoch is used to track whether the current epoch is a training epoch.
+    注意：
+        此函数仅在 DVCLive 日志启用且当前处于训练周期时执行记录操作。
+        全局变量 _training_epoch 用于跟踪当前周期是否为训练周期。
     """
     global _training_epoch
     if live and _training_epoch:
@@ -153,22 +149,21 @@ def on_fit_epoch_end(trainer) -> None:
 
 
 def on_train_end(trainer) -> None:
-    """Log best metrics, plots, and confusion matrix at the end of training.
+    """在训练结束时记录最佳指标、绘图和混淆矩阵。
 
-    This function is called at the conclusion of the training process to log final metrics, visualizations, and model
-    artifacts if DVCLive logging is active. It captures the best model performance metrics, training plots, validation
-    plots, and confusion matrix for later analysis.
+    如果 DVCLive 日志处于启用状态，此函数会在训练过程结束时调用，以记录最终指标、可视化结果和模型资源。
+    它会保存最佳模型性能指标、训练绘图、验证绘图和混淆矩阵，供后续分析使用。
 
-    Args:
-        trainer (BaseTrainer): The trainer object containing training state, metrics, and validation results.
+    参数：
+        trainer (BaseTrainer): 包含训练状态、指标和验证结果的训练器对象。
 
-    Examples:
-        >>> # Inside a custom training loop
+    示例：
+        >>> # 在自定义训练循环内部
         >>> from ultralytics.utils.callbacks.dvc import on_train_end
-        >>> on_train_end(trainer)  # Log final metrics and artifacts
+        >>> on_train_end(trainer)  # 记录最终指标和产物
     """
     if live:
-        # At the end log the best metrics. It runs validator on the best model internally.
+        # 最后记录最佳指标；内部会使用最佳模型运行验证器。
         all_metrics = {**trainer.label_loss_items(trainer.tloss, prefix="train"), **trainer.metrics, **trainer.lr}
         for metric, value in all_metrics.items():
             live.log_metric(metric, value, plot=False)

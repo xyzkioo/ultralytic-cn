@@ -3,8 +3,8 @@
 from ultralytics.utils import LOGGER, SETTINGS, TESTS_RUNNING
 
 try:
-    assert not TESTS_RUNNING  # do not log pytest
-    assert SETTINGS["neptune"] is True  # verify integration is enabled
+    assert not TESTS_RUNNING  # 不记录 pytest 日志
+    assert SETTINGS["neptune"] is True  # 验证集成已启用
 
     import neptune
     from neptune.types import File
@@ -18,13 +18,13 @@ except (ImportError, AssertionError):
 
 
 def _log_scalars(scalars: dict, step: int = 0) -> None:
-    """Log scalars to the NeptuneAI experiment logger.
+    """将标量记录到 NeptuneAI 实验日志记录器。
 
-    Args:
-        scalars (dict): Dictionary of scalar values to log to NeptuneAI.
-        step (int, optional): The current step or iteration number for logging.
+    参数：
+        scalars (dict): 要记录到 NeptuneAI 的标量值字典。
+        step (int, 可选): 当前日志记录步骤或迭代次数。
 
-    Examples:
+    示例：
         >>> metrics = {"mAP": 0.85, "loss": 0.32}
         >>> _log_scalars(metrics, step=100)
     """
@@ -34,16 +34,15 @@ def _log_scalars(scalars: dict, step: int = 0) -> None:
 
 
 def _log_images(imgs_dict: dict, group: str = "") -> None:
-    """Log images to the NeptuneAI experiment logger.
+    """将图像记录到 NeptuneAI 实验日志记录器。
 
-    This function logs image data to Neptune.ai when a valid Neptune run is active. Images are organized under the
-    specified group name.
+    当有效的 Neptune 运行处于活动状态时，此函数将图像数据记录到 Neptune.ai，图像按指定组名称组织。
 
-    Args:
-        imgs_dict (dict): Dictionary of images to log, with keys as image names and values as image data.
-        group (str, optional): Group name to organize images under in the Neptune UI.
+    参数：
+        imgs_dict (dict): 要记录的图像字典，键为图像名称，值为图像数据。
+        group (str, 可选): Group 名称 to organize 图像 under in the Neptune UI.
 
-    Examples:
+    示例：
         >>> # Log validation images
         >>> _log_images({"val_batch": img_tensor}, group="validation")
     """
@@ -53,7 +52,7 @@ def _log_images(imgs_dict: dict, group: str = "") -> None:
 
 
 def _log_plot(title: str, plot_path: str) -> None:
-    """Log plots to the NeptuneAI experiment logger."""
+    """将绘图记录到 NeptuneAI 实验日志记录器。"""
     import matplotlib.image as mpimg
     import matplotlib.pyplot as plt
 
@@ -65,7 +64,7 @@ def _log_plot(title: str, plot_path: str) -> None:
 
 
 def on_pretrain_routine_start(trainer) -> None:
-    """Initialize NeptuneAI run and log hyperparameters before training starts."""
+    """在训练开始前初始化 NeptuneAI 运行并记录超参数。"""
     try:
         global run
         run = neptune.init_run(
@@ -79,7 +78,7 @@ def on_pretrain_routine_start(trainer) -> None:
 
 
 def on_train_epoch_end(trainer) -> None:
-    """Log training metrics and learning rate at the end of each training epoch."""
+    """在每个训练周期结束时记录训练指标和学习率。"""
     _log_scalars(trainer.label_loss_items(trainer.tloss, prefix="train"), trainer.epoch + 1)
     _log_scalars(trainer.lr, trainer.epoch + 1)
     if trainer.epoch == 1:
@@ -87,7 +86,7 @@ def on_train_epoch_end(trainer) -> None:
 
 
 def on_fit_epoch_end(trainer) -> None:
-    """Log model info and validation metrics at the end of each fit epoch."""
+    """在每个拟合周期结束时记录模型信息和验证指标。"""
     if run and trainer.epoch == 0:
         from ultralytics.utils.torch_utils import model_info_for_loggers
 
@@ -96,20 +95,20 @@ def on_fit_epoch_end(trainer) -> None:
 
 
 def on_val_end(validator) -> None:
-    """Log validation images at the end of validation."""
+    """在验证结束时记录验证图像。"""
     if run:
-        # Log val_labels and val_pred
+        # 记录验证标签和验证预测结果
         _log_images({f.stem: str(f) for f in validator.save_dir.glob("val*.jpg")}, "Validation")
 
 
 def on_train_end(trainer) -> None:
-    """Log final results, plots, and model weights at the end of training."""
+    """在训练结束时记录最终结果、绘图和模型权重。"""
     if run:
-        # Log final results, CM matrix + PR plots
+        # 记录最终结果、混淆矩阵和 PR 曲线
         for f in [*trainer.plots.keys(), *trainer.validator.plots.keys()]:
             if "batch" not in f.name:
                 _log_plot(title=f.stem, plot_path=f)
-        # Log the final model
+        # 记录最终模型
         run[f"weights/{trainer.args.name or trainer.args.task}/{trainer.best.name}"].upload(File(str(trainer.best)))
 
 

@@ -6,18 +6,18 @@ from .train import YOLOEPETrainer, YOLOETrainer, YOLOETrainerFromScratch, YOLOEV
 
 
 class YOLOESegTrainer(YOLOETrainer, SegmentationTrainer):
-    """Trainer class for YOLOE segmentation models."""
+    """用于 YOLOE 分割模型的训练器。"""
 
 
 class YOLOEPESegTrainer(SegmentationTrainer):
-    """Fine-tune YOLOE segmentation models in linear probing way."""
+    """以线性探测方式微调 YOLOE 分割模型。"""
 
-    get_model = YOLOEPETrainer.get_model  # shared linear-probing builder; SegmentationTrainer stays the sole base
+    get_model = YOLOEPETrainer.get_model  # 共享线性探测构建器；SegmentationTrainer 仍是唯一基类
 
 
 class YOLOESegTrainerFromScratch(YOLOETrainerFromScratch, YOLOESegTrainer):
-    """Trainer for YOLOE segmentation models trained from scratch without pretrained weights."""
+    """用于从头训练 YOLOE 分割模型的训练器，不使用预训练权重。"""
 
 
 class YOLOESegVPTrainer(YOLOEVPTrainer, YOLOESegTrainerFromScratch):
-    """Trainer for YOLOE segmentation models with Vision Prompt (VP) capabilities."""
+    """具备视觉提示（VP）能力的 YOLOE 分割模型训练器。"""

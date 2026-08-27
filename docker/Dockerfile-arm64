@@ -1,14 +1,14 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
-# Builds ultralytics/ultralytics:latest-arm64 image on DockerHub https://hub.docker.com/r/ultralytics/ultralytics
-# Image is aarch64-compatible for Apple M1, M2, M3, Raspberry Pi and other ARM architectures
+# 在 Docker Hub 上构建 ultralytics/ultralytics:latest-arm64 镜像：https://hub.docker.com/r/ultralytics/ultralytics
+# 此镜像兼容 Apple M1、M2、M3、Raspberry Pi 及其他 ARM 架构
 
-# Start FROM Ubuntu image https://hub.docker.com/_/ubuntu with "FROM arm64v8/ubuntu:22.04" (deprecated)
-# Start FROM Debian image for arm64v8 https://hub.docker.com/r/arm64v8/debian (deprecated)
-# Start FROM official arm64v8 Ubuntu 24.04 image https://hub.docker.com/layers/arm64v8/ubuntu/24.04/
+# 基于 Ubuntu 镜像启动：https://hub.docker.com/_/ubuntu，使用 "FROM arm64v8/ubuntu:22.04"（已弃用）
+# 基于 arm64v8 Debian 镜像启动：https://hub.docker.com/r/arm64v8/debian（已弃用）
+# 基于官方 arm64v8 Ubuntu 24.04 镜像启动：https://hub.docker.com/layers/arm64v8/ubuntu/24.04/
 FROM arm64v8/ubuntu:24.04
 
-# Set environment variables (suppress PyTorch NNPACK warnings)
+# 设置环境变量（禁止 PyTorch NNPACK 警告）
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
@@ -16,40 +16,40 @@ ENV PYTHONUNBUFFERED=1 \
     UV_BREAK_SYSTEM_PACKAGES=1 \
     TORCH_CPP_LOG_LEVEL=ERROR
 
-# Downloads to user config dir
+# 下载到用户配置目录
 ADD https://github.com/ultralytics/assets/releases/download/v0.0.0/Arial.ttf \
     https://github.com/ultralytics/assets/releases/download/v0.0.0/Arial.Unicode.ttf \
     /root/.config/Ultralytics/
 
-# Install linux packages
-# TensorFlow on aarch64 may require pkg-config and libhdf5-dev if h5py builds from source.
+# 安装 Linux 软件包
+# 如果 h5py 从源代码构建，aarch64 上的 TensorFlow 可能需要 pkg-config 和 libhdf5-dev。
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     python3-pip git zip unzip wget curl htop gcc libgl1 libglib2.0-0 gnupg && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Create working directory
+# 创建工作目录
 WORKDIR /ultralytics
 
-# Copy contents and configure dependencies
+# 复制内容并配置依赖项
 COPY . .
 RUN sed -i'' -e 's/"opencv-python/"opencv-python-headless/' pyproject.toml
 ADD https://github.com/ultralytics/assets/releases/download/v8.4.0/yolo26n.pt .
 
-# Install pip packages, create python symlink, and remove build files
+# 安装 pip 软件包、创建 Python 符号链接并删除构建文件
 RUN python3 -m pip install uv && \
     uv pip install --system -e ".[export]" --extra-index-url https://download.pytorch.org/whl/cpu --index-strategy unsafe-best-match && \
-    # Creates a symbolic link to make 'python' point to 'python3'
+    # 创建符号链接，使 'python' 指向 'python3'
     ln -sf /usr/bin/python3 /usr/bin/python && \
-    # Remove extra build files
+    # 删除多余的构建文件
     rm -rf /root/.config/Ultralytics/persistent_cache.json
 
 # Usage --------------------------------------------------------------------------------------------------------------
 
-# Production builds: https://github.com/ultralytics/ultralytics/blob/main/.github/workflows/docker.yml
-# Example (build): t=ultralytics/ultralytics:latest-arm64 && docker build --platform linux/arm64 -f docker/Dockerfile-arm64 -t $t .
-# Example (push): docker push $t
-# Example (pull): t=ultralytics/ultralytics:latest-arm64 && docker pull $t
-# Example (run): docker run -it --ipc=host $t
-# Example (run-with-volume): docker run -it --ipc=host -v "$PWD/shared/datasets:/datasets" $t
+# 正式构建：https://github.com/ultralytics/ultralytics/blob/main/.github/workflows/docker.yml
+# 示例（构建）：t=ultralytics/ultralytics:latest-arm64 && docker build --platform linux/arm64 -f docker/Dockerfile-arm64 -t $t .
+# 示例（推送）：docker push $t
+# 示例（拉取）：t=ultralytics/ultralytics:latest-arm64 && docker pull $t
+# 示例（运行）：docker run -it --ipc=host $t
+# 示例（挂载卷运行）：docker run -it --ipc=host -v "$PWD/shared/datasets:/datasets" $t

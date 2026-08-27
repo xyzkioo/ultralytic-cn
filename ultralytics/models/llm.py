@@ -14,27 +14,27 @@ from ultralytics.utils.checks import check_requirements
 
 
 class LLM:
-    """OpenAI-compatible large language model interface.
+    """兼容 OpenAI 接口的大语言模型类。
 
-    Attributes:
-        model (str): Model name sent with each request.
-        api (str): API format, either "responses" or "chat.completions".
-        base_url (str | None): Optional OpenAI-compatible API base URL.
-        prompt (str | None): Optional instruction prepended to scalar text or image inputs.
-        overrides (dict): Default arguments passed to each request.
-        client (OpenAI | None): Lazily initialized synchronous client.
-        async_client (AsyncOpenAI | None): Lazily initialized asynchronous client.
+    属性：
+        model (str): 每次请求发送的模型名称。
+        api (str): API 格式，可选 "responses" 或 "chat.completions"。
+        base_url (str | None): 可选的兼容 OpenAI API 基础 URL。
+        prompt (str | None): 添加在文本或图像输入前的可选提示词。
+        overrides (dict): 传递给每次请求的默认参数。
+        client (OpenAI | None): 延迟初始化的同步客户端。
+        async_client (AsyncOpenAI | None): 延迟初始化的异步客户端。
 
-    Methods:
-        __call__: Run synchronous inference.
-        async_call: Run asynchronous inference.
+    方法：
+        __call__: 执行同步推理。
+        async_call: 执行异步推理。
 
-    Examples:
+    示例：
         >>> from ultralytics import LLM
         >>> model = LLM("gpt-5.6-luna")
         >>> response = model("What is YOLO?")
 
-        Analyze an image:
+        Analyze an 图像:
         >>> response = model("Describe this image", image="bus.jpg")
 
         Use the Chat Completions API:
@@ -51,15 +51,15 @@ class LLM:
         prompt: str | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize an OpenAI-compatible LLM.
+        """初始化兼容 OpenAI 接口的 LLM。
 
-        Args:
-            model (str): Model name.
-            api (str): API format, either "responses" or "chat.completions".
-            base_url (str, optional): OpenAI-compatible API base URL.
-            api_key (str, optional): API key. Defaults to the OPENAI_API_KEY environment variable.
-            prompt (str, optional): Instruction prepended to scalar text or image inputs.
-            **kwargs (Any): Default arguments passed to each API request.
+        参数：
+            model (str): 模型名称。
+            api (str): API 格式，可选 "responses" 或 "chat.completions"。
+            base_url (str, 可选): 兼容 OpenAI API 的基础 URL。
+            api_key (str, 可选): API 密钥。默认读取 OPENAI_API_KEY 环境变量。
+            prompt (str, 可选): 添加在文本或图像输入前的提示词。
+            **kwargs (Any): 传递给每次 API 请求的默认参数。
         """
         if api not in {"responses", "chat.completions"}:
             raise ValueError(f"Unsupported API format {api!r}. Use 'responses' or 'chat.completions'.")
@@ -74,11 +74,11 @@ class LLM:
         self._api_key = api_key
 
     def __call__(self, source: Any = None, image: Any = None, **kwargs: Any) -> Any:
-        """Run inference with the configured model."""
+        """使用已配置的模型执行推理。"""
         return self._call(self._prepare(source, image), kwargs)
 
     def _call(self, source: Any, kwargs: dict[str, Any]) -> Any:
-        """Send prepared input through the synchronous client."""
+        """通过同步客户端发送准备好的输入。"""
         request = self._request(source, kwargs)
         client = self._get_client()
         return (
@@ -86,11 +86,11 @@ class LLM:
         )
 
     async def async_call(self, source: Any = None, image: Any = None, **kwargs: Any) -> Any:
-        """Run asynchronous inference with the configured model."""
+        """使用已配置的模型执行异步推理。"""
         return await self._async_call(self._prepare(source, image), kwargs)
 
     async def _async_call(self, source: Any, kwargs: dict[str, Any]) -> Any:
-        """Send prepared input through the asynchronous client."""
+        """通过异步客户端发送准备好的输入。"""
         request = self._request(source, kwargs)
         client = self._get_async_client()
         return (
@@ -100,15 +100,14 @@ class LLM:
         )
 
     def _request(self, source: Any, kwargs: dict[str, Any]) -> dict[str, Any]:
-        """Build a Responses or Chat Completions request.
+        """构建 Responses 或 Chat Completions 请求。
 
-        Args:
-            source (Any, optional): Responses input or chat messages. Strings become a user message for Chat
-                Completions.
-            kwargs (dict): Request arguments overriding constructor defaults.
+        参数：
+            source (Any, 可选): Responses 输入或聊天消息。字符串会转换为 Chat Completions 的用户消息。
+            kwargs (dict): 覆盖构造函数默认值的请求参数。
 
-        Returns:
-            (dict): Native OpenAI SDK request arguments.
+        返回：
+            (dict): 原生 OpenAI SDK 请求参数。
         """
         request = {"model": self.model, **self.overrides, **kwargs}
         if self.api == "responses":
@@ -119,7 +118,7 @@ class LLM:
         return request
 
     def _prepare(self, source: Any, image: Any = None) -> Any:
-        """Normalize scalar text or image input while preserving native message payloads."""
+        """规范化文本或图像输入，同时保留原生消息载荷。"""
         if image is None:
             if source is None:
                 return self.prompt
@@ -156,7 +155,7 @@ class LLM:
 
     @staticmethod
     def _image_url(source: Any) -> str:
-        """Convert an image URL, path, or array to an OpenAI image URL."""
+        """将图像 URL、路径或数组转换为 OpenAI 图像 URL。"""
         if isinstance(source, str) and source.startswith(("http://", "https://", "data:image/")):
             return source
         if isinstance(source, (str, Path)):
@@ -175,7 +174,7 @@ class LLM:
         return f"data:image/jpeg;base64,{base64.b64encode(buffer).decode()}"
 
     def _get_client(self) -> Any:
-        """Create the OpenAI client on first inference."""
+        """首次推理时创建 OpenAI 客户端。"""
         if self.client is None:
             check_requirements("openai>=2.0.0")
             from openai import OpenAI
@@ -185,7 +184,7 @@ class LLM:
         return self.client
 
     def _get_async_client(self) -> Any:
-        """Create the asynchronous OpenAI client on first inference."""
+        """首次推理时创建异步 OpenAI 客户端。"""
         if self.async_client is None:
             check_requirements("openai>=2.0.0")
             from openai import AsyncOpenAI

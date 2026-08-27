@@ -13,16 +13,16 @@ __all__ = "inverse_sigmoid", "multi_scale_deformable_attn_pytorch"
 
 
 def _get_clones(module, n):
-    """Create a list of cloned modules from the given module.
+    """从给定模块创建包含多个副本的列表。
 
-    Args:
-        module (nn.Module): The module to be cloned.
-        n (int): Number of clones to create.
+    参数：
+        module (nn.Module)：要复制的模块。
+        n (int)：要创建的副本数量。
 
-    Returns:
-        (nn.ModuleList): A ModuleList containing n clones of the input module.
+    返回：
+        (nn.ModuleList)：包含 n 个输入模块副本的 ModuleList。
 
-    Examples:
+    示例：
         >>> import torch.nn as nn
         >>> layer = nn.Linear(10, 10)
         >>> clones = _get_clones(layer, 3)
@@ -33,37 +33,35 @@ def _get_clones(module, n):
 
 
 def bias_init_with_prob(prior_prob=0.01):
-    """Initialize conv/fc bias value according to a given probability value.
+    """根据给定的先验概率初始化卷积层或全连接层的偏置值。
 
-    This function calculates the bias initialization value based on a prior probability using the inverse sigmoid
-    (logit)
-    function. It's commonly used in object detection models to initialize classification layers with a specific positive
-    prediction probability.
+    此函数使用逆 Sigmoid（logit）函数，根据先验概率计算偏置初始值。它通常用于目标检测模型，为分类层设置
+    指定的正样本预测概率。
 
-    Args:
-        prior_prob (float, optional): Prior probability for bias initialization.
+    参数：
+        prior_prob (float，可选)：用于初始化偏置的先验概率。
 
-    Returns:
-        (float): Bias initialization value calculated from the prior probability.
+    返回：
+        (float)：根据先验概率计算得到的偏置初始值。
 
-    Examples:
+    示例：
         >>> bias = bias_init_with_prob(0.01)
         >>> print(f"Bias initialization value: {bias:.4f}")
-        Bias initialization value: -4.5951
+        偏置初始值：-4.5951
     """
-    return float(-np.log((1 - prior_prob) / prior_prob))  # return bias_init
+    return float(-np.log((1 - prior_prob) / prior_prob))  # 返回偏置初始值
 
 
 def linear_init(module):
-    """Initialize the weights and biases of a linear module.
+    """初始化线性模块的权重和偏置。
 
-    This function initializes the weights of a linear module using a uniform distribution within bounds calculated from
-    the output dimension. If the module has a bias, it is also initialized.
+    此函数根据输出维度计算均匀分布的边界，并使用该分布初始化线性模块的权重。如果模块包含偏置，也会一并
+    初始化。
 
-    Args:
-        module (nn.Module): Linear module to initialize.
+    参数：
+        module (nn.Module)：要初始化的线性模块。
 
-    Examples:
+    示例：
         >>> import torch.nn as nn
         >>> linear = nn.Linear(10, 5)
         >>> linear_init(linear)
@@ -75,22 +73,21 @@ def linear_init(module):
 
 
 def inverse_sigmoid(x, eps=1e-5):
-    """Calculate the inverse sigmoid function for a tensor.
+    """计算张量的逆 Sigmoid 函数。
 
-    This function applies the inverse of the sigmoid function to a tensor, which is useful in various neural network
-    operations, particularly in attention mechanisms and coordinate transformations.
+    此函数对张量应用 Sigmoid 函数的逆运算，可用于各种神经网络操作，尤其适用于注意力机制和坐标变换。
 
-    Args:
-        x (torch.Tensor): Input tensor with values in range [0, 1].
-        eps (float, optional): Small epsilon value to prevent numerical instability.
+    参数：
+        x (torch.Tensor)：输入张量，取值范围为 [0, 1]。
+        eps (float，可选)：用于避免数值不稳定的小 epsilon 值。
 
-    Returns:
-        (torch.Tensor): Tensor after applying the inverse sigmoid function.
+    返回：
+        (torch.Tensor)：应用逆 Sigmoid 函数后的张量。
 
-    Examples:
+    示例：
         >>> x = torch.tensor([0.2, 0.5, 0.8])
         >>> inverse_sigmoid(x)
-        tensor([-1.3863,  0.0000,  1.3863])
+        张量([-1.3863,  0.0000,  1.3863])
     """
     x = x.clamp(min=0, max=1)
     x1 = x.clamp(min=eps)
@@ -104,33 +101,31 @@ def multi_scale_deformable_attn_pytorch(
     sampling_locations: torch.Tensor,
     attention_weights: torch.Tensor,
 ) -> torch.Tensor:
-    """Implement multi-scale deformable attention in PyTorch.
+    """在 PyTorch 中实现多尺度可变形注意力。
 
-    Folds the (num_levels, num_points) axes into a single num_total_points axis so every traced tensor stays at rank <=
-    5, the maximum rank supported by CoreML's MIL converter. Numerically equivalent to the rank-6 reference
-    implementation on CUDA and CPU.
+    此实现将 ``(num_levels, num_points)`` 两个轴折叠为单个 ``num_total_points`` 轴，使跟踪得到的每个张量
+    的秩都不超过 5，这是 CoreML MIL 转换器支持的最大秩。在 CUDA 和 CPU 上，它在数值上等价于秩为 6 的参考
+    实现。
 
-    Args:
-        value (torch.Tensor): Value tensor with shape (bs, num_keys, num_heads, embed_dims).
-        value_spatial_shapes (list): Per-level spatial shapes as [(H_0, W_0), ..., (H_{L-1}, W_{L-1})].
-        sampling_locations (torch.Tensor): Sampling locations with shape (bs, num_queries, num_heads, num_levels *
-            num_points, 2).
-        attention_weights (torch.Tensor): Attention weights with shape (bs, num_queries, num_heads, num_levels *
-            num_points).
+    参数：
+        value (torch.Tensor)：值张量，形状为 ``(bs, num_keys, num_heads, embed_dims)``。
+        value_spatial_shapes (list)：每个层级的空间形状，格式为 ``[(H_0, W_0), ..., (H_{L-1}, W_{L-1})]``。
+        sampling_locations (torch.Tensor)：采样位置，形状为 ``(bs, num_queries, num_heads, num_levels * num_points, 2)``。
+        attention_weights (torch.Tensor)：注意力权重，形状为 ``(bs, num_queries, num_heads, num_levels * num_points)``。
 
-    Returns:
-        (torch.Tensor): Output tensor with shape (bs, num_queries, num_heads * embed_dims).
+    返回：
+        (torch.Tensor)：输出张量，形状为 ``(bs, num_queries, num_heads * embed_dims)``。
 
-    References:
+    参考：
         https://github.com/IDEA-Research/detrex/blob/main/detrex/layers/multi_scale_deform_attn.py
     """
     bs, _, num_heads, embed_dims = value.shape
     _, num_queries, _, num_total_points, _ = sampling_locations.shape
     num_points = num_total_points // len(value_spatial_shapes)
 
-    # (bs, num_keys, num_heads, embed_dims) -> tuple of (bs*num_heads, embed_dims, H*W) per level
+    # (bs, num_keys, num_heads, embed_dims) -> 每个层级对应一个 (bs*num_heads, embed_dims, H*W) 元组
     value_list = value.permute(0, 2, 3, 1).flatten(0, 1).split([h * w for h, w in value_spatial_shapes], dim=-1)
-    # Map to grid_sample coords in [-1, 1] and split per level: tuple of (bs*num_heads, num_queries, num_points, 2)
+    # 映射到 [-1, 1] 范围的 grid_sample 坐标，并按层级拆分为 (bs*num_heads, num_queries, num_points, 2) 元组
     sampling_grids = (2 * sampling_locations - 1).permute(0, 2, 1, 3, 4).flatten(0, 1).split(num_points, dim=-2)
 
     sampling_value_list = []

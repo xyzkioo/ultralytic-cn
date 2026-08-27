@@ -13,21 +13,21 @@ from .base import BaseBackend
 
 
 class QNNBackend(BaseBackend):
-    """Qualcomm QNN inference backend for Snapdragon hardware.
+    """用于 Snapdragon 硬件的 Qualcomm QNN 推理后端。
 
-    Loads and runs the QNN context binary produced by the Ultralytics QNN export (`*_qnn.onnx`) using ONNX Runtime with
-    the QNN Execution Provider plugin (`onnxruntime-qnn`). Inference runs on Qualcomm Snapdragon devices (Android,
-    Windows on Snapdragon, or Qualcomm Linux boards) via the HTP (NPU) backend.
+    使用 ONNX Runtime 和 QNN 执行提供程序插件（`onnxruntime-qnn`）加载并运行 Ultralytics QNN 导出生成的
+    QNN 上下文二进制文件（`*_qnn.onnx`）。推理通过 HTP（NPU）后端运行在 Qualcomm Snapdragon 设备上，
+    包括 Android、Snapdragon Windows 和 Qualcomm Linux 开发板。
     """
 
     def load_model(self, weight: str | Path) -> None:
-        """Load a QNN context-binary model with ONNX Runtime's QNN Execution Provider plugin.
+        """使用 ONNX Runtime 的 QNN 执行提供程序插件加载 QNN context-binary 模型。
 
-        Args:
-            weight (str | Path): Path to the `*_qnn.onnx` file.
+        参数：
+            weight (str | Path): `*_qnn.onnx` 文件路径。
 
-        Raises:
-            OSError: If the QNN Execution Provider cannot be registered (e.g. not on Snapdragon hardware).
+        异常：
+            OSError: 无法注册 QNN 执行提供程序时抛出（例如当前设备不是 Snapdragon 硬件）。
         """
         check_requirements("onnxruntime-qnn")
         import onnxruntime
@@ -37,8 +37,8 @@ class QNNBackend(BaseBackend):
         onnx_file = Path(weight)
         LOGGER.info(f"Loading {onnx_file} for Qualcomm QNN inference...")
 
-        # Register the QNN EP (libraries resolved from the plugin helper or the onnxruntime/capi bundle) and select
-        # it; ep_library is None when QNN is already built into ONNX Runtime and needs no plugin registration
+        # 注册 QNN EP（库由插件辅助程序或 onnxruntime/capi 目录解析）并选择它；
+        # 当 QNN 已内置于 ONNX Runtime 时，ep_library 为 None，无需注册插件
         ep_name = "QNNExecutionProvider"
         ep_library, htp_backend = qnn_library_paths()
         ep_options = {"backend_path": htp_backend}
@@ -58,18 +58,18 @@ class QNNBackend(BaseBackend):
                 str(onnx_file), sess_options=options, providers=[ep_name], provider_options=[ep_options]
             )
         self.output_names = [x.name for x in self.session.get_outputs()]
-        shape = self.session.get_inputs()[0].shape  # channel-last exports take [N, H, W, C] input
+        shape = self.session.get_inputs()[0].shape  # 通道-last exports take [N, H, W, C] 输入
         self.nhwc = len(shape) == 4 and shape[3] in {1, 3} and shape[1] not in {1, 3}
         self.apply_metadata(self.read_metadata(onnx_file))
 
     def forward(self, im: torch.Tensor) -> list:
-        """Run inference on the Qualcomm QNN runtime.
+        """在 Qualcomm QNN 运行时上执行推理。
 
-        Args:
-            im (torch.Tensor): Input image tensor in BCHW format, normalized to [0, 1].
+        参数：
+            im (torch.Tensor): 输入图像 张量 in BCHW format, normalized to [0, 1].
 
-        Returns:
-            (list): Model predictions as a list of output arrays.
+        返回：
+            (列表): 输出数组列表形式的模型预测结果。
         """
         if self.nhwc:
             im = im.permute(0, 2, 3, 1)

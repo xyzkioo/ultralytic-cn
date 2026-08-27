@@ -16,60 +16,57 @@ if TYPE_CHECKING:
 
 
 def find_free_network_port() -> int:
-    """Find a free port on localhost.
+    """查找本地主机上的空闲端口。
 
-    It is useful in single-node training when we don't want to connect to a real main node but have to set the
-    `MASTER_PORT` environment variable.
+    在单节点训练中，如果不需要连接真实主节点但必须设置 `MASTER_PORT` 环境变量，该函数很有用。
 
-    Returns:
-        (int): The available network port number.
+    返回：
+        (int): 可用的网络端口号。
 
-    Notes:
-        Candidates are drawn below the default OS ephemeral floor (32768 on Linux, 49152 on macOS and Windows)
-        because the port is released here and rebound later by the DDP subprocess. An ephemeral port can be handed to
-        any outbound connection in that window, which surfaces as an EADDRINUSE rendezvous failure at launch.
+    注意：
+        候选端口取自操作系统默认临时端口范围下方（Linux 为 32768，macOS 和 Windows 为 49152），因为端口会在
+        此处释放，并在稍后由 DDP 子进程重新绑定。在此期间，临时端口可能被任意出站连接占用，从而在启动时造成
+        EADDRINUSE 会合失败。
     """
     import random
     import socket
 
-    # SystemRandom as init_seeds() seeds the global RNG earlier in this process, which would hand every concurrent
-    # DDP launch on a host the same candidate list
+    # init_seeds() 会提前为全局随机数生成器设定种子，因此使用 SystemRandom，避免同一主机上的并发 DDP 启动
+    # 得到相同的候选端口列表
     for port in random.SystemRandom().sample(range(10000, 32768), 10):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             try:
                 s.bind(("127.0.0.1", port))
                 return port
             except OSError:
-                continue  # in use by an explicit listener, try the next candidate
+                continue  # 已被显式监听器占用，尝试下一个候选端口
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind(("127.0.0.1", 0))  # no non-ephemeral candidate available, fall back to an ephemeral port
+        s.bind(("127.0.0.1", 0))  # 没有可用的非临时端口时，退回使用临时端口
         return s.getsockname()[1]
 
 
 def generate_ddp_file(trainer: BaseTrainer) -> str:
-    """Generate a DDP (Distributed Data Parallel) file for multi-GPU training.
+    """为多 GPU 训练生成 DDP（分布式数据并行）文件。
 
-    This function creates a temporary Python file that enables distributed training across multiple GPUs. The file
-    contains the necessary configuration to initialize the trainer in a distributed environment.
+    此函数创建临时 Python 文件，以便在多个 GPU 之间执行分布式训练。该文件包含在分布式环境中初始化训练器所需的配置。
 
-    Args:
-        trainer (ultralytics.engine.trainer.BaseTrainer): The trainer containing training configuration and arguments.
-            Must have args attribute and be a class instance.
+    参数：
+        trainer (ultralytics.engine.trainer.BaseTrainer): 包含训练配置和参数的训练器，必须是具有 `args` 属性的类实例。
 
-    Returns:
-        (str): Path to the generated temporary DDP file.
+    返回：
+        (str): 生成的临时 DDP 文件路径。
 
-    Notes:
-        The generated file is saved in the USER_CONFIG_DIR/DDP directory and includes:
-        - Trainer class import
-        - Configuration overrides from the trainer arguments
-        - Training initialization code
+    注意：
+        生成的文件会保存到 USER_CONFIG_DIR/DDP 目录，并包含：
+        - 训练器类导入语句
+        - 训练器参数中的配置覆盖项
+        - 训练初始化代码
     """
     module, name = f"{trainer.__class__.__module__}.{trainer.__class__.__name__}".rsplit(".", 1)
 
     content = f"""
-# Ultralytics Multi-GPU training temp file (should be automatically deleted after use)
-from pathlib import Path, PosixPath  # For model arguments stored as Path instead of str
+# Ultralytics 多 GPU 训练临时文件（使用后应自动删除）
+from pathlib import Path, PosixPath  # 用于处理以 Path 而不是字符串保存的模型参数
 overrides = {vars(trainer.args)}
 
 if __name__ == "__main__":
@@ -77,7 +74,7 @@ if __name__ == "__main__":
     from ultralytics.utils import DEFAULT_CFG_DICT
 
     cfg = DEFAULT_CFG_DICT.copy()
-    cfg.update(save_dir='')   # handle the extra key 'save_dir'
+    cfg.update(save_dir='')   # 处理额外的 'save_dir' 键
     trainer = {name}(cfg=cfg, overrides=overrides)
     results = trainer.train()
 """
@@ -95,14 +92,14 @@ if __name__ == "__main__":
 
 
 def generate_ddp_command(trainer: BaseTrainer) -> tuple[list[str], str]:
-    """Generate command for distributed training.
+    """生成分布式训练命令。
 
-    Args:
-        trainer (ultralytics.engine.trainer.BaseTrainer): The trainer containing configuration for distributed training.
+    参数：
+        trainer (ultralytics.engine.trainer.BaseTrainer): 包含分布式训练配置的训练器。
 
-    Returns:
-        cmd (list[str]): The command to execute for distributed training.
-        file (str): Path to the temporary file created for DDP training.
+    返回：
+        cmd (列表[str]): 用于执行分布式训练的命令。
+        file (str): 为 DDP 训练创建的临时文件路径。
     """
     import __main__  # noqa local import to avoid https://github.com/Lightning-AI/pytorch-lightning/issues/15218
 
@@ -125,19 +122,18 @@ def generate_ddp_command(trainer: BaseTrainer) -> tuple[list[str], str]:
 
 
 def ddp_cleanup(trainer: BaseTrainer, file: str) -> None:
-    """Delete temporary file if created during distributed data parallel (DDP) training.
+    """删除分布式数据并行（DDP）训练期间创建的临时文件。
 
-    This function checks if the provided file contains the trainer's ID in its name, indicating it was created as a
-    temporary file for DDP training, and deletes it if so.
+    此函数检查给定文件名是否包含训练器 ID，以判断它是否是 DDP 训练创建的临时文件；如果是，则将其删除。
 
-    Args:
-        trainer (ultralytics.engine.trainer.BaseTrainer): The trainer used for distributed training.
-        file (str): Path to the file that might need to be deleted.
+    参数：
+        trainer (ultralytics.engine.trainer.BaseTrainer): 用于分布式训练的训练器。
+        file (str): 可能需要删除的文件路径。
 
-    Examples:
+    示例：
         >>> trainer = YOLOTrainer()
         >>> file = "/tmp/ddp_temp_123456789.py"
         >>> ddp_cleanup(trainer, file)
     """
-    if f"{id(trainer)}.py" in file:  # if temp_file suffix in file
+    if f"{id(trainer)}.py" in file:  # 如果文件名包含临时文件后缀
         os.remove(file)

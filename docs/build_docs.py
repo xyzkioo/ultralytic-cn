@@ -1,5 +1,5 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
-"""Prepare and validate the complete documentation tree with Zensical."""
+"""使用 Zensical 准备并验证完整的文档目录。"""
 
 from __future__ import annotations
 
@@ -16,13 +16,13 @@ from minijinja import Environment, load_from_path
 from ultralytics.utils import LOGGER
 from ultralytics.utils.tqdm import TQDM
 
-os.environ["JUPYTER_PLATFORM_DIRS"] = "1"  # fix DeprecationWarning: Jupyter is migrating to use standard platformdirs
+os.environ["JUPYTER_PLATFORM_DIRS"] = "1"  # 修复弃用警告：Jupyter 正在迁移到标准 platformdirs
 DOCS = Path(__file__).parent.resolve()
 SITE = DOCS.parent / "site"
 
 
 def prepare_docs_markdown():
-    """Prepare documentation Markdown for validation."""
+    """准备用于验证的 Markdown 文档。"""
     LOGGER.info("Removing existing build artifacts")
     shutil.rmtree(SITE, ignore_errors=True)
     shutil.rmtree(DOCS / "repos", ignore_errors=True)
@@ -36,20 +36,20 @@ def prepare_docs_markdown():
     shutil.copytree(local_dir / "docs/en/compare", DOCS / "en/compare")
     LOGGER.info(f"Loaded {repo} from {local_dir}")
 
-    # Add frontmatter
+    # 添加 frontmatter
     for file in TQDM((DOCS / "en").rglob("*.md"), desc="Adding frontmatter"):
         update_markdown_files(file)
 
 
 def update_markdown_files(md_filepath: Path):
-    """Create or update a Markdown file, ensuring frontmatter is present."""
+    """创建或更新 Markdown 文件，并确保文件包含前置元数据。"""
     if md_filepath.exists():
         content = md_filepath.read_text().strip()
 
-        # Replace apostrophes
+        # 替换撇号
         content = content.replace("‘", "'").replace("’", "'")
 
-        # Add frontmatter if missing
+        # 如果缺少 frontmatter，则添加
         if not content.strip().startswith("---\n"):
             header = (
                 "---\ncomments: true\n"
@@ -58,7 +58,7 @@ def update_markdown_files(md_filepath: Path):
             )
             content = header + content
 
-        # Ensure content-tab "=== " lines are preceded and followed by empty newlines
+        # 确保 content-tab 的 "=== " 行前后都有空行
         lines = content.split("\n")
         new_lines = []
         for i, line in enumerate(lines):
@@ -73,24 +73,24 @@ def update_markdown_files(md_filepath: Path):
                 new_lines.append(line)
         content = "\n".join(new_lines)
 
-        # Add EOF newline if missing
+        # 如果缺少文件结尾换行，则添加
         if not content.endswith("\n"):
             content += "\n"
 
-        # Save page
+        # 保存页面
         md_filepath.write_text(content)
 
 
 def render_jinja_macros() -> None:
-    """Render MiniJinja macros in Markdown files before validating with Zensical."""
+    """在使用 Zensical 验证前，渲染 Markdown 文件中的 MiniJinja 宏。"""
     mkdocs_yml = DOCS.parent / "mkdocs.yml"
     default_yaml = DOCS.parent / "ultralytics" / "cfg" / "default.yaml"
 
     class SafeFallbackLoader(yaml.SafeLoader):
-        """SafeLoader that gracefully skips unknown configuration tags."""
+        """能够平稳跳过未知配置标签的 SafeLoader。"""
 
     def _ignore_unknown(loader, tag_suffix, node):
-        """Gracefully handle YAML tags that aren't registered."""
+        """平稳处理尚未注册的 YAML 标签。"""
         if isinstance(node, yaml.ScalarNode):
             return loader.construct_scalar(node)
         if isinstance(node, yaml.SequenceNode):
@@ -102,7 +102,7 @@ def render_jinja_macros() -> None:
     SafeFallbackLoader.add_multi_constructor("", _ignore_unknown)
 
     def load_yaml(path: Path, *, safe_loader: yaml.Loader = yaml.SafeLoader) -> dict:
-        """Load YAML safely, returning an empty dict when the file is absent."""
+        """安全加载 YAML；文件不存在时返回空字典。"""
         if not path.exists():
             return {}
         with open(path, encoding="utf-8") as f:
@@ -124,7 +124,7 @@ def render_jinja_macros() -> None:
     )
 
     def indent_filter(value: str, width: int = 4, first: bool = False, blank: bool = False) -> str:
-        """Mimic Jinja's indent filter to preserve macros compatibility."""
+        """模拟 Jinja 的 indent 过滤器，以保持宏的兼容性。"""
         prefix = " " * int(width)
         result = []
         for i, line in enumerate(str(value).splitlines(keepends=True)):
@@ -179,7 +179,7 @@ def render_jinja_macros() -> None:
 
 
 def backup_docs_sources() -> tuple[Path, list[tuple[Path, Path]]]:
-    """Create a temporary backup of docs sources so we can fully restore after building."""
+    """创建文档源文件的临时备份，以便构建后完整恢复。"""
     backup_root = Path(tempfile.mkdtemp(prefix="docs_backup_", dir=str(DOCS.parent)))
     sources = [DOCS / "en", DOCS / "macros"]
     copied: list[tuple[Path, Path]] = []
@@ -193,7 +193,7 @@ def backup_docs_sources() -> tuple[Path, list[tuple[Path, Path]]]:
 
 
 def restore_docs_sources(backup_root: Path, backups: list[tuple[Path, Path]]):
-    """Restore docs sources from the temporary backup."""
+    """从临时备份恢复文档源文件。"""
     for src, dst in backups:
         shutil.rmtree(src, ignore_errors=True)
         if dst.exists():
@@ -202,7 +202,7 @@ def restore_docs_sources(backup_root: Path, backups: list[tuple[Path, Path]]):
 
 
 def main():
-    """Prepare and validate the complete documentation tree."""
+    """准备并验证完整的文档目录。"""
     if not shutil.which("zensical"):
         raise SystemExit('zensical is not installed. Install it with: uv pip install -e ".[dev]"')
 
@@ -211,7 +211,7 @@ def main():
     restored = False
 
     def restore_all():
-        """Restore docs sources from backup once build steps complete."""
+        """构建步骤完成后，从备份恢复文档源文件。"""
         nonlocal restored
         if backup_root:
             LOGGER.info("Restoring docs directory from backup")
@@ -224,10 +224,10 @@ def main():
         build_reference_docs(update_nav=False)
         render_jinja_macros()
 
-        # Remove cloned repos before validation to keep the tree lean
+        # 验证前删除克隆的仓库，以保持目录精简
         shutil.rmtree(DOCS / "repos", ignore_errors=True)
 
-        # Build the main documentation
+        # 构建主文档
         LOGGER.info(f"Building docs from {DOCS}")
         subprocess.run(["zensical", "build", "-f", str(DOCS.parent / "mkdocs.yml"), "--strict"], check=True)
         LOGGER.info(f"Site built at {SITE}")

@@ -4,11 +4,11 @@ from ultralytics.utils import SETTINGS, TESTS_RUNNING
 from ultralytics.utils.torch_utils import model_info_for_loggers
 
 try:
-    assert not TESTS_RUNNING  # do not log pytest
-    assert SETTINGS["wandb"] is True  # verify integration is enabled
+    assert not TESTS_RUNNING  # 不记录 pytest 测试
+    assert SETTINGS["wandb"] is True  # 确认已启用集成
     import wandb as wb
 
-    assert hasattr(wb, "__version__")  # verify package is not directory
+    assert hasattr(wb, "__version__")  # 确认导入的是有效软件包
     _processed_plots = {}
 
 except (ImportError, AssertionError):
@@ -16,22 +16,20 @@ except (ImportError, AssertionError):
 
 
 def _custom_table(x, y, classes, title="Precision Recall Curve", x_title="Recall", y_title="Precision"):
-    """Create and log a custom metric visualization table.
+    """创建并记录自定义指标可视化表。
 
-    This function crafts a custom metric visualization that mimics the behavior of the default wandb precision-recall
-    curve while allowing for enhanced customization. The visual metric is useful for monitoring model performance across
-    different classes.
+    此函数制作自定义指标可视化，模拟默认 wandb 精确率-召回率曲线的行为，同时提供更强的定制能力，可用于监控模型在不同类别上的性能。
 
-    Args:
-        x (list): Values for the x-axis; expected to have length N.
-        y (list): Corresponding values for the y-axis; also expected to have length N.
-        classes (list): Labels identifying the class of each point; length N.
-        title (str, optional): Title for the plot.
-        x_title (str, optional): Label for the x-axis.
-        y_title (str, optional): Label for the y-axis.
+    参数：
+        x (列表): x 轴数据，长度应为 N。
+        y (列表): 对应的 y 轴数据，长度也应为 N。
+        classes (列表): 用于标识每个数据点类别的标签，长度为 N。
+        title (str, 可选): 绘图标题。
+        x_title (str, 可选): x 轴标签。
+        y_title (str, 可选): y 轴标签。
 
-    Returns:
-        (wandb.Object): A wandb object suitable for logging, showcasing the crafted metric visualization.
+    返回：
+        (wandb.Object): 适合记录并展示该指标可视化结果的 wandb 对象。
     """
     import polars as pl  # scope for faster 'import ultralytics'
     import polars.selectors as cs
@@ -60,33 +58,32 @@ def _plot_curve(
     num_x=100,
     only_mean=False,
 ):
-    """Log a metric curve visualization.
+    """记录指标曲线可视化。
 
-    This function generates a metric curve based on input data and logs the visualization to wandb. The curve can
-    represent aggregated data (mean) or individual class data, depending on the 'only_mean' flag.
+    此函数根据输入数据生成指标曲线并记录到 wandb。根据 'only_mean' 标志，曲线可以表示聚合数据（均值）或单个类别数据。
 
-    Args:
-        x (np.ndarray): Data points for the x-axis with length N.
-        y (np.ndarray): Corresponding data points for the y-axis with shape (C, N), where C is the number of classes.
-        names (list, optional): Names of the classes corresponding to the y-axis data; length C.
-        id (str, optional): Unique identifier for the logged data in wandb.
-        title (str, optional): Title for the visualization plot.
-        x_title (str, optional): Label for the x-axis.
-        y_title (str, optional): Label for the y-axis.
-        num_x (int, optional): Number of interpolated data points for visualization.
-        only_mean (bool, optional): Flag to indicate if only the mean curve should be plotted.
+    参数：
+        x (np.ndarray): x 轴数据，长度为 N。
+        y (np.ndarray): 对应的 y 轴数据，形状为 (C, N)，其中 C 为类别数量。
+        names (列表, 可选): 与 y 轴数据对应的类别名称，长度为 C。
+        id (str, 可选): 在 wandb 中记录数据时使用的唯一标识符。
+        title (str, 可选): 可视化图表标题。
+        x_title (str, 可选): x 轴标签。
+        y_title (str, 可选): y 轴标签。
+        num_x (int, 可选): 用于可视化的插值数据点数量。
+        only_mean (bool, 可选): 是否只绘制均值曲线。
 
-    Notes:
-        The function leverages the '_custom_table' function to generate the actual visualization.
+    注意：
+        此函数使用 '_custom_table' 函数生成实际可视化结果。
     """
     import numpy as np
 
-    # Create new x
+    # 创建新的 x
     if names is None:
         names = []
     x_new = np.linspace(x[0], x[-1], num_x).round(5)
 
-    # Create arrays for logging
+    # 创建用于日志记录的数组。
     x_log = x_new.tolist()
     y_log = np.interp(x_new, x, np.mean(y, axis=0)).round(3).tolist()
 
@@ -96,29 +93,25 @@ def _plot_curve(
     else:
         classes = ["mean"] * len(x_log)
         for i, yi in enumerate(y):
-            x_log.extend(x_new)  # add new x
-            y_log.extend(np.interp(x_new, x, yi))  # interpolate y to new x
-            classes.extend([names[i]] * len(x_new))  # add class names
+            x_log.extend(x_new)  # 添加新的 x 值
+            y_log.extend(np.interp(x_new, x, yi))  # 将 y 插值到新的 x 值
+            classes.extend([names[i]] * len(x_new))  # 添加类别名称
         wb.log({id: _custom_table(x_log, y_log, classes, title, x_title, y_title)}, commit=False)
 
 
 def _log_plots(plots, step):
-    """Log plots to WandB at a specific step if they haven't been logged already.
+    """如果绘图尚未记录，则在指定步骤将其记录到 WandB。
 
-    This function checks each plot in the input dictionary against previously processed plots and logs new or updated
-    plots to WandB at the specified step.
+    此函数将输入字典中的每个绘图与之前处理过的绘图进行比较，并在指定步骤将新增或更新的绘图记录到 WandB。
 
-    Args:
-        plots (dict): Dictionary of plots to log, where keys are plot names and values are dictionaries containing plot
-            metadata including timestamps.
-        step (int): The step/epoch at which to log the plots in the WandB run.
+    参数：
+        plots (dict): 要记录的图表字典，键为图表名称，值为包含图表元数据（包括时间戳）的字典。
+        step (int): 在 WandB 运行中记录图表时对应的步骤或周期。
 
-    Notes:
-        The function uses a shallow copy of the plots dictionary to prevent modification during iteration.
-        Plots are identified by their stem name (filename without extension).
-        Each plot is logged as a WandB Image object.
+    注意：
+        此函数使用绘图字典的浅拷贝，避免迭代期间被修改。绘图通过 stem 名称（不含扩展名的文件名）识别，每个绘图均作为 WandB Image 对象记录。
     """
-    for name, params in plots.copy().items():  # shallow copy to prevent plots dict changing during iteration
+    for name, params in plots.copy().items():  # 使用浅拷贝，避免迭代期间 plots 字典发生变化
         timestamp = params["timestamp"]
         if _processed_plots.get(name) != timestamp:
             wb.run.log({name.stem: wb.Image(str(name))}, step=step)
@@ -126,7 +119,7 @@ def _log_plots(plots, step):
 
 
 def on_pretrain_routine_start(trainer):
-    """Initialize and start wandb project if module is present."""
+    """如果 wandb 模块存在，则初始化并启动 wandb 项目。"""
     if not wb.run:
         from datetime import datetime
         from pathlib import Path
@@ -147,7 +140,7 @@ def on_pretrain_routine_start(trainer):
 
 
 def on_fit_epoch_end(trainer):
-    """Log training metrics and model information at the end of an epoch."""
+    """在周期结束时记录训练指标和模型信息。"""
     _log_plots(trainer.plots, step=trainer.epoch + 1)
     _log_plots(trainer.validator.plots, step=trainer.epoch + 1)
     if trainer.epoch == 0:
@@ -156,7 +149,7 @@ def on_fit_epoch_end(trainer):
 
 
 def on_train_epoch_end(trainer):
-    """Log metrics and save images at the end of each training epoch."""
+    """在每个训练周期结束时记录指标并保存图像。"""
     wb.run.log(trainer.label_loss_items(trainer.tloss, prefix="train"), step=trainer.epoch + 1)
     wb.run.log(trainer.lr, step=trainer.epoch + 1)
     if trainer.epoch == 1:
@@ -164,14 +157,14 @@ def on_train_epoch_end(trainer):
 
 
 def on_train_end(trainer):
-    """Save the best model as an artifact and log final plots at the end of training."""
+    """将最佳模型保存为工件，并在训练结束时记录最终绘图。"""
     _log_plots(trainer.validator.plots, step=trainer.epoch + 1)
     _log_plots(trainer.plots, step=trainer.epoch + 1)
     art = wb.Artifact(type="model", name=f"run_{wb.run.id}_model")
     if trainer.best.exists():
         art.add_file(trainer.best)
         wb.run.log_artifact(art, aliases=["best"])
-    # Check if we actually have plots to save
+    # 检查是否确实存在要保存的绘图
     if trainer.args.plots and hasattr(trainer.validator.metrics, "curves_results"):
         for curve_name, curve_values in zip(trainer.validator.metrics.curves, trainer.validator.metrics.curves_results):
             x, y, x_title, y_title = curve_values

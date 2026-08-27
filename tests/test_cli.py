@@ -15,12 +15,12 @@ from ultralytics.utils.torch_utils import TORCH_1_11, TORCH_VERSION
 
 
 def run(cmd: str) -> None:
-    """Execute a shell command using subprocess."""
+    """使用 subprocess 执行 shell 命令。"""
     subprocess.run(cmd.split(), check=True)
 
 
 def test_special_modes() -> None:
-    """Test various special command-line modes for YOLO functionality."""
+    """测试 YOLO 的各种特殊命令行模式。"""
     run("yolo help")
     run("yolo checks")
     run("yolo version")
@@ -31,7 +31,7 @@ def test_special_modes() -> None:
 
 @pytest.mark.parametrize("api_key", ["legacy_api_key", "ul_" + "a" * 40])
 def test_settings_migration(tmp_path: Path, api_key: str) -> None:
-    """Verify schema migration preserves user settings and only retains Platform API keys."""
+    """验证架构迁移会保留用户设置，并且只保留 Platform API 密钥。"""
     from ultralytics.utils import SettingsManager
 
     settings_file = tmp_path / "settings.json"
@@ -54,7 +54,7 @@ def test_settings_migration(tmp_path: Path, api_key: str) -> None:
 
 
 def test_platform_login(monkeypatch) -> None:
-    """Verify Platform login saves valid keys and logout removes them."""
+    """验证 Platform 登录会保存有效密钥，退出登录会移除这些密钥。"""
     import requests
 
     from ultralytics import cfg
@@ -73,7 +73,7 @@ def test_platform_login(monkeypatch) -> None:
 
 
 def test_cli_imports_defer_torchvision() -> None:
-    """Verify startup imports do not load torchvision or SAM3 geometry."""
+    """验证启动导入不会加载 torchvision 或 SAM3 几何模块。"""
     code = (
         "import sys; "
         "from ultralytics import YOLO; "
@@ -87,27 +87,27 @@ def test_cli_imports_defer_torchvision() -> None:
 @pytest.mark.parametrize("task,model,data", TASK_MODEL_DATA)
 @pytest.mark.skipif(IS_RASPBERRYPI, reason="Edge devices not intended for training")
 def test_train(task: str, model: str, data: str) -> None:
-    """Test YOLO training for different tasks, models, and datasets."""
+    """测试 YOLO 在不同任务、模型和数据集上的训练。"""
     run(f"yolo train {task} model={model} data={data} imgsz=32 epochs=1 cache=disk")
 
 
 @pytest.mark.parametrize("task,model,data", TASK_MODEL_DATA)
 def test_val(task: str, model: str, data: str) -> None:
-    """Test YOLO validation process for specified task, model, and data using a shell command."""
+    """使用 shell 命令测试指定任务、模型和数据的 YOLO 验证流程。"""
     for end2end in (False, True):
         run(f"yolo val {task} model={model} data={data} imgsz=32 end2end={end2end} max_det=100 agnostic_nms")
 
 
 @pytest.mark.parametrize("task,model,data", TASK_MODEL_DATA)
 def test_predict(task: str, model: str, data: str) -> None:
-    """Test YOLO prediction on provided sample assets for specified task and model."""
+    """使用给定的示例资源测试指定任务和模型的 YOLO 预测。"""
     for end2end in (False, True):
         run(f"yolo {task} predict model={model} source={ASSETS} imgsz=32 save end2end={end2end} max_det=100")
 
 
 @pytest.mark.parametrize("model", MODELS)
 def test_export(model: str, tmp_path: Path) -> None:
-    """Test exporting a YOLO model to TorchScript format."""
+    """测试将 YOLO 模型导出为 TorchScript 格式。"""
     from ultralytics.utils.downloads import attempt_download_asset
 
     isolated = tmp_path / model
@@ -126,7 +126,7 @@ def test_export(model: str, tmp_path: Path) -> None:
     ],
 )
 def test_distill(task: str, data: str, student: str, teacher: Path) -> None:
-    """Test YOLO knowledge distillation training via CLI for supported tasks."""
+    """通过 CLI 测试支持任务的 YOLO 知识蒸馏训练。"""
     run(f"yolo train {task} model={student} distill_model={teacher} data={data} imgsz=32 epochs=1")
 
 
@@ -136,8 +136,8 @@ def test_distill(task: str, data: str, student: str, teacher: Path) -> None:
     reason="RTDETR CPU training produces NaN losses with JetPack 5 torch 2.1.0a0",
 )
 def test_rtdetr(task: str = "detect", model: Path = WEIGHTS_DIR / "rtdetr-l.pt", data: str = "coco8.yaml") -> None:
-    """Test the RTDETR functionality within Ultralytics for detection tasks using specified model and data."""
-    # Add comma and spaces to test CLI arg cleanup.
+    """使用指定模型和数据测试 Ultralytics 中检测任务的 RTDETR 功能。"""
+    # 添加逗号和空格，以测试 CLI 参数清理。
     run(f"yolo predict {task} model={model} source={ASSETS / 'bus.jpg'} imgsz=160 save")
     run(f"yolo train {task} model={model} data={data} --imgsz= 160 epochs =1, cache = disk")
 
@@ -151,7 +151,7 @@ def test_rtdetr(task: str = "detect", model: Path = WEIGHTS_DIR / "rtdetr-l.pt",
 def test_fastsam(
     task: str = "segment", model: str = WEIGHTS_DIR / "FastSAM-s.pt", data: str = "coco8-seg.yaml"
 ) -> None:
-    """Test FastSAM model for segmenting objects in images using various prompts within Ultralytics."""
+    """在 Ultralytics 中使用各种提示测试 FastSAM 模型的图像目标分割。"""
     source = ASSETS / "bus.jpg"
 
     run(f"yolo segment val {task} model={model} data={data} imgsz=32")
@@ -160,52 +160,52 @@ def test_fastsam(
     from ultralytics import FastSAM
     from ultralytics.models.sam import Predictor
 
-    # Create a FastSAM model
-    sam_model = FastSAM(model)  # or FastSAM-x.pt
+    # 创建 FastSAM 模型
+    sam_model = FastSAM(model)  # 也可以使用 FastSAM-x.pt
 
-    # Run inference on an image
+    # 对图像执行推理
     for s in (source, Image.open(source)):
         everything_results = sam_model(s, device="cpu", retina_masks=True, imgsz=160, conf=0.4, iou=0.9)
 
-        # Remove small regions
+        # 移除较小区域
         _new_masks, _ = Predictor.remove_small_regions(everything_results[0].masks.data, min_area=20)
 
-        # Run inference with bboxes and points and texts prompt at the same time
+        # 同时使用边界框、点和文本提示执行推理
         sam_model(source, bboxes=[439, 437, 524, 709], points=[[200, 200]], labels=[1], texts="a photo of a dog")
 
 
 def test_mobilesam() -> None:
-    """Test MobileSAM segmentation with point and box prompts using Ultralytics."""
+    """使用 Ultralytics 和点提示、框提示测试 MobileSAM 分割。"""
     from ultralytics import SAM
 
-    # Load the model
+    # 加载模型
     model = SAM(WEIGHTS_DIR / "mobile_sam.pt")
 
-    # Source
+    # 输入源
     source = ASSETS / "zidane.jpg"
 
-    # Predict a segment based on a 1D point prompt and 1D labels.
+    # 根据一维点提示和一维标签预测分割结果。
     model.predict(source, points=[900, 370], labels=[1])
 
-    # Predict a segment based on 3D points and 2D labels (multiple points per object).
+    # 根据三维点和二维标签预测分割结果（每个对象包含多个点）。
     model.predict(source, points=[[[900, 370], [1000, 100]]], labels=[[1, 1]])
 
-    # Predict a segment based on a box prompt
+    # 根据边界框提示预测分割结果
     model.predict(source, bboxes=[439, 437, 524, 709], save=True)
 
-    # Predict all
+    # 预测全部结果
     # model(source)
 
 
-# Slow Tests -----------------------------------------------------------------------------------------------------------
+# 慢速测试 -----------------------------------------------------------------------------------------------------------
 @pytest.mark.slow
 @pytest.mark.parametrize("task,model,data", TASK_MODEL_DATA)
 @pytest.mark.skipif(not CUDA_IS_AVAILABLE, reason="CUDA is not available")
 @pytest.mark.skipif(CUDA_DEVICE_COUNT < 2, reason="DDP is not available")
 def test_train_gpu(task: str, model: str, data: str) -> None:
-    """Test YOLO training on GPU(s) for various tasks and models."""
-    run(f"yolo train {task} model={model} data={data} imgsz=32 epochs=1 device=0")  # single GPU
-    run(f"yolo train {task} model={model} data={data} imgsz=32 epochs=1 device=0,1")  # multi GPU
+    """使用 GPU 测试 YOLO 在各种任务和模型上的训练。"""
+    run(f"yolo train {task} model={model} data={data} imgsz=32 epochs=1 device=0")  # 单 GPU
+    run(f"yolo train {task} model={model} data={data} imgsz=32 epochs=1 device=0,1")  # 多 GPU
 
 
 @pytest.mark.parametrize(
@@ -213,5 +213,5 @@ def test_train_gpu(task: str, model: str, data: str) -> None:
     ["count", "blur", "workout", "heatmap", "isegment", "visioneye", "speed", "queue", "analytics", "trackzone"],
 )
 def test_solutions(solution: str) -> None:
-    """Test yolo solutions command-line modes."""
+    """测试 yolo solutions 命令行模式。"""
     run(f"yolo solutions {solution} verbose=False")

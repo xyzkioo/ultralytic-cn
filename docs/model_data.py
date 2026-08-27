@@ -1,16 +1,16 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 """
-Module for YOLO model metadata.
+YOLO 模型元数据模块。
 
-This module stores detailed metadata for various YOLO models including authors, organizations,
-publication dates, arXiv links, GitHub repositories, documentation URLs, and performance metrics.
-When executed as a script, it serializes this metadata to a JSON file named "model_data.json".
+此模块保存各种 YOLO 模型的详细元数据，包括作者、组织、发布日期、arXiv 链接、GitHub
+仓库、文档地址和性能指标。作为脚本执行时，会将这些元数据序列化到名为
+"model_data.json" 的 JSON 文件中。
 
-Examples:
+示例：
     >>> python model_data.py
 """
 
-# Dictionary containing metadata for various models
+# 包含各种模型元数据的字典
 data = {
     "YOLO26": {
         "author": "Glenn Jocher and Jing Qiu",
@@ -350,6 +350,6 @@ data = {
 if __name__ == "__main__":
     import json
 
-    # Save the YOLO model metadata to "model_data.json"
+    # 将 YOLO 模型元数据保存到 "model_data.json"
     with open("model_data.json", "w") as f:
         json.dump(data, f)

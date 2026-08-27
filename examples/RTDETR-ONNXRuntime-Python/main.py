@@ -22,11 +22,11 @@ def download_file(url: str, local_path: str) -> str:
     Returns:
         (str): Local path where the file was saved.
     """
-    # Check if the local path already exists
+    # 检查本地路径是否已存在
     if os.path.exists(local_path):
         print(f"File already exists at {local_path}. Skipping download.")
         return local_path
-    # Download the file from the URL
+    # 从 URL 下载文件
     print(f"Downloading {url} to {local_path}...")
     response = requests.get(url, stream=True, timeout=30)
     response.raise_for_status()
@@ -97,7 +97,7 @@ class RTDETR:
         self.iou_thres = iou_thres
         self.classes = class_names
 
-        # Set up the ONNX runtime session with available execution providers
+    # 使用可用执行提供程序设置 ONNX Runtime 会话
         available = ort.get_available_providers()
         providers = [p for p in ("CUDAExecutionProvider", "CPUExecutionProvider") if p in available]
         self.session = ort.InferenceSession(model_path, providers=providers or available)
@@ -107,46 +107,46 @@ class RTDETR:
         self.input_height = self.model_input[0].shape[3]
 
         if self.classes is None:
-            # Load class names from the COCO dataset YAML file
+        # 从 COCO 数据集 YAML 文件加载类别名称
             self.classes = download_file(
                 "https://raw.githubusercontent.com/ultralytics/ultralytics/main/ultralytics/cfg/datasets/coco8.yaml",
                 "coco8.yaml",
             )
 
-        # Parse the YAML file to get class names
+        # 解析 YAML 文件以获取类别名称
         with open(self.classes) as f:
             class_data = yaml.safe_load(f)
             self.classes = list(class_data["names"].values())
 
-        # Ensure the classes are a list
+        # 确保类别是列表
         if not isinstance(self.classes, list):
             raise TypeError("Classes should be a list of class names.")
 
-        # Generate a color palette for drawing bounding boxes
+        # 生成用于绘制边界框的颜色调色板
         self.color_palette: np.ndarray = np.random.uniform(0, 255, size=(len(self.classes), 3))
 
     def draw_detections(self, box: np.ndarray, score: float, class_id: int) -> None:
         """Draw bounding box and label on the input image for a detected object."""
-        # Extract the coordinates of the bounding box
+        # 提取边界框坐标
         x1, y1, x2, y2 = box
 
-        # Retrieve the color for the class ID
+        # 获取类别 ID 对应的颜色
         color = self.color_palette[class_id]
 
-        # Draw the bounding box on the image
+        # 在图像上绘制边界框
         cv2.rectangle(self.img, (int(x1), int(y1)), (int(x2), int(y2)), color, 2)
 
-        # Create the label text with class name and score
+        # 使用类别名称和分数创建标签文本
         label = f"{self.classes[class_id]}: {score:.2f}"
 
-        # Calculate the dimensions of the label text
+        # 计算标签文本尺寸
         (label_width, label_height), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
 
-        # Calculate the position of the label text
+        # 计算标签文本位置
         label_x = x1
         label_y = y1 - 10 if y1 - 10 > label_height else y1 + 10
 
-        # Draw a filled rectangle as the background for the label text
+        # 绘制填充矩形作为标签文本背景
         cv2.rectangle(
             self.img,
             (int(label_x), int(label_y - label_height)),
@@ -155,7 +155,7 @@ class RTDETR:
             cv2.FILLED,
         )
 
-        # Draw the label text on the image
+        # 在图像上绘制标签文本
         cv2.putText(
             self.img, label, (int(label_x), int(label_y)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1, cv2.LINE_AA
         )
@@ -169,27 +169,27 @@ class RTDETR:
         Returns:
             (np.ndarray): Preprocessed image data with shape (1, 3, H, W) ready for inference.
         """
-        # Read the input image using OpenCV
+        # 使用 OpenCV 读取输入图像
         self.img = cv2.imread(self.img_path)
         if self.img is None:
             raise FileNotFoundError(f"Image not found or unreadable: '{self.img_path}'")
 
-        # Get the height and width of the input image
+        # 获取输入图像的高度和宽度
         self.img_height, self.img_width = self.img.shape[:2]
 
-        # Convert the image color space from BGR to RGB
+        # 将图像颜色空间从 BGR 转换为 RGB
         img = cv2.cvtColor(self.img, cv2.COLOR_BGR2RGB)
 
-        # Resize the image to match the input shape
+        # 调整图像尺寸以匹配输入形状
         img = cv2.resize(img, (self.input_width, self.input_height))
 
-        # Normalize the image data by dividing it by 255.0
+        # 将图像数据除以 255.0 进行归一化
         image_data = np.array(img) / 255.0
 
-        # Transpose the image to have the channel dimension as the first dimension
+        # 转置图像，使通道维度位于第一维
         image_data = np.transpose(image_data, (2, 0, 1))  # Channel first
 
-        # Expand the dimensions of the image data to match the expected input shape
+        # 扩展图像数据维度，使其匹配预期输入形状
         image_data = image_data[None].astype(np.float32)
 
         return image_data
@@ -204,17 +204,17 @@ class RTDETR:
         Returns:
             (np.ndarray): Array of shape (N, 4) with bounding boxes in (x_min, y_min, x_max, y_max) format.
         """
-        # Calculate half width and half height of the bounding boxes
+        # 计算边界框的半宽和半高
         half_width = boxes[:, 2] / 2
         half_height = boxes[:, 3] / 2
 
-        # Calculate the coordinates of the bounding boxes
+        # 计算边界框坐标
         x_min = boxes[:, 0] - half_width
         y_min = boxes[:, 1] - half_height
         x_max = boxes[:, 0] + half_width
         y_max = boxes[:, 1] + half_height
 
-        # Return the bounding boxes in (x_min, y_min, x_max, y_max) format
+        # 以 (x_min, y_min, x_max, y_max) 格式返回边界框
         return np.column_stack((x_min, y_min, x_max, y_max))
 
     def postprocess(self, model_output: list[np.ndarray]) -> np.ndarray:
@@ -229,34 +229,34 @@ class RTDETR:
         Returns:
             (np.ndarray): Annotated image with detection bounding boxes and labels.
         """
-        # Squeeze the model output to remove unnecessary dimensions
+        # 压缩模型输出以移除不必要的维度
         outputs = np.squeeze(model_output[0])
 
-        # Extract bounding boxes and scores from the model output
+        # 从模型输出中提取边界框和分数
         boxes = outputs[:, :4]
         scores = outputs[:, 4:]
 
-        # Get the class labels and scores for each detection
+        # 获取每个检测结果的类别标签和分数
         labels = np.argmax(scores, axis=1)
         scores = np.max(scores, axis=1)
 
-        # Apply confidence threshold to filter out low-confidence detections
+        # 应用置信度阈值过滤低置信度检测结果
         mask = scores > self.conf_thres
         boxes, scores, labels = boxes[mask], scores[mask], labels[mask]
 
-        # Convert bounding boxes to (x_min, y_min, x_max, y_max) format
+        # 将边界框转换为 (x_min, y_min, x_max, y_max) 格式
         boxes = self.bbox_cxcywh_to_xyxy(boxes)
 
-        # Scale bounding boxes to match the original image dimensions
+        # 缩放边界框以匹配原始图像尺寸
         boxes[:, 0::2] *= self.img_width
         boxes[:, 1::2] *= self.img_height
 
-        # Apply non-maximum suppression (optional for RT-DETR, but useful for filtering overlaps)
+        # 应用非极大值抑制（RT-DETR 可选，但有助于过滤重叠框）
         xywh_boxes = [[float(b[0]), float(b[1]), float(b[2] - b[0]), float(b[3] - b[1])] for b in boxes]
         indices = cv2.dnn.NMSBoxes(xywh_boxes, scores.tolist(), self.conf_thres, self.iou_thres)
         indices = indices.flatten().tolist() if len(indices) else []
 
-        # Draw detections on the image
+        # 在图像上绘制检测结果
         for i in indices:
             self.draw_detections(boxes[i], float(scores[i]), int(labels[i]))
 
@@ -270,18 +270,18 @@ class RTDETR:
         Returns:
             (np.ndarray): Output image with detection annotations including bounding boxes and class labels.
         """
-        # Preprocess the image for model input
+        # 预处理图像作为模型输入
         image_data = self.preprocess()
 
-        # Run the model inference
+        # 运行模型推理
         model_output = self.session.run(None, {self.model_input[0].name: image_data})
 
-        # Process and return the model output
+        # 处理并返回模型输出
         return self.postprocess(model_output)
 
 
 if __name__ == "__main__":
-    # Set up argument parser for command-line arguments
+    # 设置命令行参数解析器
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, default="rtdetr-l.onnx", help="Path to the ONNX model file.")
     parser.add_argument("--img", type=str, default="bus.jpg", help="Path to the input image.")
@@ -289,13 +289,13 @@ if __name__ == "__main__":
     parser.add_argument("--iou-thres", type=float, default=0.5, help="IoU threshold for non-maximum suppression.")
     args = parser.parse_args()
 
-    # Create the detector instance with specified parameters
+    # 使用指定参数创建检测器实例
     detection = RTDETR(args.model, args.img, args.conf_thres, args.iou_thres)
 
-    # Perform detection and get the output image
+    # 执行检测并获取输出图像
     output_image = detection.main()
 
-    # Display the annotated output image
+    # 显示标注后的输出图像
     cv2.namedWindow("Output", cv2.WINDOW_NORMAL)
     cv2.imshow("Output", output_image)
     cv2.waitKey(0)

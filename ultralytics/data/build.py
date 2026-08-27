@@ -43,51 +43,50 @@ from ultralytics.utils.torch_utils import TORCH_1_13, TORCH_2_0, TORCH_2_7, get_
 
 
 class InfiniteDataLoader(dataloader.DataLoader):
-    """DataLoader that reuses workers for infinite iteration.
+    """在无限迭代中复用工作进程的数据加载器。
 
-    This dataloader extends the PyTorch DataLoader to provide infinite recycling of workers, which improves efficiency
-    for training loops that need to iterate through the dataset multiple times without recreating workers.
+    此数据加载器扩展 PyTorch DataLoader，支持无限复用工作进程，从而提高需要多次遍历数据集且无需重复创建工作进程的训练循环效率。
 
-    Attributes:
-        batch_sampler (_RepeatSampler): A sampler that repeats indefinitely.
-        iterator (Iterator): The iterator from the parent DataLoader.
+    属性：
+        batch_sampler (_RepeatSampler): 无限重复的采样器。
+        iterator (Iterator): 父 DataLoader 的迭代器。
 
-    Methods:
-        __len__: Return the length of the batch sampler's sampler.
-        __iter__: Yield batches from the underlying iterator.
-        __del__: Ensure workers are properly terminated.
-        close: Gracefully shut down persistent workers when the DataLoader is no longer needed.
-        reset: Reset the iterator, useful when modifying dataset settings during training.
+    方法：
+        __len__: 返回批次采样器中采样器的长度。
+        __iter__: 从底层迭代器返回批次。
+        __del__: 确保正确终止工作进程。
+        close: 不再需要 DataLoader 时平稳关闭持久化工作进程。
+        reset: 重置迭代器，适用于训练期间修改数据集设置。
 
-    Examples:
-        Create an infinite DataLoader for training
+    示例：
+        创建用于训练的无限 DataLoader
         >>> dataset = YOLODataset(...)
         >>> dataloader = InfiniteDataLoader(dataset, batch_size=16, shuffle=True)
-        >>> for batch in dataloader:  # Infinite iteration
+        >>> for batch in dataloader:  # 无限迭代
         >>>     train_step(batch)
     """
 
     def __init__(self, *args: Any, **kwargs: Any):
-        """Initialize the InfiniteDataLoader with the same arguments as DataLoader."""
+        """使用与 DataLoader 相同的参数初始化 InfiniteDataLoader。"""
         if not TORCH_2_0:
-            kwargs.pop("prefetch_factor", None)  # not supported by earlier versions
+            kwargs.pop("prefetch_factor", None)  # 早期版本不支持
         super().__init__(*args, **kwargs)
         object.__setattr__(self, "batch_sampler", _RepeatSampler(self.batch_sampler))
         self.iterator = super().__iter__()
 
     def __len__(self) -> int:
-        """Return the length of the batch sampler's sampler."""
+        """返回批次采样器中采样器的长度。"""
         return len(self.batch_sampler.sampler)
 
     def __iter__(self) -> Iterator:
-        """Yield one epoch of batches from the persistent iterator."""
+        """从持久化迭代器返回一个训练周期的批次。"""
         for _ in range(len(self)):
             yield next(self.iterator)
 
     def __del__(self):
-        """Ensure that workers are properly terminated when the DataLoader is deleted."""
+        """确保删除 DataLoader 时正确终止工作进程。"""
         try:
-            for w in getattr(self.iterator, "_workers", ()):  # force terminate
+            for w in getattr(self.iterator, "_workers", ()):  # 强制终止
                 if w.is_alive():
                     w.terminate()
             self.close()
@@ -95,61 +94,57 @@ class InfiniteDataLoader(dataloader.DataLoader):
             pass
 
     def close(self):
-        """Shut down persistent workers, unregistering them from torch's SIGCHLD watchdog before interpreter exit."""
+        """关闭持久化工作进程，并在解释器退出前将其从 torch 的 SIGCHLD 监视器中注销。"""
         if hasattr(self.iterator, "_workers"):
-            self.iterator._shutdown_workers()  # joins workers and calls torch._C._remove_worker_pids
+            self.iterator._shutdown_workers()  # 等待工作进程结束，并调用 torch._C._remove_worker_pids
 
     def reset(self):
-        """Reset the iterator to allow modifications to the dataset during training."""
-        self.close()  # free old worker pipes before creating new iterator
+        """重置迭代器，以便在训练期间修改数据集。"""
+        self.close()  # 创建新迭代器前释放旧工作进程管道
         self.iterator = self._get_iterator()
 
 
 class _RepeatSampler:
-    """Sampler that repeats forever for infinite iteration.
+    """为无限迭代而无限重复的采样器。
 
-    This sampler wraps another sampler and yields its contents indefinitely, allowing for infinite iteration over a
-    dataset without recreating the sampler.
+    此采样器包装另一个采样器并无限返回其内容，使数据集可以无限迭代而无需重新创建采样器。
 
-    Attributes:
-        sampler (torch.utils.data.Sampler): The sampler to repeat.
+    属性：
+        sampler (torch.utils.data.Sampler): 要重复的采样器。
     """
 
     def __init__(self, sampler: Any):
-        """Initialize the _RepeatSampler with a sampler to repeat indefinitely."""
+        """使用要无限重复的采样器初始化 _RepeatSampler。"""
         self.sampler = sampler
 
     def __iter__(self) -> Iterator:
-        """Iterate over the sampler indefinitely, yielding its contents."""
+        """无限遍历采样器，并依次返回其中的内容。"""
         while True:
             yield from iter(self.sampler)
 
 
 class ContiguousDistributedSampler(torch.utils.data.Sampler):
-    """Distributed sampler that assigns contiguous batch-aligned chunks of the dataset to each GPU.
+    """将连续且按批次对齐的数据集块分配给每个 GPU 的分布式采样器。
 
-    Unlike PyTorch's DistributedSampler which distributes samples in a round-robin fashion (GPU 0 gets indices
-    [0,2,4,...], GPU 1 gets [1,3,5,...]), this sampler gives each GPU contiguous batches of the dataset (GPU 0 gets
-    batches [0,1,2,...], GPU 1 gets batches [k,k+1,...], etc.). This preserves any ordering or grouping in the original
-    dataset, which is critical when samples are organized by similarity (e.g., images sorted by size to enable efficient
-    batching without padding when using rect=True).
+    PyTorch 的 DistributedSampler 会以轮询方式分配样本（GPU 0 获取索引 [0,2,4,...]，GPU 1 获取 [1,3,5,...]），
+    而此采样器会为每个 GPU 分配连续的数据集批次（GPU 0 获取批次 [0,1,2,...]，GPU 1 获取 [k,k+1,...] 等）。
+    这样可以保留原始数据集中的顺序或分组；当样本按相似性组织时（例如按尺寸对图像排序，以便 rect=True 时高效地进行无填充批处理），这一点非常重要。
 
-    The sampler handles uneven batch counts by distributing remainder batches to the first few ranks, ensuring all
-    samples are covered exactly once across all GPUs.
+    当批次数量无法被进程数整除时，此采样器会将余数批次分配给前几个 rank，确保所有样本在所有 GPU 上恰好覆盖一次。
 
-    Args:
-        dataset (Dataset): Dataset to sample from. Must implement __len__.
-        num_replicas (int, optional): Number of distributed processes. Defaults to world size.
-        batch_size (int, optional): Batch size used by dataloader. Defaults to dataset.batch_size or 1.
-        rank (int, optional): Rank of current process. Defaults to current rank.
-        shuffle (bool, optional): Whether to shuffle indices within each rank's chunk. Defaults to False. When True,
-            shuffling is deterministic and controlled by set_epoch() for reproducibility.
+    参数：
+        dataset (Dataset): 要采样的数据集，必须实现 __len__。
+        num_replicas (int, 可选): 分布式进程数，默认为 world size。
+        batch_size (int, 可选): 数据加载器使用的批次大小，默认为 dataset.batch_size 或 1。
+        rank (int, 可选): 当前进程的 rank，默认为当前 rank。
+        shuffle (bool, 可选): 是否在每个 rank 的数据块内打乱索引，默认为 False。为 True 时，打乱过程具有确定性，
+            并由 set_epoch() 控制以保证可复现。
 
-    Examples:
-        >>> # For validation with size-grouped images
+    示例：
+        >>> # 对按尺寸分组的图像进行验证
         >>> sampler = ContiguousDistributedSampler(val_dataset, batch_size=32, shuffle=False)
         >>> loader = DataLoader(val_dataset, batch_size=32, sampler=sampler)
-        >>> # For training with shuffling
+        >>> # 训练时启用打乱
         >>> sampler = ContiguousDistributedSampler(train_dataset, batch_size=32, shuffle=True)
         >>> for epoch in range(num_epochs):
         ...     sampler.set_epoch(epoch)
@@ -165,7 +160,7 @@ class ContiguousDistributedSampler(torch.utils.data.Sampler):
         rank: int | None = None,
         shuffle: bool = False,
     ) -> None:
-        """Initialize the sampler with dataset and distributed training parameters."""
+        """使用数据集和分布式训练参数初始化采样器。"""
         if num_replicas is None:
             num_replicas = dist.get_world_size() if dist.is_initialized() else 1
         if rank is None:
@@ -178,31 +173,31 @@ class ContiguousDistributedSampler(torch.utils.data.Sampler):
         self.epoch = 0
         self.shuffle = shuffle
         self.total_size = len(dataset)
-        # Use unit batches when one input batch would span the dataset.
+        # 当一个输入批次会跨越整个数据集时，使用大小为 1 的批次。
         self.batch_size = 1 if batch_size >= self.total_size else batch_size
         self.num_batches = math.ceil(self.total_size / self.batch_size)
 
     def _get_rank_indices(self) -> tuple[int, int]:
-        """Calculate the start and end sample indices for this rank."""
-        # Calculate which batches this rank handles
+        """计算当前 rank 负责的数据块起始和结束样本索引。"""
+        # 计算当前 rank 负责的批次
         batches_per_rank_base = self.num_batches // self.num_replicas
         remainder = self.num_batches % self.num_replicas
 
-        # This rank gets an extra batch if rank < remainder
+        # 当 rank 小于余数时，当前 rank 多分配一个批次
         batches_for_this_rank = batches_per_rank_base + (1 if self.rank < remainder else 0)
 
-        # Calculate starting batch: base position + number of extra batches given to earlier ranks
+        # 计算起始批次：基础位置加上分配给前面 rank 的额外批次数量
         start_batch = self.rank * batches_per_rank_base + min(self.rank, remainder)
         end_batch = start_batch + batches_for_this_rank
 
-        # Convert batch indices to sample indices
+        # 将批次索引转换为样本索引
         start_idx = min(start_batch * self.batch_size, self.total_size)
         end_idx = min(end_batch * self.batch_size, self.total_size)
 
         return start_idx, end_idx
 
     def __iter__(self) -> Iterator:
-        """Generate indices for this rank's contiguous chunk of the dataset."""
+        """生成当前 rank 负责的连续数据集块索引。"""
         start_idx, end_idx = self._get_rank_indices()
         indices = list(range(start_idx, end_idx))
 
@@ -214,21 +209,21 @@ class ContiguousDistributedSampler(torch.utils.data.Sampler):
         return iter(indices)
 
     def __len__(self) -> int:
-        """Return the number of samples in this rank's chunk."""
+        """返回当前 rank 数据块中的样本数量。"""
         start_idx, end_idx = self._get_rank_indices()
         return end_idx - start_idx
 
     def set_epoch(self, epoch: int) -> None:
-        """Set the epoch for this sampler to ensure different shuffling patterns across epochs.
+        """设置采样器周期，以确保不同周期使用不同的打乱模式。
 
-        Args:
-            epoch (int): Epoch number to use as the random seed for shuffling.
+        参数：
+            epoch (int): 用作打乱随机种子的训练周期编号。
         """
         self.epoch = epoch
 
 
 def seed_worker(worker_id: int) -> None:
-    """Set dataloader worker seed for reproducibility across worker processes."""
+    """设置数据加载器工作进程的随机种子，确保不同工作进程之间结果可复现。"""
     worker_seed = torch.initial_seed() % 2**32
     np.random.seed(worker_seed)
     random.seed(worker_seed)
@@ -245,19 +240,19 @@ def build_yolo_dataset(
     multi_modal: bool = False,
     fraction: float | None = None,
 ) -> Dataset:
-    """Build and return a YOLO dataset based on configuration parameters."""
+    """根据配置参数构建并返回 YOLO 数据集。"""
     pad = 0.0 if mode == "train" else 0.5
     rect = cfg.rect or rect
     if cfg.task == "depth":
         dataset = DepthDataset
-        pad, rect = 0.0, rect and mode == "train"  # depth val letterbox stretches, so pad and rect_shape are ignored
+        pad, rect = 0.0, rect and mode == "train"  # 深度验证的 letterbox 会拉伸图像，因此忽略 pad 和 rect_shape
     elif cfg.task == "semantic":
         data_path = Path(data.get("path", ""))
         if "masks_dir" in data or (data_path / "masks").exists():
             dataset = SemanticDataset
         else:
             dataset = PolygonSemanticDataset
-        pad = 0.0  # no pad for semantic
+        pad = 0.0  # 语义分割不使用填充
     elif multi_modal:
         dataset = YOLOMultiModalDataset
     else:
@@ -294,16 +289,16 @@ def build_grounding(
     stride: int = 32,
     max_samples: int = 80,
 ) -> Dataset:
-    """Build and return a GroundingDataset based on configuration parameters."""
+    """根据配置参数构建并返回 GroundingDataset。"""
     return GroundingDataset(
         img_path=img_path,
         json_file=json_file,
         max_samples=max_samples,
         imgsz=cfg.imgsz,
         batch_size=batch,
-        augment=mode == "train",  # augmentation
+        augment=mode == "train",  # 数据增强
         hyp=copy(cfg),
-        rect=cfg.rect or rect,  # rectangular batches
+        rect=cfg.rect or rect,  # 矩形批次
         cache=cfg.cache or None,
         single_cls=cfg.single_cls or False,
         stride=stride,
@@ -325,23 +320,23 @@ def build_dataloader(
     pin_memory: bool = True,
     device: torch.device | str = "cuda",
 ) -> InfiniteDataLoader:
-    """Create and return an InfiniteDataLoader for training or validation.
+    """创建并返回用于训练或验证的 InfiniteDataLoader。
 
-    Args:
-        dataset (Dataset): Dataset to load data from.
-        batch (int): Batch size for the dataloader.
-        workers (int): Number of worker processes for data loading.
-        shuffle (bool, optional): Whether to shuffle the dataset.
-        rank (int, optional): Process rank in distributed training. -1 for single-GPU training.
-        drop_last (bool, optional): Whether to drop the last incomplete batch.
-        pin_memory (bool, optional): Whether to use pinned memory for dataloader.
-        device (torch.device | str, optional): Device used by the dataloader consumer.
+    参数：
+        dataset (Dataset): 要加载数据的数据集。
+        batch (int): 数据加载器的批次大小。
+        workers (int): 数据加载使用的工作进程数。
+        shuffle (bool, 可选): 是否打乱数据集。
+        rank (int, 可选): 分布式训练中的进程 rank；单 GPU 训练时为 -1。
+        drop_last (bool, 可选): 是否丢弃最后一个不完整批次。
+        pin_memory (bool, 可选): 是否为数据加载器使用锁页内存。
+        device (torch.device | str, 可选): 数据加载器使用方所在的设备。
 
-    Returns:
-        (InfiniteDataLoader): A dataloader that can be used for training or validation.
+    返回：
+        (InfiniteDataLoader): 可用于训练或验证的数据加载器。
 
-    Examples:
-        Create a dataloader for training
+    示例：
+        创建用于训练的数据加载器
         >>> dataset = YOLODataset(...)
         >>> dataloader = build_dataloader(dataset, batch=16, workers=4, shuffle=True)
     """
@@ -360,9 +355,9 @@ def build_dataloader(
     batches = (samples // batch if drop_last else math.ceil(samples / batch)) if batch else 0
     device_type = getattr(device, "type", str(device).split(":")[0])
     nd = get_torch_device_backend(device).device_count() if device_type not in {"cpu", "mps"} else 0
-    # Do not create more worker processes than final loader batches. Single-batch loaders run in-process to avoid
-    # persistent DataLoader worker pools that add overhead and can stall tiny datasets while holding CUDA context.
-    nw = min(os.cpu_count() // max(nd, 1), workers, 0 if batches <= 1 else batches)  # number of workers
+    # 创建的 worker 进程数不超过最终加载器批次数。单批次加载器在进程内运行，
+    # 避免持久化 DataLoader worker 池带来额外开销，并防止小型数据集在占用 CUDA 上下文时停滞。
+    nw = min(os.cpu_count() // max(nd, 1), workers, 0 if batches <= 1 else batches)  # worker 数量
     generator = torch.Generator()
     generator.manual_seed((6148914691236517205 + RANK + seed) % (1 << 64))
     pin_memory = nd > 0 and pin_memory
@@ -375,7 +370,7 @@ def build_dataloader(
         shuffle=shuffle and sampler is None,
         num_workers=nw,
         sampler=sampler,
-        prefetch_factor=4 if nw > 0 else None,  # increase over default 2
+        prefetch_factor=4 if nw > 0 else None,  # 从默认值 2 提高
         pin_memory=pin_memory,
         collate_fn=getattr(dataset, "collate_fn", None),
         worker_init_fn=seed_worker,
@@ -388,28 +383,28 @@ def build_dataloader(
 def check_source(
     source: str | int | Path | list | tuple | np.ndarray | Image.Image | torch.Tensor,
 ) -> tuple[Any, bool, bool, bool, bool, bool]:
-    """Check the type of input source and return corresponding flag values.
+    """检查输入源类型，并返回对应的标志值。
 
-    Args:
-        source (str | int | Path | list | tuple | np.ndarray | PIL.Image | torch.Tensor): The input source to check.
+    参数：
+        source (str | int | Path | list | tuple | np.ndarray | PIL.Image | torch.Tensor): 要检查的输入源。
 
-    Returns:
-        source (str | int | Path | list | tuple | np.ndarray | PIL.Image | torch.Tensor): The processed source.
-        webcam (bool): Whether the source is a webcam.
-        screenshot (bool): Whether the source is a screenshot.
-        from_img (bool): Whether the source is an image or list of images.
-        in_memory (bool): Whether the source is an in-memory object.
-        tensor (bool): Whether the source is a torch.Tensor.
+    返回：
+        source (str | int | Path | list | tuple | np.ndarray | PIL.Image | torch.Tensor): 处理后的输入源。
+        webcam (bool): 输入源是否为摄像头。
+        screenshot (bool): 输入源是否为截图。
+        from_img (bool): 输入源是否为图像或图像列表。
+        in_memory (bool): 输入源是否为内存中的对象。
+        tensor (bool): 输入源是否为 torch.Tensor。
 
-    Examples:
-        Check a file path source
+    示例：
+        检查文件路径输入源
         >>> source, webcam, screenshot, from_img, in_memory, tensor = check_source("image.jpg")
 
-        Check a webcam source
+        检查摄像头输入源
         >>> source, webcam, screenshot, from_img, in_memory, tensor = check_source(0)
     """
     webcam, screenshot, from_img, in_memory, tensor = False, False, False, False, False
-    if isinstance(source, (str, int, Path)):  # int for local usb camera
+    if isinstance(source, (str, int, Path)):  # 整数表示本地 USB 摄像头
         source = str(source)
         source_lower = source.lower()
         is_url = source_lower.startswith(("https://", "http://", "rtsp://", "rtmp://", "tcp://"))
@@ -419,18 +414,18 @@ def check_source(
         webcam = source.isnumeric() or source.endswith(".streams") or (is_url and not is_file)
         screenshot = source_lower == "screen"
         if is_url and is_file:
-            source = check_file(source)  # download
+            source = check_file(source)  # 下载文件
     elif isinstance(source, LOADERS):
         in_memory = True
     elif isinstance(source, (list, tuple)):
-        source = autocast_list(source)  # convert all list elements to PIL or np arrays
+        source = autocast_list(source)  # 将列表中的所有元素转换为 PIL 图像或 NumPy 数组
         from_img = True
     elif isinstance(source, (Image.Image, np.ndarray)):
         from_img = True
     elif isinstance(source, torch.Tensor):
         tensor = True
     else:
-        raise TypeError("Unsupported image type. For supported types see https://docs.ultralytics.com/modes/predict")
+        raise TypeError("不支持的图像类型。支持的类型请参见 https://docs.ultralytics.com/modes/predict")
 
     return source, webcam, screenshot, from_img, in_memory, tensor
 
@@ -442,30 +437,29 @@ def load_inference_source(
     buffer: bool = False,
     channels: int = 3,
 ):
-    """Load an inference source for object detection and apply necessary transformations.
+    """加载对象检测的推理源，并应用必要的变换。
 
-    Args:
-        source (str | int | Path | list | tuple | np.ndarray | PIL.Image | torch.Tensor): The input source for
-            inference.
-        batch (int, optional): Batch size for dataloaders.
-        vid_stride (int, optional): The frame interval for video sources.
-        buffer (bool, optional): Whether stream frames will be buffered.
-        channels (int, optional): The number of input channels for the model.
+    参数：
+        source (str | int | Path | list | tuple | np.ndarray | PIL.Image | torch.Tensor): 用于推理的输入源。
+        batch (int, 可选): 数据加载器的批次大小。
+        vid_stride (int, 可选): 视频源的帧间隔。
+        buffer (bool, 可选): 是否缓冲视频流帧。
+        channels (int, 可选): 模型输入通道数。
 
-    Returns:
-        (Dataset): A dataset object for the specified input source with attached source_type attribute.
+    返回：
+        (Dataset): 指定输入源对应的数据集对象，并附带 source_type 属性。
 
-    Examples:
-        Load an image source for inference
+    示例：
+        加载图像源用于推理
         >>> dataset = load_inference_source("image.jpg", batch=1)
 
-        Load a video stream source
+        加载视频流源
         >>> dataset = load_inference_source("rtsp://example.com/stream", vid_stride=2)
     """
     source, stream, screenshot, from_img, in_memory, tensor = check_source(source)
     source_type = source.source_type if in_memory else SourceTypes(stream, screenshot, from_img, tensor)
 
-    # DataLoader
+    # 数据加载器
     if tensor:
         dataset = LoadTensor(source)
     elif in_memory:
@@ -479,7 +473,7 @@ def load_inference_source(
     else:
         dataset = LoadImagesAndVideos(source, batch=batch, vid_stride=vid_stride, channels=channels)
 
-    # Attach source types to the dataset
+    # 将输入源类型附加到数据集
     dataset.source_type = source_type
 
     return dataset

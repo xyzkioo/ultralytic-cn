@@ -18,24 +18,24 @@ def torch2ncnn(
     device: torch.device | None = None,
     prefix: str = "",
 ) -> str:
-    """Export a PyTorch model to NCNN format using PNNX.
+    """使用 PNNX 将 PyTorch 模型导出为 NCNN 格式。
 
-    Args:
-        model (torch.nn.Module): The PyTorch model to export.
-        im (torch.Tensor): Example input tensor for tracing.
-        output_dir (Path | str): Directory to save the exported NCNN model.
-        quantize (int | str | None): Precision scheme, e.g. 16 for FP16.
-        metadata (dict | None): Optional metadata saved as ``metadata.yaml``.
-        device (torch.device | None): Device the model lives on.
-        prefix (str): Prefix for log messages.
+    参数：
+        model (torch.nn.Module): 要导出的 PyTorch 模型。
+        im (torch.Tensor): 用于跟踪的示例输入张量。
+        output_dir (Path | str): 保存导出 NCNN 模型的目录。
+        quantize (int | str | None): 量化方案，例如 16 表示 FP16。
+        metadata (dict | None): 保存为 ``metadata.yaml`` 的可选元数据。
+        device (torch.device | None): 模型所在的设备。
+        prefix (str): 日志消息前缀。
 
-    Returns:
-        (str): Path to the exported ``_ncnn_model`` directory.
+    返回：
+        (str): 导出的 ``_ncnn_model`` 目录路径。
     """
     from ultralytics.utils.checks import check_requirements
 
-    check_requirements("ncnn", cmds="--no-deps")  # no deps to avoid installing opencv-python
-    # Pin until PNNX 20260704 NCNN inference segfault is fixed: https://github.com/pnnx/pnnx/issues/293
+    check_requirements("ncnn", cmds="--no-deps")  # 不安装依赖，避免安装 opencv-python
+    # 在 PNNX 20260704 修复 NCNN 推理段错误前固定该版本：https://github.com/pnnx/pnnx/issues/293
     check_requirements("pnnx==20260526")
     import ncnn
     import pnnx
@@ -56,7 +56,7 @@ def torch2ncnn(
         "pnnxonnx": (output_dir / "model.pnnx.onnx").as_posix(),
     }
 
-    output_dir.mkdir(parents=True, exist_ok=True)  # make ncnn_model directory
+    output_dir.mkdir(parents=True, exist_ok=True)  # 创建 ncnn_model 目录
     device_type = device.type if device is not None else "cpu"
     pnnx.export(model, inputs=im, **ncnn_args, **pnnx_args, fp16=quantize == 16, device=device_type)
 

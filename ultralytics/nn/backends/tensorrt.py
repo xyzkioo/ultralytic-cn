@@ -15,17 +15,17 @@ from .base import BaseBackend
 
 
 class TensorRTBackend(BaseBackend):
-    """NVIDIA TensorRT inference backend for GPU-accelerated deployment.
+    """用于 GPU 加速部署的 NVIDIA TensorRT 推理后端。
 
-    Loads and runs inference with NVIDIA TensorRT serialized engines (.engine files). Supports both TensorRT 7-9 and
-    TensorRT 10/11 APIs, dynamic input shapes, FP16 precision, and DLA core offloading.
+    使用 NVIDIA TensorRT 序列化引擎（.engine 文件）加载并运行推理。
+    支持 TensorRT 7-9 和 TensorRT 10/11 API、动态输入形状、FP16 精度以及 DLA 核心卸载。
     """
 
     def load_model(self, weight: str | Path) -> None:
-        """Load an NVIDIA TensorRT engine from a serialized .engine file.
+        """从序列化的 .engine 文件加载 NVIDIA TensorRT 引擎。
 
-        Args:
-            weight (str | Path): Path to the .engine file with optional embedded metadata.
+        参数：
+            weight (str | Path): .engine 文件路径，可包含嵌入元数据。
         """
         LOGGER.info(f"Loading {weight} for TensorRT inference...")
 
@@ -47,10 +47,10 @@ class TensorRTBackend(BaseBackend):
         Binding = namedtuple("Binding", ("name", "dtype", "shape", "data", "ptr"))
         logger = trt.Logger(trt.Logger.INFO)
 
-        # Read engine file
+        # 读取引擎文件
         offset, metadata = self.engine_header(weight)
         with open(weight, "rb") as f, trt.Runtime(logger) as runtime:
-            f.seek(offset)  # skip the metadata header, if any, that precedes the engine
+            f.seek(offset)  # 跳过引擎前的元数据头（如果存在）
             if (dla := metadata.get("dla")) is not None:
                 runtime.DLA_core = int(dla)
             engine = runtime.deserialize_cuda_engine(f.read())
@@ -61,12 +61,12 @@ class TensorRTBackend(BaseBackend):
             LOGGER.error("TensorRT model exported with a different version than expected\n")
             raise
 
-        # Setup bindings
+        # 设置绑定
         self.bindings = OrderedDict()
         self.output_names = []
         self.fp16 = False
         self.dynamic = False
-        # TensorRT 10 and 11 both drop the legacy binding API in favor of named I/O tensors
+        # TensorRT 10 和 11 都弃用了旧版绑定 API，改用命名 I/O 张量
         self.is_trt10 = not hasattr(engine, "num_bindings")
         num = range(engine.num_io_tensors) if self.is_trt10 else range(engine.num_bindings)
 
@@ -108,13 +108,13 @@ class TensorRTBackend(BaseBackend):
         self.model = engine
 
     def forward(self, im: torch.Tensor) -> list[torch.Tensor]:
-        """Run NVIDIA TensorRT inference with dynamic shape handling.
+        """执行 NVIDIA TensorRT 推理，并处理动态形状。
 
-        Args:
-            im (torch.Tensor): Input image tensor in BCHW format on the CUDA device.
+        参数：
+            im (torch.Tensor): CUDA 设备上的输入图像张量，格式为 BCHW。
 
-        Returns:
-            (list[torch.Tensor]): Model predictions as a list of tensors on the CUDA device.
+        返回：
+            (列表[torch.Tensor]): CUDA 设备上张量列表形式的模型预测结果。
         """
         if self.dynamic and im.shape != self.bindings["images"].shape:
             if self.is_trt10:

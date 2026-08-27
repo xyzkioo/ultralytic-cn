@@ -1,5 +1,5 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
-"""Depth estimation predictor for YOLO models."""
+"""YOLO 模型的深度估计预测器。"""
 
 from __future__ import annotations
 
@@ -14,11 +14,11 @@ from ultralytics.utils import DEFAULT_CFG, ops
 
 
 class DepthPredictor(BasePredictor):
-    """Predictor for YOLO depth estimation models.
+    """YOLO 深度估计模型的预测器。
 
-    Produces per-pixel depth maps from RGB images.
+    根据 RGB 图像生成逐像素深度图。
 
-    Examples:
+    示例：
         >>> from ultralytics.models.yolo.depth import DepthPredictor
         >>> predictor = DepthPredictor(overrides=dict(model="yolo26n-depth.pt"))
         >>> results = predictor("image.jpg")
@@ -27,18 +27,18 @@ class DepthPredictor(BasePredictor):
     def __init__(
         self, cfg=DEFAULT_CFG, overrides: dict[str, Any] | None = None, _callbacks: dict | None = None
     ) -> None:
-        """Initialize DepthPredictor."""
+        """初始化 DepthPredictor."""
         super().__init__(cfg, overrides, _callbacks)
         self.args.task = "depth"
 
     def postprocess(
         self, preds: torch.Tensor | tuple | list, img: torch.Tensor, orig_imgs: list[np.ndarray] | torch.Tensor
     ) -> list[Results]:
-        """Post-process depth predictions to Results objects."""
+        """将深度预测结果后处理为 Results 对象。"""
         depth_maps = preds[0] if isinstance(preds, (tuple, list)) else preds  # (B, 1, H, W)
         if depth_maps.ndim == 3:
             depth_maps = depth_maps.unsqueeze(1)  # (B, H, W) → (B, 1, H, W)
-        # Restore model-input resolution so all backends crop letterbox padding before scaling to the original image.
+        # 恢复模型输入分辨率，使所有后端都能在缩放回原始图像前裁剪 letterbox 填充区域。
         depth_maps = ops.scale_masks(depth_maps, img.shape[2:], padding=False)
 
         if not isinstance(orig_imgs, list):  # torch.Tensor source (B, 3, H, W)

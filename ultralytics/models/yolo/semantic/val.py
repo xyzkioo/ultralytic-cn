@@ -21,14 +21,14 @@ from ultralytics.utils.plotting import plot_images
 
 
 class SemanticSegmentationValidator(DetectionValidator):
-    """Validator for semantic segmentation models.
+    """用于语义分割模型的验证器。
 
-    This validator evaluates semantic segmentation models using mIoU and pixel accuracy metrics.
+    此验证器使用 mIoU 和像素准确率指标评估语义分割模型。
 
-    Attributes:
-        metrics (SemanticMetrics): Metrics calculator for semantic segmentation.
+    属性：
+        metrics (SemanticMetrics): 语义分割指标计算器。
 
-    Examples:
+    示例：
         >>> from ultralytics.models.yolo.semantic import SemanticSegmentationValidator
         >>> args = dict(model="yolo26n-sem.pt", data="cityscapes8.yaml")
         >>> validator = SemanticSegmentationValidator(args=args)
@@ -36,13 +36,13 @@ class SemanticSegmentationValidator(DetectionValidator):
     """
 
     def __init__(self, dataloader=None, save_dir=None, args=None, _callbacks=None):
-        """Initialize SemanticSegmentationValidator.
+        """初始化 SemanticSegmentationValidator.
 
-        Args:
-            dataloader (DataLoader, optional): DataLoader for validation.
-            save_dir (Path, optional): Directory to save results.
-            args (dict, optional): Arguments for the validator.
-            _callbacks (dict, optional): Callback functions.
+        参数：
+            dataloader (DataLoader, 可选): 用于验证的数据加载器。
+            save_dir (Path, 可选): 结果保存目录。
+            args (dict, 可选): 验证器参数。
+            _callbacks (dict, 可选): 回调函数字典。
         """
         super().__init__(dataloader, save_dir, args, _callbacks)
         self.args.task = "semantic"
@@ -53,10 +53,10 @@ class SemanticSegmentationValidator(DetectionValidator):
         self._semantic_target_shape = None
 
     def init_metrics(self, model):
-        """Initialize metrics with model class names.
+        """使用模型类别名称初始化指标。
 
-        Args:
-            model (nn.Module): Model to validate.
+        参数：
+            model (nn.Module): 待验证的模型。
         """
         self.names = model.names
         self.nc = len(self.names)
@@ -70,7 +70,7 @@ class SemanticSegmentationValidator(DetectionValidator):
             self.results_dir = self.save_dir / "results"
             self.results_dir.mkdir(parents=True, exist_ok=True)
         cm_nc = self.metrics.cm_nc
-        if cm_nc == 2 and len(self.names) == 1:  # binary segmentation, expand to include background
+        if cm_nc == 2 and len(self.names) == 1:  # 二分类分割，扩展为包含背景类别
             cm_names = {0: "background", 1: next(iter(self.names.values()))}
         else:
             base = list(self.names.values()) + [str(i) for i in range(len(self.names), cm_nc)]
@@ -78,13 +78,13 @@ class SemanticSegmentationValidator(DetectionValidator):
         self.confusion_matrix = ConfusionMatrix(names=cm_names, task="semantic")
 
     def preprocess(self, batch):
-        """Preprocess a batch of images and masks.
+        """预处理图像和掩码组成的批次。
 
-        Args:
-            batch (dict): Batch data containing images and masks.
+        参数：
+            batch (dict): 包含图像和掩码的批次数据。
 
-        Returns:
-            (dict): Preprocessed batch.
+        返回：
+            (dict): 预处理后的批次。
         """
         batch = super().preprocess(batch)
         batch["semantic_mask"] = batch["semantic_mask"].to(self.device, dtype=torch.int32)
@@ -92,18 +92,18 @@ class SemanticSegmentationValidator(DetectionValidator):
         return batch
 
     def postprocess(self, preds):
-        """Convert logits or baked class maps to class predictions.
+        """将 logits 或固化的类别图转换为类别预测结果。
 
-        Args:
-            preds (torch.Tensor): Raw model output logits [B, nc, H, W] or baked class map [B, H, W].
+        参数：
+            preds (torch.Tensor): 模型原始输出 logits [B, nc, H, W] 或固化的类别图 [B, H, W]。
 
-        Returns:
-            (torch.Tensor): Predicted class IDs [B, H, W].
+        返回：
+            (torch.Tensor): 预测类别 ID，形状为 [B, H, W]。
         """
         if isinstance(preds, (tuple, list)):
             preds = preds[0]
         if preds.ndim == 3:
-            # [B, H, W] class map with argmax already baked into the graph. Nearest-resize only.
+            # [B, H, W] 类别图的 argmax 已固化到计算图中，此处只使用最近邻缩放。
             if tuple(preds.shape[-2:]) != self._semantic_target_shape:
                 preds = F.interpolate(preds[:, None].float(), size=self._semantic_target_shape, mode="nearest")[:, 0]
             return preds.to(torch.int32)
@@ -113,11 +113,11 @@ class SemanticSegmentationValidator(DetectionValidator):
         return preds.argmax(dim=1).to(torch.int32) if self.nc > 1 else preds.gt(0).squeeze(1).to(torch.int32)
 
     def update_metrics(self, preds, batch):
-        """Update metrics with predictions and ground truth.
+        """使用预测结果和真实标注更新指标。
 
-        Args:
-            preds (torch.Tensor): Predicted class IDs [B, H, W].
-            batch (dict): Batch containing 'semantic_mask'.
+        参数：
+            preds (torch.Tensor): 预测类别 ID，形状为 [B, H, W]。
+            batch (dict): 包含 'semantic_mask' 的批次数据。
         """
         if self.args.save_json:
             self.save_pred_masks(preds, batch)
@@ -125,14 +125,14 @@ class SemanticSegmentationValidator(DetectionValidator):
         self.seen += preds.shape[0]
 
     def gather_stats(self):
-        """Reduce semantic confusion matrix to rank 0 during DDP validation."""
+        """在 DDP 验证期间将语义混淆矩阵归约到 rank 0。"""
         if RANK == -1 or not dist.is_available() or not dist.is_initialized():
             return
         if self.metrics.matrix is None:
             cm_nc = self.metrics.cm_nc
             self.metrics.matrix = torch.zeros((cm_nc, cm_nc), device=self.device, dtype=torch.float32)
         dist.reduce(self.metrics.matrix, dst=0, op=dist.ReduceOp.SUM)
-        # Gather nt_per_image across ranks
+        # 收集所有 rank 的 nt_per_image
         if RANK == 0:
             gathered_nt = [None] * dist.get_world_size()
             dist.gather_object(self.metrics.nt_per_image, gathered_nt, dst=0)
@@ -141,7 +141,7 @@ class SemanticSegmentationValidator(DetectionValidator):
             dist.gather_object(self.metrics.nt_per_image, None, dst=0)
 
     def save_pred_masks(self, preds: torch.Tensor, batch: dict[str, Any]) -> None:
-        """Save semantic predictions as single-channel PNG masks."""
+        """将语义预测结果保存为单通道 PNG 掩码。"""
         if self.results_dir is None:
             return
         im_files = batch.get("im_file", [])
@@ -159,37 +159,37 @@ class SemanticSegmentationValidator(DetectionValidator):
             Image.fromarray(pred).save(save_path)
 
     def get_stats(self):
-        """Return validation statistics.
+        """返回验证统计信息。
 
-        Returns:
-            (dict): Dictionary of validation metrics.
+        返回：
+            (dict): 验证指标字典。
         """
         self.metrics.process(save_dir=self.save_dir, plot=self.args.plots, on_plot=self.on_plot)
         if self.metrics.matrix is not None:
-            # Internal layout is [gt, pred]; transpose to [pred, gt] for ConfusionMatrix export format.
+            # 内部布局为 [gt, pred]；转置为 [pred, gt] 以符合 ConfusionMatrix 导出格式。
             self.confusion_matrix.matrix = self.metrics.matrix.detach().cpu().numpy().T.astype(float)
         return self.metrics.results_dict
 
     def get_desc(self):
-        """Return a formatted description of evaluation metrics.
+        """返回评估指标的格式化描述字符串。
 
-        Returns:
-            (str): Formatted string with metric names.
+        返回：
+            (str): 包含指标名称的格式化字符串。
         """
         return ("%22s" + "%11s" * 4) % ("Class", "Images", "Pixels", "mIoU", "PixAcc")
 
     def print_results(self) -> None:
-        """Print training/validation set metrics per class."""
+        """打印训练集或验证集的逐类别指标。"""
         super().print_results()
         if self.args.save_json and self.results_dir is not None:
-            LOGGER.info(f"Semantic prediction masks saved to {self.results_dir}")
+            LOGGER.info(f"语义预测掩码已保存到 {self.results_dir}")
 
     def get_dataset(self):
-        """Parse the dataset YAML and add background metadata for polygon labels when required."""
+        """解析数据集 YAML，并在需要时为多边形标签添加背景元数据。"""
         return add_polygon_background(super().get_dataset())
 
     def plot_predictions(self, batch, preds, ni):
-        """Plot predicted semantic masks on input images."""
+        """在输入图像上绘制预测语义掩码。"""
         plot_images(
             images=batch["img"],
             labels={"semantic_mask": preds},

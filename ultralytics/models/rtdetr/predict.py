@@ -9,22 +9,22 @@ from ultralytics.utils import ops
 
 
 class RTDETRPredictor(BasePredictor):
-    """RT-DETR (Real-Time Detection Transformer) Predictor extending the BasePredictor class for making predictions.
+    """继承 BasePredictor、用于生成预测结果的 RT-DETR（实时检测 Transformer）预测器。
 
-    This class leverages Vision Transformers to provide real-time object detection while maintaining high accuracy. It
-    supports key features like efficient hybrid encoding and IoU-aware query selection.
+    此类利用 Vision Transformer 在保持高精度的同时提供实时对象检测，
+    支持高效混合编码和 IoU 感知查询选择等关键特性。
 
-    Attributes:
-        imgsz (int): Image size for inference (must be square and scale-filled).
-        args (dict): Argument overrides for the predictor.
-        model (torch.nn.Module): The loaded RT-DETR model.
-        batch (list): Current batch of processed inputs.
+    属性：
+        imgsz (int): 用于推理的图像尺寸（必须为正方形并进行缩放填充）。
+        args (dict): 预测器的参数覆盖项。
+        model (torch.nn.Module): 已加载的 RT-DETR 模型。
+        batch (列表): 当前处理的输入批次。
 
-    Methods:
-        postprocess: Postprocess raw model predictions to generate bounding boxes and confidence scores.
-        pre_transform: Pre-transform input images before feeding them into the model for inference.
+    方法：
+        postprocess: 对模型原始预测结果进行后处理，生成边界框和置信度分数。
+        pre_transform: 在将输入图像送入模型推理前执行预处理变换。
 
-    Examples:
+    示例：
         >>> from ultralytics.utils import ASSETS
         >>> from ultralytics.models.rtdetr import RTDETRPredictor
         >>> args = dict(model="rtdetr-l.pt", source=ASSETS)
@@ -33,26 +33,24 @@ class RTDETRPredictor(BasePredictor):
     """
 
     def postprocess(self, preds, img, orig_imgs):
-        """Postprocess the raw predictions from the model to generate bounding boxes and confidence scores.
+        """后处理模型的原始预测结果，生成边界框和置信度分数。
 
-        The method filters detections based on confidence and class if specified in `self.args`. It converts model
-        predictions (already top-k selected by the decoder head) to Results objects containing properly scaled bounding
-        boxes.
+        此方法根据 `self.args` 中指定的置信度和类别过滤检测结果。
+        它将模型预测结果（已由解码头选出 top-k）转换为 Results 对象，并生成正确缩放的边界框。
 
-        Args:
-            preds (list | tuple): List of [predictions, extra] from the model, where predictions have shape (bs,
-                num_queries, 6) with format [cx, cy, w, h, score, class].
-            img (torch.Tensor): Processed input images with shape (N, 3, H, W).
-            orig_imgs (list | torch.Tensor): Original, unprocessed images.
+        参数：
+            preds (列表 | tuple): 模型输出的 [预测结果, extra]，预测结果形状为 (bs, num_queries, 6)，
+                格式为 [cx, cy, w, h, 分数, 类别]。
+            img (torch.Tensor): 处理后的输入图像，形状为 (N, 3, H, W)。
+            orig_imgs (列表 | torch.Tensor): 未处理的原始图像。
 
-        Returns:
-            (list[Results]): A list of Results objects containing the post-processed bounding boxes, confidence scores,
-                and class labels.
+        返回：
+            (列表[Results]): 包含后处理边界框、置信度分数和类别标签的 Results 对象列表。
         """
         if isinstance(preds, (list, tuple)):
             preds = preds[0]
         bboxes, scores, labels = preds.split((4, 1, 1), dim=-1)
-        if not isinstance(orig_imgs, list):  # input images are a torch.Tensor, not a list
+        if not isinstance(orig_imgs, list):  # 输入图像是 torch.Tensor，而不是列表
             orig_imgs = ops.convert_torch2numpy_batch(orig_imgs)[..., ::-1]
 
         results = []
@@ -63,21 +61,21 @@ class RTDETRPredictor(BasePredictor):
                 idx = (label == torch.tensor(self.args.classes, device=label.device)).any(1) & idx
             pred = torch.cat([bbox, score, label], dim=-1)[idx][: self.args.max_det]
             oh, ow = orig_img.shape[:2]
-            pred[..., [0, 2]] *= ow  # scale x coordinates to original width
-            pred[..., [1, 3]] *= oh  # scale y coordinates to original height
+            pred[..., [0, 2]] *= ow  # scale x coordinates to original 宽度
+            pred[..., [1, 3]] *= oh  # scale y coordinates to original 高度
             results.append(Results(orig_img, path=img_path, names=self.model.names, boxes=pred))
         return results
 
     def pre_transform(self, im):
-        """Pre-transform input images before feeding them into the model for inference.
+        """在将输入图像送入模型推理前执行预变换。
 
-        The input images are letterboxed to ensure a square aspect ratio and scale-filled.
+        输入图像会通过 letterbox 变换，以确保图像为正方形比例并进行缩放填充。
 
-        Args:
-            im (list[np.ndarray]): Input images of shape [(H, W, 3) x N].
+        参数：
+            im (列表[np.ndarray]): 输入图像，形状为 [(H, W, 3) x N]。
 
-        Returns:
-            (list): List of pre-transformed images ready for model inference.
+        返回：
+            (列表): 可供模型推理使用的预变换图像列表。
         """
         letterbox = LetterBox(self.imgsz, auto=False, scale_fill=True)
         return [letterbox(image=x) for x in im]

@@ -1,44 +1,44 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
-# Builds ultralytics/ultralytics:latest-nvidia-arm64 image on DockerHub https://hub.docker.com/r/ultralytics/ultralytics
-# Supports JetPack 7.0 and DGX OS for YOLO on Jetson AGX Thor (T5000) and DGX Spark
+# 在 Docker Hub 上构建 ultralytics/ultralytics:latest-nvidia-arm64 镜像：https://hub.docker.com/r/ultralytics/ultralytics
+# 支持在 Jetson AGX Thor（T5000）和 DGX Spark 的 JetPack 7.0 及 DGX OS 上运行 YOLO
 
 # Start FROM PyTorch image nvcr.io/nvidia/pytorch:25.10-py3
 FROM nvcr.io/nvidia/pytorch:25.10-py3
 
-# Set environment variables
+# 设置环境变量
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_BREAK_SYSTEM_PACKAGES=1 \
     UV_BREAK_SYSTEM_PACKAGES=1
 
-# Downloads to user config dir
+# 下载到用户配置目录
 ADD https://github.com/ultralytics/assets/releases/download/v0.0.0/Arial.ttf \
     https://github.com/ultralytics/assets/releases/download/v0.0.0/Arial.Unicode.ttf \
     /root/.config/Ultralytics/
 
-# Install linux packages
+# 安装 Linux 软件包
 RUN apt-get update && \
     apt-get install -y --no-install-recommends libgl1 && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Create working directory
+# 创建工作目录
 WORKDIR /ultralytics
 
-# Copy contents and configure dependencies
+# 复制内容并配置依赖项
 COPY . .
 RUN sed -i'' -e 's/"opencv-python/"opencv-python-headless/' pyproject.toml
 ADD https://github.com/ultralytics/assets/releases/download/v8.4.0/yolo26n.pt .
 
-# Install pip packages (uv already installed in base image)
+# 安装 pip 软件包（基础镜像中已安装 uv）
 RUN uv pip install --system \
     https://github.com/ultralytics/assets/releases/download/v0.0.0/onnxruntime_gpu-1.24.0-cp312-cp312-linux_aarch64.whl && \
-    # Reinstall torch and torchvision to ensure CUDA 13.0 compatibility
+    # 重新安装 torch 和 torchvision，以确保兼容 CUDA 13.0
     uv pip install --system --force-reinstall torch torchvision --index-url https://download.pytorch.org/whl/cu130 && \
     uv pip install --system -e ".[export]" && \
-    # Remove extra build files
+    # 删除多余的构建文件
     rm -rf *.whl /root/.config/Ultralytics/persistent_cache.json
 
 # Usage --------------------------------------------------------------------------------------------------------------

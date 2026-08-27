@@ -13,21 +13,21 @@ from .base import BaseBackend
 
 
 class RKNNBackend(BaseBackend):
-    """Rockchip RKNN inference backend for Rockchip NPU hardware.
+    """用于 Rockchip NPU 硬件的 Rockchip RKNN 推理后端。
 
-    Loads and runs inference with RKNN models (.rknn files) using the RKNN-Toolkit-Lite2 runtime. Only supported on
-    Rockchip devices with NPU hardware (e.g., RK3588, RK3566).
+    使用 RKNN-Toolkit-Lite2 运行时加载并执行 RKNN 模型（.rknn 文件）推理。
+    仅支持带有 NPU 硬件的 Rockchip 设备（例如 RK3588、RK3566）。
     """
 
     def load_model(self, weight: str | Path) -> None:
-        """Load a Rockchip RKNN model from a .rknn file or model directory.
+        """从 .rknn 文件或模型目录加载 Rockchip RKNN 模型。
 
-        Args:
-            weight (str | Path): Path to the .rknn file or directory containing the model.
+        参数：
+            weight (str | Path): .rknn 文件或包含模型的目录路径。
 
-        Raises:
-            OSError: If not running on a Rockchip device.
-            RuntimeError: If model loading or runtime initialization fails.
+        异常：
+            OSError: 如果当前设备不是 Rockchip 设备。
+            RuntimeError: 模型加载或运行时初始化失败时抛出。
         """
         if not is_rockchip():
             raise OSError("RKNN inference is only supported on Rockchip devices.")
@@ -52,25 +52,25 @@ class RKNNBackend(BaseBackend):
         self.apply_metadata(self.read_metadata(w))
 
     def forward(self, im: torch.Tensor) -> list:
-        """Run inference on the Rockchip NPU.
+        """在 Rockchip NPU 上执行推理。
 
-        Args:
-            im (torch.Tensor): Input image tensor in BHWC format, normalized to [0, 1].
+        参数：
+            im (torch.Tensor): 输入图像 张量 in BHWC format, normalized to [0, 1].
 
-        Returns:
-            (list): Model predictions as a list of output arrays.
+        返回：
+            (列表): 输出数组列表形式的模型预测结果。
         """
         h, w = im.shape[1:3]
         im = (im.cpu().numpy() * 255).astype("uint8")
         im = im if isinstance(im, (list, tuple)) else [im]
         y = self.model.inference(inputs=im)
-        # INT8 exports use input-relative coordinates so a single per-tensor scale preserves class scores.
+        # INT8 导出使用相对于输入的坐标，因此单个逐张量缩放因子即可保持类别分数不变。
         if (
             self.metadata.get("args", {}).get("quantize") == 8
             and self.task in {"detect", "segment", "pose", "obb"}
             and not self.end2end
         ):
-            kpt_start = 4 + len(self.names)  # pose keypoints follow the box (4) and class-score (nc) channels
+            kpt_start = 4 + len(self.names)  # 姿态关键点位于边界框 (4) 和类别分数 (nc) 通道之后
             for x in y:
                 if x.ndim == 3:
                     x[:, [0, 2]] *= w

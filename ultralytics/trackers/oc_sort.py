@@ -14,26 +14,25 @@ from .utils.stracks import parse_bboxes
 
 
 class OCSortTrack(STrack):
-    """Track object for OC-SORT with observation-centric state management.
+    """使用以观测为中心的状态管理方式表示 OC-SORT 跟踪对象。
 
-    Extends STrack with storage of real detector observations and velocity computation, enabling the three OC-SORT
-    components: ORU, OCM, and OCR.
+    在 STrack 基础上增加真实检测观测存储和速度计算，从而支持 OC-SORT 的三个组件：ORU、OCM 和 OCR。
 
-    Attributes:
-        last_observation (np.ndarray): Last real detection in xyxy format.
-        observations (dict): Maps frame_id to xyxy observation arrays.
-        velocity (np.ndarray | None): Observation-centric velocity direction vector (dx, dy).
-        delta_t (int): Temporal window for velocity computation.
+    属性：
+        last_observation (np.ndarray): xyxy 格式的最近一次真实检测结果。
+        observations (dict): 将 frame_id 映射到 xyxy 观测数组。
+        velocity (np.ndarray | None): 以观测为中心的速度方向向量 (dx, dy)。
+        delta_t (int): 用于计算速度的时间窗口。
     """
 
     def __init__(self, xywh: np.ndarray, score: float, cls: Any, delta_t: int = 3):
-        """Initialize an OCSortTrack with observation storage.
+        """初始化 OCSortTrack，并创建观测存储。
 
-        Args:
-            xywh (np.ndarray): Bounding box in `(x, y, w, h, idx)` or `(x, y, w, h, angle, idx)` format.
-            score (float): Detection confidence in `[0, 1]`.
-            cls (Any): Class label for the detection.
-            delta_t (int): Temporal window (in frames) used for velocity direction computation.
+        参数：
+            xywh (np.ndarray): `(x, y, w, h, idx)` 或 `(x, y, w, h, angle, idx)` 格式的边界框。
+            score (float): [0, 1] 范围内的检测置信度。
+            cls (Any): 检测结果的类别标签。
+            delta_t (int): 用于计算速度方向的时间窗口（帧数）。
         """
         super().__init__(xywh, score, cls)
         self.last_observation = np.array([-1, -1, -1, -1], dtype=np.float32)
@@ -44,23 +43,23 @@ class OCSortTrack(STrack):
         self._saved_covariance: np.ndarray | None = None
 
     def activate(self, kalman_filter, frame_id: int) -> None:
-        """Activate a new tracklet and seed its observation history.
+        """激活新的轨迹，并初始化其观测历史。
 
-        Args:
-            kalman_filter (KalmanFilterXYAH): Shared Kalman filter instance.
-            frame_id (int): Frame id at which the track is created.
+        参数：
+            kalman_filter (KalmanFilterXYAH): 共享的卡尔曼滤波器实例。
+            frame_id (int): 创建轨迹时的帧编号。
         """
         super().activate(kalman_filter, frame_id)
-        self._record_observation(self.xyxy.astype(np.float32), frame_id)  # detection-space precision
+        self._record_observation(self.xyxy.astype(np.float32), frame_id)  # 保持检测空间精度
         self._saved_mean = self.mean.copy()
         self._saved_covariance = self.covariance.copy()
 
     def update(self, new_track: STrack, frame_id: int) -> None:
-        """Update the track with a matched detection and record the observation.
+        """使用匹配的检测结果更新轨迹，并记录此次观测。
 
-        Args:
-            new_track (STrack): Matched detection for this frame.
-            frame_id (int): Current frame id.
+        参数：
+            new_track (STrack): 当前帧匹配到的检测结果。
+            frame_id (int): 当前帧编号。
         """
         self._record_observation(new_track.xyxy.copy(), frame_id)
         super().update(new_track, frame_id)
@@ -69,12 +68,12 @@ class OCSortTrack(STrack):
         self.velocity = self._compute_velocity()
 
     def re_activate(self, new_track: STrack, frame_id: int, new_id: bool = False) -> None:
-        """Re-activate a previously lost track with a new detection.
+        """使用新的检测结果重新激活此前丢失的轨迹。
 
-        Args:
-            new_track (STrack): Detection used to revive this track.
-            frame_id (int): Current frame id.
-            new_id (bool): If True, assign a fresh track id instead of reusing the old one.
+        参数：
+            new_track (STrack): 用于恢复此轨迹的检测结果。
+            frame_id (int): 当前帧编号。
+            new_id (bool): 为 True 时分配新的跟踪 ID，而不是复用旧 ID。
         """
         self._record_observation(new_track.xyxy.copy(), frame_id)
         super().re_activate(new_track, frame_id, new_id)
@@ -84,14 +83,14 @@ class OCSortTrack(STrack):
 
     @staticmethod
     def _xyxy_center(xyxy: np.ndarray) -> np.ndarray:
-        """Return `(cx, cy)` center of an xyxy bounding box."""
+        """返回 xyxy 格式边界框的 `(cx, cy)` 中心坐标。"""
         return np.array([(xyxy[0] + xyxy[2]) / 2, (xyxy[1] + xyxy[3]) / 2])
 
     def _record_observation(self, obs: np.ndarray, frame_id: int) -> None:
-        """Store `obs` for `frame_id`, dropping history beyond `delta_t + 2` to bound memory.
+        """保存 `frame_id` 对应的 `obs`，并丢弃超过 `delta_t + 2` 的历史以限制内存占用。
 
-        The retained window always covers the frame `_compute_velocity` reaches back to, since at most `delta_t`
-        distinct frames fall inside `(frame_id - delta_t, frame_id]`.
+        保留的窗口始终覆盖 `_compute_velocity` 需要回溯的帧，因为 `(frame_id - delta_t, frame_id]` 内最多包含 `delta_t`
+        个不同帧。
         """
         self.last_observation = obs
         self.observations[frame_id] = obs
@@ -101,9 +100,9 @@ class OCSortTrack(STrack):
                 del self.observations[frame]
 
     def _compute_velocity(self) -> np.ndarray | None:
-        """Compute the observation-centric velocity direction from stored observations.
+        """根据保存的观测计算以观测为中心的速度方向。
 
-        Returns:
+        返回：
             (np.ndarray | None): Normalized `(dx, dy)` direction vector, or None if there are fewer than two usable
                 observations.
         """
@@ -113,14 +112,14 @@ class OCSortTrack(STrack):
         current_frame = max(self.observations.keys())
         current_center = self._xyxy_center(self.observations[current_frame])
 
-        # Find the most recent observation at least delta_t frames before current
+        # 查找至少早于当前帧 delta_t 帧的最近观测结果
         prev_obs = None
         for frame in sorted(self.observations.keys(), reverse=True):
             if frame < current_frame - self.delta_t + 1:
                 prev_obs = self.observations[frame]
                 break
 
-        # Fallback: use the earliest observation if nothing is delta_t frames back
+        # 回退：如果不存在 delta_t 帧之前的观测，则使用最早的观测
         if prev_obs is None:
             earliest_frame = min(self.observations.keys())
             if earliest_frame == current_frame:
@@ -134,7 +133,7 @@ class OCSortTrack(STrack):
         return (direction / norm).astype(np.float32)
 
     def apply_oru(self, new_observation_xyxy: np.ndarray, current_frame_id: int) -> None:
-        """Repair Kalman state across an occlusion gap by replaying predict-updates on virtual observations."""
+        """通过在虚拟观测上重放预测和更新，修复遮挡间隔期间的卡尔曼状态。"""
         if self._saved_mean is None or not self.observations:
             return
 
@@ -143,47 +142,47 @@ class OCSortTrack(STrack):
         if gap <= 1:
             return
 
-        # Restore Kalman state to last observation point
+        # 将卡尔曼状态恢复到最后一次观测位置
         self.mean = self._saved_mean.copy()
         self.covariance = self._saved_covariance.copy()
 
         last_obs = self.observations[last_frame]
 
-        # Replay with virtual observations
+        # 使用虚拟观测重放状态更新
         for t in range(1, gap):
             alpha = t / gap
             virtual_xyxy = (1 - alpha) * last_obs + alpha * new_observation_xyxy
-            # Convert xyxy to tlwh then to xyah for Kalman measurement
+            # 将 xyxy 转换为 tlwh，再转换为 xyah 作为卡尔曼测量值
             virtual_xyah = self.tlwh_to_xyah(xyxy2ltwh(virtual_xyxy))
             self.mean, self.covariance = self.kalman_filter.predict(self.mean, self.covariance)
             self.mean, self.covariance = self.kalman_filter.update(self.mean, self.covariance, virtual_xyah)
 
-        # Final predict to reach current frame
+        # 最后执行一次预测，使状态到达当前帧
         self.mean, self.covariance = self.kalman_filter.predict(self.mean, self.covariance)
 
 
 class OCSORT(BYTETracker):
-    """OC-SORT multi-object tracker with observation-centric association.
+    """采用以观测为中心匹配策略的 OC-SORT 多对象跟踪器。
 
-    Implements three key components on top of BYTETracker:
-    - Observation-Centric Re-Update (ORU): repairs Kalman state after occlusion
-    - Observation-Centric Momentum (OCM): velocity direction consistency cost
-    - Observation-Centric Recovery (OCR): re-association using last observation position
+    此类在 BYTETracker 基础上实现三个关键组件：
+    - 以观测为中心的更新（ORU）：在遮挡后修复卡尔曼状态。
+    - 以观测为中心的动量（OCM）：计算速度方向一致性代价。
+    - 以观测为中心的恢复（OCR）：使用最后一次观测位置重新匹配。
 
-    Attributes:
-        delta_t (int): Temporal window for velocity direction computation.
-        inertia (float): Weight of velocity consistency cost in association.
-        use_byte (bool): Whether to use ByteTrack-style low-confidence second pass.
+    属性：
+        delta_t (int): 计算速度方向时使用的时间窗口。
+        inertia (float): 匹配中速度一致性代价的权重。
+        use_byte (bool): 是否使用 ByteTrack 风格的低置信度第二阶段匹配。
     """
 
     track_class = OCSortTrack
 
     def __init__(self, args: Any):
-        """Initialize OC-SORT tracker.
+        """初始化 OC-SORT 跟踪器。
 
-        Args:
-            args (Namespace | IterableSimpleNamespace): Parsed tracker config providing the BYTE keys plus `delta_t`,
-                `inertia`, and `use_byte`.
+        参数：
+            args (Namespace | IterableSimpleNamespace): 解析后的跟踪器配置，除 BYTE 配置项外还提供 `delta_t`、
+                `inertia` 和 `use_byte`。
         """
         super().__init__(args)
         self.delta_t = getattr(args, "delta_t", 3)
@@ -191,7 +190,7 @@ class OCSORT(BYTETracker):
         self.use_byte = getattr(args, "use_byte", False)
 
     def init_track(self, results, img: np.ndarray | None = None) -> list[OCSortTrack]:
-        """Build `OCSortTrack` instances from a `Results`-like object."""
+        """根据类似 `Results` 的对象构建 `OCSortTrack` 实例。"""
         if len(results) == 0:
             return []
         bboxes = parse_bboxes(results)
@@ -204,11 +203,11 @@ class OCSORT(BYTETracker):
         detections: list[OCSortTrack],
         iou_dists: np.ndarray | None = None,
     ) -> np.ndarray:
-        """Hook combining motion cost with appearance cost. Default: pass-through (no ReID)."""
+        """组合运动代价和外观代价的钩子。默认行为：直接透传（不使用 ReID）。"""
         return dists
 
     def get_dists(self, tracks: list[OCSortTrack], detections: list[OCSortTrack]) -> np.ndarray:
-        """Cost matrix = IoU (+score-fuse) + inertia·OCM (+ optional appearance, via hook)."""
+        """代价矩阵 = IoU（可融合分数）+ 惯性·OCM（可通过钩子加入外观代价）。"""
         iou_dists = matching.iou_distance(tracks, detections)
         dists = matching.fuse_score(iou_dists, detections) if self.args.fuse_score else iou_dists.copy()
         dists = dists + self.inertia * self._velocity_direction_cost(tracks, detections)
@@ -221,10 +220,10 @@ class OCSORT(BYTETracker):
         activated: list[OCSortTrack],
         refind: list[OCSortTrack],
     ) -> tuple[list[int], list[int]]:
-        """Run one OCR (last-observation IoU) pass, applying matches in place.
+        """执行一次 OCR（最后观测 IoU）匹配，并原地应用匹配结果。
 
-        Returns:
-            (tuple[list[int], list[int]]): Local indices of unmatched ``tracks`` and unmatched ``dets``.
+        返回：
+            (tuple[list[int], list[int]))：未匹配 ``tracks`` 和 ``dets`` 的局部索引。
         """
         if not tracks or not dets:
             return list(range(len(tracks))), list(range(len(dets)))
@@ -252,10 +251,10 @@ class OCSORT(BYTETracker):
         activated: list[OCSortTrack],
         refind: list[OCSortTrack],
     ) -> tuple[list[int], list[int]]:
-        """Observation-Centric Recovery (OCR) pass after first-stage association.
+        """在第一阶段匹配后执行以观测为中心的恢复（OCR）阶段。
 
-        Runs OCR for still-Tracked unmatched tracks first to preserve active-track matching priority, then for
-        Lost tracks on the detections still unmatched, so a recently-lost track cannot outbid an active one.
+        先对仍处于 Tracked 状态的未匹配轨迹执行 OCR，以保持活动轨迹的匹配优先级；
+        再使用仍未匹配的检测结果处理 Lost 轨迹，避免最近丢失的轨迹抢占活动轨迹的匹配。
         """
         ocr_dets = [detections[i] for i in u_detection]
         if not ocr_dets:
@@ -281,7 +280,7 @@ class OCSORT(BYTETracker):
         refind: list[OCSortTrack],
         lost: list[OCSortTrack],
     ) -> None:
-        """Run ByteTrack-style second pass only when ``use_byte`` is enabled."""
+        """仅在启用 ``use_byte`` 时执行 ByteTrack 风格的第二阶段匹配。"""
         if not self.use_byte:
             for i in u_track:
                 track = strack_pool[i]
@@ -292,23 +291,22 @@ class OCSORT(BYTETracker):
         super()._second_association(strack_pool, u_track, detections_second, activated, refind, lost)
 
     def _velocity_direction_cost(self, tracks: list[OCSortTrack], detections: list[OCSortTrack]) -> np.ndarray:
-        """Compute OCM velocity direction consistency cost matrix (vectorized).
+        """计算 OCM 速度方向一致性代价矩阵（向量化实现）。
 
-        For each track-detection pair, measures the angular difference between
-        the track's historical motion direction and the direction to the candidate detection.
+        对每个轨迹与检测结果配对，计算轨迹历史运动方向与指向候选检测结果方向之间的角度差。
 
-        Args:
-            tracks (list[OCSortTrack]): List of tracks.
-            detections (list[OCSortTrack]): List of detections.
+        参数：
+            tracks (list[OCSortTrack]): 轨迹列表。
+            detections (list[OCSortTrack]): 检测结果列表。
 
-        Returns:
-            (np.ndarray): Cost matrix of shape (len(tracks), len(detections)).
+        返回：
+            (np.ndarray): 形状为 (len(tracks), len(detections)) 的代价矩阵。
         """
         cost = np.zeros((len(tracks), len(detections)), dtype=np.float32)
         if cost.size == 0:
             return cost
 
-        # Pre-extract detection centers as (M, 2) array
+        # 预先提取检测结果中心，形成 (M, 2) 数组
         det_centers = np.array([OCSortTrack._xyxy_center(det.xyxy) for det in detections], dtype=np.float32)
 
         for i, track in enumerate(tracks):
@@ -327,20 +325,19 @@ class OCSORT(BYTETracker):
         return cost
 
     def _ocr_distance(self, tracks: list[OCSortTrack], detections: list[OCSortTrack]) -> np.ndarray:
-        """Compute IoU distance using tracks' last observation positions instead of Kalman predictions.
+        """使用轨迹最后一次观测位置而非卡尔曼预测结果计算 IoU 距离。
 
-        Args:
-            tracks (list[OCSortTrack]): List of tracks with last_observation attributes.
-            detections (list[OCSortTrack]): List of detections.
+        参数：
+            tracks (list[OCSortTrack]): 带有 last_observation 属性的轨迹列表。
+            detections (list[OCSortTrack]): 检测结果列表。
 
-        Returns:
-            (np.ndarray): Cost matrix based on IoU with last observations (or xywha for OBB).
+        返回：
+            (np.ndarray): 基于最后观测（或 OBB 使用 xywha）计算的 IoU 代价矩阵。
 
-        Notes:
-            `last_observation` is stored in xyxy form. For oriented (OBB) tracks no oriented
-            last-observation is kept, so this method falls back to the Kalman-predicted `xywha`
-            and the OCR pass degenerates to standard IoU on the predicted box. Standard
-            (axis-aligned) tracking gets the full OCR benefit.
+        注意：
+            `last_observation` 以 xyxy 格式保存。对于有向（OBB）轨迹，不保存有向的最后观测，
+            因此该方法会回退到卡尔曼预测的 `xywha`，OCR 阶段也会退化为对预测边界框执行标准 IoU。
+            标准（轴对齐）跟踪可以获得 OCR 的全部效果。
         """
         if tracks and tracks[0].angle is not None:
             atlbrs = [t.xywha for t in tracks]

@@ -3,23 +3,23 @@
 from ultralytics.utils import LOGGER, SETTINGS, TESTS_RUNNING
 
 try:
-    assert not TESTS_RUNNING  # do not log pytest
-    assert SETTINGS["clearml"] is True  # verify integration is enabled
+    assert not TESTS_RUNNING  # 不记录 pytest 日志
+    assert SETTINGS["clearml"] is True  # 验证集成已启用
     import clearml
     from clearml import Task
 
-    assert hasattr(clearml, "__version__")  # verify package is not directory
+    assert hasattr(clearml, "__version__")  # 确认导入的是有效软件包
 
 except (ImportError, AssertionError):
     clearml = None
 
 
 def _log_debug_samples(files, title: str = "Debug Samples") -> None:
-    """Log files (images) as debug samples in the ClearML task.
+    """将文件（图像）作为调试样本记录到 ClearML 任务中。
 
-    Args:
-        files (list[Path]): A list of file paths in PosixPath format.
-        title (str): A title that groups together images with the same values.
+    参数：
+        文件 (列表[Path]): A 列表 of 文件 路径 in PosixPath format.
+        title (str): 将具有相同值的图像归为一组的标题。
     """
     import re
 
@@ -34,11 +34,11 @@ def _log_debug_samples(files, title: str = "Debug Samples") -> None:
 
 
 def _log_plot(title: str, plot_path: str) -> None:
-    """Log an image as a plot in the plot section of ClearML.
+    """将图像作为绘图记录到 ClearML 的绘图区。
 
-    Args:
+    参数：
         title (str): The title of the plot.
-        plot_path (str | Path): The path to the saved image file.
+        plot_path (str | Path): 已保存图像文件的路径。
     """
     import matplotlib.image as mpimg
     import matplotlib.pyplot as plt
@@ -54,11 +54,11 @@ def _log_plot(title: str, plot_path: str) -> None:
 
 
 def on_pretrain_routine_start(trainer) -> None:
-    """Initialize and connect ClearML task at the start of pretraining routine."""
+    """在预训练流程开始时初始化并连接 ClearML 任务。"""
     try:
         if task := Task.current_task():
-            # WARNING: make sure the automatic pytorch and matplotlib bindings are disabled!
-            # We are logging these plots and model files manually in the integration
+            # 警告：务必禁用 pytorch 和 matplotlib 的自动绑定！
+            # 此集成会手动记录这些图表和模型文件
             from clearml.binding.frameworks.pytorch_bind import PatchPyTorchModelIO
             from clearml.binding.matplotlib_bind import PatchedMatplotlib
 
@@ -83,12 +83,12 @@ def on_pretrain_routine_start(trainer) -> None:
 
 
 def on_train_epoch_end(trainer) -> None:
-    """Log debug samples for the first epoch and report current training progress."""
+    """记录第一个周期的调试样本，并报告当前训练进度。"""
     if task := Task.current_task():
-        # Log debug samples for first epoch only
+        # 仅记录第一个周期的调试样本
         if trainer.epoch == 1:
             _log_debug_samples(sorted(trainer.save_dir.glob("train_batch*.jpg")), "Mosaic")
-        # Report the current training progress
+        # 报告当前训练进度。
         for k, v in trainer.label_loss_items(trainer.tloss, prefix="train").items():
             task.get_logger().report_scalar("train", k, v, iteration=trainer.epoch)
         for k, v in trainer.lr.items():
@@ -96,9 +96,9 @@ def on_train_epoch_end(trainer) -> None:
 
 
 def on_fit_epoch_end(trainer) -> None:
-    """Report model information and metrics to logger at the end of an epoch."""
+    """在周期结束时向日志记录器报告模型信息和指标。"""
     if task := Task.current_task():
-        # Report epoch time and validation metrics
+        # 报告周期耗时和验证指标
         task.get_logger().report_scalar(
             title="Epoch Time", series="Epoch Time", value=trainer.epoch_time, iteration=trainer.epoch
         )
@@ -113,23 +113,23 @@ def on_fit_epoch_end(trainer) -> None:
 
 
 def on_val_end(validator) -> None:
-    """Log validation results including labels and predictions."""
+    """记录验证结果，包括标签和预测结果。"""
     if Task.current_task():
-        # Log validation labels and predictions
+        # 记录验证标签和预测结果
         _log_debug_samples(sorted(validator.save_dir.glob("val*.jpg")), "Validation")
 
 
 def on_train_end(trainer) -> None:
-    """Log final model and training results on training completion."""
+    """训练完成时记录最终模型和训练结果。"""
     if task := Task.current_task():
-        # Log final results, confusion matrix and PR plots
+        # 记录最终结果、混淆矩阵和 PR 曲线
         for f in [*trainer.plots.keys(), *trainer.validator.plots.keys()]:
             if "batch" not in f.name:
                 _log_plot(title=f.stem, plot_path=f)
-        # Report final metrics
+        # 报告最终指标
         for k, v in trainer.validator.metrics.results_dict.items():
             task.get_logger().report_single_value(k, v)
-        # Log the final model
+        # 记录最终模型
         task.update_output_model(model_path=str(trainer.best), model_name=trainer.args.name, auto_delete_file=False)
 
 

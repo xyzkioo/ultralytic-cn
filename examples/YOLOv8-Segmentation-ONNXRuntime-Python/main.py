@@ -85,10 +85,10 @@ class YOLOv8Seg:
         """
         shape = img.shape[:2]  # current shape [height, width]
 
-        # Scale ratio (new / old)
+        # 缩放比例（新尺寸 / 原尺寸）
         r = min(new_shape[0] / shape[0], new_shape[1] / shape[1])
 
-        # Compute padding
+        # 计算填充量
         new_unpad = round(shape[1] * r), round(shape[0] * r)
         dw, dh = (new_shape[1] - new_unpad[0]) / 2, (new_shape[0] - new_unpad[1]) / 2  # wh padding
 
@@ -112,9 +112,9 @@ class YOLOv8Seg:
                 to [0, 1].
         """
         img = self.letterbox(img, new_shape)
-        img = img[..., ::-1].transpose([2, 0, 1])[None]  # BGR to RGB, BHWC to BCHW
+        img = img[..., ::-1].transpose([2, 0, 1])[None]  # BGR 转 RGB，BHWC 转 BCHW
         img = np.ascontiguousarray(img)
-        img = img.astype(np.float32) / 255  # Normalize to [0, 1]
+        img = img.astype(np.float32) / 255  # 归一化到 [0, 1]
         return img
 
     def postprocess(self, img: np.ndarray, prep_img: np.ndarray, outs: list) -> list[Results]:
@@ -156,9 +156,9 @@ class YOLOv8Seg:
         """
         c, mh, mw = protos.shape  # CHW
         masks = (masks_in @ protos.float().view(c, -1)).view(-1, mh, mw)  # Matrix multiplication
-        masks = ops.scale_masks(masks[None], shape)[0]  # Scale masks to original image size
-        masks = ops.crop_mask(masks, bboxes)  # Crop masks to bounding boxes
-        return masks.gt_(0.0)  # Convert to binary masks
+        masks = ops.scale_masks(masks[None], shape)[0]  # 将掩码缩放到原始图像尺寸
+        masks = ops.crop_mask(masks, bboxes)  # 将掩码裁剪到边界框
+        return masks.gt_(0.0)  # 转换为二值掩码
 
 
 if __name__ == "__main__":

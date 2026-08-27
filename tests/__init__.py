@@ -3,17 +3,17 @@
 from ultralytics.cfg import TASK2DATA, TASK2MODEL, TASKS
 from ultralytics.utils import ASSETS, WEIGHTS_DIR, checks
 
-# Shared test constants for model, config, data source, and environment info
-MODEL = WEIGHTS_DIR / "path with spaces" / "yolo26n.pt"  # path with spaces to test path handling
+# 模型、配置、数据源和环境信息的共享测试常量
+MODEL = WEIGHTS_DIR / "path with spaces" / "yolo26n.pt"  # 包含空格的路径，用于测试路径处理
 CFG = "yolo26n.yaml"
 SOURCE = ASSETS / "bus.jpg"
-SOURCES_LIST = [ASSETS / "bus.jpg", ASSETS, ASSETS / "*", ASSETS / "**/*.jpg"]  # file, dir, and glob patterns
+SOURCES_LIST = [ASSETS / "bus.jpg", ASSETS, ASSETS / "*", ASSETS / "**/*.jpg"]  # 文件、目录和 glob 模式
 CUDA_IS_AVAILABLE = checks.cuda_is_available()
 CUDA_DEVICE_COUNT = checks.cuda_device_count()
 TASK_MODEL_DATA = sorted(
     [(task, WEIGHTS_DIR / TASK2MODEL[task], TASK2DATA[task]) for task in TASKS]
-)  # (task, model, data) tuples
-MODELS = sorted([*list(TASK2MODEL.values()), "yolo11n-grayscale.pt"])  # task models plus grayscale variant
+)  # （任务、模型、数据）元组
+MODELS = sorted([*list(TASK2MODEL.values()), "yolo11n-grayscale.pt"])  # 任务模型及灰度变体
 SOLUTION_ASSETS = {
     "boats": "boats.jpg",
     "demo_video": "solutions_ci_demo.mp4",

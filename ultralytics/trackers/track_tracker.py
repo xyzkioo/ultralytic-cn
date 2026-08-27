@@ -19,16 +19,16 @@ from .utils.kalman_filter import KalmanFilterXYWH
 from .utils.reid import smooth_feature
 from .utils.stracks import joint_stracks, merge_track_pools, multi_gmc, parse_bboxes
 
-# Corner index arrays (LT, LB, RT, RB of an (x1,y1,x2,y2) box) for angle-distance vectorization.
+# 角点索引数组（对应 (x1,y1,x2,y2) 边界框的 LT、LB、RT、RB），用于角度距离向量化。
 _CORNER_DX_IDX = np.array([0, 0, 2, 2])
 _CORNER_DY_IDX = np.array([1, 3, 1, 3])
 
-_LOOSE_NMS_IOU = 0.95  # looser NMS IoU used to recover detections the tight NMS dropped
-_LOOSE_NMS_DEDUP_IOU = 0.97  # IoU threshold to consider duplicate detections as "new"
+_LOOSE_NMS_IOU = 0.95  # 较宽松的 NMS IoU，用于恢复严格 NMS 丢弃的检测结果
+_LOOSE_NMS_DEDUP_IOU = 0.97  # 将检测结果视为“新结果”时使用的 IoU 阈值
 
 
 def _hmiou_distance(tracks_a: list[TTSTrack], tracks_b: list[TTSTrack]) -> tuple[np.ndarray, np.ndarray]:
-    """Return (iou_sim, 1 - HMIoU) where HMIoU = HIoU * IoU and HIoU is vertical-overlap / vertical-union."""
+    """返回 (iou_sim, 1 - HMIoU)，其中 HMIoU = HIoU * IoU，HIoU 为垂直重叠与垂直并集之比。"""
     n, m = len(tracks_a), len(tracks_b)
     if n == 0 or m == 0:
         return np.zeros((n, m), dtype=np.float32), np.ones((n, m), dtype=np.float32)
@@ -44,9 +44,9 @@ def _hmiou_distance(tracks_a: list[TTSTrack], tracks_b: list[TTSTrack]) -> tuple
 def _angle_distance(
     tracks: list[TTSTrack], dets: list[TTSTrack], frame_id: int, pairs: tuple[np.ndarray, np.ndarray], delta_t: int = 3
 ) -> np.ndarray:
-    """Return angle distance for the IoU-supported `(track, det)` index `pairs` only.
+    """仅为 IoU 支持的 `(track, det)` 索引 `pairs` 返回角度距离。
 
-    `_cost_matrix` overwrites unsupported pairs, so a full `(N, M)` grid would compute discarded work.
+    `_cost_matrix` 会覆盖不受支持的配对，因此计算完整的 `(N, M)` 网格会产生无用开销。
     """
     track_idx, det_idx = pairs
     track_boxes = np.stack([tracks[i].get_history_box(frame_id, delta_t) for i in track_idx])  # (P, 4)
@@ -64,20 +64,20 @@ def _angle_distance(
 
 
 def _confidence_distance(tracks: list[TTSTrack], dets: list[TTSTrack]) -> np.ndarray:
-    """Absolute difference between each track's projected score and each detection's confidence."""
+    """计算每个跟踪目标的投影分数与每个检测结果置信度之间的绝对差值。"""
     if len(tracks) == 0 or len(dets) == 0:
         return np.ones((len(tracks), len(dets)), dtype=np.float32)
     track_prev_scores = np.array([track.prev_score for track in tracks])
     track_curr_scores = np.array([track.score for track in tracks])
-    track_proj_scores = track_curr_scores + (track_curr_scores - track_prev_scores)  # first-order extrapolation
+    track_proj_scores = track_curr_scores + (track_curr_scores - track_prev_scores)  # 一阶外推
     det_scores = np.array([det.score for det in dets])
     return np.abs(track_proj_scores[:, None] - det_scores[None])
 
 
 def _iterative_associate(cost: np.ndarray, match_thr: float, reduce_step: float = 0.05) -> tuple[list]:
-    """Greedy mutually-nearest matching with a threshold that shrinks each iteration.
+    """使用相互最近邻的贪心匹配，并在每次迭代中缩小阈值。
 
-    Returns (matches, unmatched_tracks, unmatched_dets).
+    返回 (matches, unmatched_tracks, unmatched_dets)。
     """
     matches = []
     cost = cost.copy()
@@ -107,7 +107,7 @@ def _iterative_associate(cost: np.ndarray, match_thr: float, reduce_step: float 
 def _track_aware_nms(
     tracks: list[TTSTrack], dets: list[TTSTrack], tai_thr: float, new_track_thresh: float
 ) -> list[bool]:
-    """TAI NMS: suppress detections that heavily overlap an existing track or a stronger detection."""
+    """TAI NMS：抑制与现有跟踪目标或更强检测结果高度重叠的检测结果。"""
     if not dets:
         return []
     scores = np.array([det.score for det in dets])
@@ -134,15 +134,15 @@ def _track_aware_nms(
 
 
 def attach_raw_preds_hook(predictor) -> None:
-    """Wrap `predictor.postprocess` to capture raw pre-NMS predictions and inputs (idempotent)."""
+    """包装 `predictor.postprocess`，捕获 NMS 前的原始预测结果和输入（操作幂等）。"""
     if hasattr(predictor, "_orig_postprocess"):
         return
     orig = predictor.postprocess
 
     @wraps(orig)
     def _wrapped(preds, img, orig_imgs, *args, **kwargs):
-        raw = preds[0] if isinstance(preds, (list, tuple)) else preds  # PyTorch models return [inference, extras]
-        # clone() so the in-place NMS xywh->xyxy conversion can't mutate this capture; keep source device for box_iou
+        raw = preds[0] if isinstance(preds, (list, tuple)) else preds  # PyTorch 模型返回 [推理结果, 额外数据]
+        # 使用 clone()，避免原地 NMS 的 xywh->xyxy 转换修改捕获结果；保留源设备以供 box_iou 使用
         predictor._raw_preds = raw.detach().clone() if isinstance(raw, torch.Tensor) else raw
         predictor._postprocess_im = img
         predictor._postprocess_im0s = orig_imgs
@@ -153,7 +153,7 @@ def attach_raw_preds_hook(predictor) -> None:
 
 
 def compute_dets_del(predictor) -> list | None:
-    """Return per-batch `(xywh, conf, cls)` tuples for detections the tight NMS dropped, or None if unavailable."""
+    """返回每个批次中被严格 NMS 丢弃的 `(xywh, conf, cls)` 元组；不可用时返回 None。"""
     raw = getattr(predictor, "_raw_preds", None)
     if raw is None or not isinstance(raw, torch.Tensor):
         return None
@@ -179,7 +179,7 @@ def compute_dets_del(predictor) -> list | None:
             continue
         dels = loose_boxes.data[mask].cpu()
         if is_obb:
-            xywh = dels[:, :5].numpy()  # xywhr
+            xywh = dels[:, :5].numpy()  # xywhr 格式
             out.append((xywh, dels[:, 5].numpy(), dels[:, 6].numpy()))
         else:
             xywh = ops.xyxy2xywh(dels[:, :4]).numpy()
@@ -190,10 +190,10 @@ def compute_dets_del(predictor) -> list | None:
 
 
 def _cosine_distance(tracks: list[TTSTrack], dets: list[TTSTrack]) -> np.ndarray:
-    """Cosine distance in `[0, 1]` between track and detection embeddings; NaN where either side has no feature.
+    """计算 `[0, 1]` 范围内的跟踪目标与检测结果嵌入余弦距离；任一侧没有特征时返回 NaN。
 
-    A NaN entry signals "no appearance evidence for this pair" so the caller falls back to motion rather than treating a
-    missing/occlusion-suppressed embedding as maximally dissimilar (which would penalize true matches).
+    NaN 表示“该配对没有外观证据”，调用方会回退到运动信息，而不是将缺失或被遮挡抑制的嵌入视为最大不相似，
+    从而避免错误惩罚真实匹配。
     """
     if not tracks or not dets:
         return np.ones((len(tracks), len(dets)), dtype=np.float32)
@@ -201,8 +201,8 @@ def _cosine_distance(tracks: list[TTSTrack], dets: list[TTSTrack]) -> np.ndarray
     dfeat = [d.curr_feat for d in dets]
     dim = next((f.shape[0] for f in (*tfeat, *dfeat) if f is not None), 128)
     zeros = np.zeros(dim, dtype=np.float32)
-    # Pin float32 as `matching.embedding_distance` does: an unpinned stack inherits the encoder's dtype, so a
-    # half-precision ReID backend (`quantize=16`, or a float16 ONNX model) would decide this cost matrix' precision.
+    # 与 `matching.embedding_distance` 一样固定使用 float32：不固定时，堆叠结果会继承编码器类型，
+    # 半精度 ReID 后端（`quantize=16` 或 float16 ONNX 模型）会影响代价矩阵的精度。
     T = np.asarray([f if f is not None else zeros for f in tfeat], dtype=np.float32)
     D = np.asarray([f if f is not None else zeros for f in dfeat], dtype=np.float32)
     valid = np.array([f is not None for f in tfeat])[:, None] & np.array([f is not None for f in dfeat])[None, :]
@@ -210,25 +210,24 @@ def _cosine_distance(tracks: list[TTSTrack], dets: list[TTSTrack]) -> np.ndarray
 
 
 class TTSTrack(BOTrack):
-    """Single-object track for TrackTrack with corner velocity, score history, and ReID features.
+    """TrackTrack 使用的单目标跟踪对象，包含角点速度、分数历史和 ReID 特征。
 
-    Extends `BOTrack` (XYWH Kalman state and EMA ReID smoothing), adding corner-velocity motion, score history, and
-    score-adaptive feature smoothing.
+    该类扩展 `BOTrack`（XYWH 卡尔曼状态和 EMA ReID 平滑），增加角点速度运动信息、分数历史和自适应分数的特征平滑。
 
-    Attributes:
-        min_track_len (int): Class-level default; overridden by TRACKTRACK from config.
-        kalman_filter (KalmanFilterXYWH): Per-track Kalman filter used after activation.
-        mean (np.ndarray): Mean state vector.
-        covariance (np.ndarray): Covariance matrix.
-        score (float): Current detection confidence.
-        prev_score (float): Confidence from the previous update (for score projection).
-        tracklet_len (int): Successful updates since activation.
-        velocity (np.ndarray): Per-corner (4,2) unit velocity vectors.
-        smooth_feat (np.ndarray | None): EMA-smoothed ReID embedding.
-        curr_feat (np.ndarray | None): Raw ReID embedding from the current frame.
+    属性：
+        min_track_len (int): 类级别默认值；由配置中的 TRACKTRACK 覆盖。
+        kalman_filter (KalmanFilterXYWH): 激活后供该跟踪目标使用的卡尔曼滤波器。
+        mean (np.ndarray): 均值状态向量。
+        covariance (np.ndarray): 协方差矩阵。
+        score (float): 当前检测置信度。
+        prev_score (float): 上次更新时的置信度（用于分数投影）。
+        tracklet_len (int): 激活后的成功更新次数。
+        velocity (np.ndarray): 每个角点的 (4,2) 单位速度向量。
+        smooth_feat (np.ndarray | None): 经过 EMA 平滑的 ReID 嵌入。
+        curr_feat (np.ndarray | None): 当前帧的原始 ReID 嵌入。
 
-    Examples:
-        Create and activate a new track
+    示例：
+        创建并激活新的跟踪目标
         >>> track = TTSTrack(np.array([100, 200, 50, 80, 0]), score=0.9, cls="person")
         >>> track.activate(KalmanFilterXYWH(), frame_id=1)
     """
@@ -238,15 +237,15 @@ class TTSTrack(BOTrack):
     _delta_t = 3
 
     def __init__(self, xywh: np.ndarray, score: float, cls: Any, feat: np.ndarray | None = None):
-        """Initialize a TTSTrack from a detection bounding box.
+        """根据检测边界框初始化 TTSTrack。
 
-        Args:
-            xywh (np.ndarray): `(x, y, w, h, idx)` or `(x, y, w, h, angle, idx)`, center-based with detection index.
-            score (float): Detection confidence.
-            cls (Any): Class label.
-            feat (np.ndarray | None): Optional ReID feature vector.
+        参数：
+            xywh (np.ndarray): `(x, y, w, h, idx)` 或 `(x, y, w, h, angle, idx)`，以中心点表示，并包含检测索引。
+            score (float): 检测置信度。
+            cls (Any): 类别标签。
+            feat (np.ndarray | None): 可选的 ReID 特征向量。
         """
-        super().__init__(xywh, score, cls)  # BOTrack sets smooth_feat/curr_feat and the XYWH Kalman state
+        super().__init__(xywh, score, cls)  # BOTrack 设置 smooth_feat/curr_feat 以及 XYWH 卡尔曼状态
         self.prev_score = score
         self.velocity = np.zeros((4, 2), dtype=np.float32)
         self._history: deque[tuple[int, np.ndarray]] = deque(maxlen=self._delta_t + 1)
@@ -254,14 +253,14 @@ class TTSTrack(BOTrack):
             self.update_features(feat)
 
     def update_features(self, feat: np.ndarray) -> None:
-        """Normalize `feat` and blend it into `smooth_feat` via score-adaptive EMA."""
+        """归一化 `feat`，并通过分数自适应 EMA 将其融合到 `smooth_feat` 中。"""
         beta = self._alpha + (1 - self._alpha) * (1 - self.score)
         curr, smooth = smooth_feature(feat, self.smooth_feat, beta)
         if curr is not None:
             self.curr_feat, self.smooth_feat = curr, smooth
 
     def get_history_box(self, frame_id: int, dt: int) -> np.ndarray:
-        """Return the box from `dt` frames back, or the most recent box, or the current box."""
+        """返回 `dt` 帧之前的边界框；若不存在，则返回最近的边界框或当前边界框。"""
         target = frame_id - dt
         for fid, box in self._history:
             if fid == target:
@@ -271,7 +270,7 @@ class TTSTrack(BOTrack):
         return self.xyxy
 
     def activate(self, kalman_filter: KalmanFilterXYWH, frame_id: int) -> None:
-        """Initialize Kalman state and promote to New state."""
+        """初始化卡尔曼状态，并将跟踪目标提升为 New 状态。"""
         self.kalman_filter = kalman_filter
         self.track_id = self.next_id()
         self.mean, self.covariance = kalman_filter.initiate(self.convert_coords(self._tlwh))
@@ -282,13 +281,13 @@ class TTSTrack(BOTrack):
         self.frame_id = self.start_frame = frame_id
 
     def re_activate(self, new_track, frame_id: int, new_id: bool = False) -> None:
-        """Rebind a lost track to a fresh detection via NSA-Kalman."""
+        """通过 NSA-Kalman 将丢失的跟踪目标重新绑定到新的检测结果。"""
         self.prev_score = self.score
         self.mean, self.covariance = self.kalman_filter.update(
             self.mean, self.covariance, self.convert_coords(new_track.tlwh), confidence=new_track.score
         )
         self._history.append((frame_id, self.xyxy))
-        self.score = new_track.score  # set before update_features so the EMA weight uses the current confidence
+        self.score = new_track.score  # 在 update_features 前设置，使 EMA 权重使用当前置信度
         if new_track.curr_feat is not None:
             self.update_features(new_track.curr_feat)
         self.tracklet_len = 0
@@ -300,7 +299,7 @@ class TTSTrack(BOTrack):
         self.cls, self.angle, self.idx = new_track.cls, new_track.angle, new_track.idx
 
     def update(self, new_track, frame_id: int) -> None:
-        """Update a matched track with a new detection; promote to Tracked after min_track_len."""
+        """使用新的检测结果更新已匹配目标；达到 min_track_len 后提升为 Tracked 状态。"""
         self.frame_id = frame_id
         self.tracklet_len += 1
         self.prev_score = self.score
@@ -318,7 +317,7 @@ class TTSTrack(BOTrack):
             velocity += np.stack([dx / norm, dy / norm], axis=-1) / dt
         self.velocity = velocity / self._delta_t
 
-        self.score = new_track.score  # set before update_features so the EMA weight uses the current confidence
+        self.score = new_track.score  # 在 update_features 前设置，使 EMA 权重使用当前置信度
         if new_track.curr_feat is not None:
             self.update_features(new_track.curr_feat)
 
@@ -328,46 +327,45 @@ class TTSTrack(BOTrack):
         self.cls, self.angle, self.idx = new_track.cls, new_track.angle, new_track.idx
 
     def __repr__(self) -> str:
-        """Short string representation of the track."""
+        """返回跟踪目标的简短字符串表示。"""
         return f"TT_{self.track_id}_({self.start_frame}-{self.end_frame})"
 
 
 class TRACKTRACK:
-    """Multi-object tracker implementing Track-Perspective Association and Track-Aware Initialization.
+    """实现基于轨迹视角关联和轨迹感知初始化的多目标跟踪器。
 
-    Detections are partitioned into high, low, and deleted (loose-NMS recovered) sets, then matched against the union of
-    tracked and lost tracks using a multi-cue cost (HMIoU + cosine ReID + confidence + angle distance) solved with
-    iterative assignment. Unmatched still-Lost tracks may optionally be re-associated against leftover detections in a
-    relaxed second pass, and surviving leftover detections spawn new tracks via track-aware NMS.
+    检测结果被划分为高分、低分和删除集（由宽松 NMS 恢复），随后与已跟踪和已丢失目标的并集进行匹配。
+    匹配代价融合 HMIoU、余弦 ReID、置信度和角度距离，并通过迭代分配求解。未匹配但仍处于 Lost 状态的目标可选地在
+    第二轮宽松匹配中与剩余检测结果重新关联；通过轨迹感知 NMS 保留下来的剩余检测结果将生成新目标。
 
-    Attributes:
-        tracked_stracks (list[TTSTrack]): Currently tracked tracks.
-        lost_stracks (list[TTSTrack]): Tracks that lost their detection but remain within the buffer window.
-        frame_id (int): Current frame index.
-        args (Any): Parsed tracker configuration.
-        max_time_lost (int): Frame budget before a lost track is removed (scaled to source frame rate).
-        kalman_filter (KalmanFilterXYWH): Kalman filter for new-track initialization.
-        match_thr (float): Cost gate for the main iterative assignment.
-        lost_match_thr (float): Cost gate for the optional relaxed lost-rebind pass; 0 disables it.
-        gmc (GMC): Global motion compensation for camera-motion warping.
-        encoder (Any): ReID encoder, or None when ReID is disabled.
+    属性：
+        tracked_stracks (列表[TTSTrack]): 当前正在跟踪的目标。
+        lost_stracks (列表[TTSTrack]): 丢失检测但仍在缓冲窗口内的目标。
+        frame_id (int): 当前帧索引。
+        args (Any): 解析后的跟踪器配置。
+        max_time_lost (int): 删除丢失目标前允许的帧数（按源视频帧率缩放）。
+        kalman_filter (KalmanFilterXYWH): 用于初始化新目标的卡尔曼滤波器。
+        match_thr (float): 主迭代分配的代价门限。
+        lost_match_thr (float): 可选丢失目标重新绑定过程的代价门限；为 0 时禁用。
+        gmc (GMC): 用于相机运动变换的全局运动补偿器。
+        encoder (Any): ReID 编码器；禁用 ReID 时为 None。
 
-    Methods:
-        update: Advance the tracker by one frame and return per-object tracking results.
-        reset: Clear all tracker state.
+    方法：
+        update: 推进跟踪器一帧并返回每个目标的跟踪结果。
+        reset: 清除跟踪器的所有状态。
 
-    Examples:
-        Initialize and run on a single frame
+    示例：
+        初始化并处理单帧图像
         >>> tracker = TRACKTRACK(args)
         >>> tracked_objects = tracker.update(yolo_results, img=image)
     """
 
     def __init__(self, args):
-        """Initialize TRACKTRACK from a tracker config (see `ultralytics/cfg/trackers/tracktrack.yaml`).
+        """根据跟踪器配置初始化 TRACKTRACK（参见 `ultralytics/cfg/trackers/tracktrack.yaml`）。
 
-        Args:
-            args (Any): Parsed tracker configuration. All knobs are read with `getattr(..., default)` so legacy YAMLs
-                missing recently added keys still load.
+        参数：
+            args (Any): 解析后的跟踪器配置。所有参数均通过 `getattr(..., default)` 读取，因此缺少近期新增键的旧版 YAML
+                文件仍可正常加载。
         """
         self.tracked_stracks: list[TTSTrack] = []
         self.lost_stracks: list[TTSTrack] = []
@@ -400,27 +398,26 @@ class TRACKTRACK:
 
     @classmethod
     def setup_predictor(cls, predictor):
-        """Attach the raw-predictions hook for Track-Aware Initialization (detect/obb only).
+        """为轨迹感知初始化附加原始预测结果钩子（仅支持 detect/obb）。
 
-        Recovered (loose-NMS) detections are box-only and have no row in the post-NMS Results, so on segment/pose
-        tasks they cannot carry mask/keypoint data and would mis-index downstream; skip recovery (and its
-        per-frame overhead) for those tasks.
+        恢复的检测结果（由宽松 NMS 获取）仅包含边界框，并且在 NMS 后的 Results 中没有对应记录；
+        因此在分割和姿态任务中无法携带掩码或关键点数据，还会导致下游索引错误。对于这些任务跳过恢复流程及其逐帧开销。
         """
         if predictor.args.task in {"detect", "obb"}:
             attach_raw_preds_hook(predictor)
 
     @classmethod
     def compute_frame_extras(cls, predictor):
-        """Return per-batch ``(xywh, conf, cls)`` tuples for detections dropped by tight NMS."""
+        """返回每个批次中被严格 NMS 丢弃的 ``(xywh, conf, cls)`` 元组。"""
         return compute_dets_del(predictor)
 
     def _cost_matrix(self, tracks: list[TTSTrack], dets: list[TTSTrack]) -> np.ndarray:
-        """Return the multi-cue cost matrix (HMIoU + ReID + confidence + angle), gated by IoU support."""
+        """返回融合多种线索的代价矩阵（HMIoU + ReID + 置信度 + 角度），并由 IoU 支持关系进行门控。"""
         iou_sim, hmiou_dist = _hmiou_distance(tracks, dets)
         if self.encoder is not None:
             cos = _cosine_distance(tracks, dets)
-            # Where appearance is missing (NaN: new track, or occlusion-suppressed detection), fall back to
-            # pure motion cost for that pair so the embedding neither helps nor penalizes it.
+            # 外观信息缺失时（NaN：新目标或被遮挡抑制的检测结果），该配对回退到纯运动代价，
+            # 使嵌入既不会帮助匹配，也不会惩罚匹配。
             cost = np.where(np.isnan(cos), hmiou_dist, self.iou_weight * hmiou_dist + self.reid_weight * cos)
         else:
             cost = hmiou_dist
@@ -434,21 +431,21 @@ class TRACKTRACK:
         return np.clip(cost, 0, 1)
 
     def _apply_gmc(self, img: np.ndarray, detections: list, pools: list[list[TTSTrack]]) -> None:
-        """Warp `pools` in place by the current GMC affine."""
+        """使用当前 GMC 仿射变换原地变换 `pools`。"""
         try:
             warp = self.gmc.apply(img, [det.xyxy for det in detections])
         except Exception as e:
-            LOGGER.warning(f"GMC failed, falling back to identity: {e}")
+            LOGGER.warning(f"GMC 失败，回退到单位变换：{e}")
             warp = np.eye(2, 3)
         for pool in pools:
             multi_gmc(pool, warp)
 
     def update(self, results, img: np.ndarray | None = None, dets_del=None, **kwargs) -> np.ndarray:
-        """Advance the tracker by one frame and return an `(N, 8)` array of `[x1, y1, x2, y2, id, score, cls, idx]`."""
+        """推进跟踪器一帧，并返回形状为 `(N, 8)` 的数组 `[x1, y1, x2, y2, id, score, cls, idx]`。"""
         self.frame_id += 1
         activated, refind, lost, removed = [], [], [], []
 
-        scores = np.asarray(results.conf)  # keep masks numpy; numpy coerces a 1-element torch bool mask via __index__
+        scores = np.asarray(results.conf)  # 保持掩码为 numpy；numpy 会通过 __index__ 转换单元素 torch 布尔掩码
         boxes = parse_bboxes(results)
         high_mask = scores >= self.args.track_high_thresh
         low_mask = (scores > self.args.track_low_thresh) & (scores < self.args.track_high_thresh)
@@ -483,7 +480,7 @@ class TRACKTRACK:
                 del_boxes = np.concatenate([del_xywh[mask], -np.ones((mask.sum(), 1))], axis=-1)
                 dets_recovered = [_new_track(b, s, c) for b, s, c in zip(del_boxes, del_conf[mask], del_cls[mask])]
 
-        # Route by state: frame-1 tracks are visible (is_activated) but still New, so they must stay unconfirmed
+        # 按状态分流：第 1 帧的目标虽然可见（is_activated），但仍处于 New 状态，因此必须保持未确认
         unconfirmed, tracked = [], []
         for track in self.tracked_stracks:
             (tracked if track.state == TrackState.Tracked else unconfirmed).append(track)
@@ -494,7 +491,7 @@ class TRACKTRACK:
         TTSTrack.multi_predict(pool)
         TTSTrack.multi_predict(unconfirmed)
 
-        # Main association: pool vs (high + low + recovered) detections, with per-bucket cost penalties.
+        # 主关联：将 pool 与（高分 + 低分 + 恢复）检测结果匹配，并为不同分组施加代价惩罚。
         all_dets = dets_high + dets_low + dets_recovered
         n_high, n_low = len(dets_high), len(dets_low)
         cost = self._cost_matrix(pool, all_dets)
@@ -519,7 +516,7 @@ class TRACKTRACK:
                 track.mark_lost()
                 lost.append(track)
 
-        # Second association: unconfirmed tracks vs leftover high-confidence detections.
+        # 第二次关联：将未确认目标与剩余的高置信度检测结果匹配。
         leftover = [all_dets[i] for i in unmatched_dets if i < n_high]
         if unconfirmed and leftover:
             uc_cost = self._cost_matrix(unconfirmed, leftover)
@@ -538,7 +535,7 @@ class TRACKTRACK:
                 track.mark_removed()
                 removed.append(track)
 
-        # Optional relaxed rebind: still-Lost tracks vs leftover detections (disabled when lost_match_thr <= 0).
+        # 可选的宽松重新绑定：将仍处于 Lost 状态的目标与剩余检测结果匹配（lost_match_thr <= 0 时禁用）。
         if self.lost_match_thr > 0 and leftover:
             unmatched_lost = [t for t in pool if t.state == TrackState.Lost and t not in lost]
             if unmatched_lost:
@@ -549,7 +546,7 @@ class TRACKTRACK:
                     refind.append(unmatched_lost[track_idx])
                 leftover = [leftover[i] for i in lost_unmatched]
 
-        # TAI: spawn new tracks from leftover detections that survive NMS against existing tracks.
+        # TAI：从通过现有目标 NMS 的剩余检测结果中生成新目标。
         active = [track for track in self.tracked_stracks if track.state == TrackState.Tracked] + activated
         for det, ok in zip(leftover, _track_aware_nms(active, leftover, self.tai_thr, self.new_track_thresh)):
             if ok:
@@ -568,7 +565,7 @@ class TRACKTRACK:
         )
 
     def reset(self) -> None:
-        """Clear all tracker state including GMC warp history and the global ID counter."""
+        """清除跟踪器的所有状态，包括 GMC 变换历史和全局 ID 计数器。"""
         self.tracked_stracks = []
         self.lost_stracks = []
         self.removed_stracks = []

@@ -22,4 +22,4 @@ __all__ = (
     "SAM3SemanticPredictor",
     "SAM3VideoPredictor",
     "SAM3VideoSemanticPredictor",
-)  # tuple or list of exportable items
+)  # 可导出项目的元组或列表

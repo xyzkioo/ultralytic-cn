@@ -58,7 +58,7 @@ def mouse_callback(event: int, x: int, y: int, flags: int, param: Any) -> None:
     """
     global current_region
 
-    # Mouse left button down event
+    # 鼠标左键按下事件
     if event == cv2.EVENT_LBUTTONDOWN:
         for region in counting_regions:
             if region["polygon"].contains(Point((x, y))):
@@ -67,7 +67,7 @@ def mouse_callback(event: int, x: int, y: int, flags: int, param: Any) -> None:
                 current_region["offset_x"] = x
                 current_region["offset_y"] = y
 
-    # Mouse move event
+    # 鼠标移动事件
     elif event == cv2.EVENT_MOUSEMOVE:
         if current_region is not None and current_region["dragging"]:
             dx = x - current_region["offset_x"]
@@ -78,7 +78,7 @@ def mouse_callback(event: int, x: int, y: int, flags: int, param: Any) -> None:
             current_region["offset_x"] = x
             current_region["offset_y"] = y
 
-    # Mouse left button up event
+    # 鼠标左键释放事件
     elif event == cv2.EVENT_LBUTTONUP and current_region is not None and current_region["dragging"]:
         current_region["dragging"] = False
 
@@ -122,37 +122,37 @@ def run(
     """
     vid_frame_count = 0
 
-    # Check source path
+    # 检查源路径
     if not Path(source).exists():
         raise FileNotFoundError(f"Source path '{source}' does not exist.")
 
-    # Setup Model
+    # 设置模型
     model = YOLO(f"{weights}")
     model.to("cuda") if device == "0" else model.to("cpu")
 
-    # Extract classes names
+    # 提取类别名称
     names = model.names
 
-    # Video setup
+    # 设置视频
     videocapture = cv2.VideoCapture(source)
     frame_width = int(videocapture.get(3))
     frame_height = int(videocapture.get(4))
     fps = int(videocapture.get(5))
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
 
-    # Output setup
+    # 设置输出
     save_dir = increment_path(Path("ultralytics_rc_output") / "exp", exist_ok)
     save_dir.mkdir(parents=True, exist_ok=True)
     video_writer = cv2.VideoWriter(str(save_dir / f"{Path(source).stem}.avi"), fourcc, fps, (frame_width, frame_height))
 
-    # Iterate over video frames
+    # 遍历视频帧
     while videocapture.isOpened():
         success, frame = videocapture.read()
         if not success:
             break
         vid_frame_count += 1
 
-        # Extract the results
+        # 提取结果
         results = model.track(frame, persist=True, classes=classes)
 
         if results[0].boxes.is_track:
@@ -173,12 +173,12 @@ def run(
                 points = np.hstack(track).astype(np.int32).reshape((-1, 1, 2))
                 cv2.polylines(frame, [points], isClosed=False, color=colors(cls, True), thickness=track_thickness)
 
-                # Check if detection inside region
+                # 检查检测结果是否位于区域内
                 for region in counting_regions:
                     if region["polygon"].contains(Point((bbox_center[0], bbox_center[1]))):
                         region["counts"] += 1
 
-        # Draw regions (Polygons/Rectangles)
+        # 绘制区域（多边形/矩形）
         for region in counting_regions:
             region_label = str(region["counts"])
             region_color = region["region_color"]

@@ -30,59 +30,55 @@ from ultralytics.utils import ROOT, YAML
 
 
 class YOLO(Model):
-    """YOLO (You Only Look Once) object detection model.
+    """YOLO（You Only Look Once）对象检测模型。
 
-    This class provides a unified interface for YOLO models, automatically switching to specialized model types
-    (YOLOWorld or YOLOE) based on the model filename. It supports various computer vision tasks including object
-    detection, instance segmentation, semantic segmentation, classification, pose estimation, and oriented bounding box
-    detection.
+    此类为 YOLO 模型提供统一接口，并根据模型文件名自动切换到专用模型类型（YOLOWorld 或 YOLOE）。
+    它支持多种计算机视觉任务，包括对象检测、实例分割、语义分割、图像分类、姿态估计和有向边界框检测。
 
-    Attributes:
-        model: The loaded YOLO model instance.
-        task: The task type (detect, segment, semantic, classify, pose, obb).
-        overrides: Configuration overrides for the model.
+    属性：
+        model: 已加载的 YOLO 模型实例。
+        task: 任务类型（detect、segment、semantic、classify、pose、obb）。
+        overrides: 模型配置覆盖项。
 
-    Methods:
-        __init__: Initialize a YOLO model with automatic type detection.
-        task_map: Map tasks to their corresponding model, trainer, validator, and predictor classes.
+    方法：
+        __init__: 初始化 YOLO 模型并自动识别模型类型。
+        task_map: 将任务映射到对应的模型、训练器、验证器和预测器类。
 
-    Examples:
-        Load a pretrained YOLO26n detection model
+    示例：
+        加载预训练的 YOLO26n 检测模型
         >>> model = YOLO("yolo26n.pt")
 
-        Load a pretrained YOLO26n segmentation model
+        加载预训练的 YOLO26n 分割模型
         >>> model = YOLO("yolo26n-seg.pt")
 
-        Initialize from a YAML configuration
+        根据 YAML 配置初始化
         >>> model = YOLO("yolo26n.yaml")
     """
 
     def __init__(self, model: str | Path = "yolo26n.pt", task: str | None = None, verbose: bool = False):
-        """Initialize a YOLO model.
+        """初始化 YOLO 模型。
 
-        This constructor initializes a YOLO model, automatically switching to specialized model types (YOLOWorld or
-        YOLOE) based on the model filename.
+        此构造函数初始化 YOLO 模型，并根据模型文件名自动切换到专用模型类型（YOLOWorld 或 YOLOE）。
 
-        Args:
-            model (str | Path): Model name or path to model file, i.e. 'yolo26n.pt', 'yolo26n.yaml'.
-            task (str, optional): YOLO task specification, i.e. 'detect', 'segment', 'classify', 'pose', 'obb'. Defaults
-                to auto-detection based on model.
-            verbose (bool): Display model info on load.
+        参数：
+            model (str | Path): 模型名称或模型文件路径，例如 'yolo26n.pt'、'yolo26n.yaml'。
+            task (str, 可选): YOLO 任务类型，例如 'detect'、'segment'、'classify'、'pose'、'obb'；默认为根据模型自动识别。
+            verbose (bool): 加载模型时是否显示详细信息。
         """
         path = Path(model if isinstance(model, (str, Path)) else "")
-        if "-world" in path.stem and path.suffix in {".pt", ".yaml", ".yml"}:  # if YOLOWorld PyTorch model
+        if "-world" in path.stem and path.suffix in {".pt", ".yaml", ".yml"}:  # 如果是 YOLOWorld PyTorch 模型
             new_instance = YOLOWorld(path, verbose=verbose)
             self.__class__ = type(new_instance)
             self.__dict__ = new_instance.__dict__
-        elif "yoloe" in path.stem and path.suffix in {".pt", ".yaml", ".yml"}:  # if YOLOE PyTorch model
+        elif "yoloe" in path.stem and path.suffix in {".pt", ".yaml", ".yml"}:  # 如果是 YOLOE PyTorch 模型
             new_instance = YOLOE(path, task=task, verbose=verbose)
             self.__class__ = type(new_instance)
             self.__dict__ = new_instance.__dict__
         else:
-            # Continue with default YOLO initialization
+            # 继续执行默认的 YOLO 初始化
             super().__init__(model=model, task=task, verbose=verbose)
             head = self.model.model[-1]._get_name() if hasattr(self.model, "model") else ""
-            if "RTDETR" in (head or BaseBackend.read_metadata(self.model).get("head", "")):  # if RTDETR head
+            if "RTDETR" in (head or BaseBackend.read_metadata(self.model).get("head", "")):  # 如果是 RTDETR 检测头
                 from ultralytics import RTDETR
 
                 new_instance = RTDETR(self)
@@ -91,7 +87,7 @@ class YOLO(Model):
 
     @property
     def task_map(self) -> dict[str, dict[str, Any]]:
-        """Map head to model, trainer, validator, and predictor classes."""
+        """将任务映射到对应的模型、训练器、验证器和预测器类。"""
         return {
             "classify": {
                 "model": ClassificationModel,
@@ -139,49 +135,47 @@ class YOLO(Model):
 
 
 class YOLOWorld(Model):
-    """YOLO-World object detection model.
+    """YOLO-World 对象检测模型。
 
-    YOLO-World is an open-vocabulary object detection model that can detect objects based on text descriptions without
-    requiring training on specific classes. It extends the YOLO architecture to support real-time open-vocabulary
-    detection.
+    YOLO-World 是一种开放词汇对象检测模型，可以根据文本描述检测对象，无需针对特定类别进行训练。
+    它扩展了 YOLO 架构，以支持实时开放词汇检测。
 
-    Attributes:
-        model: The loaded YOLO-World model instance.
-        task: Always set to 'detect' for object detection.
-        overrides: Configuration overrides for the model.
+    属性：
+        model: 已加载的 YOLO-World 模型实例。
+        task: 对象检测任务始终设置为 'detect'。
+        overrides: 模型配置覆盖项。
 
-    Methods:
-        __init__: Initialize YOLOv8-World model with a pre-trained model file.
-        task_map: Map tasks to their corresponding model, trainer, validator, and predictor classes.
-        set_classes: Set the model's class names for detection.
+    方法：
+        __init__: 使用预训练模型文件初始化 YOLOv8-World 模型。
+        task_map: 将任务映射到对应的模型、训练器、验证器和预测器类。
+        set_classes: 设置模型用于检测的类别名称。
 
-    Examples:
-        Load a YOLOv8-World model
+    示例：
+        加载 YOLOv8-World 模型
         >>> model = YOLOWorld("yolov8s-world.pt")
 
-        Set custom classes for detection
+        设置用于检测的自定义类别
         >>> model.set_classes(["person", "car", "bicycle"])
     """
 
     def __init__(self, model: str | Path = "yolov8s-world.pt", verbose: bool = False) -> None:
-        """Initialize YOLOv8-World model with a pre-trained model file.
+        """使用预训练模型文件初始化 YOLOv8-World 模型。
 
-        Loads a YOLOv8-World model for object detection. If no custom class names are provided, it assigns default COCO
-        class names.
+        加载用于对象检测的 YOLOv8-World 模型。如果未提供自定义类别名称，则分配默认 COCO 类别名称。
 
-        Args:
-            model (str | Path): Path to the pre-trained model file. Supports *.pt and *.yaml formats.
-            verbose (bool): If True, prints additional information during initialization.
+        参数：
+            model (str | Path): 预训练模型文件路径，支持 *.pt 和 *.yaml 格式。
+            verbose (bool): 为 True 时在初始化期间打印额外信息。
         """
         super().__init__(model=model, task="detect", verbose=verbose)
 
-        # Assign default COCO class names when there are no custom names
+        # 没有自定义名称时分配默认 COCO 类别名称
         if not hasattr(self.model, "names"):
             self.model.names = YAML.load(ROOT / "cfg/datasets/coco8.yaml").get("names")
 
     @property
     def task_map(self) -> dict[str, dict[str, Any]]:
-        """Map head to model, trainer, validator, and predictor classes."""
+        """将任务映射到对应的模型、训练器、验证器和预测器类。"""
         return {
             "detect": {
                 "model": WorldModel,
@@ -192,74 +186,73 @@ class YOLOWorld(Model):
         }
 
     def set_classes(self, classes: list[str]) -> None:
-        """Set the model's class names for detection.
+        """设置模型用于检测的类别名称。
 
-        Args:
-            classes (list[str]): A list of categories i.e. ["person"].
+        参数：
+            classes (list[str]): 类别名称列表，例如 ["person"]。
         """
         self.model.set_classes(classes)
-        # Remove background if it's given
+        # 如果提供了背景类别，则移除背景类别
         background = " "
         if background in classes:
             classes.remove(background)
         self.model.names = classes
 
-        # Reset method class names
+        # 重置预测器中的类别名称
         if self.predictor:
             self.predictor.model.names = classes
 
 
 class YOLOE(Model):
-    """YOLOE object detection and segmentation model.
+    """YOLOE 对象检测与实例分割模型。
 
-    YOLOE is an enhanced YOLO model that supports both object detection and instance segmentation tasks with improved
-    performance and additional features like visual and text positional embeddings.
+    YOLOE 是增强版 YOLO 模型，支持目标检测和实例分割任务，并提供视觉提示、文本提示以及视觉和文本位置嵌入等能力。
 
-    Attributes:
-        model: The loaded YOLOE model instance.
-        task: The task type (detect or segment).
-        overrides: Configuration overrides for the model.
+    属性：
+        model: 已加载的 YOLOE 模型实例。
+        task: 任务类型（`detect` 或 `segment`）。
+        overrides: 模型的配置覆盖项。
 
-    Methods:
-        __init__: Initialize YOLOE model with a pre-trained model file.
-        task_map: Map tasks to their corresponding model, trainer, validator, and predictor classes.
-        get_text_pe: Get text positional embeddings for the given texts.
-        get_visual_pe: Get visual positional embeddings for the given image and visual features.
-        set_vocab: Set vocabulary and class names for the YOLOE model.
-        get_vocab: Get the vocabulary for the given class names, which become the model's classes as the head is fused.
-        set_classes: Set the model's class names and embeddings for detection.
-        save_prompt_embeddings: Save the current prompt embeddings and class names to an NPZ file.
-        load_prompt_embeddings: Load prompt embeddings and class names from an NPZ file.
-        val: Validate the model using text or visual prompts.
-        predict: Run prediction on images, videos, directories, streams, etc.
+    方法：
+        __init__: 使用预训练模型文件初始化 YOLOE 模型。
+        task_map: 将任务映射到对应的模型、训练器、验证器和预测器类。
+        get_text_pe: 获取给定文本的位置嵌入。
+        get_visual_pe: 获取给定图像和视觉特征的位置嵌入。
+        set_vocab: 为 YOLOE 模型设置词汇表和类别名称。
+        get_vocab: 获取给定类别名称对应的词汇表，并在融合检测头后作为模型类别。
+        set_classes: 设置模型用于检测的类别名称和嵌入向量。
+        save_prompt_embeddings: 将当前提示嵌入和类别名称保存到 NPZ 文件。
+        load_prompt_embeddings: 从 NPZ 文件加载提示嵌入和类别名称。
+        val: 使用文本提示或视觉提示验证模型。
+        predict: 在图像、视频、目录、流等输入上执行预测。
 
-    Examples:
-        Load a YOLOE segmentation model
+    示例：
+        加载 YOLOE 分割模型：
         >>> model = YOLOE("yoloe-11s-seg.pt")
 
-        Predict with visual prompts, whose 'cls' holds one class index per box
+        使用视觉提示进行预测，其中 `cls` 为每个边界框对应的类别索引：
         >>> from ultralytics.models.yolo.yoloe import YOLOEVPSegPredictor
         >>> prompts = {"bboxes": np.array([[10, 20, 100, 200]]), "cls": np.array([0])}
         >>> results = model.predict("image.jpg", visual_prompts=prompts, predictor=YOLOEVPSegPredictor)
 
-        Re-parameterize into a prompt-free model, which no longer accepts prompts
+        将模型重新参数化为不依赖提示的模型，此后模型不再接受提示输入：
         >>> names = ["person", "car", "dog"]
         >>> model.set_vocab(model.get_vocab(names), names)
     """
 
     def __init__(self, model: str | Path = "yoloe-11s-seg.pt", task: str | None = None, verbose: bool = False) -> None:
-        """Initialize YOLOE model with a pre-trained model file.
+        """使用预训练模型文件初始化 YOLOE 模型。
 
-        Args:
-            model (str | Path): Path to the pre-trained model file. Supports *.pt and *.yaml formats.
-            task (str, optional): Task type for the model. Auto-detected if None.
-            verbose (bool): If True, prints additional information during initialization.
+        参数：
+            model (str | Path): 预训练模型文件的路径，支持 `*.pt` 和 `*.yaml` 格式。
+            task (str, 可选): 模型任务类型；设置为 `None` 时自动检测。
+            verbose (bool): 是否在初始化过程中输出额外信息。
         """
         super().__init__(model=model, task=task, verbose=verbose)
 
     @property
     def task_map(self) -> dict[str, dict[str, Any]]:
-        """Map head to model, trainer, validator, and predictor classes."""
+        """将任务映射到对应的模型、训练器、验证器和预测器类。"""
         return {
             "detect": {
                 "model": YOLOEModel,
@@ -276,24 +269,23 @@ class YOLOE(Model):
         }
 
     def get_text_pe(self, texts):
-        """Get text positional embeddings for the given texts."""
+        """获取给定文本的位置嵌入。"""
         assert isinstance(self.model, YOLOEModel)
         return self.model.get_text_pe(texts)
 
     def get_visual_pe(self, img, visual):
-        """Get visual positional embeddings for the given image and visual features.
+        """获取给定图像和视觉特征的视觉位置嵌入。
 
-        This method extracts positional embeddings from visual features based on the input image. It requires that the
-        model is an instance of YOLOEModel.
+        此方法根据输入图像从视觉特征中提取位置嵌入，要求模型必须是 YOLOEModel 的实例。
 
-        Args:
-            img (torch.Tensor): Input image tensor.
-            visual (torch.Tensor): Visual features extracted from the image.
+        参数：
+            img (torch.Tensor): 输入图像张量。
+            visual (torch.Tensor): 从图像中提取的视觉特征。
 
-        Returns:
-            (torch.Tensor): Visual positional embeddings.
+        返回：
+            (torch.Tensor): 视觉位置嵌入。
 
-        Examples:
+        示例：
             >>> model = YOLOE("yoloe-11s-seg.pt")
             >>> img = torch.rand(1, 3, 640, 640)
             >>> visual_features = torch.rand(1, 1, 80, 80)
@@ -303,72 +295,72 @@ class YOLOE(Model):
         return self.model.get_visual_pe(img, visual)
 
     def set_vocab(self, vocab: torch.nn.ModuleList, names: list[str]) -> None:
-        """Re-parameterize the model into a prompt-free one over the given class names.
+        """根据给定类别名称，将模型重新参数化为不依赖提示的模型。
 
-        The vocabulary is the fused classification layer `get_vocab` returns for the same names, not the names
-        themselves. The model must be an instance of YOLOEModel.
+        词汇表是针对相同名称由 `get_vocab` 返回的融合分类层，而不是类别名称本身。
+        模型必须是 YOLOEModel 的实例。
 
-        Args:
-            vocab (torch.nn.ModuleList): Fused classification layers returned by `get_vocab` for `names`.
-            names (list[str]): List of class names that the model can detect or classify.
+        参数：
+            vocab (torch.nn.ModuleList): 对 `names` 调用 `get_vocab` 返回的融合分类层。
+            names (列表[str]): 模型可以检测或分类的类别名称列表。
 
-        Raises:
-            AssertionError: If the model is not an instance of YOLOEModel.
+        异常：
+            AssertionError: 当模型不是 YOLOEModel 实例时抛出。
 
-        Examples:
+        示例：
             >>> model = YOLOE("yoloe-11s-seg.pt")
             >>> names = ["person", "car", "dog"]
             >>> model.set_vocab(model.get_vocab(names), names)
         """
         assert isinstance(self.model, YOLOEModel)
         names = check_class_names(names)
-        self.predictor = None  # the delegate destructively re-parameterizes the head
+        self.predictor = None  # 委托模型会直接将检测头重新参数化
         self.model.set_vocab(vocab, names=names)
 
     def get_vocab(self, names):
-        """Get the vocabulary for the given class names, which become the model's classes as the head is fused."""
+        """获取给定类别名称对应的词汇表，并在融合检测头后将其作为模型类别。"""
         assert isinstance(self.model, YOLOEModel)
-        self.predictor = None  # the delegate destructively fuses the promptable head
+        self.predictor = None  # 委托模型会直接融合可提示检测头
         return self.model.get_vocab(names)
 
     def set_classes(self, classes: list[str], embeddings: torch.Tensor | None = None) -> None:
-        """Set the model's class names and embeddings for detection.
+        """设置模型用于检测的类别名称和嵌入向量。
 
-        Args:
-            classes (list[str]): A list of categories i.e. ["person"].
-            embeddings (torch.Tensor, optional): Embeddings corresponding to the classes.
+        参数：
+            classes (列表[str]): 类别名称列表，例如 `["person"]`。
+            embeddings (torch.Tensor, 可选): 与类别名称对应的嵌入向量。
         """
-        # Verify no background class is present
+        # 确保类别列表中不包含背景类别
         assert " " not in classes
         assert isinstance(self.model, YOLOEModel)
         names = self.model.names.values() if isinstance(self.model.names, dict) else self.model.names
         if embeddings is not None or sorted(names) != sorted(classes):
             if embeddings is None:
-                embeddings = self.get_text_pe(classes)  # generate text embeddings if not provided
+                embeddings = self.get_text_pe(classes)  # 未提供嵌入向量时生成文本嵌入
             self.model.set_classes(classes, embeddings)
 
-        # Reset method class names
+        # 同步当前预测器中的类别名称
         if self.predictor:
             self.predictor.model.names = self.model.names
 
     def _prompt_embedding_model(self) -> str:
-        """Return the checkpoint identifier used to bind prompt embeddings to this model."""
+        """返回用于将提示嵌入绑定到当前模型的检查点标识符。"""
         source = self.overrides.get("pretrained") or getattr(self.model, "pt_path", None) or self.ckpt_path
         source = source if isinstance(source, (str, Path)) else self.model.yaml["yaml_file"]
         model = Path(source).stem
         return model[:-4] if model.endswith("-seg") else model
 
     def save_prompt_embeddings(self, file: str | Path) -> Path:
-        """Save the current prompt embeddings and class names to an NPZ file.
+        """将当前提示嵌入和类别名称保存到 NPZ 文件。
 
-        Args:
-            file (str | Path): Destination NPZ file path.
+        参数：
+            file (str | Path): 目标 NPZ 文件路径。
 
-        Returns:
-            (Path): Path to the saved NPZ file.
+        返回：
+            (Path): 已保存 NPZ 文件的路径。
 
-        Raises:
-            ValueError: If prompt embeddings have not been set or are invalid.
+        异常：
+            ValueError: 尚未设置提示嵌入，或提示嵌入无效时抛出。
         """
         assert isinstance(self.model, YOLOEModel)
         embeddings = getattr(self.model, "pe", None)
@@ -390,13 +382,13 @@ class YOLOE(Model):
         return file
 
     def load_prompt_embeddings(self, file: str | Path) -> None:
-        """Load prompt embeddings and class names from a model-bound NPZ file.
+        """从与模型绑定的 NPZ 文件加载提示嵌入和类别名称。
 
-        Args:
-            file (str | Path): Source NPZ file path created by :meth:`save_prompt_embeddings`.
+        参数：
+            file (str | Path): 由 `save_prompt_embeddings` 创建的源 NPZ 文件路径。
 
-        Raises:
-            ValueError: If the file is invalid or belongs to a different YOLOE architecture.
+        异常：
+            ValueError: 文件无效，或文件属于其他 YOLOE 架构时抛出。
         """
         assert isinstance(self.model, YOLOEModel)
         with np.load(file, allow_pickle=False) as data:
@@ -428,19 +420,19 @@ class YOLOE(Model):
         refer_data: str | None = None,
         **kwargs,
     ):
-        """Validate the model using text or visual prompts.
+        """使用文本提示或视觉提示验证模型。
 
-        Args:
-            validator (callable, optional): A callable validator function. If None, a default validator is loaded.
-            load_vp (bool): Whether to load visual prompts. If False, text prompts are used.
-            refer_data (str, optional): Path to the reference data for visual prompts.
-            **kwargs (Any): Additional keyword arguments to override default settings.
+        参数：
+            validator (callable, 可选): 可调用的验证器函数；为 `None` 时加载默认验证器。
+            load_vp (bool): 是否加载视觉提示；为 `False` 时使用文本提示。
+            refer_data (str, 可选): 视觉提示所需参考数据的路径。
+            **kwargs (Any): 用于覆盖默认设置的其他关键字参数。
 
-        Returns:
-            (dict): Validation statistics containing metrics computed during validation.
+        返回：
+            (dict): 验证过程中计算得到的指标统计信息。
         """
-        custom = {"rect": not load_vp}  # method defaults
-        args = {**self.overrides, **custom, **kwargs, "mode": "val"}  # highest priority args on the right
+        custom = {"rect": not load_vp}  # 方法默认设置
+        args = {**self.overrides, **custom, **kwargs, "mode": "val"}  # 右侧参数具有更高优先级
 
         validator = (validator or self._smart_load("validator"))(args=args, _callbacks=self.callbacks)
         validator(model=self.model, load_vp=load_vp, refer_data=refer_data)
@@ -456,28 +448,26 @@ class YOLOE(Model):
         predictor=yolo.yoloe.YOLOEVPDetectPredictor,
         **kwargs,
     ):
-        """Run prediction on images, videos, directories, streams, etc.
+        """在图像、视频、目录、数据流等输入上执行预测。
 
-        Args:
-            source (str | int | PIL.Image | np.ndarray, optional): Source for prediction. Accepts image paths, directory
-                paths, URL/YouTube streams, PIL images, numpy arrays, or webcam indices.
-            stream (bool): Whether to stream the prediction results. If True, results are yielded as a generator as they
-                are computed.
-            visual_prompts (dict[str, np.ndarray | list[np.ndarray]]): Dictionary containing visual prompts for the
-                model. Must include 'bboxes' and 'cls' keys when non-empty, holding either flat arrays or one array per
-                image for an explicit list, tuple, or 4-D tensor source with no refer_image.
-            refer_image (str | PIL.Image | np.ndarray, optional): Reference image for visual prompts.
-            predictor (callable): Custom predictor class for visual prompt predictions. Defaults to
-                YOLOEVPDetectPredictor.
-            **kwargs (Any): Additional keyword arguments passed to the predictor.
+        参数：
+            source (str | int | PIL.Image | np.ndarray, 可选): 预测输入源。可接受图像路径、目录路径、URL、
+                YouTube 数据流、PIL 图像、NumPy 数组或摄像头索引。
+            stream (bool): 是否以流式方式返回预测结果。为 `True` 时，结果会在计算完成后通过生成器逐个产出。
+            visual_prompts (dict[str, np.ndarray | 列表[np.ndarray]]): 包含视觉提示的字典。非空时必须包含 `bboxes`
+                和 `cls` 键；对于显式列表、元组或在未设置 `refer_image` 时的四维张量输入，二者可以是扁平数组，
+                也可以按图像分别提供一个数组。
+            refer_image (str | PIL.Image | np.ndarray, 可选): 视觉提示使用的参考图像。
+            predictor (callable): 处理视觉提示预测结果的自定义预测器类，默认为 `YOLOEVPDetectPredictor`。
+            **kwargs (Any): 传递给预测器的其他关键字参数。
 
-        Returns:
-            (list | generator): List of Results objects or generator of Results objects if stream=True.
+        返回：
+            (列表 | generator): `stream=True` 时返回 Results 对象列表或 Results 对象生成器。
 
-        Examples:
+        示例：
             >>> model = YOLOE("yoloe-11s-seg.pt")
             >>> results = model.predict("path/to/image.jpg")
-            >>> # With visual prompts, whose 'cls' holds one class index per box
+            >>> # 使用视觉提示，其中 `cls` 为每个边界框对应的类别索引
             >>> from ultralytics.models.yolo.yoloe import YOLOEVPSegPredictor
             >>> prompts = {"bboxes": np.array([[10, 20, 100, 200]]), "cls": np.array([0])}
             >>> results = model.predict("path/to/image.jpg", visual_prompts=prompts, predictor=YOLOEVPSegPredictor)
@@ -492,7 +482,7 @@ class YOLOE(Model):
                 "Expected non-scalar 'bboxes' and 'cls' visual prompts"
             )
             assert len(bboxes) == len(classes) > 0, "Expected an equal, non-zero number of boxes and classes"
-            nested = yolo.yoloe.YOLOEVPDetectPredictor.is_per_image(visual_prompts)  # one prompt array per image
+            nested = yolo.yoloe.YOLOEVPDetectPredictor.is_per_image(visual_prompts)  # 每张图像对应一个提示数组
             assert not isinstance(source, np.ndarray) or source.ndim != 4, "4-D NumPy sources are not supported"
             per_image_source = isinstance(source, (list, tuple)) or (
                 isinstance(source, torch.Tensor) and source.ndim == 4
@@ -540,15 +530,15 @@ class YOLOE(Model):
             if refer_image is None and source is not None:
                 dataset = load_inference_source(source)
                 if dataset.mode in {"video", "stream"}:
-                    # NOTE: set the first frame as refer image for videos/streams inference
+                    # 注意：将视频或数据流的第一帧设置为推理参考图像
                     refer_image = next(iter(dataset))[1][0]
             if refer_image is not None:
                 vpe = self.predictor.get_vpe(refer_image)
                 self.model.set_classes(self.model.names, vpe)
                 self.task = "segment" if isinstance(self.predictor, yolo.segment.SegmentationPredictor) else "detect"
-                self.predictor = None  # reset predictor
+                self.predictor = None  # 重置预测器
         elif isinstance(self.predictor, yolo.yoloe.YOLOEVPDetectPredictor):
-            self.predictor = None  # reset predictor if no visual prompts
-        self.overrides["agnostic_nms"] = True  # use agnostic nms for YOLOE default
+            self.predictor = None  # 没有视觉提示时重置预测器
+        self.overrides["agnostic_nms"] = True  # YOLOE 默认使用类别无关的 NMS
 
         return super().predict(source, stream, **kwargs)

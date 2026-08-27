@@ -1,8 +1,8 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
-# This action mirrors the Ultralytics repository to other platforms like GitLab.
-# It runs on manual workflow dispatch by the repository owner.
-# Additional platforms can be added by uncommenting the relevant sections.
+# 此操作会将 Ultralytics 仓库镜像到 GitLab 等其他平台。
+# 由仓库所有者手动触发工作流运行。
+# 取消相关部分的注释即可添加其他平台。
 
 name: Mirror Repository
 

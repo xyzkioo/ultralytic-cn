@@ -1,5 +1,5 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
-"""Block modules."""
+"""网络模块。"""
 
 from __future__ import annotations
 
@@ -58,16 +58,16 @@ __all__ = (
 
 
 class DFL(nn.Module):
-    """Integral module of Distribution Focal Loss (DFL).
+    """分布焦点损失（DFL）的积分模块。
 
-    Proposed in Generalized Focal Loss https://arxiv.org/abs/2006.04388
+    该模块提出于 Generalized Focal Loss：https://arxiv.org/abs/2006.04388
     """
 
     def __init__(self, c1: int = 16):
-        """Initialize a convolutional layer with a given number of input channels.
+        """使用给定的输入通道数量初始化卷积层。
 
-        Args:
-            c1 (int): Number of input channels.
+        参数：
+            c1 (int)：输入通道数量。
         """
         super().__init__()
         self.conv = nn.Conv2d(c1, 1, 1, bias=False).requires_grad_(False)
@@ -76,22 +76,22 @@ class DFL(nn.Module):
         self.c1 = c1
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Apply the DFL module to input tensor and return transformed output."""
-        b, _, a = x.shape  # batch, channels, anchors
+        """将 DFL 模块应用于输入张量并返回变换后的输出。"""
+        b, _, a = x.shape  # 批次、通道、锚框
         return self.conv(x.view(b, 4, self.c1, a).transpose(2, 1).softmax(1)).view(b, 4, a)
-        # return self.conv(x.view(b, self.c1, 4, a).softmax(1)).view(b, 4, a)
+        # 返回 self.conv(x.view(b, self.c1, 4, a).softmax(1)).view(b, 4, a)
 
 
 class Proto(nn.Module):
-    """Ultralytics YOLO models mask Proto module for segmentation models."""
+    """Ultralytics YOLO 分割模型的掩码原型模块。"""
 
     def __init__(self, c1: int, c_: int = 256, c2: int = 32):
-        """Initialize the Ultralytics YOLO models mask Proto module with specified number of protos and masks.
+        """使用指定的原型数量和掩码数量初始化 Ultralytics YOLO 掩码原型模块。
 
-        Args:
-            c1 (int): Input channels.
-            c_ (int): Intermediate channels.
-            c2 (int): Output channels (number of protos).
+        参数：
+            c1 (int)：输入通道数量。
+            c_ (int)：中间通道数量。
+            c2 (int)：输出通道数量（原型数量）。
         """
         super().__init__()
         self.cv1 = Conv(c1, c_, k=3)
@@ -100,23 +100,23 @@ class Proto(nn.Module):
         self.cv3 = Conv(c_, c2)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Perform a forward pass through layers using an upsampled input image."""
+        """对上采样后的输入图像执行前向传播。"""
         return self.cv3(self.cv2(self.upsample(self.cv1(x))))
 
 
 class HGStem(nn.Module):
-    """StemBlock of PPHGNetV2 with 5 convolutions and one maxpool2d.
+    """PPHGNetV2 的 StemBlock，包含 5 个卷积层和一个 maxpool2d。
 
     https://github.com/PaddlePaddle/PaddleDetection/blob/develop/ppdet/modeling/backbones/hgnet_v2.py
     """
 
     def __init__(self, c1: int, cm: int, c2: int):
-        """Initialize the StemBlock of PPHGNetV2.
+        """初始化 PPHGNetV2 的 StemBlock。
 
-        Args:
-            c1 (int): Input channels.
-            cm (int): Middle channels.
-            c2 (int): Output channels.
+        参数：
+            c1 (int)：输入通道数量。
+            cm (int)：中间通道数量。
+            c2 (int)：输出通道数量。
         """
         super().__init__()
         self.stem1 = Conv(c1, cm, 3, 2, act=nn.ReLU())
@@ -127,7 +127,7 @@ class HGStem(nn.Module):
         self.pool = nn.MaxPool2d(kernel_size=2, stride=1, padding=0, ceil_mode=True)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Forward pass of a PPHGNetV2 backbone layer."""
+        """执行 PPHGNetV2 主干网络层的前向传播。"""
         x = self.stem1(x)
         x = F.pad(x, [0, 1, 0, 1])
         x2 = self.stem2a(x)
@@ -141,7 +141,7 @@ class HGStem(nn.Module):
 
 
 class HGBlock(nn.Module):
-    """HG_Block of PPHGNetV2 with 2 convolutions and LightConv.
+    """PPHGNetV2 的 HG_Block，包含 2 个卷积层和 LightConv。
 
     https://github.com/PaddlePaddle/PaddleDetection/blob/develop/ppdet/modeling/backbones/hgnet_v2.py
     """
@@ -157,28 +157,28 @@ class HGBlock(nn.Module):
         shortcut: bool = False,
         act: nn.Module | None = None,
     ):
-        """Initialize HGBlock with specified parameters.
+        """使用指定参数初始化 HGBlock。
 
-        Args:
-            c1 (int): Input channels.
-            cm (int): Middle channels.
-            c2 (int): Output channels.
-            k (int): Kernel size.
-            n (int): Number of LightConv or Conv blocks.
-            lightconv (bool): Whether to use LightConv.
-            shortcut (bool): Whether to use shortcut connection.
-            act (nn.Module): Activation function.
+        参数：
+            c1 (int)：输入通道数量。
+            cm (int)：中间通道数量。
+            c2 (int)：输出通道数量。
+            k (int)：卷积核尺寸。
+            n (int)：LightConv 或 Conv 模块数量。
+            lightconv (bool)：是否使用 LightConv。
+            shortcut (bool)：是否使用残差连接。
+            act (nn.Module)：激活函数。
         """
         super().__init__()
         act = nn.ReLU() if act is None else act
         block = LightConv if lightconv else Conv
         self.m = nn.ModuleList(block(c1 if i == 0 else cm, cm, k=k, act=act) for i in range(n))
-        self.sc = Conv(c1 + n * cm, c2 // 2, 1, 1, act=act)  # squeeze conv
-        self.ec = Conv(c2 // 2, c2, 1, 1, act=act)  # excitation conv
+        self.sc = Conv(c1 + n * cm, c2 // 2, 1, 1, act=act)  # 压缩卷积
+        self.ec = Conv(c2 // 2, c2, 1, 1, act=act)  # 激励卷积
         self.add = shortcut and c1 == c2
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Forward pass of a PPHGNetV2 backbone layer."""
+        """执行 PPHGNetV2 主干网络层的前向传播。"""
         y = [x]
         y.extend(m(y[-1]) for m in self.m)
         y = self.ec(self.sc(torch.cat(y, 1)))
@@ -186,46 +186,46 @@ class HGBlock(nn.Module):
 
 
 class SPP(nn.Module):
-    """Spatial Pyramid Pooling (SPP) layer https://arxiv.org/abs/1406.4729."""
+    """空间金字塔池化（SPP）层，参见 https://arxiv.org/abs/1406.4729。"""
 
     def __init__(self, c1: int, c2: int, k: tuple[int, ...] = (5, 9, 13)):
-        """Initialize the SPP layer with input/output channels and pooling kernel sizes.
+        """使用输入/输出通道数和池化卷积核尺寸初始化 SPP 层。
 
-        Args:
-            c1 (int): Input channels.
-            c2 (int): Output channels.
-            k (tuple): Kernel sizes for max pooling.
+        参数：
+            c1 (int)：输入通道数量。
+            c2 (int)：输出通道数量。
+            k (tuple)：最大池化使用的卷积核尺寸。
         """
         super().__init__()
-        c_ = c1 // 2  # hidden channels
+        c_ = c1 // 2  # 隐藏通道
         self.cv1 = Conv(c1, c_, 1, 1)
         self.cv2 = Conv(c_ * (len(k) + 1), c2, 1, 1)
         self.m = nn.ModuleList([nn.MaxPool2d(kernel_size=x, stride=1, padding=x // 2) for x in k])
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Forward pass of the SPP layer, performing spatial pyramid pooling."""
+        """执行 SPP 层的前向传播，并完成空间金字塔池化。"""
         x = self.cv1(x)
         return self.cv2(torch.cat([x] + [m(x) for m in self.m], 1))
 
 
 class SPPF(nn.Module):
-    """Spatial Pyramid Pooling - Fast (SPPF) layer for YOLOv5 by Glenn Jocher."""
+    """Glenn Jocher 为 YOLOv5 提出的快速空间金字塔池化（SPPF）层。"""
 
     def __init__(self, c1: int, c2: int, k: int = 5, n: int = 3, shortcut: bool = False):
-        """Initialize the SPPF layer with given input/output channels and kernel size.
+        """使用给定的输入/输出通道数和卷积核尺寸初始化 SPPF 层。
 
-        Args:
-            c1 (int): Input channels.
-            c2 (int): Output channels.
-            k (int): Kernel size.
-            n (int): Number of pooling iterations.
-            shortcut (bool): Whether to use shortcut connection.
+        参数：
+            c1 (int)：输入通道数量。
+            c2 (int)：输出通道数量。
+            k (int)：卷积核尺寸。
+            n (int)：池化迭代次数。
+            shortcut (bool)：是否使用残差连接。
 
-        Notes:
-            This module is equivalent to SPP(k=(5, 9, 13)).
+        注意：
+            此模块等价于 SPP(k=(5, 9, 13))。
         """
         super().__init__()
-        c_ = c1 // 2  # hidden channels
+        c_ = c1 // 2  # 隐藏通道
         self.cv1 = Conv(c1, c_, 1, 1, act=False)
         self.cv2 = Conv(c_ * (n + 1), c2, 1, 1)
         self.m = nn.MaxPool2d(kernel_size=k, stride=1, padding=k // 2)
@@ -233,7 +233,7 @@ class SPPF(nn.Module):
         self.add = shortcut and c1 == c2
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Apply sequential pooling operations to input and return concatenated feature maps."""
+        """对输入执行连续池化操作，并返回拼接后的特征图。"""
         y = [self.cv1(x)]
         y.extend(self.m(y[-1]) for _ in range(getattr(self, "n", 3)))
         y = self.cv2(torch.cat(y, 1))
@@ -241,81 +241,81 @@ class SPPF(nn.Module):
 
 
 class C1(nn.Module):
-    """CSP Bottleneck with 1 convolution."""
+    """包含 1 个卷积层的 CSP 瓶颈模块。"""
 
     def __init__(self, c1: int, c2: int, n: int = 1):
-        """Initialize the CSP Bottleneck with 1 convolution.
+        """初始化包含 1 个卷积层的 CSP 瓶颈模块。
 
-        Args:
-            c1 (int): Input channels.
-            c2 (int): Output channels.
-            n (int): Number of convolutions.
+        参数：
+            c1 (int)：输入通道数量。
+            c2 (int)：输出通道数量。
+            n (int)：卷积层数量。
         """
         super().__init__()
         self.cv1 = Conv(c1, c2, 1, 1)
         self.m = nn.Sequential(*(Conv(c2, c2, 3) for _ in range(n)))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Apply convolution and residual connection to input tensor."""
+        """对输入张量应用卷积和残差连接。"""
         y = self.cv1(x)
         return self.m(y) + y
 
 
 class C2(nn.Module):
-    """CSP Bottleneck with 2 convolutions."""
+    """包含 2 个卷积层的 CSP 瓶颈模块。"""
 
     def __init__(self, c1: int, c2: int, n: int = 1, shortcut: bool = True, g: int = 1, e: float = 0.5):
-        """Initialize a CSP Bottleneck with 2 convolutions.
+        """初始化包含 2 个卷积层的 CSP 瓶颈模块。
 
-        Args:
-            c1 (int): Input channels.
-            c2 (int): Output channels.
-            n (int): Number of Bottleneck blocks.
-            shortcut (bool): Whether to use shortcut connections.
-            g (int): Groups for convolutions.
-            e (float): Expansion ratio.
+        参数：
+            c1 (int): 输入通道数。
+            c2 (int): 输出通道数。
+            n (int): Bottleneck 模块数量。
+            shortcut (bool): 是否使用残差连接。
+            g (int): 卷积分组数量。
+            e (float): 通道扩展比例。
         """
         super().__init__()
-        self.c = int(c2 * e)  # hidden channels
+        self.c = int(c2 * e)  # 隐藏通道
         self.cv1 = Conv(c1, 2 * self.c, 1, 1)
-        self.cv2 = Conv(2 * self.c, c2, 1)  # optional act=FReLU(c2)
-        # self.attention = ChannelAttention(2 * self.c)  # or SpatialAttention()
+        self.cv2 = Conv(2 * self.c, c2, 1)  # 可选 act=FReLU(c2)
+        # self.attention = ChannelAttention(2 * self.c)  # 或使用 SpatialAttention()
         self.m = nn.Sequential(*(Bottleneck(self.c, self.c, shortcut, g, k=((3, 3), (3, 3)), e=1.0) for _ in range(n)))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Forward pass through the CSP bottleneck with 2 convolutions."""
+        """执行包含 2 个卷积层的 CSP 瓶颈模块前向传播。"""
         a, b = self.cv1(x).chunk(2, 1)
         return self.cv2(torch.cat((self.m(a), b), 1))
 
 
 class C2f(nn.Module):
-    """Faster Implementation of CSP Bottleneck with 2 convolutions."""
+    """包含 2 个卷积层的快速 CSP 瓶颈实现。"""
 
     def __init__(self, c1: int, c2: int, n: int = 1, shortcut: bool = False, g: int = 1, e: float = 0.5):
-        """Initialize a CSP bottleneck with 2 convolutions.
+        """初始化包含 2 个卷积层的 CSP 瓶颈模块。
 
-        Args:
-            c1 (int): Input channels.
-            c2 (int): Output channels.
-            n (int): Number of Bottleneck blocks.
-            shortcut (bool): Whether to use shortcut connections.
-            g (int): Groups for convolutions.
-            e (float): Expansion ratio.
+        参数：
+            c1 (int)：输入通道数量。
+            c2 (int)：输出通道数量。
+            n (int)：Bottleneck 模块数量。
+            shortcut (bool)：是否使用残差连接。
+            g (int)：卷积分组数量。
+            e (float)：扩展比例。
         """
         super().__init__()
-        self.c = int(c2 * e)  # hidden channels
+        self.c = int(c2 * e)  # 隐藏通道
         self.cv1 = Conv(c1, 2 * self.c, 1, 1)
-        self.cv2 = Conv((2 + n) * self.c, c2, 1)  # optional act=FReLU(c2)
+        self.cv2 = Conv((2 + n) * self.c, c2, 1)  # 可选 act=FReLU(c2)
         self.m = nn.ModuleList(Bottleneck(self.c, self.c, shortcut, g, k=((3, 3), (3, 3)), e=1.0) for _ in range(n))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Forward pass through C2f layer."""
+        """执行 C2f 层的前向传播。"""
         y = list(self.cv1(x).chunk(2, 1))
         y.extend(m(y[-1]) for m in self.m)
         return self.cv2(torch.cat(y, 1))
 
     def forward_split(self, x: torch.Tensor) -> torch.Tensor:
-        """Forward pass using split() instead of chunk()."""
+        """使用 split() 而不是 chunk() 执行前向传播。"""
         y = self.cv1(x).split((self.c, self.c), 1)
         y = [y[0], y[1]]
         y.extend(m(y[-1]) for m in self.m)
@@ -323,44 +323,44 @@ class C2f(nn.Module):
 
 
 class C3(nn.Module):
-    """CSP Bottleneck with 3 convolutions."""
+    """包含 3 个卷积层的 CSP 瓶颈模块。"""
 
     def __init__(self, c1: int, c2: int, n: int = 1, shortcut: bool = True, g: int = 1, e: float = 0.5):
-        """Initialize the CSP Bottleneck with 3 convolutions.
+        """初始化包含 3 个卷积层的 CSP 瓶颈模块。
 
-        Args:
-            c1 (int): Input channels.
-            c2 (int): Output channels.
-            n (int): Number of Bottleneck blocks.
-            shortcut (bool): Whether to use shortcut connections.
-            g (int): Groups for convolutions.
-            e (float): Expansion ratio.
+        参数：
+            c1 (int)：输入通道数量。
+            c2 (int)：输出通道数量。
+            n (int)：Bottleneck 模块数量。
+            shortcut (bool)：是否使用残差连接。
+            g (int)：卷积分组数量。
+            e (float)：扩展比例。
         """
         super().__init__()
-        c_ = int(c2 * e)  # hidden channels
+        c_ = int(c2 * e)  # 隐藏通道
         self.cv1 = Conv(c1, c_, 1, 1)
         self.cv2 = Conv(c1, c_, 1, 1)
-        self.cv3 = Conv(2 * c_, c2, 1)  # optional act=FReLU(c2)
+        self.cv3 = Conv(2 * c_, c2, 1)  # 可选 act=FReLU(c2)
         self.m = nn.Sequential(*(Bottleneck(c_, c_, shortcut, g, k=((1, 1), (3, 3)), e=1.0) for _ in range(n)))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Forward pass through the CSP bottleneck with 3 convolutions."""
+        """执行包含 3 个卷积层的 CSP 瓶颈模块前向传播。"""
         return self.cv3(torch.cat((self.m(self.cv1(x)), self.cv2(x)), 1))
 
 
 class C3x(C3):
-    """C3 module with cross-convolutions."""
+    """使用交叉卷积的 C3 模块。"""
 
     def __init__(self, c1: int, c2: int, n: int = 1, shortcut: bool = True, g: int = 1, e: float = 0.5):
-        """Initialize C3 module with cross-convolutions.
+        """使用交叉卷积初始化 C3 模块。
 
-        Args:
-            c1 (int): Input channels.
-            c2 (int): Output channels.
-            n (int): Number of Bottleneck blocks.
-            shortcut (bool): Whether to use shortcut connections.
-            g (int): Groups for convolutions.
-            e (float): Expansion ratio.
+        参数：
+            c1 (int)：输入通道数量。
+            c2 (int)：输出通道数量。
+            n (int)：Bottleneck 模块数量。
+            shortcut (bool)：是否使用残差连接。
+            g (int)：卷积分组数量。
+            e (float)：扩展比例。
         """
         super().__init__(c1, c2, n, shortcut, g, e)
         self.c_ = int(c2 * e)
@@ -368,42 +368,42 @@ class C3x(C3):
 
 
 class RepC3(nn.Module):
-    """Rep C3."""
+    """Rep C3 模块。"""
 
     def __init__(self, c1: int, c2: int, n: int = 3, e: float = 1.0):
-        """Initialize RepC3 module with RepConv blocks.
+        """使用 RepConv 模块初始化 RepC3。
 
-        Args:
-            c1 (int): Input channels.
-            c2 (int): Output channels.
-            n (int): Number of RepConv blocks.
-            e (float): Expansion ratio.
+        参数：
+            c1 (int)：输入通道数量。
+            c2 (int)：输出通道数量。
+            n (int)：RepConv 模块数量。
+            e (float)：扩展比例。
         """
         super().__init__()
-        c_ = int(c2 * e)  # hidden channels
+        c_ = int(c2 * e)  # 隐藏通道
         self.cv1 = Conv(c1, c_, 1, 1)
         self.cv2 = Conv(c1, c_, 1, 1)
         self.m = nn.Sequential(*[RepConv(c_, c_) for _ in range(n)])
         self.cv3 = Conv(c_, c2, 1, 1) if c_ != c2 else nn.Identity()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Forward pass of RepC3 module."""
+        """执行 RepC3 模块的前向传播。"""
         return self.cv3(self.m(self.cv1(x)) + self.cv2(x))
 
 
 class C3TR(C3):
-    """C3 module with TransformerBlock()."""
+    """使用 TransformerBlock() 的 C3 模块。"""
 
     def __init__(self, c1: int, c2: int, n: int = 1, shortcut: bool = True, g: int = 1, e: float = 0.5):
-        """Initialize C3 module with TransformerBlock.
+        """使用 TransformerBlock 初始化 C3 模块。
 
-        Args:
-            c1 (int): Input channels.
-            c2 (int): Output channels.
-            n (int): Number of Transformer blocks.
-            shortcut (bool): Whether to use shortcut connections.
-            g (int): Groups for convolutions.
-            e (float): Expansion ratio.
+        参数：
+            c1 (int)：输入通道数量。
+            c2 (int)：输出通道数量。
+            n (int)：Transformer 模块数量。
+            shortcut (bool)：是否使用残差连接。
+            g (int)：卷积分组数量。
+            e (float)：扩展比例。
         """
         super().__init__(c1, c2, n, shortcut, g, e)
         c_ = int(c2 * e)
@@ -411,121 +411,121 @@ class C3TR(C3):
 
 
 class C3Ghost(C3):
-    """C3 module with GhostBottleneck()."""
+    """使用 GhostBottleneck() 的 C3 模块。"""
 
     def __init__(self, c1: int, c2: int, n: int = 1, shortcut: bool = True, g: int = 1, e: float = 0.5):
-        """Initialize C3 module with GhostBottleneck.
+        """使用 GhostBottleneck 初始化 C3 模块。
 
-        Args:
-            c1 (int): Input channels.
-            c2 (int): Output channels.
-            n (int): Number of Ghost bottleneck blocks.
-            shortcut (bool): Whether to use shortcut connections.
-            g (int): Groups for convolutions.
-            e (float): Expansion ratio.
+        参数：
+            c1 (int)：输入通道数量。
+            c2 (int)：输出通道数量。
+            n (int)：Ghost 瓶颈模块数量。
+            shortcut (bool)：是否使用残差连接。
+            g (int)：卷积分组数量。
+            e (float)：扩展比例。
         """
         super().__init__(c1, c2, n, shortcut, g, e)
-        c_ = int(c2 * e)  # hidden channels
+        c_ = int(c2 * e)  # 隐藏通道
         self.m = nn.Sequential(*(GhostBottleneck(c_, c_) for _ in range(n)))
 
 
 class GhostBottleneck(nn.Module):
-    """Ghost Bottleneck https://github.com/huawei-noah/Efficient-AI-Backbones."""
+    """Ghost 瓶颈模块，参见 https://github.com/huawei-noah/Efficient-AI-Backbones。"""
 
     def __init__(self, c1: int, c2: int, k: int = 3, s: int = 1):
-        """Initialize Ghost Bottleneck module.
+        """初始化 Ghost 瓶颈模块。
 
-        Args:
-            c1 (int): Input channels.
-            c2 (int): Output channels.
-            k (int): Kernel size.
-            s (int): Stride.
+        参数：
+            c1 (int)：输入通道数量。
+            c2 (int)：输出通道数量。
+            k (int)：卷积核尺寸。
+            s (int)：步长。
         """
         super().__init__()
         c_ = c2 // 2
         self.conv = nn.Sequential(
-            GhostConv(c1, c_, 1, 1),  # pw
-            DWConv(c_, c_, k, s, act=False) if s == 2 else nn.Identity(),  # dw
-            GhostConv(c_, c2, 1, 1, act=False),  # pw-linear
+            GhostConv(c1, c_, 1, 1),  # 逐点卷积
+            DWConv(c_, c_, k, s, act=False) if s == 2 else nn.Identity(),  # 深度卷积
+            GhostConv(c_, c2, 1, 1, act=False),  # 线性逐点卷积
         )
         self.shortcut = (
             nn.Sequential(DWConv(c1, c1, k, s, act=False), Conv(c1, c2, 1, 1, act=False)) if s == 2 else nn.Identity()
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Apply skip connection and addition to input tensor."""
+        """对输入张量应用跳跃连接并执行相加。"""
         return self.conv(x) + self.shortcut(x)
 
 
 class Bottleneck(nn.Module):
-    """Standard bottleneck."""
+    """标准瓶颈模块。"""
 
     def __init__(
         self, c1: int, c2: int, shortcut: bool = True, g: int = 1, k: tuple[int, int] = (3, 3), e: float = 0.5
     ):
-        """Initialize a standard bottleneck module.
+        """初始化标准瓶颈模块。
 
-        Args:
-            c1 (int): Input channels.
-            c2 (int): Output channels.
-            shortcut (bool): Whether to use shortcut connection.
-            g (int): Groups for convolutions.
-            k (tuple): Kernel sizes for convolutions.
-            e (float): Expansion ratio.
+        参数：
+            c1 (int)：输入通道数量。
+            c2 (int)：输出通道数量。
+            shortcut (bool)：是否使用残差连接。
+            g (int)：卷积分组数量。
+            k (tuple)：卷积核尺寸。
+            e (float)：扩展比例。
         """
         super().__init__()
-        c_ = int(c2 * e)  # hidden channels
+        c_ = int(c2 * e)  # 隐藏通道
         self.cv1 = Conv(c1, c_, k[0], 1)
         self.cv2 = Conv(c_, c2, k[1], 1, g=g)
         self.add = shortcut and c1 == c2
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Apply bottleneck with optional shortcut connection."""
+        """对输入应用瓶颈模块，并根据配置使用可选的残差连接。"""
         return x + self.cv2(self.cv1(x)) if self.add else self.cv2(self.cv1(x))
 
 
 class BottleneckCSP(nn.Module):
-    """CSP Bottleneck https://github.com/WongKinYiu/CrossStagePartialNetworks."""
+    """CSP 瓶颈模块，参见 https://github.com/WongKinYiu/CrossStagePartialNetworks。"""
 
     def __init__(self, c1: int, c2: int, n: int = 1, shortcut: bool = True, g: int = 1, e: float = 0.5):
-        """Initialize CSP Bottleneck.
+        """初始化 CSP 瓶颈模块。
 
-        Args:
-            c1 (int): Input channels.
-            c2 (int): Output channels.
-            n (int): Number of Bottleneck blocks.
-            shortcut (bool): Whether to use shortcut connections.
-            g (int): Groups for convolutions.
-            e (float): Expansion ratio.
+        参数：
+            c1 (int)：输入通道数量。
+            c2 (int)：输出通道数量。
+            n (int)：Bottleneck 模块数量。
+            shortcut (bool)：是否使用残差连接。
+            g (int)：卷积分组数量。
+            e (float)：扩展比例。
         """
         super().__init__()
-        c_ = int(c2 * e)  # hidden channels
+        c_ = int(c2 * e)  # 隐藏通道
         self.cv1 = Conv(c1, c_, 1, 1)
         self.cv2 = nn.Conv2d(c1, c_, 1, 1, bias=False)
         self.cv3 = nn.Conv2d(c_, c_, 1, 1, bias=False)
         self.cv4 = Conv(2 * c_, c2, 1, 1)
-        self.bn = nn.BatchNorm2d(2 * c_)  # applied to cat(cv2, cv3)
+        self.bn = nn.BatchNorm2d(2 * c_)  # 应用于 cat(cv2, cv3) 的结果
         self.act = nn.SiLU()
         self.m = nn.Sequential(*(Bottleneck(c_, c_, shortcut, g, e=1.0) for _ in range(n)))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Apply CSP bottleneck with 4 convolutions."""
+        """对输入应用包含 4 个卷积层的 CSP 瓶颈模块。"""
         y1 = self.cv3(self.m(self.cv1(x)))
         y2 = self.cv2(x)
         return self.cv4(self.act(self.bn(torch.cat((y1, y2), 1))))
 
 
 class ResNetBlock(nn.Module):
-    """ResNet block with standard convolution layers."""
+    """使用标准卷积层构成的 ResNet 模块。"""
 
     def __init__(self, c1: int, c2: int, s: int = 1, e: int = 4):
-        """Initialize ResNet block.
+        """初始化 ResNet 模块。
 
-        Args:
-            c1 (int): Input channels.
-            c2 (int): Output channels.
-            s (int): Stride.
-            e (int): Expansion ratio.
+        参数：
+            c1 (int): 输入通道数。
+            c2 (int): 输出通道数。
+            s (int): 步幅。
+            e (int): 通道扩展比例。
         """
         super().__init__()
         c3 = e * c2
@@ -535,23 +535,23 @@ class ResNetBlock(nn.Module):
         self.shortcut = nn.Sequential(Conv(c1, c3, k=1, s=s, act=False)) if s != 1 or c1 != c3 else nn.Identity()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Forward pass through the ResNet block."""
+        """执行 ResNet 模块的前向传播。"""
         return F.relu(self.cv3(self.cv2(self.cv1(x))) + self.shortcut(x))
 
 
 class ResNetLayer(nn.Module):
-    """ResNet layer with multiple ResNet blocks."""
+    """由多个 ResNet 模块组成的 ResNet 层。"""
 
     def __init__(self, c1: int, c2: int, s: int = 1, is_first: bool = False, n: int = 1, e: int = 4):
-        """Initialize ResNet layer.
+        """初始化 ResNet 层。
 
-        Args:
-            c1 (int): Input channels.
-            c2 (int): Output channels.
-            s (int): Stride.
-            is_first (bool): Whether this is the first layer.
-            n (int): Number of ResNet blocks.
-            e (int): Expansion ratio.
+        参数：
+            c1 (int): 输入通道数。
+            c2 (int): 输出通道数。
+            s (int): 步幅。
+            is_first (bool): 是否为第一层。
+            n (int): ResNet 模块数量。
+            e (int): 通道扩展比例。
         """
         super().__init__()
         self.is_first = is_first
@@ -566,23 +566,23 @@ class ResNetLayer(nn.Module):
             self.layer = nn.Sequential(*blocks)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Forward pass through the ResNet layer."""
+        """执行 ResNet 层的前向传播。"""
         return self.layer(x)
 
 
 class MaxSigmoidAttnBlock(nn.Module):
-    """Max Sigmoid attention block."""
+    """最大 Sigmoid 注意力模块。"""
 
     def __init__(self, c1: int, c2: int, nh: int = 1, ec: int = 128, gc: int = 512, scale: bool = False):
-        """Initialize MaxSigmoidAttnBlock.
+        """初始化 MaxSigmoidAttnBlock。
 
-        Args:
-            c1 (int): Input channels.
-            c2 (int): Output channels.
-            nh (int): Number of heads.
-            ec (int): Embedding channels.
-            gc (int): Guide channels.
-            scale (bool): Whether to use learnable scale parameter.
+        参数：
+            c1 (int): 输入通道数。
+            c2 (int): 输出通道数。
+            nh (int): 注意力头数量。
+            ec (int): 嵌入通道数。
+            gc (int): 引导向量通道数。
+            scale (bool): 是否使用可学习的缩放参数。
         """
         super().__init__()
         self.nh = nh
@@ -594,14 +594,14 @@ class MaxSigmoidAttnBlock(nn.Module):
         self.scale = nn.Parameter(torch.ones(1, nh, 1, 1)) if scale else 1.0
 
     def forward(self, x: torch.Tensor, guide: torch.Tensor) -> torch.Tensor:
-        """Forward pass of MaxSigmoidAttnBlock.
+        """执行 MaxSigmoidAttnBlock 的前向传播。
 
-        Args:
-            x (torch.Tensor): Input tensor.
-            guide (torch.Tensor): Guide tensor.
+        参数：
+            x (torch.Tensor): 输入张量.
+            guide (torch.Tensor): 引导张量。
 
-        Returns:
-            (torch.Tensor): Output tensor after attention.
+        返回：
+            (torch.Tensor): 经过注意力处理后的输出张量。
         """
         bs, _, h, w = x.shape
 
@@ -623,7 +623,7 @@ class MaxSigmoidAttnBlock(nn.Module):
 
 
 class C2fAttn(nn.Module):
-    """C2f module with an additional attn module."""
+    """带有额外注意力模块的 C2f 模块。"""
 
     def __init__(
         self,
@@ -637,35 +637,35 @@ class C2fAttn(nn.Module):
         g: int = 1,
         e: float = 0.5,
     ):
-        """Initialize C2f module with attention mechanism.
+        """初始化带有注意力机制的 C2f 模块。
 
-        Args:
-            c1 (int): Input channels.
-            c2 (int): Output channels.
-            n (int): Number of Bottleneck blocks.
-            ec (int): Embedding channels for attention.
-            nh (int): Number of heads for attention.
-            gc (int): Guide channels for attention.
-            shortcut (bool): Whether to use shortcut connections.
-            g (int): Groups for convolutions.
-            e (float): Expansion ratio.
+        参数：
+            c1 (int): 输入通道数。
+            c2 (int): 输出通道数。
+            n (int): Bottleneck 模块数量。
+            ec (int): 注意力嵌入通道数。
+            nh (int): 注意力头数量。
+            gc (int): 注意力引导通道数。
+            shortcut (bool): 是否使用残差连接。
+            g (int): 卷积分组数量。
+            e (float): 通道扩展比例。
         """
         super().__init__()
-        self.c = int(c2 * e)  # hidden channels
+        self.c = int(c2 * e)  # 隐藏通道
         self.cv1 = Conv(c1, 2 * self.c, 1, 1)
-        self.cv2 = Conv((3 + n) * self.c, c2, 1)  # optional act=FReLU(c2)
+        self.cv2 = Conv((3 + n) * self.c, c2, 1)  # 可选 act=FReLU(c2)
         self.m = nn.ModuleList(Bottleneck(self.c, self.c, shortcut, g, k=((3, 3), (3, 3)), e=1.0) for _ in range(n))
         self.attn = MaxSigmoidAttnBlock(self.c, self.c, gc=gc, ec=ec, nh=nh)
 
     def forward(self, x: torch.Tensor, guide: torch.Tensor) -> torch.Tensor:
-        """Forward pass through C2f layer with attention.
+        """执行带有注意力机制的 C2f 层前向传播。
 
-        Args:
-            x (torch.Tensor): Input tensor.
-            guide (torch.Tensor): Guide tensor for attention.
+        参数：
+            x (torch.Tensor): 输入张量.
+            guide (torch.Tensor): 注意力机制使用的引导张量。
 
-        Returns:
-            (torch.Tensor): Output tensor after processing.
+        返回：
+            (torch.Tensor): 处理后的输出张量。
         """
         y = list(self.cv1(x).chunk(2, 1))
         y.extend(m(y[-1]) for m in self.m)
@@ -673,14 +673,14 @@ class C2fAttn(nn.Module):
         return self.cv2(torch.cat(y, 1))
 
     def forward_split(self, x: torch.Tensor, guide: torch.Tensor) -> torch.Tensor:
-        """Forward pass using split() instead of chunk().
+        """使用 split() 而不是 chunk() 执行前向传播。
 
-        Args:
-            x (torch.Tensor): Input tensor.
-            guide (torch.Tensor): Guide tensor for attention.
+        参数：
+            x (torch.Tensor): 输入张量.
+            guide (torch.Tensor): 注意力机制使用的引导张量。
 
-        Returns:
-            (torch.Tensor): Output tensor after processing.
+        返回：
+            (torch.Tensor): 处理后的输出张量。
         """
         y = list(self.cv1(x).split((self.c, self.c), 1))
         y.extend(m(y[-1]) for m in self.m)
@@ -689,20 +689,20 @@ class C2fAttn(nn.Module):
 
 
 class ImagePoolingAttn(nn.Module):
-    """ImagePoolingAttn: Enhance the text embeddings with image-aware information."""
+    """ImagePoolingAttn：使用图像相关信息增强文本嵌入。"""
 
     def __init__(
         self, ec: int = 256, ch: tuple[int, ...] = (), ct: int = 512, nh: int = 8, k: int = 3, scale: bool = False
     ):
-        """Initialize ImagePoolingAttn module.
+        """初始化 ImagePoolingAttn 模块。
 
-        Args:
-            ec (int): Embedding channels.
-            ch (tuple): Channel dimensions for feature maps.
-            ct (int): Channel dimension for text embeddings.
-            nh (int): Number of attention heads.
-            k (int): Kernel size for pooling.
-            scale (bool): Whether to use learnable scale parameter.
+        参数：
+            ec (int): 嵌入通道数。
+            ch (tuple): 各特征图的通道数。
+            ct (int): 文本嵌入的通道数。
+            nh (int): 注意力头数量。
+            k (int): 池化窗口尺寸。
+            scale (bool): 是否使用可学习的缩放参数。
         """
         super().__init__()
 
@@ -721,14 +721,14 @@ class ImagePoolingAttn(nn.Module):
         self.k = k
 
     def forward(self, x: list[torch.Tensor], text: torch.Tensor) -> torch.Tensor:
-        """Forward pass of ImagePoolingAttn.
+        """执行 ImagePoolingAttn 的前向传播。
 
-        Args:
-            x (list[torch.Tensor]): List of input feature maps.
-            text (torch.Tensor): Text embeddings.
+        参数：
+            x (列表[torch.Tensor]): 输入特征图列表。
+            text (torch.Tensor): 文本嵌入。
 
-        Returns:
-            (torch.Tensor): Enhanced text embeddings.
+        返回：
+            (torch.Tensor): 增强后的文本嵌入。
         """
         bs = x[0].shape[0]
         assert len(x) == self.nf
@@ -754,24 +754,24 @@ class ImagePoolingAttn(nn.Module):
 
 
 class ContrastiveHead(nn.Module):
-    """Implements contrastive learning head for region-text similarity in vision-language models."""
+    """用于视觉语言模型区域与文本相似度计算的对比学习头。"""
 
     def __init__(self):
-        """Initialize ContrastiveHead with region-text similarity parameters."""
+        """初始化用于区域与文本相似度计算的 ContrastiveHead。"""
         super().__init__()
-        # NOTE: use -10.0 to keep the init cls loss consistency with other losses
+        # 注意：使用 -10.0，使初始分类损失与其他损失保持一致
         self.bias = nn.Parameter(torch.tensor([-10.0]))
         self.logit_scale = nn.Parameter(torch.ones([]) * torch.tensor(1 / 0.07).log())
 
     def forward(self, x: torch.Tensor, w: torch.Tensor) -> torch.Tensor:
-        """Forward function of contrastive learning.
+        """执行对比学习的前向计算。
 
-        Args:
-            x (torch.Tensor): Image features.
-            w (torch.Tensor): Text features.
+        参数：
+            x (torch.Tensor): 图像特征。
+            w (torch.Tensor): 文本特征。
 
-        Returns:
-            (torch.Tensor): Similarity scores.
+        返回：
+            (torch.Tensor): 相似度分数。
         """
         x = F.normalize(x, dim=1, p=2)
         w = F.normalize(w, dim=-1, p=2)
@@ -780,27 +780,27 @@ class ContrastiveHead(nn.Module):
 
 
 class BNContrastiveHead(nn.Module):
-    """Batch Norm Contrastive Head using batch norm instead of l2-normalization.
+    """使用批归一化代替 L2 归一化的对比学习头。
 
-    Args:
-        embed_dims (int): Embed dimensions of text and image features.
+    参数：
+        embed_dims (int): 文本和图像特征的嵌入维度。
     """
 
     def __init__(self, embed_dims: int):
-        """Initialize BNContrastiveHead.
+        """初始化 BNContrastiveHead。
 
-        Args:
-            embed_dims (int): Embedding dimensions for features.
+        参数：
+            embed_dims (int): 特征嵌入维度。
         """
         super().__init__()
         self.norm = nn.BatchNorm2d(embed_dims)
-        # NOTE: use -10.0 to keep the init cls loss consistency with other losses
+        # 注意：使用 -10.0，使初始分类损失与其他损失保持一致
         self.bias = nn.Parameter(torch.tensor([-10.0]))
-        # use -1.0 is more stable
+        # 使用 -1.0 更稳定
         self.logit_scale = nn.Parameter(-1.0 * torch.ones([]))
 
     def fuse(self):
-        """Fuse the batch normalization layer in the BNContrastiveHead module."""
+        """融合 BNContrastiveHead 模块中的批归一化层。"""
         del self.norm
         del self.bias
         del self.logit_scale
@@ -808,18 +808,18 @@ class BNContrastiveHead(nn.Module):
 
     @staticmethod
     def forward_fuse(x: torch.Tensor, w: torch.Tensor) -> torch.Tensor:
-        """Passes image features through unchanged after fusing."""
+        """融合后直接返回图像特征，不对其进行修改。"""
         return x
 
     def forward(self, x: torch.Tensor, w: torch.Tensor) -> torch.Tensor:
-        """Forward function of contrastive learning with batch normalization.
+        """执行带批归一化的对比学习前向计算。
 
-        Args:
-            x (torch.Tensor): Image features.
-            w (torch.Tensor): Text features.
+        参数：
+            x (torch.Tensor): 图像特征。
+            w (torch.Tensor): 文本特征。
 
-        Returns:
-            (torch.Tensor): Similarity scores.
+        返回：
+            (torch.Tensor): 相似度分数。
         """
         x = self.norm(x)
         w = F.normalize(w, dim=-1, p=2)
@@ -829,57 +829,57 @@ class BNContrastiveHead(nn.Module):
 
 
 class RepBottleneck(Bottleneck):
-    """Rep bottleneck."""
+    """RepBottleneck 瓶颈模块。"""
 
     def __init__(
         self, c1: int, c2: int, shortcut: bool = True, g: int = 1, k: tuple[int, int] = (3, 3), e: float = 0.5
     ):
-        """Initialize RepBottleneck.
+        """初始化 RepBottleneck。
 
-        Args:
-            c1 (int): Input channels.
-            c2 (int): Output channels.
-            shortcut (bool): Whether to use shortcut connection.
-            g (int): Groups for convolutions.
-            k (tuple): Kernel sizes for convolutions.
-            e (float): Expansion ratio.
+        参数：
+            c1 (int): 输入通道数。
+            c2 (int): 输出通道数。
+            shortcut (bool): 是否使用残差连接。
+            g (int): 卷积分组数量。
+            k (tuple): 卷积核尺寸。
+            e (float): 通道扩展比例。
         """
         super().__init__(c1, c2, shortcut, g, k, e)
-        c_ = int(c2 * e)  # hidden channels
+        c_ = int(c2 * e)  # 隐藏通道
         self.cv1 = RepConv(c1, c_, k[0], 1)
 
 
 class RepCSP(C3):
-    """Repeatable Cross Stage Partial Network (RepCSP) module for efficient feature extraction."""
+    """用于高效特征提取的可重复跨阶段局部网络（RepCSP）模块。"""
 
     def __init__(self, c1: int, c2: int, n: int = 1, shortcut: bool = True, g: int = 1, e: float = 0.5):
-        """Initialize RepCSP layer.
+        """初始化 RepCSP 层。
 
-        Args:
-            c1 (int): Input channels.
-            c2 (int): Output channels.
-            n (int): Number of RepBottleneck blocks.
-            shortcut (bool): Whether to use shortcut connections.
-            g (int): Groups for convolutions.
-            e (float): Expansion ratio.
+        参数：
+            c1 (int): 输入通道数。
+            c2 (int): 输出通道数。
+            n (int): RepBottleneck 模块数量。
+            shortcut (bool): 是否使用残差连接。
+            g (int): 卷积分组数量。
+            e (float): 通道扩展比例。
         """
         super().__init__(c1, c2, n, shortcut, g, e)
-        c_ = int(c2 * e)  # hidden channels
+        c_ = int(c2 * e)  # 隐藏通道
         self.m = nn.Sequential(*(RepBottleneck(c_, c_, shortcut, g, e=1.0) for _ in range(n)))
 
 
 class RepNCSPELAN4(nn.Module):
-    """CSP-ELAN."""
+    """CSP-ELAN 模块。"""
 
     def __init__(self, c1: int, c2: int, c3: int, c4: int, n: int = 1):
-        """Initialize CSP-ELAN layer.
+        """初始化 CSP-ELAN 层。
 
-        Args:
-            c1 (int): Input channels.
-            c2 (int): Output channels.
-            c3 (int): Intermediate channels.
-            c4 (int): Intermediate channels for RepCSP.
-            n (int): Number of RepCSP blocks.
+        参数：
+            c1 (int): 输入通道数。
+            c2 (int): 输出通道数。
+            c3 (int): 中间通道数。
+            c4 (int): RepCSP 模块的中间通道数。
+            n (int): RepCSP 模块数量。
         """
         super().__init__()
         self.c = c3 // 2
@@ -889,29 +889,29 @@ class RepNCSPELAN4(nn.Module):
         self.cv4 = Conv(c3 + (2 * c4), c2, 1, 1)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Forward pass through RepNCSPELAN4 layer."""
+        """执行 RepNCSPELAN4 层的前向传播。"""
         y = list(self.cv1(x).chunk(2, 1))
         y.extend((m(y[-1])) for m in [self.cv2, self.cv3])
         return self.cv4(torch.cat(y, 1))
 
     def forward_split(self, x: torch.Tensor) -> torch.Tensor:
-        """Forward pass using split() instead of chunk()."""
+        """使用 split() 而不是 chunk() 执行前向传播。"""
         y = list(self.cv1(x).split((self.c, self.c), 1))
         y.extend(m(y[-1]) for m in [self.cv2, self.cv3])
         return self.cv4(torch.cat(y, 1))
 
 
 class ELAN1(RepNCSPELAN4):
-    """ELAN1 module with 4 convolutions."""
+    """包含 4 个卷积层的 ELAN1 模块。"""
 
     def __init__(self, c1: int, c2: int, c3: int, c4: int):
-        """Initialize ELAN1 layer.
+        """初始化 ELAN1 层.
 
-        Args:
-            c1 (int): Input channels.
-            c2 (int): Output channels.
-            c3 (int): Intermediate channels.
-            c4 (int): Intermediate channels for convolutions.
+        参数：
+            c1 (int): 输入通道数。
+            c2 (int): 输出通道数。
+            c3 (int): 中间通道数。
+            c4 (int): 卷积层的中间通道数。
         """
         super().__init__(c1, c2, c3, c4)
         self.c = c3 // 2
@@ -922,33 +922,33 @@ class ELAN1(RepNCSPELAN4):
 
 
 class AConv(nn.Module):
-    """AConv."""
+    """AConv 下采样卷积模块。"""
 
     def __init__(self, c1: int, c2: int):
-        """Initialize AConv module.
+        """初始化 AConv 模块。
 
-        Args:
-            c1 (int): Input channels.
-            c2 (int): Output channels.
+        参数：
+            c1 (int): 输入通道数。
+            c2 (int): 输出通道数。
         """
         super().__init__()
         self.cv1 = Conv(c1, c2, 3, 2, 1)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Forward pass through AConv layer."""
+        """执行 AConv 层的前向传播。"""
         x = torch.nn.functional.avg_pool2d(x, 2, 1, 0, False, True)
         return self.cv1(x)
 
 
 class ADown(nn.Module):
-    """ADown."""
+    """ADown 下采样模块。"""
 
     def __init__(self, c1: int, c2: int):
-        """Initialize ADown module.
+        """初始化 ADown 模块。
 
-        Args:
-            c1 (int): Input channels.
-            c2 (int): Output channels.
+        参数：
+            c1 (int): 输入通道数。
+            c2 (int): 输出通道数。
         """
         super().__init__()
         self.c = c2 // 2
@@ -956,7 +956,7 @@ class ADown(nn.Module):
         self.cv2 = Conv(c1 // 2, self.c, 1, 1, 0)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Forward pass through ADown layer."""
+        """执行 ADown 层的前向传播。"""
         x = torch.nn.functional.avg_pool2d(x, 2, 1, 0, False, True)
         x1, x2 = x.chunk(2, 1)
         x1 = self.cv1(x1)
@@ -966,16 +966,16 @@ class ADown(nn.Module):
 
 
 class SPPELAN(nn.Module):
-    """SPP-ELAN."""
+    """SPP-ELAN 模块。"""
 
     def __init__(self, c1: int, c2: int, c3: int, k: int = 5):
-        """Initialize SPP-ELAN block.
+        """初始化 SPP-ELAN 模块。
 
-        Args:
-            c1 (int): Input channels.
-            c2 (int): Output channels.
-            c3 (int): Intermediate channels.
-            k (int): Kernel size for max pooling.
+        参数：
+            c1 (int): 输入通道数。
+            c2 (int): 输出通道数。
+            c3 (int): 中间通道数。
+            k (int): 最大池化窗口尺寸。
         """
         super().__init__()
         self.c = c3
@@ -986,55 +986,55 @@ class SPPELAN(nn.Module):
         self.cv5 = Conv(4 * c3, c2, 1, 1)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Forward pass through SPPELAN layer."""
+        """执行 SPPELAN 层的前向传播。"""
         y = [self.cv1(x)]
         y.extend(m(y[-1]) for m in [self.cv2, self.cv3, self.cv4])
         return self.cv5(torch.cat(y, 1))
 
 
 class CBLinear(nn.Module):
-    """CBLinear."""
+    """CBLinear 分支卷积模块。"""
 
     def __init__(self, c1: int, c2s: list[int], k: int = 1, s: int = 1, p: int | None = None, g: int = 1):
-        """Initialize CBLinear module.
+        """初始化 CBLinear 模块.
 
-        Args:
-            c1 (int): Input channels.
-            c2s (list[int]): List of output channel sizes.
-            k (int): Kernel size.
-            s (int): Stride.
-            p (int | None): Padding.
-            g (int): Groups.
+        参数：
+            c1 (int): 输入通道数。
+            c2s (列表[int]): 各分支的输出通道数列表。
+            k (int): 卷积核尺寸。
+            s (int): 步幅。
+            p (int | None): 填充大小。
+            g (int): 分组数量。
         """
         super().__init__()
         self.c2s = c2s
         self.conv = nn.Conv2d(c1, sum(c2s), k, s, autopad(k, p), groups=g, bias=True)
 
     def forward(self, x: torch.Tensor) -> list[torch.Tensor]:
-        """Forward pass through CBLinear layer."""
+        """执行 CBLinear 层的前向传播。"""
         return self.conv(x).split(self.c2s, dim=1)
 
 
 class CBFuse(nn.Module):
-    """CBFuse."""
+    """CBFuse 特征融合模块。"""
 
     def __init__(self, idx: list[int]):
-        """Initialize CBFuse module.
+        """初始化 CBFuse 模块.
 
-        Args:
-            idx (list[int]): Indices for feature selection.
+        参数：
+            idx (列表[int]): 特征选择所使用的索引。
         """
         super().__init__()
         self.idx = idx
 
     def forward(self, xs: list[torch.Tensor]) -> torch.Tensor:
-        """Forward pass through CBFuse layer.
+        """执行 CBFuse 层的前向传播。
 
-        Args:
-            xs (list[torch.Tensor]): List of input tensors.
+        参数：
+            xs (列表[torch.Tensor]): 输入张量列表。
 
-        Returns:
-            (torch.Tensor): Fused output tensor.
+        返回：
+            (torch.Tensor): 融合后的输出张量。
         """
         target_size = xs[-1].shape[2:]
         res = [F.interpolate(x[self.idx[i]], size=target_size, mode="nearest") for i, x in enumerate(xs[:-1])]
@@ -1042,35 +1042,35 @@ class CBFuse(nn.Module):
 
 
 class C3f(nn.Module):
-    """Faster Implementation of CSP Bottleneck with 3 convolutions."""
+    """使用 3 个卷积层实现的快速 CSP 瓶颈模块。"""
 
     def __init__(self, c1: int, c2: int, n: int = 1, shortcut: bool = False, g: int = 1, e: float = 0.5):
-        """Initialize CSP bottleneck layer with three convolutions.
+        """初始化包含 3 个卷积层的 CSP 瓶颈层。
 
-        Args:
-            c1 (int): Input channels.
-            c2 (int): Output channels.
-            n (int): Number of Bottleneck blocks.
-            shortcut (bool): Whether to use shortcut connections.
-            g (int): Groups for convolutions.
-            e (float): Expansion ratio.
+        参数：
+            c1 (int): 输入通道数。
+            c2 (int): 输出通道数。
+            n (int): Bottleneck 模块数量。
+            shortcut (bool): 是否使用残差连接。
+            g (int): 卷积分组数量。
+            e (float): 通道扩展比例。
         """
         super().__init__()
-        c_ = int(c2 * e)  # hidden channels
+        c_ = int(c2 * e)  # 隐藏通道
         self.cv1 = Conv(c1, c_, 1, 1)
         self.cv2 = Conv(c1, c_, 1, 1)
-        self.cv3 = Conv((2 + n) * c_, c2, 1)  # optional act=FReLU(c2)
+        self.cv3 = Conv((2 + n) * c_, c2, 1)  # 可选 act=FReLU(c2)
         self.m = nn.ModuleList(Bottleneck(c_, c_, shortcut, g, k=((3, 3), (3, 3)), e=1.0) for _ in range(n))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Forward pass through C3f layer."""
+        """执行 C3f 层的前向传播。"""
         y = [self.cv2(x), self.cv1(x)]
         y.extend(m(y[-1]) for m in self.m)
         return self.cv3(torch.cat(y, 1))
 
 
 class C3k2(C2f):
-    """Faster Implementation of CSP Bottleneck with 2 convolutions."""
+    """使用 2 个卷积层实现的快速 CSP 瓶颈模块。"""
 
     def __init__(
         self,
@@ -1083,17 +1083,17 @@ class C3k2(C2f):
         g: int = 1,
         shortcut: bool = True,
     ):
-        """Initialize C3k2 module.
+        """初始化 C3k2 模块。
 
-        Args:
-            c1 (int): Input channels.
-            c2 (int): Output channels.
-            n (int): Number of blocks.
-            c3k (bool): Whether to use C3k blocks.
-            e (float): Expansion ratio.
-            attn (bool): Whether to use attention blocks.
-            g (int): Groups for convolutions.
-            shortcut (bool): Whether to use shortcut connections.
+        参数：
+            c1 (int): 输入通道数。
+            c2 (int): 输出通道数。
+            n (int): 模块数量。
+            c3k (bool): 是否使用 C3k 模块。
+            e (float): 通道扩展比例。
+            attn (bool): 是否使用注意力模块。
+            g (int): 卷积分组数量。
+            shortcut (bool): 是否使用残差连接。
         """
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(
@@ -1110,34 +1110,34 @@ class C3k2(C2f):
 
 
 class C3k(C3):
-    """C3k is a CSP bottleneck module with customizable kernel sizes for feature extraction in neural networks."""
+    """C3k 是一种 CSP 瓶颈模块，可自定义卷积核尺寸以提取神经网络特征。"""
 
     def __init__(self, c1: int, c2: int, n: int = 1, shortcut: bool = True, g: int = 1, e: float = 0.5, k: int = 3):
-        """Initialize C3k module.
+        """初始化 C3k 模块。
 
-        Args:
-            c1 (int): Input channels.
-            c2 (int): Output channels.
-            n (int): Number of Bottleneck blocks.
-            shortcut (bool): Whether to use shortcut connections.
-            g (int): Groups for convolutions.
-            e (float): Expansion ratio.
-            k (int): Kernel size.
+        参数：
+            c1 (int)：输入通道数量。
+            c2 (int)：输出通道数量。
+            n (int)：Bottleneck 模块数量。
+            shortcut (bool)：是否使用残差连接。
+            g (int)：卷积分组数量。
+            e (float)：扩展比例。
+            k (int): 卷积核尺寸。
         """
         super().__init__(c1, c2, n, shortcut, g, e)
-        c_ = int(c2 * e)  # hidden channels
+        c_ = int(c2 * e)  # 隐藏通道
         # self.m = nn.Sequential(*(RepBottleneck(c_, c_, shortcut, g, k=(k, k), e=1.0) for _ in range(n)))
         self.m = nn.Sequential(*(Bottleneck(c_, c_, shortcut, g, k=(k, k), e=1.0) for _ in range(n)))
 
 
 class RepVGGDW(torch.nn.Module):
-    """RepVGGDW is a class that represents a depth-wise convolutional block in RepVGG architecture."""
+    """RepVGGDW 表示 RepVGG 架构中的深度可分离卷积模块。"""
 
     def __init__(self, ed: int) -> None:
-        """Initialize RepVGGDW module.
+        """初始化 RepVGGDW 模块.
 
-        Args:
-            ed (int): Input and output channels.
+        参数：
+            ed (int): 输入和输出通道数。
         """
         super().__init__()
         self.conv = Conv(ed, ed, 7, 1, 3, g=ed, act=False)
@@ -1146,35 +1146,35 @@ class RepVGGDW(torch.nn.Module):
         self.act = nn.SiLU()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Perform a forward pass of the RepVGGDW block.
+        """执行 RepVGGDW 模块的前向传播。
 
-        Args:
-            x (torch.Tensor): Input tensor.
+        参数：
+            x (torch.Tensor): 输入张量.
 
-        Returns:
-            (torch.Tensor): Output tensor after applying the depth-wise convolution.
+        返回：
+            (torch.Tensor): 经过深度可分离卷积后的输出张量。
         """
         return self.act(self.conv(x) + self.conv1(x))
 
     def forward_fuse(self, x: torch.Tensor) -> torch.Tensor:
-        """Perform a forward pass of the fused RepVGGDW block.
+        """执行融合后的 RepVGGDW 模块的前向传播。
 
-        Args:
-            x (torch.Tensor): Input tensor.
+        参数：
+            x (torch.Tensor): 输入张量.
 
-        Returns:
-            (torch.Tensor): Output tensor after applying the depth-wise convolution.
+        返回：
+            (torch.Tensor): 经过深度可分离卷积后的输出张量。
         """
         return self.act(self.conv(x))
 
     @torch.no_grad()
     def fuse(self):
-        """Fuse the convolutional layers in the RepVGGDW block.
+        """融合 RepVGGDW 模块中的卷积层。
 
-        This method fuses the convolutional layers and updates the weights and biases accordingly.
+        此方法会融合卷积层，并相应更新权重和偏置。
         """
         if not hasattr(self, "conv1"):
-            return  # already fused
+            return  # 已完成融合
         conv = fuse_conv_and_bn(self.conv.conv, self.conv.bn)
         conv1 = fuse_conv_and_bn(self.conv1.conv, self.conv1.bn)
 
@@ -1196,28 +1196,28 @@ class RepVGGDW(torch.nn.Module):
 
 
 class CIB(nn.Module):
-    """Compact Inverted Block (CIB) module.
+    """紧凑型倒置模块（CIB）。
 
-    Args:
-        c1 (int): Number of input channels.
-        c2 (int): Number of output channels.
-        shortcut (bool, optional): Whether to add a shortcut connection. Defaults to True.
-        e (float, optional): Scaling factor for the hidden channels. Defaults to 0.5.
-        lk (bool, optional): Whether to use RepVGGDW for the third convolutional layer. Defaults to False.
+    参数：
+        c1 (int): 输入通道数.
+        c2 (int): 输出通道数.
+            shortcut (bool, 可选): 是否添加残差连接，默认为 True。
+            e (float, 可选): 隐藏通道的缩放因子，默认为 0.5。
+            lk (bool, 可选): 第三个卷积层是否使用 RepVGGDW，默认为 False。
     """
 
     def __init__(self, c1: int, c2: int, shortcut: bool = True, e: float = 0.5, lk: bool = False):
-        """Initialize the CIB module.
+        """初始化 CIB 模块。
 
-        Args:
-            c1 (int): Input channels.
-            c2 (int): Output channels.
-            shortcut (bool): Whether to use shortcut connection.
-            e (float): Expansion ratio.
-            lk (bool): Whether to use RepVGGDW.
+        参数：
+            c1 (int): 输入通道数。
+            c2 (int): 输出通道数。
+            shortcut (bool): 是否使用残差连接。
+            e (float): 通道扩展比例。
+            lk (bool): 是否使用 RepVGGDW。
         """
         super().__init__()
-        c_ = int(c2 * e)  # hidden channels
+        c_ = int(c2 * e)  # 隐藏通道
         self.cv1 = nn.Sequential(
             Conv(c1, c1, 3, g=c1),
             Conv(c1, 2 * c_, 1),
@@ -1229,75 +1229,75 @@ class CIB(nn.Module):
         self.add = shortcut and c1 == c2
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Forward pass of the CIB module.
+        """执行 CIB 模块的前向传播。
 
-        Args:
-            x (torch.Tensor): Input tensor.
+        参数：
+            x (torch.Tensor): 输入张量.
 
-        Returns:
-            (torch.Tensor): Output tensor.
+        返回：
+            (torch.Tensor): 输出张量.
         """
         return x + self.cv1(x) if self.add else self.cv1(x)
 
 
 class C2fCIB(C2f):
-    """C2fCIB class represents a convolutional block with C2f and CIB modules.
+    """由 C2f 和 CIB 模块组成的卷积模块。
 
-    Args:
-        c1 (int): Number of input channels.
-        c2 (int): Number of output channels.
-        n (int, optional): Number of CIB modules to stack. Defaults to 1.
-        shortcut (bool, optional): Whether to use shortcut connection. Defaults to False.
-        lk (bool, optional): Whether to use large kernel. Defaults to False.
-        g (int, optional): Number of groups for grouped convolution. Defaults to 1.
-        e (float, optional): Expansion ratio for CIB modules. Defaults to 0.5.
+    参数：
+        c1 (int): 输入通道数.
+        c2 (int): 输出通道数.
+        n (int, 可选): 要堆叠的 CIB 模块数量，默认为 1。
+        shortcut (bool, 可选): 是否使用残差连接，默认为 False。
+        lk (bool, 可选): 是否使用大卷积核，默认为 False。
+        g (int, 可选): 分组卷积的分组数量，默认为 1。
+        e (float, 可选): CIB 模块的通道扩展比例，默认为 0.5。
     """
 
     def __init__(
         self, c1: int, c2: int, n: int = 1, shortcut: bool = False, lk: bool = False, g: int = 1, e: float = 0.5
     ):
-        """Initialize C2fCIB module.
+        """初始化 C2fCIB 模块.
 
-        Args:
-            c1 (int): Input channels.
-            c2 (int): Output channels.
-            n (int): Number of CIB modules.
-            shortcut (bool): Whether to use shortcut connection.
-            lk (bool): Whether to use large kernel.
-            g (int): Groups for convolutions.
-            e (float): Expansion ratio.
+        参数：
+            c1 (int): 输入通道数。
+            c2 (int): 输出通道数。
+            n (int): CIB 模块数量。
+            shortcut (bool): 是否使用残差连接。
+            lk (bool): 是否使用大卷积核。
+            g (int): 卷积分组数量。
+            e (float): 通道扩展比例。
         """
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(CIB(self.c, self.c, shortcut, e=1.0, lk=lk) for _ in range(n))
 
 
 class Attention(nn.Module):
-    """Attention module that performs self-attention on the input tensor.
+    """对输入张量执行自注意力计算的 Attention 模块。
 
-    Args:
-        dim (int): The input tensor dimension.
-        num_heads (int): The number of attention heads.
-        attn_ratio (float): The ratio of the attention key dimension to the head dimension.
+    参数：
+        dim (int): 输入张量的维度。
+        num_heads (int): 注意力头数量。
+        attn_ratio (float): 注意力键维度与注意力头维度的比例。
 
-    Attributes:
-        num_heads (int): The number of attention heads.
-        head_dim (int): The dimension of each attention head.
-        key_dim (int): The dimension of the attention key.
-        scale (float): The scaling factor for the attention scores.
-        qkv (Conv): Convolutional layer for computing the query, key, and value.
-        proj (Conv): Convolutional layer for projecting the attended values.
-        pe (Conv): Convolutional layer for positional encoding.
+    属性：
+        num_heads (int): 注意力头数量。
+        head_dim (int): 每个注意力头的维度。
+        key_dim (int): 注意力键的维度。
+        scale (float): 注意力分数的缩放因子。
+        qkv (Conv): 用于计算查询、键和值的卷积层。
+        proj (Conv): 用于投影注意力结果的卷积层。
+        pe (Conv): 用于位置编码的卷积层。
     """
 
     format = None
 
     def __init__(self, dim: int, num_heads: int = 8, attn_ratio: float = 0.5):
-        """Initialize multi-head attention module.
+        """初始化多头注意力模块。
 
-        Args:
-            dim (int): Input dimension.
-            num_heads (int): Number of attention heads.
-            attn_ratio (float): Attention ratio for key dimension.
+        参数：
+            dim (int): 输入维度。
+            num_heads (int): 注意力头数量。
+            attn_ratio (float): 注意力键维度的比例。
         """
         super().__init__()
         self.num_heads = num_heads
@@ -1311,13 +1311,13 @@ class Attention(nn.Module):
         self.pe = Conv(dim, dim, 3, 1, g=dim, act=False)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Forward pass of the Attention module.
+        """执行 Attention 模块的前向传播。
 
-        Args:
-            x (torch.Tensor): The input tensor.
+        参数：
+            x (torch.Tensor): 输入张量。
 
-        Returns:
-            (torch.Tensor): The output tensor after self-attention.
+        返回：
+            (torch.Tensor): 经过自注意力计算后的输出张量。
         """
         B, C, H, W = x.shape
         N = H * W
@@ -1337,34 +1337,33 @@ class Attention(nn.Module):
 
 
 class PSABlock(nn.Module):
-    """PSABlock class implementing a Position-Sensitive Attention block for neural networks.
+    """在神经网络中实现位置敏感注意力的 PSABlock 模块。
 
-    This class encapsulates the functionality for applying multi-head attention and feed-forward neural network layers
-    with optional shortcut connections.
+    此类封装了多头注意力和前馈神经网络层，并支持可选的残差连接。
 
-    Attributes:
-        attn (Attention): Multi-head attention module.
-        ffn (nn.Sequential): Feed-forward neural network module.
-        add (bool): Flag indicating whether to add shortcut connections.
+    属性：
+        attn (Attention): 多头注意力模块。
+        ffn (nn.Sequential): 前馈神经网络模块。
+        add (bool): 是否添加残差连接的标志。
 
-    Methods:
-        forward: Performs a forward pass through the PSABlock, applying attention and feed-forward layers.
+    方法：
+        forward：执行 PSABlock 的前向传播，并应用注意力和前馈层。
 
-    Examples:
-        Create a PSABlock and perform a forward pass
+    示例：
+        创建 PSABlock 并执行前向传播
         >>> psablock = PSABlock(c=128, attn_ratio=0.5, num_heads=4, shortcut=True)
         >>> input_tensor = torch.randn(1, 128, 32, 32)
         >>> output_tensor = psablock(input_tensor)
     """
 
     def __init__(self, c: int, attn_ratio: float = 0.5, num_heads: int = 4, shortcut: bool = True) -> None:
-        """Initialize the PSABlock.
+        """初始化 PSABlock。
 
-        Args:
-            c (int): Input and output channels.
-            attn_ratio (float): Attention ratio for key dimension.
-            num_heads (int): Number of attention heads.
-            shortcut (bool): Whether to use shortcut connections.
+        参数：
+            c (int): 输入和输出通道数。
+            attn_ratio (float): 注意力键的维度比例。
+            num_heads (int): 注意力头数量。
+            shortcut (bool): 是否使用残差连接。
         """
         super().__init__()
 
@@ -1373,13 +1372,13 @@ class PSABlock(nn.Module):
         self.add = shortcut
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Execute a forward pass through PSABlock.
+        """执行 PSABlock 的前向传播。
 
-        Args:
-            x (torch.Tensor): Input tensor.
+        参数：
+            x (torch.Tensor): 输入张量.
 
-        Returns:
-            (torch.Tensor): Output tensor after attention and feed-forward processing.
+        返回：
+            (torch.Tensor): 经过注意力和前馈处理后的输出张量。
         """
         x = x + self.attn(x) if self.add else self.attn(x)
         x = x + self.ffn(x) if self.add else self.ffn(x)
@@ -1387,35 +1386,34 @@ class PSABlock(nn.Module):
 
 
 class PSA(nn.Module):
-    """PSA class for implementing Position-Sensitive Attention in neural networks.
+    """在神经网络中实现位置敏感注意力的 PSA 模块。
 
-    This class encapsulates the functionality for applying position-sensitive attention and feed-forward networks to
-    input tensors, enhancing feature extraction and processing capabilities.
+    此模块将位置敏感注意力和前馈网络应用于输入张量，以增强特征提取和处理能力。
 
-    Attributes:
-        c (int): Number of hidden channels after applying the initial convolution.
-        cv1 (Conv): 1x1 convolution layer to reduce the number of input channels to 2*c.
-        cv2 (Conv): 1x1 convolution layer to reduce the number of output channels to c1.
-        attn (Attention): Attention module for position-sensitive attention.
-        ffn (nn.Sequential): Feed-forward network for further processing.
+    属性：
+        c (int): 初始卷积处理后的隐藏通道数。
+        cv1 (Conv): 将输入通道数调整为 2*c 的 1x1 卷积层。
+        cv2 (Conv): 将输出通道数调整为 c1 的 1x1 卷积层。
+        attn (Attention): 用于位置敏感注意力的 Attention 模块。
+        ffn (nn.Sequential): 用于进一步处理的前馈网络。
 
-    Methods:
-        forward: Applies position-sensitive attention and feed-forward network to the input tensor.
+    方法：
+        forward：将位置敏感注意力和前馈网络应用于输入张量。
 
-    Examples:
-        Create a PSA module and apply it to an input tensor
+    示例：
+        创建 PSA 模块并将其应用于输入张量
         >>> psa = PSA(c1=128, c2=128, e=0.5)
         >>> input_tensor = torch.randn(1, 128, 64, 64)
         >>> output_tensor = psa.forward(input_tensor)
     """
 
     def __init__(self, c1: int, c2: int, e: float = 0.5):
-        """Initialize PSA module.
+        """初始化 PSA 模块.
 
-        Args:
-            c1 (int): Input channels.
-            c2 (int): Output channels.
-            e (float): Expansion ratio.
+        参数：
+            c1 (int): 输入通道数。
+            c2 (int): 输出通道数。
+            e (float): 通道扩展比例。
         """
         super().__init__()
         assert c1 == c2
@@ -1427,13 +1425,13 @@ class PSA(nn.Module):
         self.ffn = nn.Sequential(Conv(self.c, self.c * 2, 1), Conv(self.c * 2, self.c, 1, act=False))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Execute forward pass in PSA module.
+        """执行 PSA 模块的前向传播。
 
-        Args:
-            x (torch.Tensor): Input tensor.
+        参数：
+            x (torch.Tensor): 输入张量.
 
-        Returns:
-            (torch.Tensor): Output tensor after attention and feed-forward processing.
+        返回：
+            (torch.Tensor): 经过注意力和前馈处理后的输出张量。
         """
         a, b = self.cv1(x).split((self.c, self.c), dim=1)
         b = b + self.attn(b)
@@ -1442,37 +1440,36 @@ class PSA(nn.Module):
 
 
 class C2PSA(nn.Module):
-    """C2PSA module with attention mechanism for enhanced feature extraction and processing.
+    """带有注意力机制、用于增强特征提取和处理能力的 C2PSA 模块。
 
-    This module implements a convolutional block with attention mechanisms to enhance feature extraction and processing
-    capabilities. It includes a series of PSABlock modules for self-attention and feed-forward operations.
+    此模块通过注意力机制增强特征提取和处理能力，并包含一系列用于自注意力和前馈运算的 PSABlock 模块。
 
-    Attributes:
-        c (int): Number of hidden channels.
-        cv1 (Conv): 1x1 convolution layer to reduce the number of input channels to 2*c.
-        cv2 (Conv): 1x1 convolution layer to reduce the number of output channels to c1.
-        m (nn.Sequential): Sequential container of PSABlock modules for attention and feed-forward operations.
+    属性：
+        c (int): 隐藏通道数。
+        cv1 (Conv): 将输入通道数调整为 2*c 的 1x1 卷积层。
+        cv2 (Conv): 将输出通道数调整为 c1 的 1x1 卷积层。
+        m (nn.Sequential): 用于注意力和前馈运算的 PSABlock 模块序列。
 
-    Methods:
-        forward: Performs a forward pass through the C2PSA module, applying attention and feed-forward operations.
+    方法：
+        forward：执行 C2PSA 模块的前向传播，应用注意力和前馈运算。
 
-    Examples:
+    示例：
         >>> c2psa = C2PSA(c1=256, c2=256, n=3, e=0.5)
         >>> input_tensor = torch.randn(1, 256, 64, 64)
         >>> output_tensor = c2psa(input_tensor)
 
-    Notes:
-        This module essentially is the same as PSA module, but refactored to allow stacking more PSABlock modules.
+    注意：
+        此模块本质上与 PSA 模块相同，但经过重构后可以堆叠更多 PSABlock 模块。
     """
 
     def __init__(self, c1: int, c2: int, n: int = 1, e: float = 0.5):
-        """Initialize C2PSA module.
+        """初始化 C2PSA 模块.
 
-        Args:
-            c1 (int): Input channels.
-            c2 (int): Output channels.
-            n (int): Number of PSABlock modules.
-            e (float): Expansion ratio.
+        参数：
+            c1 (int): 输入通道数。
+            c2 (int): 输出通道数。
+            n (int): PSABlock 模块数量。
+            e (float): 通道扩展比例。
         """
         super().__init__()
         assert c1 == c2
@@ -1483,13 +1480,13 @@ class C2PSA(nn.Module):
         self.m = nn.Sequential(*(PSABlock(self.c, attn_ratio=0.5, num_heads=max(self.c // 64, 1)) for _ in range(n)))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Process the input tensor through a series of PSA blocks.
+        """通过一系列 PSA 模块处理输入张量。
 
-        Args:
-            x (torch.Tensor): Input tensor.
+        参数：
+            x (torch.Tensor): 输入张量.
 
-        Returns:
-            (torch.Tensor): Output tensor after processing.
+        返回：
+            (torch.Tensor): 处理后的输出张量。
         """
         a, b = self.cv1(x).split((self.c, self.c), dim=1)
         b = self.m(b)
@@ -1497,22 +1494,21 @@ class C2PSA(nn.Module):
 
 
 class C2fPSA(C2f):
-    """C2fPSA module with enhanced feature extraction using PSA blocks.
+    """使用 PSA 模块增强特征提取能力的 C2fPSA 模块。
 
-    This class extends the C2f module by incorporating PSA blocks for improved attention mechanisms and feature
-    extraction.
+    此类在 C2f 模块中加入 PSA 模块，以改进注意力机制和特征提取能力。
 
-    Attributes:
-        c (int): Number of hidden channels.
-        cv1 (Conv): 1x1 convolution layer to reduce the number of input channels to 2*c.
-        cv2 (Conv): 1x1 convolution layer to reduce the number of output channels to c2.
-        m (nn.ModuleList): List of PSABlock modules for feature extraction.
+    属性：
+        c (int): 隐藏通道数。
+        cv1 (Conv): 将输入通道数调整为 2*c 的 1x1 卷积层。
+        cv2 (Conv): 将输出通道数调整为 c2 的 1x1 卷积层。
+        m (nn.ModuleList): 用于特征提取的 PSABlock 模块列表。
 
-    Methods:
-        forward: Performs a forward pass through the C2fPSA module.
-        forward_split: Performs a forward pass using split() instead of chunk().
+    方法：
+        forward：执行 C2fPSA 模块的前向传播。
+        forward_split：使用 split() 而不是 chunk() 执行前向传播。
 
-    Examples:
+    示例：
         >>> import torch
         >>> from ultralytics.nn.modules.block import C2fPSA
         >>> model = C2fPSA(c1=64, c2=64, n=3, e=0.5)
@@ -1522,13 +1518,13 @@ class C2fPSA(C2f):
     """
 
     def __init__(self, c1: int, c2: int, n: int = 1, e: float = 0.5):
-        """Initialize C2fPSA module.
+        """初始化 C2fPSA 模块.
 
-        Args:
-            c1 (int): Input channels.
-            c2 (int): Output channels.
-            n (int): Number of PSABlock modules.
-            e (float): Expansion ratio.
+        参数：
+            c1 (int): 输入通道数。
+            c2 (int): 输出通道数。
+            n (int): PSABlock 模块数量。
+            e (float): 通道扩展比例。
         """
         assert c1 == c2
         super().__init__(c1, c2, n=n, e=e)
@@ -1536,19 +1532,18 @@ class C2fPSA(C2f):
 
 
 class SCDown(nn.Module):
-    """SCDown module for downsampling with separable convolutions.
+    """使用可分离卷积进行下采样的 SCDown 模块。
 
-    This module performs downsampling using a combination of pointwise and depthwise convolutions, which helps in
-    efficiently reducing the spatial dimensions of the input tensor while maintaining the channel information.
+    此模块结合逐点卷积和深度卷积执行下采样，在保留通道信息的同时高效降低输入张量的空间维度。
 
-    Attributes:
-        cv1 (Conv): Pointwise convolution layer that reduces the number of channels.
-        cv2 (Conv): Depthwise convolution layer that performs spatial downsampling.
+    属性：
+        cv1 (Conv): 用于减少通道数的逐点卷积层。
+        cv2 (Conv): 用于执行空间下采样的深度卷积层。
 
-    Methods:
-        forward: Applies the SCDown module to the input tensor.
+    方法：
+        forward：将 SCDown 模块应用于输入张量。
 
-    Examples:
+    示例：
         >>> import torch
         >>> from ultralytics.nn.modules.block import SCDown
         >>> model = SCDown(c1=64, c2=128, k=3, s=2)
@@ -1559,60 +1554,59 @@ class SCDown(nn.Module):
     """
 
     def __init__(self, c1: int, c2: int, k: int, s: int):
-        """Initialize SCDown module.
+        """初始化 SCDown 模块.
 
-        Args:
-            c1 (int): Input channels.
-            c2 (int): Output channels.
-            k (int): Kernel size.
-            s (int): Stride.
+        参数：
+            c1 (int): 输入通道数。
+            c2 (int): 输出通道数。
+            k (int): 卷积核尺寸。
+            s (int): 步幅。
         """
         super().__init__()
         self.cv1 = Conv(c1, c2, 1, 1)
         self.cv2 = Conv(c2, c2, k=k, s=s, g=c2, act=False)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Apply convolution and downsampling to the input tensor.
+        """对输入张量执行卷积和下采样。
 
-        Args:
-            x (torch.Tensor): Input tensor.
+        参数：
+            x (torch.Tensor): 输入张量.
 
-        Returns:
-            (torch.Tensor): Downsampled output tensor.
+        返回：
+            (torch.Tensor): 下采样后的输出张量。
         """
         return self.cv2(self.cv1(x))
 
 
 class TorchVision(nn.Module):
-    """TorchVision module to allow loading any torchvision model.
+    """用于加载任意 torchvision 模型的 TorchVision 模块。
 
-    This class provides a way to load a model from the torchvision library, optionally load pre-trained weights, and
-    customize the model by truncating or unwrapping layers.
+    此类可以从 torchvision 库加载模型，可选择加载预训练权重，并通过截断或展开层来自定义模型。
 
-    Args:
-        model (str): Name of the torchvision model to load.
-        weights (str, optional): Pre-trained weights to load. Default is "DEFAULT".
-        unwrap (bool, optional): Unwraps the model to a sequential containing all but the last `truncate` layers.
-        truncate (int, optional): Number of layers to truncate from the end if `unwrap` is True. Default is 2.
-        split (bool, optional): Returns output from intermediate child modules as list. Default is False.
+    参数：
+        模型 (str): 要加载的 torchvision 模型名称。
+        权重 (str, 可选): 要加载的预训练权重，默认为 "DEFAULT"。
+        unwrap (bool, 可选): 将模型展开为一个 sequential，其中包含除最后 `truncate` 层以外的所有层。
+        truncate (int, 可选): 当 `unwrap` 为 True 时，从末尾截断的层数，默认为 2。
+        split (bool, 可选): 是否将中间子模块的输出作为列表返回，默认为 False。
 
-    Attributes:
-        m (nn.Module): The loaded torchvision model, possibly truncated and unwrapped.
+    属性：
+        m (nn.Module): 加载的 torchvision 模型，可能已被截断或展开。
     """
 
     def __init__(
         self, model: str, weights: str = "DEFAULT", unwrap: bool = True, truncate: int = 2, split: bool = False
     ):
-        """Load the model and weights from torchvision.
+        """从 torchvision 加载模型和权重。
 
-        Args:
-            model (str): Name of the torchvision model to load.
-            weights (str): Pre-trained weights to load.
-            unwrap (bool): Whether to unwrap the model.
-            truncate (int): Number of layers to truncate.
-            split (bool): Whether to split the output.
+        参数：
+            模型 (str): 要加载的 torchvision 模型名称。
+            权重 (str): 要加载的预训练权重。
+            unwrap (bool): 是否展开模型。
+            truncate (int): 截断层数。
+            split (bool): 是否拆分输出。
         """
-        import torchvision  # scope for faster 'import ultralytics'
+        import torchvision  # 仅在此处导入，以加快 `import ultralytics` 的速度
 
         super().__init__()
         if hasattr(torchvision.models, "get_model"):
@@ -1621,7 +1615,7 @@ class TorchVision(nn.Module):
             self.m = torchvision.models.__dict__[model](pretrained=bool(weights))
         if unwrap:
             layers = list(self.m.children())
-            if isinstance(layers[0], nn.Sequential):  # Second-level for some models like EfficientNet, Swin
+            if isinstance(layers[0], nn.Sequential):  # EfficientNet、Swin 等部分模型需要展开第二层
                 layers = [*list(layers[0].children()), *layers[1:]]
             self.m = nn.Sequential(*(layers[:-truncate] if truncate else layers))
             self.split = split
@@ -1630,13 +1624,13 @@ class TorchVision(nn.Module):
             self.m.head = self.m.heads = nn.Identity()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Forward pass through the model.
+        """执行模型的前向传播。
 
-        Args:
-            x (torch.Tensor): Input tensor.
+        参数：
+            x (torch.Tensor): 输入张量.
 
-        Returns:
-            (torch.Tensor | list[torch.Tensor]): Output tensor or list of tensors.
+        返回：
+            (torch.Tensor | 列表[torch.Tensor]): 输出张量或张量列表。
         """
         if self.split:
             y = [x]
@@ -1647,23 +1641,23 @@ class TorchVision(nn.Module):
 
 
 class AAttn(nn.Module):
-    """Area-attention module for YOLO models, providing efficient attention mechanisms.
+    """为 YOLO 模型提供高效注意力机制的区域注意力模块。
 
-    This module implements an area-based attention mechanism that processes input features in a spatially-aware manner,
-    making it particularly effective for object detection tasks.
+    此模块实现基于区域的注意力机制，以具有空间感知能力的方式处理输入特征，
+    因此特别适用于目标检测任务。
 
-    Attributes:
-        area (int): Number of areas the feature map is divided into.
-        num_heads (int): Number of heads into which the attention mechanism is divided.
-        head_dim (int): Dimension of each attention head.
-        qkv (Conv): Convolution layer for computing query, key and value tensors.
-        proj (Conv): Projection convolution layer.
-        pe (Conv): Position encoding convolution layer.
+    属性：
+        area (int): 将特征图划分成的区域数量。
+        num_heads (int): 注意力机制划分出的注意力头数量。
+        head_dim (int): 每个注意力头的维度。
+        qkv (Conv): 用于计算查询、键和值张量的卷积层。
+        proj (Conv): 投影卷积层。
+        pe (Conv): 位置编码卷积层。
 
-    Methods:
-        forward: Applies area-attention to input tensor.
+    方法：
+        forward：将区域注意力应用于输入张量。
 
-    Examples:
+    示例：
         >>> attn = AAttn(dim=256, num_heads=8, area=4)
         >>> x = torch.randn(1, 256, 32, 32)
         >>> output = attn(x)
@@ -1672,12 +1666,12 @@ class AAttn(nn.Module):
     """
 
     def __init__(self, dim: int, num_heads: int, area: int = 1):
-        """Initialize an Area-attention module for YOLO models.
+        """初始化用于 YOLO 模型的区域注意力模块。
 
-        Args:
-            dim (int): Number of hidden channels.
-            num_heads (int): Number of heads into which the attention mechanism is divided.
-            area (int): Number of areas the feature map is divided into.
+        参数：
+            dim (int): 隐藏通道数。
+            num_heads (int): 注意力机制划分出的注意力头数量。
+            area (int): 将特征图划分成的区域数量。
         """
         super().__init__()
         self.area = area
@@ -1691,19 +1685,19 @@ class AAttn(nn.Module):
         self.pe = Conv(all_head_dim, all_head_dim, 7, 1, 3, g=all_head_dim, act=False)
 
     def __setstate__(self, state):
-        """Add missing all_head_dim attribute to old checkpoints."""
+        """为旧检查点补充缺失的 all_head_dim 属性。"""
         super().__setstate__(state)
         if not hasattr(self, "all_head_dim"):
             self.all_head_dim = self.head_dim * self.num_heads
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Process the input tensor through the area-attention.
+        """通过区域注意力处理输入张量。
 
-        Args:
-            x (torch.Tensor): Input tensor.
+        参数：
+            x (torch.Tensor): 输入张量.
 
-        Returns:
-            (torch.Tensor): Output tensor after area-attention.
+        返回：
+            (torch.Tensor): 经过区域注意力处理后的输出张量。
         """
         B, _, H, W = x.shape
         N = H * W
@@ -1736,21 +1730,20 @@ class AAttn(nn.Module):
 
 
 class ABlock(nn.Module):
-    """Area-attention block module for efficient feature extraction in YOLO models.
+    """用于 YOLO 模型高效特征提取的区域注意力模块。
 
-    This module implements an area-attention mechanism combined with a feed-forward network for processing feature maps.
-    It uses a novel area-based attention approach that is more efficient than traditional self-attention while
-    maintaining effectiveness.
+    此模块将区域注意力机制与前馈网络结合，用于处理特征图。
+    它采用新颖的基于区域的注意力方式，在保持有效性的同时比传统自注意力更加高效。
 
-    Attributes:
-        attn (AAttn): Area-attention module for processing spatial features.
-        mlp (nn.Sequential): Multi-layer perceptron for feature transformation.
+    属性：
+        attn (AAttn): 用于处理空间特征的区域注意力模块。
+        mlp (nn.Sequential): 用于特征变换的多层感知机。
 
-    Methods:
-        _init_weights: Initializes module weights using truncated normal distribution.
-        forward: Applies area-attention and feed-forward processing to input tensor.
+    方法：
+        _init_weights：使用截断正态分布初始化模块权重。
+        forward：对输入张量执行区域注意力和前馈处理。
 
-    Examples:
+    示例：
         >>> block = ABlock(dim=256, num_heads=8, mlp_ratio=1.2, area=1)
         >>> x = torch.randn(1, 256, 32, 32)
         >>> output = block(x)
@@ -1759,13 +1752,13 @@ class ABlock(nn.Module):
     """
 
     def __init__(self, dim: int, num_heads: int, mlp_ratio: float = 1.2, area: int = 1):
-        """Initialize an Area-attention block module.
+        """初始化区域注意力模块。
 
-        Args:
-            dim (int): Number of input channels.
-            num_heads (int): Number of heads into which the attention mechanism is divided.
-            mlp_ratio (float): Expansion ratio for MLP hidden dimension.
-            area (int): Number of areas the feature map is divided into.
+        参数：
+            dim (int): 输入通道数.
+            num_heads (int): 注意力机制划分出的注意力头数量。
+            mlp_ratio (float): MLP 隐藏维度的扩展比例。
+            area (int): 将特征图划分成的区域数量。
         """
         super().__init__()
 
@@ -1777,10 +1770,10 @@ class ABlock(nn.Module):
 
     @staticmethod
     def _init_weights(m: nn.Module):
-        """Initialize weights using a truncated normal distribution.
+        """使用截断正态分布初始化权重。
 
-        Args:
-            m (nn.Module): Module to initialize.
+        参数：
+            m (nn.Module): 要初始化的模块。
         """
         if isinstance(m, nn.Conv2d):
             nn.init.trunc_normal_(m.weight, std=0.02)
@@ -1788,34 +1781,34 @@ class ABlock(nn.Module):
                 nn.init.constant_(m.bias, 0)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Forward pass through ABlock.
+        """执行 ABlock 的前向传播。
 
-        Args:
-            x (torch.Tensor): Input tensor.
+        参数：
+            x (torch.Tensor): 输入张量.
 
-        Returns:
-            (torch.Tensor): Output tensor after area-attention and feed-forward processing.
+        返回：
+            (torch.Tensor): 经过区域注意力和前馈处理后的输出张量。
         """
         x = x + self.attn(x)
         return x + self.mlp(x)
 
 
 class A2C2f(nn.Module):
-    """Area-Attention C2f module for enhanced feature extraction with area-based attention mechanisms.
+    """使用区域注意力机制增强特征提取能力的 Area-Attention C2f 模块。
 
-    This module extends the C2f architecture by incorporating area-attention and ABlock layers for improved feature
-    processing. It supports both area-attention and standard convolution modes.
+    此模块在 C2f 架构中加入区域注意力和 ABlock 层，以改进特征处理能力。
+    它同时支持区域注意力模式和标准卷积模式。
 
-    Attributes:
-        cv1 (Conv): Initial 1x1 convolution layer that reduces input channels to hidden channels.
-        cv2 (Conv): Final 1x1 convolution layer that processes concatenated features.
-        gamma (nn.Parameter | None): Learnable parameter for residual scaling when using area attention.
-        m (nn.ModuleList): List of either ABlock or C3k modules for feature processing.
+    属性：
+        cv1 (Conv): 将输入通道数减少为隐藏通道数的初始 1x1 卷积层。
+        cv2 (Conv): 处理拼接特征的最终 1x1 卷积层。
+        gamma (nn.Parameter | None): 使用区域注意力时用于残差缩放的可学习参数。
+        m (nn.ModuleList): 用于特征处理的 ABlock 或 C3k 模块列表。
 
-    Methods:
-        forward: Processes input through area-attention or standard convolution pathway.
+    方法：
+        forward：通过区域注意力或标准卷积路径处理输入。
 
-    Examples:
+    示例：
         >>> m = A2C2f(512, 512, n=1, a2=True, area=1)
         >>> x = torch.randn(1, 512, 32, 32)
         >>> output = m(x)
@@ -1836,23 +1829,23 @@ class A2C2f(nn.Module):
         g: int = 1,
         shortcut: bool = True,
     ):
-        """Initialize Area-Attention C2f module.
+        """初始化 Area-Attention C2f 模块.
 
-        Args:
-            c1 (int): Number of input channels.
-            c2 (int): Number of output channels.
-            n (int): Number of ABlock or C3k modules to stack.
-            a2 (bool): Whether to use area attention blocks. If False, uses C3k blocks instead.
-            area (int): Number of areas the feature map is divided into.
-            residual (bool): Whether to use residual connections with learnable gamma parameter.
-            mlp_ratio (float): Expansion ratio for MLP hidden dimension.
-            e (float): Channel expansion ratio for hidden channels.
-            g (int): Number of groups for grouped convolutions.
-            shortcut (bool): Whether to use shortcut connections in C3k blocks.
+        参数：
+            c1 (int): 输入通道数.
+            c2 (int): 输出通道数.
+            n (int): 要堆叠的 ABlock 或 C3k 模块数量。
+            a2 (bool): 是否使用区域注意力模块；为 False 时改用 C3k 模块。
+            area (int): 将特征图划分成的区域数量。
+            residual (bool): 是否使用带可学习 gamma 参数的残差连接。
+            mlp_ratio (float): MLP 隐藏维度的扩展比例。
+            e (float): 隐藏通道的通道扩展比例。
+            g (int): 分组卷积的分组数量。
+            shortcut (bool): C3k 模块中是否使用残差连接。
         """
         super().__init__()
-        c_ = int(c2 * e)  # hidden channels
-        assert c_ % 32 == 0, "Dimension of ABlock must be a multiple of 32."
+        c_ = int(c2 * e)  # 隐藏通道
+        assert c_ % 32 == 0, "ABlock 的维度必须是 32 的倍数。"
 
         self.cv1 = Conv(c1, c_, 1, 1)
         self.cv2 = Conv((1 + n) * c_, c2, 1)
@@ -1866,13 +1859,13 @@ class A2C2f(nn.Module):
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Forward pass through A2C2f layer.
+        """执行 A2C2f 层的前向传播。
 
-        Args:
-            x (torch.Tensor): Input tensor.
+        参数：
+            x (torch.Tensor): 输入张量.
 
-        Returns:
-            (torch.Tensor): Output tensor after processing.
+        返回：
+            (torch.Tensor): 处理后的输出张量。
         """
         y = [self.cv1(x)]
         y.extend(m(y[-1]) for m in self.m)
@@ -1883,22 +1876,22 @@ class A2C2f(nn.Module):
 
 
 class SwiGLUFFN(nn.Module):
-    """SwiGLU Feed-Forward Network for transformer-based architectures."""
+    """用于基于 Transformer 架构的 SwiGLU 前馈网络。"""
 
     def __init__(self, gc: int, ec: int, e: int = 4) -> None:
-        """Initialize SwiGLU FFN with input dimension, output dimension, and expansion factor.
+        """使用输入维度、输出维度和扩展因子初始化 SwiGLU FFN。
 
-        Args:
-            gc (int): Guide channels.
-            ec (int): Embedding channels.
-            e (int): Expansion factor.
+        参数：
+            gc (int): 引导通道数。
+            ec (int): 嵌入通道数。
+            e (int): 扩展因子。
         """
         super().__init__()
         self.w12 = nn.Linear(gc, e * ec)
         self.w3 = nn.Linear(e * ec // 2, ec)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Apply SwiGLU transformation to input features."""
+        """对输入特征执行 SwiGLU 变换。"""
         x12 = self.w12(x)
         x1, x2 = x12.chunk(2, dim=-1)
         hidden = F.silu(x1) * x2
@@ -1906,36 +1899,36 @@ class SwiGLUFFN(nn.Module):
 
 
 class Residual(nn.Module):
-    """Residual connection wrapper for neural network modules."""
+    """神经网络模块的残差连接封装器。"""
 
     def __init__(self, m: nn.Module) -> None:
-        """Initialize residual module with the wrapped module.
+        """使用被封装模块初始化残差模块。
 
-        Args:
-            m (nn.Module): Module to wrap with residual connection.
+        参数：
+            m (nn.Module): 要使用残差连接封装的模块。
         """
         super().__init__()
         self.m = m
         nn.init.zeros_(self.m.w3.bias)
-        # For models with l scale, please change the initialization to
+        # 对于使用 l 缩放的模型，请将初始化方式改为
         # nn.init.constant_(self.m.w3.weight, 1e-6)
         nn.init.zeros_(self.m.w3.weight)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Apply residual connection to input features."""
+        """对输入特征应用残差连接。"""
         return x + self.m(x)
 
 
 class SAVPE(nn.Module):
-    """Spatial-Aware Visual Prompt Embedding module for feature enhancement."""
+    """用于增强特征的空间感知视觉提示嵌入模块。"""
 
     def __init__(self, ch: list[int], c3: int, embed: int):
-        """Initialize SAVPE module with channels, intermediate channels, and embedding dimension.
+        """使用通道数、中间通道数和嵌入维度初始化 SAVPE 模块。
 
-        Args:
-            ch (list[int]): List of input channel dimensions.
-            c3 (int): Intermediate channels.
-            embed (int): Embedding dimension.
+        参数：
+            ch (列表[int]): 输入通道维度列表。
+            c3 (int): 中间通道数。
+            embed (int): 嵌入维度。
         """
         super().__init__()
         self.cv1 = nn.ModuleList(
@@ -1957,7 +1950,7 @@ class SAVPE(nn.Module):
         self.cv6 = nn.Sequential(Conv(2 * self.c, self.c, 3), nn.Conv2d(self.c, self.c, 3, padding=1))
 
     def forward(self, x: list[torch.Tensor], vp: torch.Tensor) -> torch.Tensor:
-        """Process input features and visual prompts to generate enhanced embeddings."""
+        """处理输入特征和视觉提示，生成增强后的嵌入。"""
         y = [self.cv2[i](xi) for i, xi in enumerate(x)]
         y = self.cv4(torch.cat(y, dim=1))
 
@@ -1986,16 +1979,16 @@ class SAVPE(nn.Module):
 
 
 class Proto26(Proto):
-    """Ultralytics YOLO26 models mask Proto module for segmentation models."""
+    """用于分割模型的 Ultralytics YOLO26 掩码原型模块。"""
 
     def __init__(self, ch: tuple = (), c_: int = 256, c2: int = 32, nc: int = 80):
-        """Initialize the Ultralytics YOLO models mask Proto module with specified number of protos and masks.
+        """使用指定数量的原型和掩码初始化 Ultralytics YOLO 掩码原型模块。
 
-        Args:
-            ch (tuple): Tuple of channel sizes from backbone feature maps.
-            c_ (int): Intermediate channels.
-            c2 (int): Output channels (number of protos).
-            nc (int): Number of classes for semantic segmentation.
+        参数：
+            ch (tuple): 主干网络特征图的通道数元组。
+            c_ (int): 中间通道数。
+            c2 (int): 输出通道数，即原型数量。
+            nc (int): 语义分割的类别数量。
         """
         super().__init__(c_, c_, c2)
         self.feat_refine = nn.ModuleList(Conv(x, ch[0], k=1) for x in ch[1:])
@@ -2003,11 +1996,11 @@ class Proto26(Proto):
         self.semseg = nn.Sequential(Conv(ch[0], c_, k=3), Conv(c_, c_, k=3), nn.Conv2d(c_, nc, 1))
 
     def forward(self, x: torch.Tensor, return_semantic: bool = True) -> torch.Tensor:
-        """Perform a forward pass by fusing multi-scale feature maps and generating proto masks."""
+        """融合多尺度特征图并生成掩码原型。"""
         feat = x[0]
         for i, f in enumerate(self.feat_refine):
             up_feat = f(x[i + 1])
-            # Constant scale (P4/P5 -> P3) keeps the upsample static for dynamic-shape CoreML export
+            # 固定缩放比例（P4/P5 -> P3）可使上采样在动态形状 CoreML 导出时保持静态
             up_feat = F.interpolate(up_feat, scale_factor=2 ** (i + 1), mode="nearest")
             feat = feat + up_feat
         p = super().forward(self.feat_fuse(feat))
@@ -2017,33 +2010,33 @@ class Proto26(Proto):
         return p
 
     def fuse(self):
-        """Fuse the model for inference by removing the semantic segmentation head."""
+        """移除语义分割头，使模型可用于推理。"""
         self.semseg = None
 
 
 class RealNVP(nn.Module):
-    """RealNVP: a flow-based generative model.
+    """RealNVP：一种基于流的生成模型。
 
-    References:
+    参考：
         https://arxiv.org/abs/1605.08803
         https://github.com/open-mmlab/mmpose/blob/main/mmpose/models/utils/realnvp.py
     """
 
     @staticmethod
     def nets():
-        """Get the scale model in a single invertible mapping."""
+        """获取单个可逆映射中的缩放模型。"""
         return nn.Sequential(nn.Linear(2, 64), nn.SiLU(), nn.Linear(64, 64), nn.SiLU(), nn.Linear(64, 2), nn.Tanh())
 
     @staticmethod
     def nett():
-        """Get the translation model in a single invertible mapping."""
+        """获取单个可逆映射中的平移模型。"""
         return nn.Sequential(nn.Linear(2, 64), nn.SiLU(), nn.Linear(64, 64), nn.SiLU(), nn.Linear(64, 2))
 
     def __init__(self):
         super().__init__()
 
-        # loc/cov are no longer read (the prior is the closed-form standard normal in log_prob) but stay registered so
-        # checkpoints saved before 8.4.126 still resume: the EMA state is loaded strictly.
+        # loc/cov 已不再读取（log_prob 中的先验是闭式标准正态分布），但仍保留注册，
+        # 这样 8.4.126 之前保存的检查点仍可恢复：EMA 状态会以严格模式加载。
         self.register_buffer("loc", torch.zeros(2))
         self.register_buffer("cov", torch.eye(2))
         self.register_buffer("mask", torch.tensor([[0, 1], [1, 0]] * 3, dtype=torch.float32))
@@ -2053,14 +2046,13 @@ class RealNVP(nn.Module):
         self.init_weights()
 
     def init_weights(self):
-        """Initialize model weights."""
+        """初始化 模型 权重."""
         for m in self.modules():
             if isinstance(m, nn.Linear):
                 nn.init.xavier_uniform_(m.weight, gain=0.01)
 
     def backward_p(self, x):
-        """Apply mapping from the data space to the latent space and calculate the log determinant of the Jacobian
-        matrix.
+        """将数据空间映射到潜空间，并计算雅可比矩阵的对数行列式。
         """
         log_det_jacob, z = x.new_zeros(x.shape[0]), x
         for i in reversed(range(len(self.t))):
@@ -2072,9 +2064,9 @@ class RealNVP(nn.Module):
         return z, log_det_jacob
 
     def log_prob(self, x):
-        """Calculate the log probability of given sample in data space."""
+        """计算给定数据空间样本的对数概率。"""
         if x.dtype == torch.float32 and self.s[0][0].weight.dtype != torch.float32:
             self.float()
         z, log_det = self.backward_p(x)
-        # Closed-form log N(z; 0, I) in 2-D; fp32 keeps z**2 from overflowing under AMP.
+        # 二维闭式 log N(z; 0, I)；使用 fp32 可避免 z**2 在 AMP 下溢出。
         return -0.5 * (z.float() ** 2).sum(-1) - math.log(2 * math.pi) + log_det

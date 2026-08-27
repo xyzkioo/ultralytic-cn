@@ -6,23 +6,22 @@ from ultralytics.utils import nms, ops
 
 
 class DetectionPredictor(BasePredictor):
-    """A class extending the BasePredictor class for prediction based on a detection model.
+    """继承 BasePredictor、用于根据检测模型生成预测结果的类。
 
-    This predictor specializes in object detection tasks, processing model outputs into meaningful detection results
-    with bounding boxes and class predictions.
+    此预测器专用于对象检测任务，将模型输出处理为包含边界框和类别预测结果的检测结果。
 
-    Attributes:
-        args (namespace): Configuration arguments for the predictor.
-        model (nn.Module): The detection model used for inference.
-        batch (list): Batch of images and metadata for processing.
+    属性：
+        args (namespace): 预测器的配置参数。
+        model (nn.Module): 用于推理的检测模型。
+        batch (列表): 待处理的图像及其元数据批次。
 
-    Methods:
-        postprocess: Process raw model predictions into detection results.
-        construct_results: Build Results objects from processed predictions.
-        construct_result: Create a single Result object from a prediction.
-        get_obj_feats: Extract object features from the feature maps.
+    方法：
+        postprocess: 将模型原始预测结果处理为检测结果。
+        construct_results: 根据处理后的预测结果构建 Results 对象。
+        construct_result: 根据单个预测结果创建一个 Results 对象。
+        get_obj_feats: 从特征图中提取对象特征。
 
-    Examples:
+    示例：
         >>> from ultralytics.utils import ASSETS
         >>> from ultralytics.models.yolo.detect import DetectionPredictor
         >>> args = dict(model="yolo26n.pt", source=ASSETS)
@@ -31,21 +30,20 @@ class DetectionPredictor(BasePredictor):
     """
 
     def postprocess(self, preds, img, orig_imgs, **kwargs):
-        """Post-process predictions and return a list of Results objects.
+        """后处理预测结果，并返回 Results 对象列表。
 
-        This method applies non-maximum suppression to raw model predictions and prepares them for visualization and
-        further analysis.
+        此方法对模型原始预测结果应用非极大值抑制，并为可视化和进一步分析准备数据。
 
-        Args:
-            preds (torch.Tensor): Raw predictions from the model.
-            img (torch.Tensor): Processed input image tensor in model input format.
-            orig_imgs (torch.Tensor | list): Original input images before preprocessing.
-            **kwargs (Any): Additional keyword arguments.
+        参数：
+            preds (torch.Tensor): 模型输出的原始预测结果。
+            img (torch.Tensor): 采用模型输入格式的处理后输入图像张量。
+            orig_imgs (torch.Tensor | 列表): 预处理前的原始输入图像。
+            **kwargs (Any): 其他关键字参数。
 
-        Returns:
-            (list): List of Results objects containing the post-processed predictions.
+        返回：
+            (列表): 包含后处理预测结果的 Results 对象列表。
 
-        Examples:
+        示例：
             >>> predictor = DetectionPredictor(overrides=dict(model="yolo26n.pt"))
             >>> results = predictor.predict("path/to/image.jpg")
             >>> processed_results = predictor.postprocess(preds, img, orig_imgs)
@@ -54,7 +52,7 @@ class DetectionPredictor(BasePredictor):
         preds = nms.non_max_suppression(
             preds,
             self.args.conf,
-            kwargs.pop("iou", self.args.iou),  # allow callers (e.g. TrackTrack loose-NMS recovery) to override IoU
+            kwargs.pop("iou", self.args.iou),  # 允许调用方（例如 TrackTrack 宽松 NMS 恢复逻辑）覆盖 IoU
             self.args.classes,
             self.args.agnostic_nms,
             max_det=self.args.max_det,
@@ -64,7 +62,7 @@ class DetectionPredictor(BasePredictor):
             return_idxs=save_feats,
         )
 
-        if not isinstance(orig_imgs, list):  # input images are a torch.Tensor, not a list
+        if not isinstance(orig_imgs, list):  # 输入图像是 torch.Tensor，而不是列表
             orig_imgs = ops.convert_torch2numpy_batch(orig_imgs)[..., ::-1]
 
         if save_feats:
@@ -75,31 +73,31 @@ class DetectionPredictor(BasePredictor):
 
         if save_feats:
             for r, f in zip(results, obj_feats):
-                r.feats = f  # add object features to results
+                r.feats = f  # 将对象特征添加到结果
 
         return results
 
     @staticmethod
     def get_obj_feats(feat_maps, idxs):
-        """Extract object features from the feature maps."""
+        """从特征图中提取对象特征。"""
         import torch
 
-        s = min(x.shape[1] for x in feat_maps)  # find shortest vector length
+        s = min(x.shape[1] for x in feat_maps)  # 查找最短向量长度
         obj_feats = torch.cat(
             [x.permute(0, 2, 3, 1).reshape(x.shape[0], -1, s, x.shape[1] // s).mean(dim=-1) for x in feat_maps], dim=1
-        )  # mean reduce all vectors to same length
-        return [feats[idx] if idx.shape[0] else [] for feats, idx in zip(obj_feats, idxs)]  # for each img in batch
+        )  # 对所有向量求均值，使其长度一致
+        return [feats[idx] if idx.shape[0] else [] for feats, idx in zip(obj_feats, idxs)]  # 处理批次中的每张图像
 
     def construct_results(self, preds, img, orig_imgs):
-        """Construct a list of Results objects from model predictions.
+        """根据模型预测结果构建 Results 对象列表。
 
-        Args:
-            preds (list[torch.Tensor]): List of predicted bounding boxes and scores for each image.
-            img (torch.Tensor): Batch of preprocessed images used for inference.
-            orig_imgs (list[np.ndarray]): List of original images before preprocessing.
+        参数：
+            preds (列表[torch.Tensor]): 每张图像的预测边界框和分数列表。
+            img (torch.Tensor): 用于推理的预处理图像批次。
+            orig_imgs (列表[np.ndarray]): 预处理前的原始图像列表。
 
-        Returns:
-            (list[Results]): List of Results objects containing detection information for each image.
+        返回：
+            (列表[Results]): 包含每张图像检测信息的 Results 对象列表。
         """
         return [
             self.construct_result(pred, img, orig_img, img_path)
@@ -107,16 +105,16 @@ class DetectionPredictor(BasePredictor):
         ]
 
     def construct_result(self, pred, img, orig_img, img_path):
-        """Construct a single Results object from one image prediction.
+        """根据一张图像的预测结果构建单个 Results 对象。
 
-        Args:
-            pred (torch.Tensor): Predicted boxes and scores with shape (N, 6) where N is the number of detections.
-            img (torch.Tensor): Preprocessed image tensor used for inference.
-            orig_img (np.ndarray): Original image before preprocessing.
-            img_path (str): Path to the original image file.
+        参数：
+            pred (torch.Tensor): 预测边界框和分数，形状为 (N, 6)，其中 N 是检测数量。
+            img (torch.Tensor): 用于推理的预处理图像张量。
+            orig_img (np.ndarray): 预处理前的原始图像。
+            img_path (str): 原始图像文件路径。
 
-        Returns:
-            (Results): Results object containing the original image, image path, class names, and scaled bounding boxes.
+        返回：
+            (Results): 包含原始图像、图像路径、类别名称和缩放后边界框的 Results 对象。
         """
         pred[:, :4] = ops.scale_boxes(img.shape[2:], pred[:, :4], orig_img.shape)
         return Results(orig_img, path=img_path, names=self.model.names, boxes=pred[:, :6])

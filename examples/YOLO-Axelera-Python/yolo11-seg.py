@@ -46,7 +46,7 @@ def build_pipeline(model_path: str, conf: float = 0.25, iou: float = 0.45):
             op.seq(op.itemgetter(0), op.nms(iou_threshold=iou, max_boxes=300)),
             op.itemgetter(1),
         ),
-        # par unpacks its tuple, so this par receives (dets, protos) and returns
+        # par 会解包其元组，因此此处的 par 接收 (dets, protos) 并返回
         # (rescaled dets, masks) for ax_segmentation
         op.par(
             op.seq(op.pack(), op.itemgetter(0), op.to_image_space()),
@@ -60,7 +60,7 @@ def main(args):
     """Run the YOLO11 segmentation pipeline over the source and render results via the display app."""
     renderer = "none" if args.no_display else "auto"
     # --output saves rendered frames via save_output_video(), which reads the surface
-    # frame sink — only the OpenCV renderer has one, so it can't run headless.
+        # 帧输出端——只有 OpenCV 渲染器需要它，因此无头模式不应运行该逻辑。
     expose_surface = bool(args.output)
     with display.App(renderer=renderer) as visualizer:
         vis = visualizer.create_window("YOLO11 Segmentation", (800, 500), expose_surface=expose_surface)
@@ -68,8 +68,8 @@ def main(args):
 
         # cv.create_source wants a path/URL string; map a bare camera index to its /dev/video node.
         source_arg = f"/dev/video{args.source}" if args.source.isdigit() else args.source
-        # The ffmpeg backend doesn't support V4L2 /dev/video cameras, so decode those with OpenCV;
-        # ffmpeg stays the default for files/streams (faster, wider format support).
+        # ffmpeg 后端不支持 V4L2 /dev/video 摄像头，因此使用 OpenCV 解码摄像头；
+        # 对文件/流仍默认使用 ffmpeg（更快且格式支持更广）。
         backend = "opencv" if source_arg.startswith("/dev/video") else "ffmpeg"
         with cv.create_source(source_arg, backend=backend) as source:
             if args.output:
@@ -78,14 +78,14 @@ def main(args):
                 if vis.is_closed:
                     break
                 vis(img, segments)
-                # Headless has no window, so periodically log what was detected.
+                # 无头模式没有窗口，因此定期记录检测到的内容。
                 if args.no_display and frame_count % 100 == 0:
                     counts = Counter(getattr(s.class_id, "name", str(s.class_id)) for s in segments)
                     summary = ", ".join(f"{name}x{n}" for name, n in counts.most_common()) or "none"
                     print(f"frame {frame_count}: {len(segments)} segments ({summary})")
 
-        # Keep the window open for a still image; gate on the source being an image file, not the
-        # frame count -- a 1-frame video or a stream that stops early isn't an image.
+        # 对静态图像保持窗口打开；根据源是否为图像文件判断，而不是根据帧数判断——
+        # 单帧视频或提前结束的流并不是图像。
         is_image = not args.source.isdigit() and Path(args.source).suffix.lower() in IMAGE_SUFFIXES
         if is_image and not args.no_display and not vis.is_closed:
             vis.wait_for_close()

@@ -24,9 +24,9 @@ from ultralytics.utils.torch_utils import get_cpu_info, get_gpu_info, unwrap_mod
 
 
 def _post(url: str, data: dict, timeout: float = 5.0) -> None:
-    """Send a one-shot JSON POST request."""
+    """发送一次性 JSON POST 请求。"""
     try:
-        body = json.dumps(data, separators=(",", ":")).encode()  # compact JSON
+        body = json.dumps(data, separators=(",", ":")).encode()  # 紧凑 JSON
         req = Request(url, data=body, headers={"Content-Type": "application/json"})
         urlopen(req, timeout=timeout).close()
     except Exception:
@@ -34,49 +34,47 @@ def _post(url: str, data: dict, timeout: float = 5.0) -> None:
 
 
 def _arch(model):
-    """Return the architecture a model is built from, i.e. 'yolo11n-seg', or None if it cannot be determined.
+    """返回模型所基于的架构（例如 'yolo11n-seg'）；如果无法确定则返回 None。
 
-    The config travels inside a checkpoint, so fine-tuned models report the architecture they descend from however many
-    generations back.
+    配置会随检查点保存，因此微调模型可以报告其祖先架构，即使中间经过了多代模型派生。
     """
-    desc = f"{getattr(model, 'description', '')}".split()  # exported models name the arch here instead of a YAML
-    # a trainer holds the config on the model itself, a predictor one level down on the backend; SAM has no .model
+    desc = f"{getattr(model, 'description', '')}".split()  # 导出模型在此处保存架构名称，而不是 YAML 文件
+    # 训练器将配置保存在模型自身，预测器则保存在下一层 backend 中；SAM 没有 .model 属性
     yaml = getattr(model, "yaml", None) or getattr(getattr(model, "model", None), "yaml", None) or {}
     stem = Path(yaml.get("yaml_file", "")).stem or (desc[1] if len(desc) > 1 else "")
-    return stem.lower()[:100] or None  # lowercased so one arch cannot split into two cells; 100 is the GA4 limit
+    return stem.lower()[:100] or None  # 统一转小写，避免同一架构被拆成两项；100 是 GA4 的长度限制
 
 
 class Events:
-    """Collect and send anonymous usage analytics with rate-limiting.
+    """收集并按速率限制发送匿名使用分析数据。
 
-    Event collection and transmission are enabled when sync is enabled in settings, the current process is rank -1 or 0,
-    tests are not running, the environment is online, and the installation source is either pip or the official
-    Ultralytics GitHub repository.
+    当设置中启用同步、当前进程 rank 为 -1 或 0、未运行测试、环境在线，且安装来源为 pip 或官方 Ultralytics GitHub
+    仓库时，才会收集并发送事件。
 
-    Attributes:
-        url (str): Measurement Protocol endpoint for receiving anonymous events.
-        events (list[dict]): In-memory queue of event payloads awaiting transmission.
-        rate_limit (float): Minimum time in seconds between POST requests.
-        t (float): Timestamp of the last transmission in seconds since the epoch.
-        metadata (dict): Static metadata describing runtime, installation source, and environment.
-        enabled (bool): Flag indicating whether analytics collection is active.
+    属性：
+        url (str): 接收匿名事件的 Measurement Protocol 地址。
+        events (列表[dict]): 等待发送的事件负载内存队列。
+        rate_limit (float): 两次 POST 请求之间的最小间隔（秒）。
+        t (float): 上次发送时间戳（自 Unix 纪元起的秒数）。
+        metadata (dict): 描述运行时、安装来源和环境的静态元数据。
+        enabled (bool): 指示是否启用分析数据收集。
 
-    Methods:
-        __init__: Initialize the event queue, rate limiter, and runtime metadata.
-        __call__: Queue an event and trigger a non-blocking send when the rate limit elapses.
+    方法：
+        __init__: 初始化事件队列、速率限制器和运行时元数据。
+        __call__: 将事件加入队列，并在达到发送间隔后触发非阻塞发送。
     """
 
     url = "https://www.google-analytics.com/mp/collect?measurement_id=G-X8NCJYTQXM&api_secret=QLQrATrNSwGRFRLE-cbHJw"
 
     def __init__(self) -> None:
-        """Initialize the Events instance with queue, rate limiter, and environment metadata."""
-        self.events = []  # pending events
-        self.rate_limit = 30.0  # rate limit (seconds)
-        self.t = 0.0  # last send timestamp (seconds)
+        """使用队列、速率限制器和环境元数据初始化 Events 实例。"""
+        self.events = []  # 待发送事件
+        self.rate_limit = 30.0  # 速率限制（秒）
+        self.t = 0.0  # 上次发送时间戳（秒）
         self.metadata = {
             "cli": Path(ARGV[0]).name == "yolo",
             "install": "git" if GIT.is_repo else "pip" if IS_PIP_PACKAGE else "other",
-            "python": PYTHON_VERSION.rsplit(".", 1)[0],  # i.e. 3.13
+            "python": PYTHON_VERSION.rsplit(".", 1)[0],  # 例如 3.13
             "torch": TORCH_VERSION,
             "CPU": get_cpu_info(),
             "version": __version__,
@@ -93,111 +91,110 @@ class Events:
         )
 
     def __call__(self, cfg, device=None, run=None) -> None:
-        """Queue an event and flush the queue asynchronously when the rate limit elapses.
+        """将事件加入队列，并在达到速率限制间隔后异步刷新队列。
 
-        Args:
-            cfg (IterableSimpleNamespace): The configuration object containing mode and task information.
-            device (torch.device | str, optional): The device type (e.g., 'cpu', 'cuda').
-            run (BasePredictor | BaseTrainer, optional): The completed run, read for the mode's result fields.
+        参数：
+            cfg (IterableSimpleNamespace): 包含模式和任务信息的配置对象。
+            device (torch.device | str, 可选): 设备类型（例如 'cpu'、'cuda'）。
+            run (BasePredictor | BaseTrainer, 可选): 已完成的运行对象，用于读取对应模式的结果字段。
         """
-        # An event is named for its mode, so an arbitrary mode becomes an arbitrary event name, and GA4 drops every new
-        # name once a property reaches 500 of them - eventually the real ones.
+        # 事件名称使用运行模式；否则任意模式都会生成任意事件名称，GA4 达到每个属性 500 个名称后会丢弃后续名称。
         if not self.enabled or cfg.mode not in MODES or cfg.task not in TASKS:
             return
 
-        # Attempt to enqueue a new event
-        if len(self.events) < 25:  # Queue limited to 25 events to bound memory and traffic
+        # 尝试加入新事件
+        if len(self.events) < 25:  # 队列最多保存 25 个事件，以限制内存和流量
             params = {
                 **self.metadata,
                 "task": cfg.task,
-                "model": Path(str(cfg.model)).name[:100] if cfg.model else None,  # basename, never a path
+                "model": Path(str(cfg.model)).name[:100] if cfg.model else None,  # 仅保存文件名，不保存路径
                 "device": str(device),
             }
             if cfg.mode == "export":
                 params["format"] = cfg.format
             elif cfg.mode == "train":
-                # Guarded and ordered exactly as predict below, for the same reasons
+                # 与下方 predict 使用相同的保护和字段顺序，原因也相同
                 try:
-                    # grouping key; stem unifies YAML and directory, and isinstance keeps a dict repr's path out
+                    # 分组键：stem 统一 YAML 和目录，isinstance 避免字典表示中的路径混入
                     params["data"] = Path(cfg.data).stem[:100] if isinstance(cfg.data, (str, Path)) else None
                     params["imgsz"] = cfg.imgsz
-                    # epochs this session, to stay consistent with hours; a resumed run restores an absolute epoch
+                    # 本次会话的训练轮数，与 hours 保持一致；恢复训练时会还原绝对轮数
                     params["epochs_done"] = run.epoch + 1 - run.start_epoch
-                    params["batch"] = run.batch_size  # resolved, since autobatch and OOM retries both move it
+                    params["batch"] = run.batch_size  # 已解析，因为 autobatch 和 OOM 重试都会调整它
                     params["hours"] = round((time.time() - run.train_time_start) / 3600, 4)
-                    params["n"] = len(run.train_loader.dataset)  # train split size, matching predict's n
-                    if run.best_fitness is not None:  # None when a run never validated
-                        # a per-task composite: mAP50-95 for detect, box+mask for segment, so compare within a task
+                    params["n"] = len(run.train_loader.dataset)  # train split 尺寸, matching predict's n
+                    if run.best_fitness is not None:  # 运行从未验证时为 None
+                        # 按任务组合指标：detect 使用 mAP50-95，分割使用边界框+掩码，因此仅在同一任务内比较
                         params["fitness"] = round(float(run.best_fitness), 5)
-                    # both resolved: the default 'auto' fits its own optimizer and lr0, ignoring cfg.lr0
+                    # 两者均已解析：默认 'auto' 使用自身的优化器和 lr0，并忽略 cfg.lr0
                     params["optimizer"] = type(run.optimizer).__name__
-                    # min, since MuSGD splits every group in two and puts the finetuning lr*3 half first
+                    # 取最小值，因为 MuSGD 会将每组拆成两组，并把微调 lr*3 的一半放在前面
                     params["lr0"] = min(g["initial_lr"] for g in run.optimizer.param_groups)
                     flags = {
                         "pretrained": bool(cfg.pretrained),
                         "cos_lr": cfg.cos_lr,
-                        "amp": run.amp,  # as applied: check_amp() turns a requested True off on unsupported hardware
+                        "amp": run.amp,  # 实际应用值：check_amp() 会在不支持的硬件上关闭请求的 True
                         "rect": cfg.rect,
                         "multi_scale": bool(cfg.multi_scale),
-                        "freeze": bool(cfg.freeze),  # freeze=0 and freeze=[] both freeze nothing
+                        "freeze": bool(cfg.freeze),  # freeze=0 和 freeze=[] 都表示不冻结任何层
                         "dropout": cfg.dropout > 0,
                         "early_stop": run.epoch + 1 < run.epochs,  # .stop is also set on the last planned epoch
-                        "resume": bool(cfg.resume),  # fitness carries over, epochs and hours do not
+                        "resume": bool(cfg.resume),  # fitness 会延续，epochs 和 hours 不会延续
                     }
                     params["flags"] = ",".join(k for k, v in flags.items() if v) or None
-                    params["arch"] = _arch(unwrap_model(run.model))  # DDP and EMA both wrap away the .yaml
-                    params["ngpu"] = run.world_size if run.world_size > 1 else None  # only a count above one informs
+                    params["arch"] = _arch(unwrap_model(run.model))  # DDP 和 EMA 都会包裹模型并隐藏 .yaml
+                    params["ngpu"] = run.world_size if run.world_size > 1 else None  # 只有大于 1 的数量才有信息
                     if device.type == "cuda":  # makes hours comparable
                         params["GPU"] = get_gpu_info(device.index or 0).rsplit(", ", 1)[0]
                 except Exception:
                     pass
-            elif cfg.mode in {"predict", "track"}:  # track runs the predictor too, and is most of the video inference
-                # Reads inside the guard so nothing can raise into a user's run, cheapest first; order is drop order
+            elif cfg.mode in {"predict", "track"}:  # track runs the predictor too, and is most of the video 推理
+                # 在保护块内读取，避免任何异常影响用户运行；先读取成本最低的字段，顺序也是丢弃顺序
                 try:
-                    params["n"] = run.seen  # predictor state this file's own owner sets, so it cannot raise
-                    params["pixels"] = run.pixels  # mean inference area, which FLOPs scale with; sqrt for a side
-                    for k, v in (run.speed or {}).items():  # absent when a run processed no images
+                    params["n"] = run.seen  # 由该文件的所有者设置预测器状态，因此不会抛出异常
+                    params["pixels"] = run.pixels  # 平均推理面积，FLOPs 会随其变化；边长取平方根
+                    for k, v in (run.speed or {}).items():  # 运行未处理图像时为空
                         params[f"{k}_ms"] = round(v, 3)
                     params["batch"] = min(getattr(run.dataset, "bs", 0), run.seen) or None
                     model = run.model
                     params["format"] = model.format
-                    params["nc"] = len(getattr(model, "names", None) or ()) or None  # drives head width and NMS
-                    # toggles that move inference time, as applied: compile replaces .model, end2end is tri-state
+                    params["nc"] = len(getattr(model, "names", None) or ()) or None  # 决定检测头宽度和 NMS
+                    # 记录影响推理时间的开关：compile 会替换 .模型，end2end 为三态值
                     flags = {
                         "compile": hasattr(model, "_orig_mod"),
                         "end2end": getattr(model, "end2end", False),
                         "augment": cfg.augment,
                     }
                     params["flags"] = ",".join(k for k, v in flags.items() if v) or None
-                    params["arch"] = _arch(model)  # reads into model.description and model.model.yaml
+                    params["arch"] = _arch(model)  # 读取模型 description 和模型 yaml
                     meta = getattr(model, "metadata", None) or {}
                     params["quantize"] = str(meta.get("args", {}).get("quantize") or cfg.quantize or 32)
-                    if device.type == "cuda":  # CUDA is already initialized here, so this costs nothing
+                    if device.type == "cuda":  # CUDA 此时已初始化，因此无需额外开销
                         params["GPU"] = get_gpu_info(device.index or 0).rsplit(", ", 1)[0]
                     session = getattr(model, "session", None)  # ONNX Runtime provider, else OpenVINO device
-                    ov = getattr(model, "ov_compiled_model", None)  # an Arc GPU run must not look like CPU
+                    ov = getattr(model, "ov_compiled_model", None)  # Arc GPU 运行不能被识别为 CPU
                     devices = session.get_providers() if session else ov.get_property("EXECUTION_DEVICES") if ov else []
                     params["provider"] = devices[0] if devices else None  # last: least reliable read
                 except Exception:
                     pass
-            # nulls are dropped anyway, and an event over 25 params is rejected outright, so cap rather than lose it
+            # null 值最终会被丢弃，超过 25 个参数的事件会直接被拒绝，因此截断参数而不是丢弃整个事件
             params = dict([(k, v) for k, v in params.items() if v is not None][:25])
             self.events.append({"name": cfg.mode, "params": params})
 
-        # Check rate limit and return early if under limit
+        # 检查速率限制；未达到间隔时提前返回
         t = time.time()
         if (t - self.t) < self.rate_limit:
             return
 
-        # Overrate limit: send a snapshot of queued events in a background thread
-        payload_events = list(self.events)  # snapshot to avoid race with queue reset
+        # 达到发送间隔：在线程后台发送队列快照
+        payload_events = list(self.events)  # 复制快照，避免与队列重置产生竞态
         Thread(
             target=_post,
             args=(self.url, {"client_id": SETTINGS["uuid"], "events": payload_events}),  # SHA-256 anonymized
             daemon=True,
         ).start()
 
-        # Reset queue and rate limit timer
+        # 重置队列和速率限制计时器
         self.events = []
         self.t = t
 
@@ -206,26 +203,26 @@ events = Events()
 
 
 def on_train_end(trainer):
-    """Record an anonymous training event after final metrics are available."""
+    """最终指标可用后记录匿名训练事件。"""
     events(trainer.args, trainer.device, trainer)
 
 
 def on_val_start(validator):
-    """Record an anonymous standalone validation event.
+    """记录匿名的独立验证事件。
 
-    A trainer's final validation retains mode=train, so the guard prevents a duplicate train event.
+    训练器的最终验证仍保留 mode=train，因此此处的判断可避免重复记录训练事件。
     """
     if validator.args.mode == "val":
         events(validator.args, validator.device)
 
 
 def on_predict_end(predictor):
-    """Record an anonymous prediction event after per-image speeds are available."""
+    """逐图像速度可用后记录匿名预测事件。"""
     events(predictor.args, predictor.device, predictor)
 
 
 def on_export_start(exporter):
-    """Record an anonymous export event."""
+    """记录匿名导出事件。"""
     events(exporter.args, exporter.device)
 
 

@@ -9,27 +9,26 @@ from ultralytics.nn.modules import MLP, LayerNorm2d
 
 
 class MaskDecoder(nn.Module):
-    """Decoder module for generating masks and their associated quality scores using a transformer architecture.
+    """使用 Transformer 架构生成掩码及其质量分数的解码器模块。
 
-    This class predicts masks given image and prompt embeddings, utilizing a transformer to process the inputs and
-    generate mask predictions along with their quality scores.
+    此类根据图像和提示嵌入预测掩码，使用 Transformer 处理输入，并生成掩码预测结果及其质量分数。
 
-    Attributes:
-        transformer_dim (int): Channel dimension for the transformer module.
-        transformer (nn.Module): Transformer module used for mask prediction.
-        num_multimask_outputs (int): Number of masks to predict for disambiguating masks.
-        iou_token (nn.Embedding): Embedding for the IoU token.
-        num_mask_tokens (int): Number of mask tokens.
-        mask_tokens (nn.Embedding): Embedding for the mask tokens.
-        output_upscaling (nn.Sequential): Neural network sequence for upscaling the output.
-        output_hypernetworks_mlps (nn.ModuleList): Hypernetwork MLPs for generating masks.
-        iou_prediction_head (nn.Module): MLP for predicting mask quality.
+    属性：
+        transformer_dim (int): Transformer 模块的通道维度。
+        transformer (nn.Module): 用于掩码预测的 Transformer 模块。
+        num_multimask_outputs (int): 为消除掩码歧义而预测的掩码数量。
+        iou_token (nn.Embedding): IoU 令牌嵌入。
+        num_mask_tokens (int): 掩码令牌数量。
+        mask_tokens (nn.Embedding): 掩码令牌嵌入。
+        output_upscaling (nn.Sequential): 用于放大输出的神经网络序列。
+        output_hypernetworks_mlps (nn.ModuleList): 用于生成掩码的超网络 MLP 列表。
+        iou_prediction_head (nn.Module): 用于预测掩码质量的 MLP。
 
-    Methods:
-        forward: Predict masks given image and prompt embeddings.
-        predict_masks: Internal method for mask prediction.
+    方法：
+        forward: 根据图像和提示嵌入预测掩码。
+        predict_masks: 掩码预测的内部方法。
 
-    Examples:
+    示例：
         >>> decoder = MaskDecoder(transformer_dim=256, transformer=transformer_module)
         >>> masks, iou_pred = decoder(
         ...     image_embeddings, image_pe, sparse_prompt_embeddings, dense_prompt_embeddings, multimask_output=True
@@ -46,15 +45,15 @@ class MaskDecoder(nn.Module):
         iou_head_depth: int = 3,
         iou_head_hidden_dim: int = 256,
     ) -> None:
-        """Initialize the MaskDecoder module for generating masks and their associated quality scores.
+        """初始化用于生成掩码及其质量分数的 MaskDecoder 模块。
 
-        Args:
-            transformer_dim (int): Channel dimension for the transformer module.
-            transformer (nn.Module): Transformer module used for mask prediction.
-            num_multimask_outputs (int): Number of masks to predict for disambiguating masks.
-            activation (type[nn.Module]): Type of activation to use when upscaling masks.
-            iou_head_depth (int): Depth of the MLP used to predict mask quality.
-            iou_head_hidden_dim (int): Hidden dimension of the MLP used to predict mask quality.
+        参数：
+            transformer_dim (int): Transformer 模块的通道维度。
+            transformer (nn.Module): 用于掩码预测的 Transformer 模块。
+            num_multimask_outputs (int): 为消除掩码歧义而预测的掩码数量。
+            activation (type[nn.Module]): 放大掩码时使用的激活函数类型。
+            iou_head_depth (int): 用于预测掩码质量的 MLP 深度。
+            iou_head_hidden_dim (int): 用于预测掩码质量的 MLP 隐藏维度。
         """
         super().__init__()
         self.transformer_dim = transformer_dim
@@ -87,20 +86,20 @@ class MaskDecoder(nn.Module):
         dense_prompt_embeddings: torch.Tensor,
         multimask_output: bool,
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        """Predict masks given image and prompt embeddings.
+        """根据图像和提示嵌入预测掩码。
 
-        Args:
-            image_embeddings (torch.Tensor): Embeddings from the image encoder.
-            image_pe (torch.Tensor): Positional encoding with the shape of image_embeddings.
-            sparse_prompt_embeddings (torch.Tensor): Embeddings of the points and boxes.
-            dense_prompt_embeddings (torch.Tensor): Embeddings of the mask inputs.
-            multimask_output (bool): Whether to return multiple masks or a single mask.
+        参数：
+            image_embeddings (torch.Tensor): 图像编码器生成的嵌入。
+            image_pe (torch.Tensor): 与 image_embeddings 形状相同的位置编码。
+            sparse_prompt_embeddings (torch.Tensor): 点和边界框的嵌入。
+            dense_prompt_embeddings (torch.Tensor): 掩码输入的嵌入。
+            multimask_output (bool): 是否返回多个掩码，而不是单个掩码。
 
-        Returns:
-            masks (torch.Tensor): Batched predicted masks.
-            iou_pred (torch.Tensor): Batched predictions of mask quality.
+        返回：
+            masks (torch.Tensor): 批量预测的掩码。
+            iou_pred (torch.Tensor): 批量预测的掩码质量。
 
-        Examples:
+        示例：
             >>> decoder = MaskDecoder(transformer_dim=256, transformer=transformer_module)
             >>> image_emb = torch.rand(1, 256, 64, 64)
             >>> image_pe = torch.rand(1, 256, 64, 64)
@@ -116,7 +115,7 @@ class MaskDecoder(nn.Module):
             dense_prompt_embeddings=dense_prompt_embeddings,
         )
 
-        # Select the correct mask or masks for output
+        # 选择正确的掩码输出
         mask_slice = slice(1, None) if multimask_output else slice(0, 1)
         masks = masks[:, mask_slice, :, :]
         iou_pred = iou_pred[:, mask_slice]
@@ -130,24 +129,24 @@ class MaskDecoder(nn.Module):
         sparse_prompt_embeddings: torch.Tensor,
         dense_prompt_embeddings: torch.Tensor,
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        """Predict masks and quality scores using image and prompt embeddings via transformer architecture."""
-        # Concatenate output tokens
+        """通过 Transformer 架构，使用图像和提示嵌入预测掩码及质量分数。"""
+        # 拼接输出令牌
         output_tokens = torch.cat([self.iou_token.weight, self.mask_tokens.weight], dim=0)
         output_tokens = output_tokens.unsqueeze(0).expand(sparse_prompt_embeddings.shape[0], -1, -1)
         tokens = torch.cat((output_tokens, sparse_prompt_embeddings), dim=1)
 
-        # Expand per-image data in batch direction to be per-mask
+        # 沿批次维度扩展每张图像的数据，使其对应每个掩码
         src = torch.repeat_interleave(image_embeddings, tokens.shape[0], dim=0)
         src = src + dense_prompt_embeddings
         pos_src = torch.repeat_interleave(image_pe, tokens.shape[0], dim=0)
         b, c, h, w = src.shape
 
-        # Run the transformer
+        # 运行 Transformer
         hs, src = self.transformer(src, pos_src, tokens)
         iou_token_out = hs[:, 0, :]
         mask_tokens_out = hs[:, 1 : (1 + self.num_mask_tokens), :]
 
-        # Upscale mask embeddings and predict masks using the mask tokens
+        # 放大掩码嵌入，并使用掩码令牌预测掩码
         src = src.transpose(1, 2).view(b, c, h, w)
         upscaled_embedding = self.output_upscaling(src)
         hyper_in_list: list[torch.Tensor] = [
@@ -157,46 +156,45 @@ class MaskDecoder(nn.Module):
         b, c, h, w = upscaled_embedding.shape
         masks = (hyper_in @ upscaled_embedding.view(b, c, h * w)).view(b, -1, h, w)
 
-        # Generate mask quality predictions
+        # 生成掩码质量预测结果
         iou_pred = self.iou_prediction_head(iou_token_out)
 
         return masks, iou_pred
 
 
 class SAM2MaskDecoder(nn.Module):
-    """Transformer-based decoder for predicting instance segmentation masks from image and prompt embeddings.
+    """基于 Transformer 的解码器，用于根据图像和提示嵌入预测实例分割掩码。
 
-    This class extends the functionality of the MaskDecoder, incorporating additional features such as high-resolution
-    feature processing, dynamic multimask output, and object score prediction.
+    此类扩展 MaskDecoder 的功能，加入高分辨率特征处理、动态多掩码输出和对象分数预测等特性。
 
-    Attributes:
-        transformer_dim (int): Channel dimension of the transformer.
-        transformer (nn.Module): Transformer used to predict masks.
-        num_multimask_outputs (int): Number of masks to predict when disambiguating masks.
-        iou_token (nn.Embedding): Embedding for IOU token.
-        num_mask_tokens (int): Total number of mask tokens.
-        mask_tokens (nn.Embedding): Embedding for mask tokens.
-        pred_obj_scores (bool): Whether to predict object scores.
-        obj_score_token (nn.Embedding): Embedding for object score token.
-        use_multimask_token_for_obj_ptr (bool): Whether to use multimask token for object pointer.
-        output_upscaling (nn.Sequential): Upscaling layers for output.
-        use_high_res_features (bool): Whether to use high-resolution features.
-        conv_s0 (nn.Conv2d): Convolutional layer for high-resolution features (s0).
-        conv_s1 (nn.Conv2d): Convolutional layer for high-resolution features (s1).
-        output_hypernetworks_mlps (nn.ModuleList): List of MLPs for output hypernetworks.
-        iou_prediction_head (MLP): MLP for IOU prediction.
-        pred_obj_score_head (nn.Linear | MLP): Linear layer or MLP for object score prediction.
-        dynamic_multimask_via_stability (bool): Whether to use dynamic multimask via stability.
-        dynamic_multimask_stability_delta (float): Delta value for dynamic multimask stability.
-        dynamic_multimask_stability_thresh (float): Threshold for dynamic multimask stability.
+    属性：
+        transformer_dim (int): Transformer 的通道维度。
+        transformer (nn.Module): 用于预测掩码的 Transformer。
+        num_multimask_outputs (int): 消除掩码歧义时要预测的掩码数量。
+        iou_token (nn.Embedding): IoU 令牌嵌入。
+        num_mask_tokens (int): 掩码令牌总数。
+        mask_tokens (nn.Embedding): 掩码令牌嵌入。
+        pred_obj_scores (bool): 是否预测对象分数。
+        obj_score_token (nn.Embedding): 对象分数令牌嵌入。
+        use_multimask_token_for_obj_ptr (bool): 是否使用多掩码令牌作为对象指针。
+        output_upscaling (nn.Sequential): 用于输出上采样的层。
+        use_high_res_features (bool): 是否使用高分辨率特征。
+        conv_s0 (nn.Conv2d): 用于高分辨率特征（s0）的卷积层。
+        conv_s1 (nn.Conv2d): 用于高分辨率特征（s1）的卷积层。
+        output_hypernetworks_mlps (nn.ModuleList): 输出超网络使用的 MLP 列表。
+        iou_prediction_head (MLP): 用于 IoU 预测的 MLP。
+        pred_obj_score_head (nn.Linear | MLP): 用于对象分数预测的线性层或 MLP。
+        dynamic_multimask_via_stability (bool): 是否通过稳定性选择动态多掩码。
+        dynamic_multimask_stability_delta (float): 动态多掩码稳定性的 Delta 值。
+        dynamic_multimask_stability_thresh (float): 动态多掩码稳定性的阈值。
 
-    Methods:
-        forward: Predict masks given image and prompt embeddings.
-        predict_masks: Predict instance segmentation masks from image and prompt embeddings.
-        _get_stability_scores: Compute mask stability scores based on IoU between thresholds.
-        _dynamic_multimask_via_stability: Dynamically select the most stable mask output.
+    方法：
+        forward: 根据图像和提示嵌入预测掩码。
+        predict_masks: 根据图像和提示嵌入预测实例分割掩码。
+        _get_stability_scores：根据两个阈值之间的 IoU 计算掩码稳定性分数。
+        _dynamic_multimask_via_stability: 动态选择最稳定的掩码输出。
 
-    Examples:
+    示例：
         >>> image_embeddings = torch.rand(1, 256, 64, 64)
         >>> image_pe = torch.rand(1, 256, 64, 64)
         >>> sparse_prompt_embeddings = torch.rand(1, 2, 256)
@@ -224,26 +222,25 @@ class SAM2MaskDecoder(nn.Module):
         pred_obj_scores_mlp: bool = False,
         use_multimask_token_for_obj_ptr: bool = False,
     ) -> None:
-        """Initialize the SAM2MaskDecoder module for predicting instance segmentation masks.
+        """初始化用于预测实例分割掩码的 SAM2MaskDecoder 模块。
 
-        This decoder extends the functionality of MaskDecoder, incorporating additional features such as high-resolution
-        feature processing, dynamic multimask output, and object score prediction.
+        此解码器扩展 MaskDecoder 的功能，加入高分辨率特征处理、动态多掩码输出和对象分数预测等特性。
 
-        Args:
-            transformer_dim (int): Channel dimension of the transformer.
-            transformer (nn.Module): Transformer used to predict masks.
-            num_multimask_outputs (int): Number of masks to predict when disambiguating masks.
-            activation (type[nn.Module]): Type of activation to use when upscaling masks.
-            iou_head_depth (int): Depth of the MLP used to predict mask quality.
-            iou_head_hidden_dim (int): Hidden dimension of the MLP used to predict mask quality.
-            use_high_res_features (bool): Whether to use high-resolution features.
-            iou_prediction_use_sigmoid (bool): Whether to use sigmoid for IOU prediction.
-            dynamic_multimask_via_stability (bool): Whether to use dynamic multimask via stability.
-            dynamic_multimask_stability_delta (float): Delta value for dynamic multimask stability.
-            dynamic_multimask_stability_thresh (float): Threshold for dynamic multimask stability.
-            pred_obj_scores (bool): Whether to predict object scores.
-            pred_obj_scores_mlp (bool): Whether to use MLP for object score prediction.
-            use_multimask_token_for_obj_ptr (bool): Whether to use multimask token for object pointer.
+        参数：
+            transformer_dim (int): Transformer 的通道维度。
+            transformer (nn.Module): 用于预测掩码的 Transformer。
+            num_multimask_outputs (int): 消除掩码歧义时要预测的掩码数量。
+            activation (type[nn.Module]): 掩码上采样时使用的激活函数类型。
+            iou_head_depth (int): 用于预测掩码质量的 MLP 深度。
+            iou_head_hidden_dim (int): 用于预测掩码质量的 MLP 隐藏维度。
+            use_high_res_features (bool): 是否使用高分辨率特征。
+            iou_prediction_use_sigmoid (bool): 是否对 IoU 预测使用 sigmoid。
+            dynamic_multimask_via_stability (bool): 是否通过稳定性选择动态多掩码。
+            dynamic_multimask_stability_delta (float): 动态多掩码稳定性的 Delta 值。
+            dynamic_multimask_stability_thresh (float): 动态多掩码稳定性的阈值。
+            pred_obj_scores (bool): 是否预测对象分数。
+            pred_obj_scores_mlp (bool): 是否使用 MLP 预测对象分数。
+            use_multimask_token_for_obj_ptr (bool): 是否使用多掩码令牌作为对象指针。
         """
         super().__init__()
         self.transformer_dim = transformer_dim
@@ -288,8 +285,8 @@ class SAM2MaskDecoder(nn.Module):
             if pred_obj_scores_mlp:
                 self.pred_obj_score_head = MLP(transformer_dim, transformer_dim, 1, 3)
 
-        # When outputting a single mask, optionally we can dynamically fall back to the best
-        # multimask output token if the single mask output token gives low stability scores.
+        # 输出单个掩码时，如果单掩码输出令牌的稳定性分数较低，
+        # 可以选择动态回退到最佳多掩码输出令牌。
         self.dynamic_multimask_via_stability = dynamic_multimask_via_stability
         self.dynamic_multimask_stability_delta = dynamic_multimask_stability_delta
         self.dynamic_multimask_stability_thresh = dynamic_multimask_stability_thresh
@@ -304,24 +301,24 @@ class SAM2MaskDecoder(nn.Module):
         repeat_image: bool,
         high_res_features: list[torch.Tensor] | None = None,
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
-        """Predict masks given image and prompt embeddings.
+        """根据图像和提示嵌入预测掩码。
 
-        Args:
-            image_embeddings (torch.Tensor): Embeddings from the image encoder with shape (B, C, H, W).
-            image_pe (torch.Tensor): Positional encoding with the shape of image_embeddings (B, C, H, W).
-            sparse_prompt_embeddings (torch.Tensor): Embeddings of the points and boxes with shape (B, N, C).
-            dense_prompt_embeddings (torch.Tensor): Embeddings of the mask inputs with shape (B, C, H, W).
-            multimask_output (bool): Whether to return multiple masks or a single mask.
-            repeat_image (bool): Flag to repeat the image embeddings.
-            high_res_features (list[torch.Tensor] | None, optional): Optional high-resolution features.
+        参数：
+            image_embeddings (torch.Tensor): 来自图像编码器的嵌入，形状为 (B, C, H, W)。
+            image_pe (torch.Tensor): 与 image_embeddings 形状相同的位置信息编码（B, C, H, W）。
+            sparse_prompt_embeddings (torch.Tensor): 点和边界框的嵌入，形状为 (B, N, C)。
+            dense_prompt_embeddings (torch.Tensor): 掩码输入的嵌入，形状为 (B, C, H, W)。
+            multimask_output (bool): 是否返回多个掩码，而不是单个掩码。
+            repeat_image (bool): 是否重复图像嵌入。
+            high_res_features (列表[torch.Tensor] | None, 可选): 可选的高分辨率特征。
 
-        Returns:
-            masks (torch.Tensor): Batched predicted masks with shape (B, N, H, W).
-            iou_pred (torch.Tensor): Batched predictions of mask quality with shape (B, N).
-            sam_tokens_out (torch.Tensor): Batched SAM token for mask output with shape (B, N, C).
-            object_score_logits (torch.Tensor): Batched object score logits with shape (B, 1).
+        返回：
+            掩码 (torch.Tensor): 批量预测掩码，形状为 (B, N, H, W)。
+            iou_pred (torch.Tensor): 批量掩码质量预测结果，形状为 (B, N)。
+            sam_tokens_out (torch.Tensor): 批量 SAM 掩码输出令牌，形状为 (B, N, C)。
+            object_score_logits (torch.Tensor): 批量对象分数 logits，形状为 (B, 1)。
 
-        Examples:
+        示例：
             >>> image_embeddings = torch.rand(1, 256, 64, 64)
             >>> image_pe = torch.rand(1, 256, 64, 64)
             >>> sparse_prompt_embeddings = torch.rand(1, 2, 256)
@@ -340,7 +337,7 @@ class SAM2MaskDecoder(nn.Module):
             high_res_features=high_res_features,
         )
 
-        # Select the correct mask or masks for output
+        # 选择正确的掩码输出
         if multimask_output:
             masks = masks[:, 1:, :, :]
             iou_pred = iou_pred[:, 1:]
@@ -351,14 +348,13 @@ class SAM2MaskDecoder(nn.Module):
             iou_pred = iou_pred[:, 0:1]
 
         if multimask_output and self.use_multimask_token_for_obj_ptr:
-            sam_tokens_out = mask_tokens_out[:, 1:]  # [b, 3, c] shape
+            sam_tokens_out = mask_tokens_out[:, 1:]  # [b, 3, c] 形状
         else:
-            # Take the mask output token. Here we *always* use the token for single mask output.
-            # At test time, even if we track after 1-click (and using multimask_output=True),
-            # we still take the single mask token here. The rationale is that we always track
-            # after multiple clicks during training, so the past tokens seen during training
-            # are always the single mask token (and we'll let it be the object-memory token).
-            sam_tokens_out = mask_tokens_out[:, 0:1]  # [b, 1, c] shape
+            # 获取掩码输出令牌。这里始终使用单掩码输出令牌。
+            # 测试时，即使在一次点击后跟踪（并使用 multimask_output=True），此处仍取单掩码令牌。
+            # 原因是训练期间始终在多次点击后进行跟踪，因此训练期间看到的历史令牌始终是单掩码令牌，
+            # 并将其作为目标记忆令牌。
+            sam_tokens_out = mask_tokens_out[:, 0:1]  # [b, 1, c] 形状
 
         return masks, iou_pred, sam_tokens_out, object_score_logits
 
@@ -371,8 +367,8 @@ class SAM2MaskDecoder(nn.Module):
         repeat_image: bool,
         high_res_features: list[torch.Tensor] | None = None,
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
-        """Predict instance segmentation masks from image and prompt embeddings using a transformer."""
-        # Concatenate output tokens
+        """使用 Transformer 根据图像和提示嵌入预测实例分割掩码。"""
+        # 拼接输出令牌
         s = 0
         if self.pred_obj_scores:
             output_tokens = torch.cat(
@@ -389,7 +385,7 @@ class SAM2MaskDecoder(nn.Module):
         output_tokens = output_tokens.unsqueeze(0).expand(sparse_prompt_embeddings.shape[0], -1, -1)
         tokens = torch.cat((output_tokens, sparse_prompt_embeddings), dim=1)
 
-        # Expand per-image data in batch direction to be per-mask
+        # 沿批次维度扩展每张图像的数据，使其对应每个掩码
         if repeat_image:
             src = torch.repeat_interleave(image_embeddings, tokens.shape[0], dim=0)
         else:
@@ -400,12 +396,12 @@ class SAM2MaskDecoder(nn.Module):
         pos_src = torch.repeat_interleave(image_pe, tokens.shape[0], dim=0)
         b, c, h, w = src.shape
 
-        # Run the transformer
+        # 运行 Transformer
         hs, src = self.transformer(src, pos_src, tokens)
         iou_token_out = hs[:, s, :]
         mask_tokens_out = hs[:, s + 1 : (s + 1 + self.num_mask_tokens), :]
 
-        # Upscale mask embeddings and predict masks using the mask tokens
+        # 放大掩码嵌入，并使用掩码令牌预测掩码
         src = src.transpose(1, 2).view(b, c, h, w)
         if not self.use_high_res_features or high_res_features is None:
             upscaled_embedding = self.output_upscaling(src)
@@ -422,50 +418,47 @@ class SAM2MaskDecoder(nn.Module):
         b, c, h, w = upscaled_embedding.shape
         masks = (hyper_in @ upscaled_embedding.view(b, c, h * w)).view(b, -1, h, w)
 
-        # Generate mask quality predictions
+        # 生成掩码质量预测结果
         iou_pred = self.iou_prediction_head(iou_token_out)
         if self.pred_obj_scores:
             assert s == 1
             object_score_logits = self.pred_obj_score_head(hs[:, 0, :])
         else:
-            # Obj scores logits - default to 10.0, i.e. assuming the object is present, sigmoid(10)=1
+            # 对象分数 logits 默认为 10.0，即假设对象存在，此时 sigmoid(10)=1
             object_score_logits = 10.0 * iou_pred.new_ones(iou_pred.shape[0], 1)
 
         return masks, iou_pred, mask_tokens_out, object_score_logits
 
     def _get_stability_scores(self, mask_logits):
-        """Compute mask stability scores based on IoU between upper and lower thresholds."""
+        """根据上下阈值之间的 IoU 计算掩码稳定性分数。"""
         mask_logits = mask_logits.flatten(-2)
         area_i = torch.sum(mask_logits > self.dynamic_multimask_stability_delta, dim=-1).float()
         area_u = torch.sum(mask_logits > -self.dynamic_multimask_stability_delta, dim=-1).float()
         return torch.where(area_u > 0, area_i / area_u, 1.0)
 
     def _dynamic_multimask_via_stability(self, all_mask_logits, all_iou_scores):
-        """Dynamically select the most stable mask output based on stability scores and IoU predictions.
+        """根据稳定性分数和 IoU 预测结果动态选择最稳定的掩码输出。
 
-        This method is used when outputting a single mask. If the stability score from the current single-mask output
-        (based on output token 0) falls below a threshold, it instead selects from multi-mask outputs (based on output
-        tokens 1-3) the mask with the highest predicted IoU score. This ensures a valid mask for both clicking and
-        tracking scenarios.
+        此方法用于输出单个掩码。当当前单掩码输出（基于输出令牌 0）的稳定性分数低于阈值时，会从多掩码输出（基于输出令牌 1-3）中选择预测 IoU 分数最高的掩码，从而保证点击和跟踪场景都能得到有效掩码。
 
-        Args:
-            all_mask_logits (torch.Tensor): Logits for all predicted masks, shape (B, N, H, W) where B is batch size, N
-                is number of masks (typically 4), and H, W are mask dimensions.
-            all_iou_scores (torch.Tensor): Predicted IoU scores for all masks, shape (B, N).
+        参数：
+            all_mask_logits (torch.Tensor): 所有预测掩码的 logits，形状为 (B, N, H, W)，其中 B 为批次大小，
+                N 为掩码数量（通常为 4），H、W 为掩码尺寸。
+            all_iou_scores (torch.Tensor): 所有掩码的预测 IoU 分数，形状为 (B, N)。
 
-        Returns:
-            mask_logits_out (torch.Tensor): Selected mask logits, shape (B, 1, H, W).
-            iou_scores_out (torch.Tensor): Selected IoU scores, shape (B, 1).
+        返回：
+            mask_logits_out (torch.Tensor): 选中的掩码 logits，形状为 (B, 1, H, W)。
+            iou_scores_out (torch.Tensor): 选中的 IoU 分数，形状为 (B, 1)。
 
-        Examples:
+        示例：
             >>> decoder = SAM2MaskDecoder(...)
-            >>> all_mask_logits = torch.rand(2, 4, 256, 256)  # 2 images, 4 masks each
+            >>> all_mask_logits = torch.rand(2, 4, 256, 256)  # 2 张图像，每张 4 个掩码
             >>> all_iou_scores = torch.rand(2, 4)
             >>> mask_logits, iou_scores = decoder._dynamic_multimask_via_stability(all_mask_logits, all_iou_scores)
             >>> print(mask_logits.shape, iou_scores.shape)
             torch.Size([2, 1, 256, 256]) torch.Size([2, 1])
         """
-        # The best mask from multimask output tokens (1~3)
+        # 从多掩码输出令牌（1~3）中选择最佳掩码
         multimask_logits = all_mask_logits[:, 1:, :, :]
         multimask_iou_scores = all_iou_scores[:, 1:]
         best_scores_inds = torch.argmax(multimask_iou_scores, dim=-1)
@@ -475,13 +468,13 @@ class SAM2MaskDecoder(nn.Module):
         best_multimask_iou_scores = multimask_iou_scores[batch_inds, best_scores_inds]
         best_multimask_iou_scores = best_multimask_iou_scores.unsqueeze(1)
 
-        # The mask from singlemask output token 0 and its stability score
+        # 获取单掩码输出令牌 0 及其稳定性分数
         singlemask_logits = all_mask_logits[:, 0:1, :, :]
         singlemask_iou_scores = all_iou_scores[:, 0:1]
         stability_scores = self._get_stability_scores(singlemask_logits)
         is_stable = stability_scores >= self.dynamic_multimask_stability_thresh
 
-        # Dynamically fall back to best multimask output upon low stability scores.
+        # 稳定性分数较低时，动态回退到最佳多掩码输出。
         mask_logits_out = torch.where(
             is_stable[..., None, None].expand_as(singlemask_logits),
             singlemask_logits,

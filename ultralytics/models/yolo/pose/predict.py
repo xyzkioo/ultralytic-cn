@@ -7,19 +7,18 @@ from ultralytics.utils import DEFAULT_CFG, ops
 
 
 class PosePredictor(DetectionPredictor):
-    """A class extending the DetectionPredictor class for prediction based on a pose model.
+    """继承 DetectionPredictor、用于根据姿态模型生成预测结果的类。
 
-    This class specializes in pose estimation, handling keypoints detection alongside standard object detection
-    capabilities inherited from DetectionPredictor.
+    此类专用于姿态估计，在继承 DetectionPredictor 标准对象检测能力的同时处理关键点检测。
 
-    Attributes:
-        args (namespace): Configuration arguments for the predictor.
-        model (torch.nn.Module): The loaded YOLO pose model with keypoint detection capabilities.
+    属性：
+        args (namespace): 预测器配置参数。
+        model (torch.nn.Module): 已加载的具备关键点检测能力的 YOLO 姿态模型。
 
-    Methods:
-        construct_result: Construct the result object from the prediction, including keypoints.
+    方法：
+        construct_result: 根据预测结果构建包含关键点的结果对象。
 
-    Examples:
+    示例：
         >>> from ultralytics.utils import ASSETS
         >>> from ultralytics.models.yolo.pose import PosePredictor
         >>> args = dict(model="yolo26n-pose.pt", source=ASSETS)
@@ -28,40 +27,37 @@ class PosePredictor(DetectionPredictor):
     """
 
     def __init__(self, cfg=DEFAULT_CFG, overrides=None, _callbacks: dict | None = None):
-        """Initialize PosePredictor for pose estimation tasks.
+        """初始化用于姿态估计任务的 PosePredictor。
 
-        Sets up a PosePredictor instance, configuring it for pose detection tasks and handling device-specific warnings
-        for Apple MPS.
+        设置 PosePredictor 实例，将其配置为姿态检测任务，并处理 Apple MPS 的设备特定警告。
 
-        Args:
-            cfg (Any): Configuration for the predictor.
-            overrides (dict, optional): Configuration overrides that take precedence over cfg.
-            _callbacks (dict, optional): Dictionary of callback functions to be invoked during prediction.
+        参数：
+            cfg (Any): 预测器配置。
+            overrides (dict, 可选): 优先于 cfg 的配置覆盖项。
+            _callbacks (dict, 可选): 预测期间调用的回调函数字典。
         """
         super().__init__(cfg, overrides, _callbacks)
         self.args.task = "pose"
 
     def construct_result(self, pred, img, orig_img, img_path):
-        """Construct the result object from the prediction, including keypoints.
+        """根据预测结果构建包含关键点的结果对象。
 
-        Extends the parent class implementation by extracting keypoint data from predictions and adding them to the
-        result object.
+        此方法扩展父类实现，从预测结果中提取关键点数据并添加到结果对象。
 
-        Args:
-            pred (torch.Tensor): The predicted bounding boxes, scores, and keypoints with shape (N, 6+K*D) where N is
-                the number of detections, K is the number of keypoints, and D is the keypoint dimension.
-            img (torch.Tensor): The processed input image tensor with shape (B, C, H, W).
-            orig_img (np.ndarray): The original unprocessed image as a numpy array.
-            img_path (str): The path to the original image file.
+        参数：
+            pred (torch.Tensor): 预测边界框、分数和关键点，形状为 (N, 6+K*D)，其中 N 为检测数量、
+                K 为关键点数量、D 为关键点维度。
+            img (torch.Tensor): 处理后的输入图像张量，形状为 (B, C, H, W)。
+            orig_img (np.ndarray): 未处理的原始图像 NumPy 数组。
+            img_path (str): 原始图像文件路径。
 
-        Returns:
-            (Results): The result object containing the original image, image path, class names, bounding boxes, and
-                keypoints.
+        返回：
+            (Results): 包含原始图像、图像路径、类别名称、边界框和关键点的结果对象。
         """
         result = super().construct_result(pred, img, orig_img, img_path)
-        # Extract keypoints from prediction and reshape according to model's keypoint shape
+        # 从预测结果中提取关键点，并根据模型的关键点形状调整维度
         pred_kpts = pred[:, 6:].view(pred.shape[0], *self.model.kpt_shape)
-        # Scale keypoints coordinates to match the original image dimensions
+        # 缩放关键点坐标以匹配原始图像尺寸
         pred_kpts = ops.scale_coords(img.shape[2:], pred_kpts, orig_img.shape)
         result.update(keypoints=pred_kpts)
         return result

@@ -15,7 +15,7 @@ from ultralytics.utils.checks import check_requirements
 
 @pytest.mark.slow
 def test_tensorboard():
-    """Test training with TensorBoard logging enabled."""
+    """测试启用 TensorBoard 日志记录时的训练。"""
     SETTINGS["tensorboard"] = True
     YOLO("yolo26n-cls.yaml").train(data="imagenet10", imgsz=32, epochs=3, plots=False, device="cpu")
     SETTINGS["tensorboard"] = False
@@ -23,7 +23,7 @@ def test_tensorboard():
 
 @pytest.mark.skipif(not check_requirements("ray", install=False), reason="ray[tune] not installed")
 def test_model_ray_tune():
-    """Tune YOLO model using Ray for hyperparameter optimization."""
+    """使用 Ray 调整 YOLO 模型，以优化超参数。"""
     YOLO("yolo26n-cls.yaml").tune(
         use_ray=True, data="imagenet10", grace_period=1, iterations=1, imgsz=32, epochs=1, plots=False, device="cpu"
     )
@@ -31,7 +31,7 @@ def test_model_ray_tune():
 
 @pytest.mark.skipif(not check_requirements("mlflow", install=False), reason="mlflow not installed")
 def test_mlflow(tmp_path, monkeypatch):
-    """Test training with MLflow tracking enabled."""
+    """测试启用 MLflow 跟踪时的训练。"""
     import mlflow
 
     monkeypatch.setenv("MLFLOW_TRACKING_URI", f"sqlite:///{(tmp_path / 'mlflow.db').as_posix()}")
@@ -46,7 +46,7 @@ def test_mlflow(tmp_path, monkeypatch):
 
 @pytest.mark.skipif(not check_requirements("mlflow", install=False), reason="mlflow not installed")
 def test_mlflow_keep_run_active(tmp_path, monkeypatch):
-    """Ensure MLFLOW_KEEP_RUN_ACTIVE controls whether new MLflow runs remain active."""
+    """确保 MLFLOW_KEEP_RUN_ACTIVE 能控制新的 MLflow 运行是否保持活动状态。"""
     import mlflow
 
     monkeypatch.setenv("MLFLOW_TRACKING_URI", f"sqlite:///{(tmp_path / 'mlflow.db').as_posix()}")
@@ -76,30 +76,30 @@ def test_mlflow_keep_run_active(tmp_path, monkeypatch):
 
 @pytest.mark.skipif(not check_requirements("tritonclient", install=False), reason="tritonclient[all] not installed")
 def test_triton(tmp_path, isolated_model):
-    """Test NVIDIA Triton Server functionalities with YOLO model."""
+    """使用 YOLO 模型测试 NVIDIA Triton Server 功能。"""
     check_requirements("tritonclient[all]")
     from tritonclient.http import InferenceServerClient
 
-    # Create variables
+    # 创建变量
     model_name = "yolo"
     triton_repo = tmp_path / "triton_repo"  # Triton repo path
     triton_model = triton_repo / model_name  # Triton model path
 
-    # Export model to ONNX
+    # 将模型导出为 ONNX
     f = YOLO(isolated_model).export(format="onnx", dynamic=True)
 
-    # Prepare Triton repo
+    # 准备 Triton 仓库
     (triton_model / "1").mkdir(parents=True, exist_ok=True)
     Path(f).rename(triton_model / "1" / "model.onnx")
     (triton_model / "config.pbtxt").touch()
 
-    # Define image https://catalog.ngc.nvidia.com/orgs/nvidia/containers/tritonserver
+    # 定义图像 https://catalog.ngc.nvidia.com/orgs/nvidia/containers/tritonserver
     tag = "nvcr.io/nvidia/tritonserver:23.09-py3"  # 6.4 GB
 
-    # Pull the image
+    # 拉取镜像
     subprocess.call(f"docker pull {tag}", shell=True)
 
-    # Run the Triton server and capture the container ID
+    # 运行 Triton 服务器并捕获容器 ID
     container_id = (
         subprocess.check_output(
             f"docker run -d --rm -v {triton_repo}:/models -p 8000:8000 {tag} tritonserver --model-repository=/models",
@@ -109,26 +109,26 @@ def test_triton(tmp_path, isolated_model):
         .strip()
     )
 
-    # Wait for the Triton server to start
+    # 等待 Triton 服务器启动
     triton_client = InferenceServerClient(url="localhost:8000", verbose=False, ssl=False)
 
-    # Wait until model is ready
+    # 等待模型就绪
     for _ in range(10):
         with contextlib.suppress(Exception):
             assert triton_client.is_model_ready(model_name)
             break
         time.sleep(1)
 
-    # Check Triton inference
-    YOLO(f"http://localhost:8000/{model_name}", "detect")(SOURCE)  # exported model inference
+    # 检查 Triton 推理
+    YOLO(f"http://localhost:8000/{model_name}", "detect")(SOURCE)  # 导出模型推理
 
-    # Kill and remove the container at the end of the test
+    # 测试结束时终止并移除容器
     subprocess.call(f"docker kill {container_id}", shell=True)
 
 
 @pytest.mark.skipif(not check_requirements("faster-coco-eval", install=False), reason="faster-coco-eval not installed")
 def test_faster_coco_eval():
-    """Validate YOLO model predictions on COCO dataset using faster-coco-eval."""
+    """使用 faster-coco-eval 验证 YOLO 模型在 COCO 数据集上的预测。"""
     from ultralytics.models.yolo.detect import DetectionValidator
     from ultralytics.models.yolo.pose import PoseValidator
     from ultralytics.models.yolo.segment import SegmentationValidator

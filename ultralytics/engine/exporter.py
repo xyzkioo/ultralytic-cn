@@ -142,8 +142,8 @@ from ultralytics.utils.torch_utils import (
 
 
 def export_formats():
-    """Return a dictionary of Ultralytics YOLO export formats."""
-    #          Format, Argument, Suffix, CPU, GPU, Arguments, Env
+    """返回 Ultralytics YOLO 支持的导出格式字典。"""
+    #          格式、参数、后缀、CPU、GPU、参数列表、环境
     x = [
         ["PyTorch", "-", ".pt", True, True, [], "base"],
         [
@@ -354,10 +354,10 @@ EXPORT_ENVS = {
         "smoke": ["yolo export format=rknn model=yolo26n.pt imgsz=32 quantize=16"],
     },
     "isolated-axelera": {
-        # Axelera devkit 1.7.0 does not provide Python 3.13 wheels.
+        # Axelera devkit 1.7.0 未提供 Python 3.13 的 wheel 包。
         "python": "3.12",
         "extras": ["export-base"],
-        # Axelera export requires 2.8.0 <= torch < 2.12.0.
+        # Axelera 导出要求 2.8.0 <= torch < 2.12.0。
         "torch": ">=2.8,<2.12",
         "requirements": [
             "axelera-devkit==1.7.0",
@@ -369,12 +369,12 @@ EXPORT_ENVS = {
         "indexes": [
             ("--extra-index-url", "https://software.axelera.ai/artifactory/api/pypi/axelera-pypi/simple"),
         ],
-        # Use the Python protobuf runtime for Axelera compiler compatibility.
+        # 使用 Python protobuf 运行时，以兼容 Axelera 编译器。
         "env": {"PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION": "python"},
         "smoke": ["yolo export format=axelera model=yolo26n.pt imgsz=64 data=coco8.yaml"],
     },
     "isolated-deepx": {
-        # dx-com 2.3.0 does not provide Python 3.13 wheels.
+        # dx-com 2.3.0 未提供 Python 3.13 的 wheel 包。
         "python": "3.12",
         "extras": ["export-base", "export-deepx"],
         "torch": ">=2.8,<2.12",
@@ -382,7 +382,7 @@ EXPORT_ENVS = {
         "indexes": [
             ("--find-links", "https://sdk.deepx.ai/release/dxcom/v2.3.0/index.html"),
         ],
-        # DeepX export is only supported on non-aarch64 Linux.
+        # DeepX 导出仅支持非 aarch64 架构的 Linux 系统。
         "env": {},
         "smoke": ["yolo export format=deepx model=yolo26n.pt imgsz=32 data=coco8.yaml"],
     },
@@ -398,7 +398,7 @@ EXPORT_ENVS = {
 }
 
 
-# Export precision support per format. Unset/32 requests are FP32 except for formats listed in FP32_UNSUPPORTED_FORMATS.
+# 各格式的导出精度支持。未设置或设置为 32 时请求 FP32，但 FP32_UNSUPPORTED_FORMATS 中列出的格式除外。
 FP16_FORMATS = frozenset({"torchscript", "onnx", "openvino", "engine", "coreml", "mnn", "ncnn", "rknn", "ascend"})
 INT8_FORMATS = frozenset(
     {
@@ -419,10 +419,10 @@ INT8_FORMATS = frozenset(
 )
 W8A16_FORMATS = frozenset(
     {"coreml", "imx", "qnn", "litert"}
-)  # INT8 weights + 16-bit activations (FP16; INT16 on LiteRT)
-W8A32_FORMATS = frozenset({"litert"})  # INT8 weights + FP32 activations (dynamic/weight-only INT8, no calibration)
+)  # INT8 权重 + 16 位激活（FP16；LiteRT 上为 INT16）
+W8A32_FORMATS = frozenset({"litert"})  # INT8 权重 + FP32 激活（动态/仅权重 INT8，无需校准）
 FP32_UNSUPPORTED_FORMATS = frozenset({"edgetpu", "imx", "rknn", "axelera", "deepx", "qnn", "hailo", "ascend"})
-# (label, supporting formats) per quantize precision, used to list valid options in errors. 32/None (FP32) is universal except FP32_UNSUPPORTED_FORMATS.
+# 每种量化精度对应（标签、支持格式），用于在错误信息中列出有效选项。32/None（FP32）通用于除 FP32_UNSUPPORTED_FORMATS 外的格式。
 QUANTIZE_PRECISIONS = (
     ("16 (FP16)", FP16_FORMATS),
     ("8 (INT8)", INT8_FORMATS),
@@ -432,23 +432,23 @@ QUANTIZE_PRECISIONS = (
 
 
 def validate_args(format, passed_args, valid_args):
-    """Validate arguments based on the export format.
+    """根据导出格式验证参数。
 
-    Args:
-        format (str): The export format.
-        passed_args (SimpleNamespace): The arguments used during export.
-        valid_args (list): List of valid arguments for the format.
+    参数：
+        format (str): 导出格式。
+        passed_args (SimpleNamespace): 导出期间使用的参数。
+        valid_args (list): 该格式支持的有效参数列表。
 
-    Raises:
-        AssertionError: If an unsupported argument is used, or if the format lacks supported argument listings.
+    异常：
+        AssertionError: 使用了不支持的参数，或该格式没有列出支持的参数时抛出。
     """
-    # Format-specific args come from the export table; skip inference args and quantize (validated above)
+    # 特定格式的参数来自导出表；跳过推理参数和 quantize（已在上面验证）
     export_args = sorted(set().union(*export_formats()["Arguments"]) - {"conf", "iou", "name", "quantize"})
 
     assert valid_args is not None, f"ERROR ❌️ valid arguments for '{format}' not listed."
     custom = {"batch": 1, "data": None, "device": None}  # exporter defaults
     default_args = get_cfg(DEFAULT_CFG, custom)
-    if passed_args.quantize is not None:  # 32/None (FP32) is universal except FP32_UNSUPPORTED_FORMATS
+    if passed_args.quantize is not None:  # 除 FP32_UNSUPPORTED_FORMATS 外，32/None（FP32）通用
         options = [label for label, formats in QUANTIZE_PRECISIONS if format in formats]
         if format not in FP32_UNSUPPORTED_FORMATS:
             options.append("32 (FP32)")
@@ -457,9 +457,9 @@ def validate_args(format, passed_args, valid_args):
             assert format in FP16_FORMATS, f"ERROR ❌️ quantize=16 (FP16) is not supported; {hint}"
         elif passed_args.quantize == 8:  # INT8
             assert format in INT8_FORMATS, f"ERROR ❌️ quantize=8 (INT8) is not supported; {hint}"
-        elif passed_args.quantize == "w8a16":  # INT8 weights + 16-bit activations (FP16; INT16 on LiteRT)
+        elif passed_args.quantize == "w8a16":  # INT8 权重 + 16 位激活（FP16；LiteRT 上为 INT16）
             assert format in W8A16_FORMATS, f"ERROR ❌️ quantize='w8a16' is not supported; {hint}"
-        elif passed_args.quantize == "w8a32":  # INT8 weights + FP32 activations (dynamic/weight-only INT8)
+        elif passed_args.quantize == "w8a32":  # INT8 权重 + FP32 激活（动态/仅权重 INT8）
             assert format in W8A32_FORMATS, f"ERROR ❌️ quantize='w8a32' is not supported; {hint}"
         elif passed_args.quantize == 32:  # FP32
             assert format not in FP32_UNSUPPORTED_FORMATS, f"ERROR ❌️ quantize=32 (FP32) is not supported; {hint}"
@@ -470,16 +470,16 @@ def validate_args(format, passed_args, valid_args):
 
 
 def try_export(inner_func):
-    """YOLO export decorator, i.e. @try_export."""
+    """YOLO 导出装饰器，即 @try_export。"""
     inner_args = get_default_args(inner_func)
 
     def outer_func(*args, **kwargs):
-        """Export a model."""
+        """导出模型。"""
         prefix = inner_args["prefix"]
         dt = 0.0
         try:
             with Profile() as dt:
-                f = inner_func(*args, **kwargs)  # exported file/dir or tuple of (file/dir, *)
+                f = inner_func(*args, **kwargs)  # 导出的文件/目录，或 (文件/目录, *) 元组
             path = f if isinstance(f, (str, Path)) else f[0]
             mb = file_size(path)
             assert mb > 0.1, f"{mb:.3f} MB output model too small (likely corrupt or unsupported ops)"
@@ -493,95 +493,94 @@ def try_export(inner_func):
 
 
 class Exporter:
-    """A class for exporting YOLO models to various formats.
+    """将 YOLO 模型导出为各种格式的类。
 
-    This class provides functionality to export YOLO models to different formats including ONNX, TensorRT, CoreML,
-    TensorFlow, and others. It handles format validation, device selection, model preparation, and the actual export
-    process for each supported format.
+    此类支持将 YOLO 模型导出为 ONNX、TensorRT、CoreML、TensorFlow 等多种格式，
+    并负责格式验证、设备选择、模型准备以及各支持格式的实际导出过程。
 
-    Attributes:
-        args (SimpleNamespace): Configuration arguments for the exporter.
-        callbacks (dict): Dictionary of callback functions for different export events.
-        im (torch.Tensor): Input tensor for model inference during export.
-        model (torch.nn.Module): The YOLO model to be exported.
-        file (Path): Path to the model file being exported.
-        output_shape (tuple): Shape of the model output tensor(s).
-        pretty_name (str): Formatted model name for display purposes.
-        metadata (dict): Model metadata including description, author, version, etc.
-        device (torch.device): Device on which the model is loaded.
-        imgsz (list): Input image size for the model.
+    属性：
+        args (SimpleNamespace): 导出器配置参数。
+        callbacks (dict): 不同导出事件的回调函数字典。
+        im (torch.Tensor): 导出期间用于模型推理的输入张量。
+        model (torch.nn.Module): 要导出的 YOLO 模型。
+        file (Path): 待导出模型文件的路径。
+        output_shape (tuple): 模型输出张量的形状。
+        pretty_name (str): 用于显示的格式化模型名称。
+        metadata (dict): 模型元数据，包括描述、作者和版本等。
+        device (torch.device): 加载模型所在的设备。
+        imgsz (list): 模型输入图像尺寸。
 
-    Methods:
-        __call__: Main export method that handles the export process.
-        get_int8_calibration_dataloader: Build dataloader for INT8 calibration.
-        export_torchscript: Export model to TorchScript format.
-        export_onnx: Export model to ONNX format.
-        export_openvino: Export model to OpenVINO format.
-        export_paddle: Export model to PaddlePaddle format.
-        export_mnn: Export model to MNN format.
-        export_ncnn: Export model to NCNN format.
-        export_coreml: Export model to CoreML format.
-        export_engine: Export model to TensorRT format.
-        export_saved_model: Export model to TensorFlow SavedModel format.
-        export_pb: Export model to TensorFlow GraphDef format.
-        export_edgetpu: Export model to Edge TPU format.
-        export_rknn: Export model to RKNN format.
-        export_imx: Export model to IMX format.
-        export_executorch: Export model to ExecuTorch format.
-        export_axelera: Export model to Axelera format.
-        export_deepx: Export model to DEEPX format.
+    方法：
+        __call__：处理导出流程的主要导出方法。
+        get_int8_calibration_dataloader：构建 INT8 校准数据加载器。
+        export_torchscript：将模型导出为 TorchScript 格式。
+        export_onnx：将模型导出为 ONNX 格式。
+        export_openvino：将模型导出为 OpenVINO 格式。
+        export_paddle：将模型导出为 PaddlePaddle 格式。
+        export_mnn：将模型导出为 MNN 格式。
+        export_ncnn：将模型导出为 NCNN 格式。
+        export_coreml：将模型导出为 CoreML 格式。
+        export_engine：将模型导出为 TensorRT 格式。
+        export_saved_model：将模型导出为 TensorFlow SavedModel 格式。
+        export_pb：将模型导出为 TensorFlow GraphDef 格式。
+        export_edgetpu：将模型导出为 Edge TPU 格式。
+        export_rknn：将模型导出为 RKNN 格式。
+        export_imx：将模型导出为 IMX 格式。
+        export_executorch：将模型导出为 ExecuTorch 格式。
+        export_axelera：将模型导出为 Axelera 格式。
+        export_deepx：将模型导出为 DEEPX 格式。
 
-    Examples:
-        Export a YOLO26 model to TorchScript format
+    示例：
+        将 YOLO26 模型导出为 TorchScript 格式
         >>> from ultralytics.engine.exporter import Exporter
         >>> exporter = Exporter()
-        >>> exporter(model="yolo26n.pt")  # exports to yolo26n.torchscript
+        >>> exporter(model="yolo26n.pt")  # 导出为 yolo26n.torchscript
 
-        Export with specific arguments
+        使用指定参数导出
         >>> args = {"format": "onnx", "dynamic": True, "quantize": 8, "data": "coco8.yaml"}
         >>> exporter = Exporter(overrides=args)
         >>> exporter(model="yolo26n.pt")
     """
 
     def __init__(self, cfg=DEFAULT_CFG, overrides=None, _callbacks: dict | None = None):
-        """Initialize the Exporter class.
+        """初始化 Exporter 类。
 
-        Args:
-            cfg (str | Path | dict | SimpleNamespace, optional): Configuration file path or configuration object.
-            overrides (dict, optional): Configuration overrides.
-            _callbacks (dict, optional): Dictionary of callback functions.
+        参数：
+            cfg (str | Path | dict | SimpleNamespace, optional): 配置文件路径或配置对象。
+            overrides (dict, optional): 配置覆盖项。
+            _callbacks (dict, optional): 回调函数字典。
         """
         self.args = get_cfg(cfg, overrides)
         self.callbacks = _callbacks or callbacks.get_default_callbacks()
         callbacks.add_integration_callbacks(self)
 
     def __call__(self, model=None) -> str:
-        """Export a model and return the final exported path as a string.
+        """导出模型，并以字符串形式返回最终导出路径。
 
-        Returns:
-            (str): Path to the exported file or directory (the last export artifact).
+        返回：
+            (str): 导出文件或目录的路径（最后一个导出产物）。
         """
         t = time.time()
-        fmt = self.args.format.lower()  # to lowercase
+        fmt = self.args.format.lower()  # 转换为小写
         if fmt in {"tensorrt", "trt"}:  # 'engine' aliases
             fmt = "engine"
         if fmt in {"mlmodel", "mlpackage", "mlprogram", "apple", "ios", "coreml"}:  # 'coreml' aliases
             fmt = "coreml"
         if fmt in {"huawei", "cann", "om"}:  # 'ascend' aliases
             fmt = self.args.format = "ascend"
-        if fmt in {"tflite", "tfjs"}:  # deprecated formats, replaced by the unified Google LiteRT export
+        if fmt in {"tflite", "tfjs"}:  # 已弃用格式，已由统一的 Google LiteRT 导出替代
             LOGGER.warning(
                 f"format='{fmt}' is deprecated as of 8.4.83 and has been replaced by the unified Google LiteRT "
                 f"format. Exporting format='litert' instead. See https://docs.ultralytics.com/integrations/litert"
             )
             fmt = self.args.format = "litert"
         fmts_dict = export_formats()
-        fmts = tuple(fmts_dict["Argument"][1:])  # available export formats
+        fmts = tuple(fmts_dict["Argument"][1:])  # 可用的导出格式
         if fmt not in fmts:
             import difflib
 
-            # Get the closest match if format is invalid
-            matches = difflib.get_close_matches(fmt, fmts, n=1, cutoff=0.6)  # 60% similarity required to match
+            # 如果格式无效，则获取最接近的匹配项
+            matches = difflib.get_close_matches(fmt, fmts, n=1, cutoff=0.6)  # 匹配需要达到 60% 相似度
             if not matches:
                 msg = "Model is already in PyTorch format." if fmt == "pt" else f"Invalid export format='{fmt}'."
                 raise ValueError(f"{msg} Valid formats are {fmts}")
@@ -594,17 +593,17 @@ class Exporter:
         if fmt == "engine" and self.args.device is None:
             LOGGER.warning("TensorRT requires GPU export, automatically assigning device=0")
             self.args.device = "0"
-        if fmt == "engine" and "dla" in str(self.args.device):  # convert int/list to str first
+        if fmt == "engine" and "dla" in str(self.args.device):  # 先将整数/列表转换为字符串
             device_str = str(self.args.device)
             self.dla = device_str.rsplit(":", 1)[-1]
-            self.args.device = "0"  # update device to "0"
+            self.args.device = "0"  # 将设备更新为 "0"
             assert self.dla in {"0", "1"}, f"Expected device 'dla:0' or 'dla:1', but got {device_str}."
         if fmt == "imx" and self.args.device is None and torch.cuda.is_available():
             LOGGER.warning("Exporting on CPU while CUDA is available, setting device=0 for faster export on GPU.")
-            self.args.device = "0"  # update device to "0"
+            self.args.device = "0"  # 将设备更新为 "0"
         self.device = select_device("cpu" if self.args.device is None else self.args.device)
 
-        # Argument compatibility checks
+        # 参数兼容性检查
         fmt_keys = dict(zip(fmts_dict["Argument"], fmts_dict["Arguments"]))[fmt]
         validate_args(fmt, self.args, fmt_keys)
         if fmt in {"deepx", "axelera", "imx", "edgetpu", "qnn", "hailo"} and self.args.quantize not in {8, "w8a16"}:
@@ -665,11 +664,11 @@ class Exporter:
             if self.args.end2end is not None:
                 model.end2end = self.args.end2end
             if fmt in {"rknn", "ncnn", "executorch", "paddle", "imx", "edgetpu", "qnn"}:
-                # Disable end2end branch for certain export formats as they does not support topk
+                # 某些导出格式不支持 topk，因此禁用 end2end 分支
                 model.end2end = False
                 LOGGER.warning(f"{fmt.upper()} export does not support end2end models, disabling end2end branch.")
             if fmt == "litert" and self.args.quantize in {8, "w8a16"}:
-                # Static activation quantization collapses the end2end class-index output; export raw and run NMS later
+                # 静态激活量化会压缩端到端类别索引输出；先导出原始输出，稍后再运行 NMS
                 model.end2end = False
                 LOGGER.warning("LiteRT INT8 export does not support end2end models, disabling end2end branch.")
             if fmt == "engine":
@@ -700,7 +699,7 @@ class Exporter:
                     pass
         if self.args.quantize == 16 and fmt == "torchscript" and self.device.type == "cpu":
             raise ValueError("FP16 TorchScript export is only supported on GPU, i.e. use device=0.")
-        self.imgsz = check_imgsz(self.args.imgsz, stride=model.stride, min_dim=2)  # check image size
+        self.imgsz = check_imgsz(self.args.imgsz, stride=model.stride, min_dim=2)  # 检查图像尺寸
         if fmt == "axelera" and min(self.imgsz) < 64:
             raise ValueError(f"Axelera export requires imgsz>=64, but got imgsz={self.imgsz}.")
         if fmt == "rknn":
@@ -730,8 +729,8 @@ class Exporter:
             elif self.args.quantize is None:
                 self.args.quantize = 16
         if fmt == "ascend":
-            # No SoC allowlist: valid --soc_version values depend on which Ascend-cann-kernels-* packages are
-            # installed, so a hardcoded list would reject valid targets. ATC reports an unknown SoC itself.
+            # 不设置 SoC 允许列表：有效的 --soc_version 值取决于已安装的 Ascend-cann-kernels-* 软件包，
+            # 硬编码列表会拒绝有效目标。ATC 会自行报告未知 SoC。
             if not self.args.name:
                 LOGGER.warning(
                     "Huawei Ascend export requires a missing 'name' arg for the target SoC. "
@@ -744,7 +743,7 @@ class Exporter:
                     f"'Ascend310P3' or 'Ascend310B4'. See https://docs.ultralytics.com/integrations/ascend"
                 )
             if self.args.quantize is None:
-                self.args.quantize = 16  # Ascend AI Core convolutions accept only FP16/INT8 inputs, never FP32
+                self.args.quantize = 16  # Ascend AI Core 卷积只接受 FP16/INT8 输入，不接受 FP32
         if fmt == "qnn":
             if not self.args.name:
                 LOGGER.warning(
@@ -752,7 +751,7 @@ class Exporter:
                     "Using default name='73' (Snapdragon 8 Gen 2)."
                 )
                 self.args.name = "73"
-            self.args.name = str(self.args.name).lower().lstrip("v")  # accept '73', 'v73', or a supported SoC
+            self.args.name = str(self.args.name).lower().lstrip("v")  # 接受 '73'、'v73' 或受支持的 SoC
             assert self.args.name in QNN_HTP_TARGETS, (
                 f"Invalid Qualcomm QNN target '{self.args.name}'. Valid targets are {tuple(QNN_HTP_TARGETS)}."
             )
@@ -771,7 +770,7 @@ class Exporter:
             if getattr(model, "end2end", False) or isinstance(model.model[-1], RTDETRDecoder):
                 LOGGER.warning("'nms=True' is not available for end2end models. Forcing 'nms=False'.")
                 self.args.nms = False
-            self.args.conf = self.args.conf or 0.25  # set conf default value for nms export
+            self.args.conf = self.args.conf or 0.25  # 为 NMS 导出设置 conf 默认值
         if fmt == "mnn" and self.args.nms:
             if self.args.dynamic:
                 raise ValueError("Alibaba MNN export does not support combining 'dynamic=True' with 'nms=True'.")
@@ -779,8 +778,8 @@ class Exporter:
                 raise ValueError("Alibaba MNN export with 'nms=True' only supports detect and pose models.")
         if fmt == "coreml":
             if self.args.nms and model.task != "detect" and self.args.quantize == 32:
-                # CoreML evaluates NMSModel's data-dependent shapes only on its FP16 path, silently dropping
-                # detections from an FP32 ML Program. Detect is unaffected, its NMS is an Apple pipeline stage.
+                # CoreML 仅在 FP16 路径上计算 NMSModel 的数据相关形状，FP32 ML Program 会静默丢弃检测结果。
+                # detect 不受影响，因为它的 NMS 是 Apple 流水线阶段。
                 LOGGER.warning(f"CoreML 'nms=True' requires FP16 for {model.task} models. Forcing 'quantize=16'.")
                 self.args.quantize = 16
             if self.args.batch > 1:
@@ -813,13 +812,13 @@ class Exporter:
                 "(torchscript, onnx, openvino, engine, coreml) formats. "
                 "See https://docs.ultralytics.com/models/yolo-world for details."
             )
-            model.clip_model = None  # openvino int8 export error: https://github.com/ultralytics/ultralytics/pull/18445
+            model.clip_model = None  # OpenVINO INT8 导出错误：https://github.com/ultralytics/ultralytics/pull/18445
         if self.args.quantize in {8, "w8a16"} and not self.args.data:
-            self.args.data = DEFAULT_CFG.data or TASK2DATA[getattr(model, "task", "detect")]  # assign default data
+            self.args.data = DEFAULT_CFG.data or TASK2DATA[getattr(model, "task", "detect")]  # 分配默认数据集
             LOGGER.warning(
                 f"INT8 export requires a missing 'data' arg for calibration. Using default 'data={self.args.data}'."
             )
-        # Recommend OpenVINO if export and Intel CPU
+        # 在导出到 Intel CPU 时推荐使用 OpenVINO
         if SETTINGS.get("openvino_msg"):
             if is_intel():
                 LOGGER.info(
@@ -828,7 +827,7 @@ class Exporter:
                 )
             SETTINGS["openvino_msg"] = False
 
-        # Input
+        # 输入
         im = torch.zeros(self.args.batch, model.yaml.get("channels", 3), *self.imgsz).to(self.device)
         file = Path(
             getattr(model, "pt_path", None) or getattr(model, "yaml_file", None) or model.yaml.get("yaml_file", "")
@@ -836,7 +835,7 @@ class Exporter:
         if file.suffix in {".yaml", ".yml"}:
             file = Path(file.name)
 
-        # Update model
+        # 更新模型
         model = deepcopy(model).to(self.device)
         for p in model.parameters():
             p.requires_grad = False
@@ -862,18 +861,18 @@ class Exporter:
             if isinstance(m, (Classify, SemanticSegment, Depth)):
                 m.export = True
                 m.format = self.args.format
-                # Semantic argmax bake needs an integer graph output; TensorRT supports uint8 outputs only on TRT>=10
-                # (Jetson TRT 8.x rejects them). Read the version from the package name to avoid importing tensorrt here.
+                # 语义 argmax 固化需要整数图输出；TensorRT 仅在 TRT>=10 支持 uint8 输出
+                #（Jetson TRT 8.x 会拒绝该输出）。从软件包名称读取版本，避免在此处导入 tensorrt。
                 if isinstance(m, SemanticSegment) and fmt == "engine":
                     cuda_major = (torch.version.cuda or "12").split(".")[0]
                     m.bake_argmax = check_version(f"tensorrt-cu{cuda_major}", ">=10.0.0") or check_version(
                         "tensorrt", ">=10.0.0"
                     )
-            if isinstance(m, (Detect, RTDETRDecoder)):  # includes all Detect subclasses like Segment, Pose, OBB
+            if isinstance(m, (Detect, RTDETRDecoder)):  # 包含 Segment、Pose、OBB 等所有 Detect 子类
                 m.dynamic = self.args.dynamic
                 m.export = True
                 m.format = self.args.format
-                # Clamp max_det to available queries/anchors (required for TensorRT compatibility)
+                # 将 max_det 限制为可用查询/锚框数量（TensorRT 兼容性要求）
                 available = (
                     m.num_queries
                     if isinstance(m, RTDETRDecoder)
@@ -881,29 +880,28 @@ class Exporter:
                 )
                 m.max_det = min(self.args.max_det, available)
                 m.agnostic_nms = self.args.agnostic_nms
-                # CoreML detect keeps IOSDetectModel's own xywh handling; segment/pose route through
-                # NMSModel like every other format, which expects xyxy boxes.
+                # CoreML 检测保留 IOSDetectModel 自身的 xywh 处理；分割/姿态通过
+                # 与其他格式一样，NMSModel 需要 xyxy 边界框。
                 m.xyxy = self.args.nms and (fmt != "coreml" or model.task != "detect")
-                m.shape = None  # reset cached shape for new export input size
-                if hasattr(model, "pe") and hasattr(m, "fuse") and not hasattr(m, "lrpc"):  # for YOLOE models
+                m.shape = None  # 为新的导出输入尺寸重置缓存形状
+                if hasattr(model, "pe") and hasattr(m, "fuse") and not hasattr(m, "lrpc"):  # 用于 YOLOE 模型
                     m.fuse(model.pe.to(self.device))
             elif isinstance(m, C2f) and not is_tf_format:
-                # EdgeTPU does not support FlexSplitV while split provides cleaner ONNX graph
+                # EdgeTPU 不支持 FlexSplitV，而 split 可以生成更简洁的 ONNX 图。
                 m.forward = m.forward_split
 
         if model.task == "semantic" and fmt in {"qnn", "coreml", "ascend"}:
-            # NPU-targeted semantic exports ship a compact uint8 class map instead of float logits: emitting logits
-            # forces consumers to dequantize and argmax ~20M floats on the CPU every frame (measured erratic
-            # 123-1065 ms on Hexagon). Not applied to LiteRT, where the GPU delegate cannot compile ArgMax (int64
-            # indices) and a whole-graph CPU fallback is slower than GPU logits + consumer-side argmax. Python
-            # predict/val accept both forms.
+            # 面向 NPU 的语义导出使用紧凑的 uint8 类别图，而不是浮点 logits：输出 logits 会迫使使用方每帧在 CPU 上
+            # 对约 2000 万个浮点数执行反量化和 argmax（在 Hexagon 上测得耗时波动为 123-1065 ms）。LiteRT 不应用此策略，
+            # 因为其 GPU 委托无法编译 ArgMax（int64 索引），而完整图的 CPU 回退比 GPU logits 加使用方 argmax 更慢。
+            # predict/val 两种形式均可接受。
             model = ClassMapModel(model)
 
         y = None
         for _ in range(2):  # dry runs
             y = NMSModel(model, self.args)(im) if self.args.nms and fmt not in {"coreml", "imx"} else model(im)
         if self.args.quantize == 16 and fmt in {"onnx", "torchscript"} and self.device.type != "cpu":
-            im, model = im.half(), model.half()  # to FP16
+            im, model = im.half(), model.half()  # 转为 FP16
 
         # Assign
         self.im = im
@@ -933,9 +931,9 @@ class Exporter:
             "args": {k: str(v) if isinstance(v, Path) else v for k, v in self.args if k in fmt_keys},
             "channels": model.yaml.get("channels", 3),
             "end2end": getattr(model, "end2end", False),
-        }  # model metadata
+        }  # 模型元数据
         if self.dla is not None:
-            self.metadata["dla"] = self.dla  # make sure `AutoBackend` uses correct dla device if it has one
+            self.metadata["dla"] = self.dla  # 确保 `AutoBackend` 存在 DLA 设备时使用正确的设备
         if model.task == "pose":
             self.metadata["kpt_shape"] = model.model[-1].kpt_shape
             if hasattr(model, "kpt_names"):
@@ -967,7 +965,7 @@ class Exporter:
                 f"work. Use export 'imgsz={max(self.imgsz)}' if val is required."
             )
             imgsz = self.imgsz[0] if square else str(self.imgsz)[1:-1].replace(" ", "")
-            q = "quantize=16" if self.args.quantize == 16 else ""  # FP16 inference flag for the val/predict hint
+            q = "quantize=16" if self.args.quantize == 16 else ""  # 提示 val/predict 使用 FP16 推理的标志
             inference_commands = (
                 f"\nPredict:         yolo predict task={model.task} model={f} imgsz={imgsz} {q}"
                 f"\nValidate:        yolo val task={model.task} model={f} imgsz={imgsz} data={data} {q} {s}"
@@ -982,10 +980,10 @@ class Exporter:
             )
 
         self.run_callbacks("on_export_end")
-        return f  # path to final export artifact
+        return f  # 最终导出产物的路径
 
     def get_int8_calibration_dataloader(self, prefix=""):
-        """Build and return a dataloader for calibration of INT8 models."""
+        """构建并返回用于 INT8 模型校准的数据加载器。"""
         LOGGER.info(f"{prefix} collecting INT8 calibration images from 'data={self.args.data}'")
         cfg = deepcopy(self.args)
         cfg.imgsz = max(self.imgsz)
@@ -996,7 +994,7 @@ class Exporter:
             dataset = ClassificationDataset(data[self.args.split or "val"], args=cfg, augment=False)
             if self.args.fraction < 1.0:
                 dataset.samples = dataset.samples[: round(len(dataset.samples) * self.args.fraction)]
-            # INT8 backends divide images by 255, so emit uint8 [0, 255] center-cropped like classify inference
+            # INT8 后端会将图像除以 255，因此像分类推理一样输出中心裁剪的 uint8 [0, 255] 图像
             dataset.torch_transforms = T.Compose([T.Resize(cfg.imgsz), T.CenterCrop(cfg.imgsz), T.PILToTensor()])
         else:
             data = check_det_dataset(self.args.data, split=self.args.split)
@@ -1009,7 +1007,7 @@ class Exporter:
                 fraction=self.args.fraction,
             )
         if hasattr(dataset, "transforms") and hasattr(dataset.transforms.transforms[0], "new_shape"):
-            dataset.transforms.transforms[0].new_shape = self.imgsz  # LetterBox with non-square imgsz
+            dataset.transforms.transforms[0].new_shape = self.imgsz  # 非正方形 imgsz 的 LetterBox
         n = len(dataset)
         if n < 1:
             raise ValueError(f"The calibration dataset must have at least 1 image, but found {n} images.")
@@ -1022,11 +1020,11 @@ class Exporter:
             LOGGER.warning(f"{prefix} >100 images required for Axelera calibration, found {n} images.")
         elif self.args.format != "axelera" and n < 300:
             LOGGER.warning(f"{prefix} >300 images recommended for INT8 calibration, found {n} images.")
-        return build_dataloader(dataset, batch=batch, workers=0, drop_last=True)  # required for batch loading
+        return build_dataloader(dataset, batch=batch, workers=0, drop_last=True)  # 批次加载所需
 
     @try_export
     def export_torchscript(self, prefix=colorstr("TorchScript:")):  # noqa: B008
-        """Export YOLO model to TorchScript format."""
+        """将 YOLO 模型导出为 TorchScript 格式。"""
         from ultralytics.utils.export.torchscript import torch2torchscript
 
         return torch2torchscript(
@@ -1039,11 +1037,11 @@ class Exporter:
 
     @try_export
     def export_onnx(self, prefix=colorstr("ONNX:")):  # noqa: B008
-        """Export YOLO model to ONNX format."""
+        """将 YOLO 模型导出为 ONNX 格式。"""
         requirements = ["onnx>=1.16.1,<1.19.0" if self.args.format == "rknn" else "onnx>=1.12.0,<2.0.0"]
         if self.args.simplify or (self.args.format == "onnx" and self.args.quantize == 8):
-            # Pass onnxruntime variants as interchangeable candidates so AutoUpdate keeps an installed build
-            # (e.g. onnxruntime-qnn for QNN export) instead of reinstalling stable onnxruntime and breaking its ABI.
+            # 将 onnxruntime 变体作为可互换候选项，使 AutoUpdate 保留已安装版本
+            # （例如 QNN 导出的 onnxruntime-qnn），避免重新安装稳定版并破坏 ABI。
             ort = "onnxruntime-gpu" if "cuda" in self.device.type else "onnxruntime"
             requirements += [(ort, "onnxruntime", "onnxruntime-gpu", "onnxruntime-qnn")]
         if self.args.simplify:
@@ -1068,17 +1066,17 @@ class Exporter:
                 dynamic["output0"] = {0: "batch", 2: "anchors"}  # shape(1, 116, 8400)
                 dynamic["output1"] = {0: "batch", 2: "mask_height", 3: "mask_width"}  # shape(1,32,160,160)
             elif isinstance(self.model, DepthModel):
-                dynamic["output0"] = {0: "batch", 2: "height", 3: "width"}  # shape(1,1,640,640) dense map, not anchors
+                dynamic["output0"] = {0: "batch", 2: "height", 3: "width"}  # shape(1,1,640,640) 密集图，而不是锚框
             elif isinstance(self.model, DetectionModel):
                 dynamic["output0"] = {0: "batch", 2: "anchors"}  # shape(1, 84, 8400)
             if self.args.nms:
                 dynamic["output0"].pop(2)
         if self.args.nms and self.model.task == "obb":
-            self.args.opset = opset  # for NMSModel
-            self.args.simplify = True  # fix OBB runtime error related to topk
+            self.args.opset = opset  # 用于 NMSModel
+            self.args.simplify = True  # 修复与 topk 相关的 OBB 运行时错误
 
         model = NMSModel(self.model, self.args) if self.args.nms else self.model
-        # Normalize coordinates by input size so RKNN's per-tensor INT8 scale preserves class scores.
+        # 按输入尺寸归一化坐标，使 RKNN 的逐张量 INT8 缩放保持类别分数不变。
         if (
             self.args.format == "rknn"
             and self.args.quantize == 8
@@ -1107,10 +1105,10 @@ class Exporter:
                 dynamic=dynamic or None,
             )
 
-        # Checks
-        model_onnx = onnx.load(f)  # load onnx model
+        # 检查
+        model_onnx = onnx.load(f)  # 加载 ONNX 模型
 
-        # Simplify
+        # 简化
         if self.args.simplify:
             try:
                 import onnxslim
@@ -1121,8 +1119,8 @@ class Exporter:
             except Exception as e:
                 LOGGER.warning(f"{prefix} simplifier failure: {e}")
 
-        # CANN requires the optional score-threshold input on ONNX NonMaxSuppression nodes. Scores were already
-        # filtered by args.conf in NMSModel, so zero preserves the graph's semantics.
+        # CANN 要求 ONNX NonMaxSuppression 节点提供可选的分数阈值输入。分数已经在 NMSModel 中由 args.conf
+        # 完成过滤，因此使用 0 可以保持图的语义不变。
         if self.args.format == "ascend":
             for i, node in enumerate(model_onnx.graph.node):
                 if node.op_type == "NonMaxSuppression" and len(node.input) == 4:
@@ -1132,17 +1130,17 @@ class Exporter:
                         onnx.helper.make_tensor(threshold_name, onnx.TensorProto.FLOAT, [1], [0.0])
                     )
 
-        # Metadata
+        # 元数据
         for k, v in self.metadata.items():
             meta = model_onnx.metadata_props.add()
             meta.key, meta.value = k, str(v)
 
-        # IR version
+        # IR 版本
         if getattr(model_onnx, "ir_version", 0) > 10:
             LOGGER.info(f"{prefix} limiting IR version {model_onnx.ir_version} to 10 for ONNXRuntime compatibility...")
             model_onnx.ir_version = 10
 
-        # FP16 conversion for CPU export (GPU exports are already FP16 from model.half() during tracing)
+        # CPU 导出时转换为 FP16（GPU 导出在跟踪期间已通过 model.half() 转为 FP16）
         if self.args.quantize == 16 and self.args.format == "onnx" and self.device.type == "cpu":
             try:
                 from onnxruntime.transformers import float16
@@ -1172,17 +1170,17 @@ class Exporter:
 
     @try_export
     def export_openvino(self, prefix=colorstr("OpenVINO:")):  # noqa: B008
-        """Export YOLO model to OpenVINO format."""
+        """将 YOLO 模型导出为 OpenVINO 格式。"""
         from ultralytics.utils.export.openvino import torch2openvino
 
-        # OpenVINO <= 2025.1.0 error on macOS 15.4+: https://github.com/openvinotoolkit/openvino/issues/30023
+        # OpenVINO <= 2025.1.0 在 macOS 15.4+ 上会报错：https://github.com/openvinotoolkit/openvino/issues/30023
         check_requirements("openvino>=2025.2.0" if MACOS and MACOS_VERSION >= "15.4" else "openvino>=2024.0.0")
         import openvino as ov
 
         assert TORCH_2_1, f"OpenVINO export requires torch>=2.1 but torch=={TORCH_VERSION} is installed"
 
         def serialize(ov_model, file):
-            """Set RT info, serialize, and save metadata YAML."""
+            """设置 RT 信息、序列化模型并保存元数据 YAML。"""
             ov_model.set_rt_info("YOLO", ["model_info", "model_type"])
             ov_model.set_rt_info(True, ["model_info", "reverse_input_channels"])
             ov_model.set_rt_info(114, ["model_info", "pad_value"])
@@ -1193,11 +1191,11 @@ class Exporter:
                 ov_model.set_rt_info("fit_to_window_letterbox", ["model_info", "resize_type"])
 
             ov.save_model(ov_model, file, compress_to_fp16=self.args.quantize == 16)
-            YAML.save(Path(file).parent / "metadata.yaml", self.metadata)  # add metadata.yaml
+            YAML.save(Path(file).parent / "metadata.yaml", self.metadata)  # 添加 metadata.yaml
 
         calibration_dataset = None
         if self.args.quantize == 8:
-            check_requirements("packaging>=23.2")  # must be installed first to build nncf wheel
+            check_requirements("packaging>=23.2")  # 构建 nncf wheel 前必须先安装
             check_requirements("nncf>=2.14.0,<3.0.0" if not TORCH_2_3 else "nncf>=2.14.0")
             import nncf
 
@@ -1222,7 +1220,7 @@ class Exporter:
 
     @try_export
     def export_paddle(self, prefix=colorstr("PaddlePaddle:")):  # noqa: B008
-        """Export YOLO model to PaddlePaddle format."""
+        """将 YOLO 模型导出为 PaddlePaddle 格式。"""
         from ultralytics.utils.export.paddle import torch2paddle
 
         return torch2paddle(
@@ -1235,11 +1233,11 @@ class Exporter:
 
     @try_export
     def export_litert(self, prefix=colorstr("LiteRT:")):  # noqa: B008
-        """Export YOLO model to LiteRT format using litert_torch with optional INT8 quantization.
+        """使用 litert_torch 将 YOLO 模型导出为 LiteRT 格式，并可选择 INT8 量化。
 
-        Supports ``quantize=8`` (static INT8, int8 weights + int8 activations, requires calibration ``data``),
-        ``quantize='w8a16'`` (static, int8 weights + int16 activations, requires calibration ``data``) and
-        ``quantize='w8a32'`` (dynamic/weight-only INT8, int8 weights + FP32 activations, no calibration needed).
+        支持 ``quantize=8``（静态 INT8，INT8 权重和 INT8 激活，需要校准 ``data``）、
+        ``quantize='w8a16'``（静态量化，INT8 权重和 INT16 激活，需要校准 ``data``）以及
+        ``quantize='w8a32'``（动态或仅权重量化 INT8，INT8 权重和 FP32 激活，不需要校准）。
         """
         assert MACOS or (LINUX and not ARM64), "LiteRT export only supported on Linux x86 and macOS"
         from ultralytics.utils.export.litert import torch2litert
@@ -1258,7 +1256,7 @@ class Exporter:
 
     @try_export
     def export_mnn(self, prefix=colorstr("MNN:")):  # noqa: B008
-        """Export YOLO model to MNN format using MNN https://github.com/alibaba/MNN."""
+        """使用 MNN 将 YOLO 模型导出为 MNN 格式：https://github.com/alibaba/MNN。"""
         from ultralytics.utils.export.mnn import onnx2mnn
 
         return onnx2mnn(
@@ -1271,7 +1269,7 @@ class Exporter:
 
     @try_export
     def export_ncnn(self, prefix=colorstr("NCNN:")):  # noqa: B008
-        """Export YOLO model to NCNN format using PNNX https://github.com/pnnx/pnnx."""
+        """使用 PNNX 将 YOLO 模型导出为 NCNN 格式：https://github.com/pnnx/pnnx。"""
         from ultralytics.utils.export.ncnn import torch2ncnn
 
         return torch2ncnn(
@@ -1286,11 +1284,11 @@ class Exporter:
 
     @try_export
     def export_coreml(self, prefix=colorstr("CoreML:")):  # noqa: B008
-        """Export YOLO model to CoreML format."""
-        mlmodel = self.args.format.lower() == "mlmodel"  # legacy *.mlmodel export format requested
+        """将 YOLO 模型导出为 CoreML 格式。"""
+        mlmodel = self.args.format.lower() == "mlmodel"  # 请求旧版 *.mlmodel 导出格式
         from ultralytics.utils.export.coreml import IOSDetectModel, pipeline_coreml, torch2coreml
 
-        # numpy 2.4.x breaks coremltools CoreML export https://github.com/apple/coremltools/issues/2633
+        # numpy 2.4.x 会破坏 coremltools 的 CoreML 导出：https://github.com/apple/coremltools/issues/2633
         check_requirements(["coremltools>=9.0", "numpy>=1.14.5,<=2.3.5"])
         import coremltools as ct
 
@@ -1302,8 +1300,8 @@ class Exporter:
 
         if self.args.nms and self.model.task == "detect":
             model = IOSDetectModel(self.model, self.im, mlprogram=not mlmodel)
-        elif self.args.nms:  # segment, pose: NMS baked into the trace instead of Apple's NMS pipeline,
-            model = NMSModel(self.model, self.args)  # which can't carry masks/keypoints through suppression
+        elif self.args.nms:  # 分割、姿态：将 NMS 固化到追踪图中，而不是使用 Apple 的 NMS 流水线，
+            model = NMSModel(self.model, self.args)  # 后者无法在抑制过程中携带掩码/关键点
         else:
             model = self.model
 
@@ -1311,8 +1309,8 @@ class Exporter:
             h, w = self.imgsz
             lb_h = lb_w = 32
             if getattr(self.model, "end2end", False):
-                # end2end graphs bake TopK k=max_det, so the smallest declared input must still supply >= k anchors
-                # or CoreML rejects the model at load; shrink the range proportionally from the traced default size
+                # 端到端图会将 TopK k=max_det 固化，因此声明的最小输入仍必须提供 >= k 个锚点，
+                # 否则 CoreML 加载模型时会拒绝；根据跟踪时的默认尺寸按比例缩小范围
                 stride = int(self.model.stride.max())
                 r = self.model.model[-1].max_det / sum(int(h / s) * int(w / s) for s in self.model.stride.tolist())
                 lb_h = max(lb_h, int(np.ceil(h * r**0.5 / stride)) * stride)
@@ -1359,7 +1357,7 @@ class Exporter:
             ct_model.user_defined_metadata.update({"com.apple.coreml.model.preview.type": "imageClassifier"})
 
         try:
-            ct_model.save(str(f))  # save *.mlpackage
+            ct_model.save(str(f))  # 保存 *.mlpackage
         except Exception as e:
             LOGGER.warning(
                 f"{prefix} CoreML export to *.mlpackage failed ({e}), reverting to *.mlmodel export. "
@@ -1371,13 +1369,13 @@ class Exporter:
 
     @try_export
     def export_engine(self, prefix=colorstr("TensorRT:")):  # noqa: B008
-        """Export YOLO model to TensorRT format https://developer.nvidia.com/tensorrt."""
+        """将 YOLO 模型导出为 TensorRT 格式：https://developer.nvidia.com/tensorrt。"""
         assert self.im.device.type != "cpu", "export running on CPU but must be on GPU, i.e. use 'device=0'"
-        f_onnx = self.export_onnx()  # run before TRT import https://github.com/ultralytics/ultralytics/issues/7016
+        f_onnx = self.export_onnx()  # 在导入 TRT 前运行 https://github.com/ultralytics/ultralytics/issues/7016
         from ultralytics.utils.export.engine import onnx2engine
 
         assert Path(f_onnx).exists(), f"failed to export ONNX file: {f_onnx}"
-        f = self.file.with_suffix(".engine")  # TensorRT engine file
+        f = self.file.with_suffix(".engine")  # TensorRT 引擎文件
         onnx2engine(
             f_onnx,
             f,
@@ -1396,7 +1394,7 @@ class Exporter:
 
     @try_export
     def export_saved_model(self, prefix=colorstr("TensorFlow SavedModel:")):  # noqa: B008
-        """Export YOLO model to TensorFlow SavedModel format."""
+        """将 YOLO 模型导出为 TensorFlow SavedModel 格式。"""
         assert not (MACOS and IS_PYTHON_MINIMUM_3_13), (
             "TensorFlow exports not supported on macOS with Python>=3.13: the ai-edge-litert macOS wheel fails to load "
             "(missing libpywrap_litert_common.dylib). TensorFlow export works on Linux Python 3.13."
@@ -1405,9 +1403,9 @@ class Exporter:
 
         f = Path(str(self.file).replace(self.file.suffix, "_saved_model"))
         if f.is_dir():
-            shutil.rmtree(f)  # delete output folder
+            shutil.rmtree(f)  # 删除输出目录
 
-        # Export to TF
+        # 导出到 TF
         images = None
         if self.args.quantize == 8 and self.args.data:
             images = [batch["img"] for batch in self.get_int8_calibration_dataloader(prefix)]
@@ -1417,12 +1415,12 @@ class Exporter:
                 .numpy()
             )
 
-        # Export to ONNX
+        # 导出到 ONNX
         if isinstance(self.model.model[-1], RTDETRDecoder):
             self.args.opset = self.args.opset or 19
             assert self.args.opset <= 19, "RTDETR TensorFlow export requires opset<=19"
         self.args.simplify = True
-        f_onnx = self.export_onnx()  # ensure ONNX is available
+        f_onnx = self.export_onnx()  # 确保 ONNX 可用
         keras_model = onnx2saved_model(
             f_onnx,
             f,
@@ -1433,22 +1431,22 @@ class Exporter:
             prefix=prefix,
         )
         YAML.save(f / "metadata.yaml", self.metadata)  # add metadata.yaml
-        # Add TFLite metadata
+        # 添加 TFLite 元数据
         for file in f.rglob("*.tflite"):
             file.unlink() if "quant_with_int16_act.tflite" in str(file) else self._add_tflite_metadata(file)
 
-        return str(f), keras_model  # or keras_model = tf.saved_model.load(f, tags=None, options=None)
+        return str(f), keras_model  # 或 keras_model = tf.saved_model.load(f, tags=None, options=None)
 
     @try_export
     def export_pb(self, keras_model, prefix=colorstr("TensorFlow GraphDef:")):  # noqa: B008
-        """Export YOLO model to TensorFlow GraphDef *.pb format https://github.com/leimao/Frozen-Graph-TensorFlow."""
+        """将 YOLO 模型导出为 TensorFlow GraphDef *.pb 格式：https://github.com/leimao/Frozen-Graph-TensorFlow。"""
         from ultralytics.utils.export.tensorflow import keras2pb
 
         return keras2pb(keras_model, output_file=self.file.with_suffix(".pb"), prefix=prefix)
 
     @try_export
     def export_axelera(self, prefix=colorstr("Axelera:")):  # noqa: B008
-        """Export YOLO model to Axelera format."""
+        """将 YOLO 模型导出为 Axelera 格式。"""
         assert LINUX and not (ARM64 and IS_DOCKER), (
             "export is only supported on Linux and is not supported on ARM64 Docker."
         )
@@ -1469,7 +1467,7 @@ class Exporter:
 
     @try_export
     def export_executorch(self, prefix=colorstr("ExecuTorch:")):  # noqa: B008
-        """Export YOLO model to ExecuTorch *.pte format."""
+        """将 YOLO 模型导出为 ExecuTorch *.pte 格式。"""
         assert TORCH_2_9, f"ExecuTorch requires torch>=2.9.0 but torch=={TORCH_VERSION} is installed"
         from ultralytics.utils.export.executorch import torch2executorch
 
@@ -1483,7 +1481,7 @@ class Exporter:
 
     @try_export
     def export_edgetpu(self, tflite_model="", prefix=colorstr("Edge TPU:")):  # noqa: B008
-        """Export YOLO model to Edge TPU format https://coral.ai/docs/edgetpu/models-intro/."""
+        """将 YOLO 模型导出为 Edge TPU 格式：https://coral.ai/docs/edgetpu/models-intro/。"""
         from ultralytics.utils.export.tensorflow import tflite2edgetpu
 
         output_file = tflite2edgetpu(tflite_file=tflite_model, output_dir=tflite_model.parent, prefix=prefix)
@@ -1492,13 +1490,13 @@ class Exporter:
 
     @try_export
     def export_rknn(self, prefix=colorstr("RKNN:")):  # noqa: B008
-        """Export YOLO model to RKNN format with optional INT8 quantization."""
+        """将 YOLO 模型导出为 RKNN 格式，并可选择 INT8 量化。"""
         from ultralytics.utils.export.rknn import onnx2rknn
 
         if self.args.opset and self.args.opset > 19:
             LOGGER.warning(f"{prefix} rknn-toolkit2 requires opset<=19, setting opset=19.")
         self.args.opset = min(self.args.opset or 19, 19)  # rknn-toolkit expects opset<=19
-        self.im = self.im[:1]  # RKNN Toolkit expands the batch after calibrating the batch-1 ONNX model
+        self.im = self.im[:1]  # RKNN Toolkit 要求先使用批次为 1 的 ONNX 模型进行校准，再扩展批次
         f_onnx = self.export_onnx()
         output_dir = Path(str(self.file).replace(self.file.suffix, f"_rknn_model{os.sep}"))
         rknn_dataset = None
@@ -1524,15 +1522,15 @@ class Exporter:
                 prefix=prefix,
             )
         finally:
-            if self.args.quantize == 8:  # INT8 graphs hold normalized coordinates, so they are not reusable
+            if self.args.quantize == 8:  # INT8 图包含归一化坐标，因此不可复用
                 Path(f_onnx).unlink(missing_ok=True)
 
     @try_export
     def export_ascend(self, prefix=colorstr("Ascend:")):  # noqa: B008
-        """Export YOLO model to Huawei Ascend offline model (.om) format."""
+        """将 YOLO 模型导出为华为昇腾离线模型（.om）格式。"""
         from ultralytics.utils.export.ascend import _check_atc, onnx2ascend
 
-        _check_atc()  # before the ONNX trace, so a missing toolchain does not cost a full export first
+        _check_atc()  # 在 ONNX 追踪前检查，避免缺少工具链时先进行完整导出
         if self.args.opset and self.args.opset > 17:
             LOGGER.warning(f"{prefix} the CANN ONNX parser requires opset<=17, setting opset=17.")
         self.args.opset = min(self.args.opset or 17, 17)
@@ -1549,7 +1547,7 @@ class Exporter:
 
     @try_export
     def export_imx(self, prefix=colorstr("IMX:")):  # noqa: B008
-        """Export YOLO model to IMX format."""
+        """将 YOLO 模型导出为 IMX 格式。"""
         assert LINUX, (
             "Export only supported on Linux."
             "See https://developer.aitrios.sony-semicon.com/en/docs/raspberry-pi-ai-camera/imx500-converter?version=3.17.3&progLang="
@@ -1573,7 +1571,7 @@ class Exporter:
 
     @try_export
     def export_deepx(self, prefix=colorstr("DEEPX:")):  # noqa: B008
-        """Export YOLO model to DEEPX format."""
+        """将 YOLO 模型导出为 DEEPX 格式。"""
         assert LINUX and not ARM64, "DEEPX export only supported on non-aarch64 Linux"
         from ultralytics.utils.export.deepx import onnx2deepx
 
@@ -1589,10 +1587,10 @@ class Exporter:
 
     @try_export
     def export_qnn(self, prefix=colorstr("Qualcomm QNN:")):  # noqa: B008
-        """Export YOLO model to a Qualcomm QNN context binary using ONNX Runtime QNN."""
+        """使用 ONNX Runtime QNN 将 YOLO 模型导出为 Qualcomm QNN 上下文二进制文件。"""
         from ultralytics.utils.export.qnn import onnx2qnn
 
-        # Wrap for Hexagon-friendly I/O: channel-last input (the class-map wrap for semantic is format-agnostic)
+        # 包装为适配 Hexagon 的输入输出：输入采用通道最后格式（语义类别图的包装与格式无关）。
         model, im = self.model, self.im
         try:
             self.model, self.im = QNNModel(model), im.permute(0, 2, 3, 1)
@@ -1612,7 +1610,7 @@ class Exporter:
 
     @try_export
     def export_hailo(self, prefix=colorstr("Hailo:")):  # noqa: B008
-        """Export a YOLO model to Hailo Executable Format (HEF)."""
+        """将 YOLO 模型导出为 Hailo 可执行格式（HEF）。"""
         try:
             import tensorflow as tf
             from hailo_sdk_client import ClientRunner
@@ -1632,13 +1630,12 @@ class Exporter:
         one2one = getattr(self.model, "end2end", False)
         task = self.model.task
         if task == "classify":
-            # The Classify head ends in Gemm -> Softmax; cut at the Softmax so the HEF returns the same
-            # (1, nc) probabilities as the PyTorch model. The DFC translates the softmax to a native layer.
+            # Classify 头以 Gemm -> Softmax 结束；在 Softmax 处截断，使 HEF 返回与 PyTorch 模型相同的 (1, nc) 概率。
+            # DFC 会将 softmax 转换为原生层。
             end_nodes = [f"/model.{head_index}/Softmax"]
         elif task == "semantic":
-            # Multi-class Hailo-15/10 (DFC 5.x) heads compile the bilinear upsample and ArgMax on chip. Hailo-8/8L
-            # (DFC 3.x) cannot compile the Resize, and single-class heads use a threshold instead of ArgMax, so both
-            # cut at the classifier logits and run the reduction on the host.
+            # 多类别 Hailo-15/10（DFC 5.x）头可在芯片上编译双线性上采样和 ArgMax。Hailo-8/8L
+            #（DFC 3.x）无法编译 Resize，单类别头也使用阈值而不是 ArgMax，因此两者都在分类器 logits 处截断并在主机端执行归约。
             head.bake_argmax = head.nc > 1 and self.args.name in {"hailo10h", "hailo15h", "hailo15l"}
             end_nodes = [
                 f"/model.{head_index}/ArgMax"
@@ -1646,9 +1643,9 @@ class Exporter:
                 else f"/model.{head_index}/classifier/classifier.1/Conv"
             ]
         elif task == "depth":
-            # The Depth head ends in clamp/exp, log-affine calibration, and a 4x upsample. Cut at the final logit
-            # conv (head.3, the last layer of the dense decoder) so the a16 HEF carries the raw logit and the host
-            # mirrors Depth.forward. Same string convention as detect's `.2/Conv`; no new head attribute.
+            # Depth 头以 clamp/exp、对数仿射校准和 4 倍上采样结束。在最终 logit 卷积处截断
+            #（head.3，密集解码器的最后一层），使 a16 HEF 携带原始 logit，主机端
+            # 与 Depth.forward 一致。字符串约定与 detect 的 `.2/Conv` 相同，不新增检测头属性。
             end_nodes = [f"/model.{head_index}/head/head.3/Conv"]
         else:
             scales = range(len(head.one2one_cv2 if one2one else head.cv2))
@@ -1659,7 +1656,7 @@ class Exporter:
                     for i in scales
                 ]
             elif task in {"segment", "pose", "obb"}:
-                # reg/cls/extra triple per scale (extra = mask coeffs, keypoints, or angle); segment adds prototypes.
+                # 每个尺度包含 reg/cls/extra 三元组（extra 为掩码系数、关键点或角度）；分割任务还会添加原型。
                 end_nodes = [
                     f"/model.{head_index}/cv{branch}.{i}/cv{branch}.{i}.2/Conv" for i in scales for branch in (2, 3, 4)
                 ]
@@ -1684,17 +1681,17 @@ class Exporter:
                 f"post_quantization_optimization(finetune, policy=enabled, dataset_size={calibration_size})",
             ]
             if one2one or task == "depth":
-                # a16 on the output(s): the NMS-free detect logits and the single dense depth logit both need the
-                # wider activation to keep their range (a8 collapses the depth map; validated on Hailo-8L).
+                # 输出使用 a16：无 NMS 检测 logits 和单个稠密深度 logits 都需要更宽的激活范围
+                # （a8 会压缩深度图；已在 Hailo-8L 上验证）。
                 outputs = ", ".join(f"output_layer{i + 1}" for i in range(len(end_nodes)))
                 model_script.append(f"quantization_param([{outputs}], precision_mode=a16_w16)")
             elif task in {"classify", "semantic"}:
-                pass  # softmax/class-map is already the graph output; no NMS or activation changes needed
+                pass  # softmax/class-map 已经是图输出，无需修改 NMS 或激活函数
             else:
                 outputs = [layer.inputs[0].rsplit("/", 1)[-1] for layer in runner.get_hn_model().get_output_layers()]
                 if task in {"segment", "pose", "obb"}:
-                    # Bake sigmoid into the class convs only (position 1 of each per-scale reg/cls/extra triple).
-                    # Mask coeffs, prototypes, keypoints and angles stay raw and are decoded on the host.
+                    # 仅将 sigmoid 固化到类别卷积中（每个尺度 reg/cls/extra 三元组的第 1 个位置）。
+                    # 掩码系数、原型、关键点和角度保持原始形式，在主机端解码。
                     model_script.extend(
                         f"change_output_activation({outputs[i]}, sigmoid)" for i in range(1, 3 * len(scales), 3)
                     )
@@ -1750,7 +1747,7 @@ class Exporter:
                     "hailo_arch": self.args.name,
                     "nms": task == "detect" and not one2one,
                     "semantic_baked": task == "semantic" and head.bake_argmax,
-                    # Depth's learned log-affine calibration is applied on the host, so it must ride in metadata.
+                    # Depth 学习得到的对数仿射校准在主机端执行，因此必须随元数据保存。
                     **({"cal_a": float(head.cal_a), "cal_b": float(head.cal_b)} if task == "depth" else {}),
                 },
             )
@@ -1759,7 +1756,7 @@ class Exporter:
             f_onnx.unlink(missing_ok=True)
 
     def _add_tflite_metadata(self, file):
-        """Add metadata to *.tflite models per https://ai.google.dev/edge/litert/models/metadata."""
+        """按照 https://ai.google.dev/edge/litert/models/metadata 为 *.tflite 模型添加元数据。"""
         import zipfile
 
         with zipfile.ZipFile(file, "a", zipfile.ZIP_DEFLATED) as zf:
@@ -1767,39 +1764,39 @@ class Exporter:
 
     @staticmethod
     def _transform_fn(data_item) -> np.ndarray:
-        """Quantization preprocessing transform for INT8 calibration (Axelera, OpenVINO, ONNX, QNN)."""
+        """用于 INT8 校准的量化预处理变换（Axelera、OpenVINO、ONNX、QNN）。"""
         data_item: torch.Tensor = data_item["img"] if isinstance(data_item, dict) else data_item
         assert data_item.dtype == torch.uint8, "Input image must be uint8 for the quantization preprocessing"
-        im = data_item.numpy().astype(np.float32) / 255.0  # uint8 to fp16/32 and 0 - 255 to 0.0 - 1.0
+        im = data_item.numpy().astype(np.float32) / 255.0  # 将 uint8 转为 fp16/32，并将 0 - 255 转为 0.0 - 1.0
         return im[None] if im.ndim == 3 else im
 
     def add_callback(self, event: str, callback):
-        """Append the given callback to the specified event."""
+        """将给定回调添加到指定事件。"""
         self.callbacks[event].append(callback)
 
     def run_callbacks(self, event: str):
-        """Execute all callbacks for a given event."""
+        """执行指定事件的所有回调。"""
         for callback in self.callbacks.get(event, []):
             callback(self)
 
 
 class ExportWrapper(torch.nn.Module):
-    """Base for export-time model wrappers: stores the wrapped model and forwards attribute lookups.
+    """导出阶段模型包装器的基类：保存被包装模型并转发属性查找。
 
-    Subclasses adapt a fused YOLO model's inference I/O for a specific deployment contract (layout, output
-    reduction) while the exporter keeps interacting with the wrapper as if it were the model itself.
+    子类会根据特定部署约定（布局、输出归约）调整融合 YOLO 模型的推理输入输出，
+    同时让导出器能够像操作原模型一样操作包装器。
     """
 
     def __init__(self, model):
-        """Wrap a fused YOLO `model` prepared for export."""
+        """包装准备导出的融合 YOLO `model`。"""
         super().__init__()
-        # Stored under a private name so attribute forwarding resolves `wrapper.model` to the wrapped model's own
-        # `model` (its nn.Sequential), keeping exporter code like `self.model.model[-1]` working unchanged.
+        # 使用私有名称保存，使属性转发将 `wrapper.model` 解析为被包装模型自身的
+        # `model`（即 nn.Sequential），从而保持 `self.model.model[-1]` 等导出器代码不变。
         self._model = model
         self.task = model.task
 
     def __getattr__(self, name):
-        """Forward attribute lookups (model, names, stride, yaml, args, ...) to the wrapped model."""
+        """将属性查找（model、names、stride、yaml、args 等）转发到被包装模型。"""
         try:
             return super().__getattr__(name)
         except AttributeError:
@@ -1807,61 +1804,58 @@ class ExportWrapper(torch.nn.Module):
 
 
 class QNNModel(ExportWrapper):
-    """Wraps a YOLO model with channel-last inference input for Qualcomm QNN export.
+    """为 Qualcomm QNN 导出包装使用通道末尾推理输入的 YOLO 模型。
 
-    Traced by the standard ONNX export (`export_qnn` swaps it in with a channel-last dummy input). The graph takes `[N,
-    H, W, C]` images - the Hexagon HTP's native layout and what camera pipelines produce - so ONNX Runtime's layout
-    transformer folds the wrapper's Transpose into the NPU partition during context generation, and neither the NPU
-    (boundary transpose) nor the consuming app (CPU-side permute) pays a per-inference layout cost.
+    标准 ONNX 导出会对其进行跟踪（`export_qnn` 使用通道末尾的虚拟输入替换原模型）。图像图接收 `[N, H, W, C]`
+    格式，这是 Hexagon HTP 的原生布局，也是摄像头流程的输出布局；因此 ONNX Runtime 的布局转换器会在生成上下文时
+    将包装器的 Transpose 折叠到 NPU 分区中，NPU 和调用应用都无需在每次推理时额外承担布局转换开销。
 
-    Attributes:
+    属性：
         task (str): The wrapped model's task, forwarded for the ONNX export plumbing.
     """
 
     def forward(self, x):
-        """Run inference on channel-last `[N, H, W, C]` input normalized to [0, 1]."""
-        return self._model(x.permute(0, 3, 1, 2))  # the wrapped model is NCHW; the transpose folds into the NPU graph
+        """对归一化到 [0, 1] 的通道末尾 `[N, H, W, C]` 输入执行推理。"""
+        return self._model(x.permute(0, 3, 1, 2))  # 被包装模型采用 NCHW，转置会折叠到 NPU 图中
 
 
 class ClassMapModel(ExportWrapper):
-    """Reduces semantic-segmentation logits to a compact integer class map for export.
+    """将语义分割 logits 归约为紧凑的整数类别图，以便导出。
 
-    Applied to QNN, Core ML and Ascend semantic exports, where the argmax runs on the NPU: deployment consumers want
-    per-pixel class indices, and shipping float logits instead forces a dequantize + argmax over large tensors (~8M
-    values at the standard 640px mobile input) on the consumer's CPU every frame - measured as both slow and highly
-    variable on mobile NPUs. The argmax cannot live in the model's own forward because it is non-differentiable
-    (training needs logits), so it is attached here at export time, mirroring how `NMSModel` adds suppression only for
-    export.
+    此包装器用于 QNN、Core ML 和 Ascend 语义分割导出，此时 argmax 在 NPU 上执行。部署端需要逐像素类别索引，
+    若传输浮点 logits，则每帧都需要在调用方 CPU 上对大型张量（标准 640px 移动端输入约 800 万个值）执行反量化和
+    argmax，这在移动端 NPU 上实测速度较慢且波动很大。argmax 不可放在模型自身的 forward 中，因为它不可微
+    （训练需要 logits），因此像 `NMSModel` 只在导出时添加抑制一样，在此处附加该操作。
 
-    Attributes:
-        task (str): The wrapped model's task ("semantic").
-        dtype (torch.dtype): Class-index dtype; uint8 unless the model has more than 256 classes.
+    属性：
+        task (str): 被包装模型的任务（"semantic"）。
+        dtype (torch.dtype): 类别索引数据类型；类别数超过 256 时使用 int32，否则使用 uint8。
     """
 
     def __init__(self, model):
-        """Wrap a fused semantic `model` so export emits class indices instead of logits."""
+        """包装融合语义分割 `model`，使导出结果输出类别索引而不是 logits。"""
         super().__init__(model)
-        # uint8 quarters the NPU->CPU output transfer vs int32 and Core ML promotes it to int32 in-spec;
-        # int32 only when more than 256 classes make uint8 indices ambiguous.
+        # 与 int32 相比，uint8 可将 NPU 到 CPU 的输出传输量降至四分之一，Core ML 会按规范将其提升为 int32；
+        # 只有类别超过 256 个、uint8 索引可能产生歧义时才使用 int32。
         self.dtype = torch.uint8 if len(model.names) <= 256 else torch.int32
 
     def forward(self, x):
-        """Run the wrapped model and return a `[N, H, W]` integer class map instead of float logits."""
+        """运行被包装模型，返回 `[N, H, W]` 整数类别图，而不是浮点 logits。"""
         y = self._model(x)
         y = y[0] if isinstance(y, (list, tuple)) else y
-        # Single-channel (binary) models threshold the logit, matching predict/val semantics for nc == 1
+        # 单通道（二分类）模型对 logit 应用阈值，与 nc == 1 时的 predict/val 语义保持一致
         return (y.argmax(1) if y.shape[1] > 1 else y[:, 0].gt(0)).to(self.dtype)
 
 
 class NMSModel(torch.nn.Module):
-    """Model wrapper with embedded NMS for Detect, Segment, Pose and OBB."""
+    """为 Detect、Segment、Pose 和 OBB 内置 NMS 的模型包装器。"""
 
     def __init__(self, model, args):
-        """Initialize the NMSModel.
+        """初始化 NMSModel。
 
-        Args:
-            model (torch.nn.Module): The model to wrap with NMS postprocessing.
-            args (SimpleNamespace): The export arguments.
+        参数：
+            model (torch.nn.Module): 要使用 NMS 后处理进行包装的模型。
+            args (SimpleNamespace): 导出参数。
         """
         super().__init__()
         self.model = model
@@ -1870,14 +1864,14 @@ class NMSModel(torch.nn.Module):
         self.is_tf = self.args.format == "saved_model"
 
     def forward(self, x):
-        """Perform inference with NMS post-processing. Supports Detect, Segment, OBB and Pose.
+        """执行带 NMS 后处理的推理，支持 Detect、Segment、OBB 和 Pose。
 
-        Args:
-            x (torch.Tensor): The preprocessed tensor with shape (B, C, H, W).
+        参数：
+            x (torch.Tensor): 预处理张量，形状为 (B, C, H, W)。
 
-        Returns:
-            (torch.Tensor | tuple): Tensor of shape (B, max_det, 4 + 2 + extra_shape) where B is the batch size, or a
-                tuple of (detections, proto) for segmentation models.
+        返回：
+            (torch.Tensor | tuple): 形状为 (B, max_det, 4 + 2 + extra_shape) 的张量，其中 B 为批次大小；
+                对于分割模型，则返回 (detections, proto) 元组。
         """
         from torchvision.ops import nms
 
@@ -1885,34 +1879,34 @@ class NMSModel(torch.nn.Module):
         pred = preds[0] if isinstance(preds, tuple) else preds
         kwargs = {"device": pred.device, "dtype": pred.dtype}
         bs = pred.shape[0]
-        pred = pred.transpose(-1, -2)  # shape(1,84,6300) to shape(1,6300,84)
-        extra_shape = pred.shape[-1] - (4 + len(self.model.names))  # extras from Segment, OBB, Pose
-        if self.args.dynamic and self.args.batch > 1:  # batch size needs to always be same due to loop unroll
+        pred = pred.transpose(-1, -2)  # 从 shape(1,84,6300) 转换为 shape(1,6300,84)
+        extra_shape = pred.shape[-1] - (4 + len(self.model.names))  # Segment、OBB、Pose 的额外输出
+        if self.args.dynamic and self.args.batch > 1:  # 由于循环展开，批次大小必须始终保持一致
             pad = torch.zeros(torch.max(torch.tensor(self.args.batch - bs), torch.tensor(0)), *pred.shape[1:], **kwargs)
             pred = torch.cat((pred, pad))
         if self.args.dynamic and self.args.format == "onnx" and self.obb:
             pred = torch.cat((pred, pred.new_zeros(pred.shape[0], self.args.max_det * 5, pred.shape[2])), dim=1)
         boxes, scores, extras = pred.split([4, len(self.model.names), extra_shape], dim=2)
         scores, classes = scores.max(dim=-1)
-        # (N, max_det, 4 coords + 1 class score + 1 class label + extra_shape).
+        # 输出形状为 (N, max_det, 4 个坐标 + 1 个类别分数 + 1 个类别标签 + extra_shape)。
         out = torch.zeros(pred.shape[0], self.args.max_det, boxes.shape[-1] + 2 + extra_shape, **kwargs)
         for i in range(bs):
             box, cls, score, extra = boxes[i], classes[i], scores[i], extras[i]
             mask = score > self.args.conf
             if self.is_tf or (self.args.format == "onnx" and self.obb):
-                # TFLite GatherND error if mask is empty
+                # 掩码为空时会出现 TFLite GatherND 错误
                 score *= mask
-                # Explicit length otherwise reshape error, hardcoded to `self.args.max_det * 5`
+                # 显式指定长度，否则会重塑失败，固定为 `self.args.max_det * 5`
                 mask = score.topk(min(self.args.max_det * 5, score.shape[0])).indices
             box, score, cls, extra = box[mask], score[mask], cls[mask], extra[mask]
             nmsbox = box.clone()
-            # `8` is the minimum value experimented to get correct NMS results for obb
+            # 经过试验，`8` 是获得正确 OBB NMS 结果的最小值
             multiplier = 8 if self.obb else 1 / max(len(self.model.names), 1)
-            # Normalize boxes for NMS since large values for class offset causes issue with int8 quantization
+            # 为 NMS 归一化边界框，因为类别偏移量过大会导致 int8 量化问题
             nmsbox = multiplier * (nmsbox / torch._shape_as_tensor(x)[2:].max().to(**kwargs))
-            if not self.args.agnostic_nms:  # class-wise NMS
+            if not self.args.agnostic_nms:  # 按类别执行 NMS
                 end = 2 if self.obb else 4
-                # fully explicit expansion otherwise reshape error
+                # 必须完全显式展开，否则会在 reshape 时出错
                 cls_offset = cls.view(cls.shape[0], 1).expand(cls.shape[0], end)
                 offbox = nmsbox[:, :end] + cls_offset * multiplier
                 nmsbox = torch.cat((offbox, nmsbox[:, end:]), dim=-1)
@@ -1922,7 +1916,7 @@ class NMSModel(torch.nn.Module):
                     use_triu=not (
                         self.is_tf
                         or (self.args.opset or 14) < 14
-                        or (self.args.format == "openvino" and self.args.quantize == 8)  # OpenVINO INT8 error with triu
+                        or (self.args.format == "openvino" and self.args.quantize == 8)  # OpenVINO INT8 使用 triu 时出错
                     ),
                     iou_func=batch_probiou,
                     exit_early=False,
@@ -1938,8 +1932,8 @@ class NMSModel(torch.nn.Module):
             dets = torch.cat(
                 [box[keep], score[keep].view(-1, 1), cls[keep].view(-1, 1).to(out.dtype), extra[keep]], dim=-1
             )
-            # Zero-pad to max_det size to avoid reshape error. Padded on a flattened 1D view (rather than
-            # dim 0 of the 2D tensor) since CoreML's MIL conversion only supports dynamic padding on rank-1 tensors.
+            # 用零填充到 max_det 大小以避免重塑错误。对展平的一维视图进行填充，而不是填充二维张量的第 0 维，
+            # 因为 CoreML 的 MIL 转换仅支持对一维张量进行动态填充。
             c = dets.shape[-1]
             pad = (0, (self.args.max_det - dets.shape[0]) * c)
             out[i] = torch.nn.functional.pad(dets.reshape(-1), pad).reshape(self.args.max_det, c)

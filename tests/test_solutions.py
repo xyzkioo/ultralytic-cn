@@ -1,7 +1,7 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
-# Tests Ultralytics Solutions: https://docs.ultralytics.com/solutions,
-# Includes all solutions except DistanceCalculation and the Security Alarm System.
+# 测试 Ultralytics Solutions：https://docs.ultralytics.com/solutions
+# 包含除 DistanceCalculation 和 Security Alarm System 外的所有解决方案。
 
 import os
 from unittest.mock import patch
@@ -17,15 +17,15 @@ from ultralytics.utils import IS_RASPBERRYPI, TORCH_VERSION, checks
 from ultralytics.utils.downloads import safe_download
 from ultralytics.utils.torch_utils import TORCH_2_4
 
-# Predefined argument values
+# 预定义参数值
 SHOW = False
-REGION = [(10, 200), (540, 200), (540, 180), (10, 180)]  # for object counting, speed estimation and queue management
-HORIZONTAL_LINE = [(10, 200), (540, 200)]  # for object counting
-VERTICAL_LINE = [(320, 0), (320, 400)]  # for object counting
+REGION = [(10, 200), (540, 200), (540, 180), (10, 180)]  # 用于目标计数、速度估计和队列管理
+HORIZONTAL_LINE = [(10, 200), (540, 200)]  # 用于目标计数
+VERTICAL_LINE = [(320, 0), (320, 400)]  # 用于目标计数
 
 
 def process_video(solution, video_path: str, needs_frame_count: bool = False):
-    """Process video with solution, feeding frames and optional frame count to the solution instance."""
+    """使用解决方案处理视频，将帧和可选的帧数传递给解决方案实例。"""
     cap = cv2.VideoCapture(video_path)
     assert cap.isOpened(), f"Error reading video file {video_path}"
 
@@ -172,13 +172,13 @@ def process_video(solution, video_path: str, needs_frame_count: bool = False):
             "StreamlitInference",
             solutions.Inference,
             False,
-            None,  # streamlit application doesn't require video file
-            {},  # streamlit application doesn't accept arguments
+            None,  # Streamlit 应用不需要视频文件
+            {},  # Streamlit 应用不接受参数
         ),
     ],
 )
 def test_solution(name, solution_class, needs_frame_count, video_key, kwargs_update, tmp_path, solution_assets):
-    """Test individual Ultralytics solution with video processing and parameter validation."""
+    """通过视频处理和参数验证测试单个 Ultralytics 解决方案。"""
     video_path = str(solution_assets(video_key)) if video_key else None
 
     kwargs = {}
@@ -194,8 +194,8 @@ def test_solution(name, solution_class, needs_frame_count, video_key, kwargs_upd
     kwargs.setdefault("imgsz", 320)
 
     if name == "StreamlitInference":
-        if checks.check_imshow():  # do not merge with elif above
-            solution_class(**kwargs).inference()  # requires interactive GUI environment
+        if checks.check_imshow():  # 不要与上面的 elif 合并
+            solution_class(**kwargs).inference()  # 需要交互式 GUI 环境
         return
 
     process_video(
@@ -216,7 +216,7 @@ def test_solution(name, solution_class, needs_frame_count, video_key, kwargs_upd
     ids=["left-to-right", "right-to-left", "downward", "upward"],
 )
 def test_object_counter_polygon_direction(region, step, expected):
-    """Polygonal counting must follow the object's motion axis regardless of the region's aspect ratio."""
+    """无论区域的宽高比如何，多边形计数都必须沿对象的运动轴进行。"""
     counter = solutions.ObjectCounter(region=region, show=False)
     counter.initialize_region()
     cx = sum(p[0] for p in region) / 4
@@ -231,10 +231,10 @@ def test_object_counter_polygon_direction(region, step, expected):
 
 
 def test_object_counter_polygon_reversal_at_entry():
-    """A track that backs away, turns around and then enters must be counted by its crossing motion."""
+    """轨迹先远离、转身再进入时，必须根据其穿越运动进行计数。"""
     counter = solutions.ObjectCounter(region=[(220, 140), (420, 140), (420, 340), (220, 340)], show=False)
     counter.initialize_region()
-    # outside the right edge moving away (rightward), then reversing and entering leftward
+    # 从右边缘外向右移动，然后反向向左进入
     xs = [428, 436, 444, 436, 428, 420, 412]  # turn at x=444, entry at x=412
     track = [(float(x), 240.0) for x in xs]
     for i in range(2, len(track) + 1):
@@ -246,7 +246,7 @@ def test_object_counter_polygon_reversal_at_entry():
 
 
 def test_object_counter_polygon_reentry_after_inside_spawn():
-    """A track spawning inside (uncounted first frame), exiting and re-entering counts by its crossing motion."""
+    """轨迹在区域内部生成（第一帧不计数）、离开后再次进入时，必须根据其穿越运动进行计数。"""
     counter = solutions.ObjectCounter(region=[(220, 140), (420, 140), (420, 340), (220, 340)], show=False)
     counter.initialize_region()
     track = [(230.0, 240.0), (210.0, 240.0), (230.0, 240.0)]  # inside -> out the left edge -> re-enter rightward
@@ -259,7 +259,7 @@ def test_object_counter_polygon_reentry_after_inside_spawn():
 
 
 def test_left_click_selection():
-    """Test distance calculation left click selection functionality."""
+    """测试距离计算中的左键选择功能。"""
     dc = solutions.DistanceCalculation()
     dc.boxes, dc.track_ids = [[10, 10, 50, 50]], [1]
     dc.mouse_event_for_distance(cv2.EVENT_LBUTTONDOWN, 30, 30, None, None)
@@ -267,7 +267,7 @@ def test_left_click_selection():
 
 
 def test_left_click_selection_obb():
-    """Test distance calculation left click selection with (4, 2) OBB corner boxes."""
+    """使用 (4, 2) OBB 角点框测试距离计算的左键选择。"""
     dc = solutions.DistanceCalculation()
     dc.boxes = [torch.tensor([[30.0, 10.0], [50.0, 30.0], [30.0, 50.0], [10.0, 30.0]])]  # rotated box corners
     dc.track_ids = [1]
@@ -288,11 +288,11 @@ def test_left_click_selection_obb():
     ids=["Heatmap", "ObjectBlurrer", "VisionEye", "RegionCounter", "ParkingManagement"],
 )
 def test_solution_obb_boxes(solution_class, extra_kwargs, solution_assets):
-    """Regression: solutions consuming self.boxes must handle (4, 2) OBB corner boxes without crashing.
+    """回归测试：使用 self.boxes 的解决方案必须能够处理 (4, 2) OBB 角点框而不崩溃。
 
-    OBB models fill self.boxes with (4, 2) corner points instead of xyxy scalars, and get_enclosing_box normalizes
-    them. A single parking_video frame already yields OBB tracks, so one frame exercises each crash site without
-    processing the whole video. Reuses the parking_video and yolo26n-obb.pt assets already in the test matrix.
+    OBB 模型会用 (4, 2) 角点填充 self.boxes，而不是 xyxy 标量，get_enclosing_box 会对其进行归一化。
+    单个 parking_video 帧就能生成 OBB 轨迹，因此无需处理完整视频即可覆盖每个崩溃位置。
+    复用测试矩阵中已有的 parking_video 和 yolo26n-obb.pt 资源。
     """
     kwargs = {"model": "yolo26n-obb.pt", "show": SHOW, "imgsz": 320, **extra_kwargs}
     if kwargs.get("json_file") == "parking_areas":
@@ -306,7 +306,7 @@ def test_solution_obb_boxes(solution_class, extra_kwargs, solution_assets):
 
 
 def test_object_blurrer_obb_outside_frame():
-    """An OBB box that clips fully outside the frame produces an empty ROI and must be skipped before cv2.blur."""
+    """完全裁剪到画面外的 OBB 框会产生空 ROI，必须在调用 cv2.blur 前跳过。"""
     blurrer = solutions.ObjectBlurrer()
     frame = np.zeros((480, 640, 3), dtype=np.uint8)
     inside = torch.tensor([[100.0, 100], [200, 100], [200, 200], [100, 200]])  # (4, 2) OBB, in frame
@@ -318,7 +318,7 @@ def test_object_blurrer_obb_outside_frame():
 
 
 def test_right_click_reset():
-    """Test distance calculation right click reset functionality."""
+    """测试距离计算的右键重置功能。"""
     dc = solutions.DistanceCalculation()
     dc.selected_boxes, dc.left_mouse_count = {1: [10, 10, 50, 50]}, 1
     dc.mouse_event_for_distance(cv2.EVENT_RBUTTONDOWN, 0, 0, None, None)
@@ -327,7 +327,7 @@ def test_right_click_reset():
 
 
 def test_parking_json_none():
-    """Test that ParkingManagement handles missing JSON gracefully."""
+    """测试 ParkingManagement 能够平稳处理缺失的 JSON。"""
     im0 = np.zeros((640, 480, 3), dtype=np.uint8)
     try:
         parkingmanager = solutions.ParkingManagement(json_path=None)
@@ -337,7 +337,7 @@ def test_parking_json_none():
 
 
 def test_analytics_graph_not_supported():
-    """Test that unsupported analytics type raises ValueError."""
+    """测试不支持的分析类型会抛出 ValueError。"""
     try:
         analytics = solutions.Analytics(analytics_type="test")  # 'test' is unsupported
         analytics.process(im0=np.zeros((640, 480, 3), dtype=np.uint8), frame_number=0)
@@ -347,7 +347,7 @@ def test_analytics_graph_not_supported():
 
 
 def test_area_chart_padding():
-    """Test area chart graph update with dynamic class padding logic."""
+    """测试面积图会使用动态类别填充逻辑进行更新。"""
     analytics = solutions.Analytics(analytics_type="area")
     analytics.update_graph(frame_number=1, count_dict={"car": 2}, plot="area")
     plot_im = analytics.update_graph(frame_number=2, count_dict={"car": 3, "person": 1}, plot="area")
@@ -355,7 +355,7 @@ def test_area_chart_padding():
 
 
 def test_config_update_method_with_invalid_argument():
-    """Test that update() raises ValueError for invalid config keys."""
+    """测试 update() 会针对无效配置键抛出 ValueError。"""
     obj = solutions.config.SolutionConfig()
     try:
         obj.update(invalid_key=123)
@@ -365,7 +365,7 @@ def test_config_update_method_with_invalid_argument():
 
 
 def test_plot_with_no_masks():
-    """Test that instance segmentation handles cases with no masks."""
+    """测试实例分割能够处理没有掩码的情况。"""
     im0 = np.zeros((640, 480, 3), dtype=np.uint8)
     isegment = solutions.InstanceSegmentation(model="yolo26n-seg.pt")
     results = isegment(im0)
@@ -373,7 +373,7 @@ def test_plot_with_no_masks():
 
 
 def test_streamlit_handle_video_upload_creates_file(tmp_path):
-    """Test Streamlit video upload logic saves file correctly."""
+    """测试 Streamlit 视频上传逻辑能够正确保存文件。"""
     import io
 
     fake_file = io.BytesIO(b"fake video content")
@@ -397,16 +397,16 @@ def test_streamlit_handle_video_upload_creates_file(tmp_path):
 @pytest.mark.skipif(not TORCH_2_4, reason=f"VisualAISearch requires torch>=2.4 (found torch=={TORCH_VERSION})")
 @pytest.mark.skipif(IS_RASPBERRYPI, reason="Disabled due to slow performance on Raspberry Pi.")
 def test_similarity_search(tmp_path, solution_assets):
-    """Test similarity search solution with sample images and text query."""
+    """使用示例图像和文本查询测试相似度搜索解决方案。"""
     safe_download(solution_assets("similarity_images"), dir=tmp_path)  # 4 dog images for testing in a zip file
     searcher = solutions.VisualAISearch(data=str(tmp_path / "4-imgs-similaritysearch"))
-    _ = searcher("a dog sitting on a bench")  # Returns the results in format "- img name | similarity score"
+    _ = searcher("a dog sitting on a bench")  # 以 "- 图像名称 | 相似度分数" 格式返回结果
 
 
 @pytest.mark.skipif(not TORCH_2_4, reason=f"VisualAISearch requires torch>=2.4 (found torch=={TORCH_VERSION})")
 @pytest.mark.skipif(IS_RASPBERRYPI, reason="Disabled due to slow performance on Raspberry Pi.")
 def test_similarity_search_app_init():
-    """Test SearchApp initializes with required attributes."""
+    """测试 SearchApp 是否使用所需属性完成初始化。"""
     app = solutions.SearchApp(device="cpu")
     assert hasattr(app, "searcher")
     assert hasattr(app, "run")
@@ -415,7 +415,7 @@ def test_similarity_search_app_init():
 @pytest.mark.skipif(not TORCH_2_4, reason=f"VisualAISearch requires torch>=2.4 (found torch=={TORCH_VERSION})")
 @pytest.mark.skipif(IS_RASPBERRYPI, reason="Disabled due to slow performance on Raspberry Pi.")
 def test_similarity_search_complete(tmp_path):
-    """Test VisualAISearch end-to-end with sample images and query."""
+    """使用示例图像和查询测试 VisualAISearch 的端到端流程。"""
     from PIL import Image
 
     image_dir = tmp_path / "images"
@@ -429,7 +429,7 @@ def test_similarity_search_complete(tmp_path):
 
 
 def test_distance_calculation_process_method():
-    """Test DistanceCalculation.process() computes distance between selected boxes."""
+    """测试 DistanceCalculation.process() 能够计算所选框之间的距离。"""
     from ultralytics.solutions.solutions import SolutionResults
 
     dc = solutions.DistanceCalculation()
@@ -449,12 +449,12 @@ def test_distance_calculation_process_method():
 
 
 def test_object_crop_with_show_True():
-    """Test ObjectCropper init with show=True to cover display warning."""
+    """使用 show=True 初始化 ObjectCropper，以覆盖显示警告逻辑。"""
     solutions.ObjectCropper(show=True)
 
 
 def test_display_output_method():
-    """Test that display_output triggers imshow, waitKey, and destroyAllWindows when enabled."""
+    """测试启用 display_output 时会调用 imshow、waitKey 和 destroyAllWindows。"""
     counter = solutions.ObjectCounter(show=True)
     counter.env_check = True
     frame = np.zeros((100, 100, 3), dtype=np.uint8)

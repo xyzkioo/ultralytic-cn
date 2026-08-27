@@ -15,7 +15,7 @@ from .model_misc import LayerScale
 
 
 class ResidualAttentionBlock(nn.Module):
-    """Transformer block with multi-head attention, layer normalization, and MLP feed-forward network."""
+    """包含多头注意力、层归一化和 MLP 前馈网络的 Transformer 块。"""
 
     def __init__(
         self,
@@ -26,7 +26,7 @@ class ResidualAttentionBlock(nn.Module):
         act_layer: Callable[[], nn.Module] = nn.GELU,
         norm_layer: Callable[[int], nn.Module] = nn.LayerNorm,
     ):
-        """Initialize residual attention block with configurable dimensions and normalization."""
+        """初始化可配置维度和归一化方式的残差注意力块。"""
         super().__init__()
         # Attention
         self.attn = nn.MultiheadAttention(d_model, n_head, batch_first=True)
@@ -53,10 +53,10 @@ class ResidualAttentionBlock(nn.Module):
     def attention(
         self, q_x: torch.Tensor, k_x: torch.Tensor = None, v_x: torch.Tensor = None, attn_mask: torch.Tensor = None
     ) -> torch.Tensor:
-        """Compute multi-head attention with optional cross-attention support and masking."""
+        """计算多头注意力，并支持可选的交叉注意力和掩码。"""
         k_x = k_x if k_x is not None else q_x
         v_x = v_x if v_x is not None else q_x
-        if attn_mask is not None and attn_mask.dtype != torch.bool:  # leave boolean masks as is
+        if attn_mask is not None and attn_mask.dtype != torch.bool:  # 保持布尔掩码不变
             attn_mask = attn_mask.to(q_x.dtype)
 
         return self.attn(q_x, k_x, v_x, need_weights=False, attn_mask=attn_mask)[0]
@@ -64,7 +64,7 @@ class ResidualAttentionBlock(nn.Module):
     def forward(
         self, q_x: torch.Tensor, k_x: torch.Tensor = None, v_x: torch.Tensor = None, attn_mask: torch.Tensor = None
     ) -> torch.Tensor:
-        """Apply residual attention with layer normalization and MLP, supporting optional cross-attention."""
+        """应用带层归一化和 MLP 的残差注意力，并支持可选交叉注意力。"""
         k_x = self.ln_1_kv(k_x) if hasattr(self, "ln_1_kv") and k_x is not None else None
         v_x = self.ln_1_kv(v_x) if hasattr(self, "ln_1_kv") and v_x is not None else None
         x = q_x + self.ls_1(self.attention(q_x=self.ln_1(q_x), k_x=k_x, v_x=v_x, attn_mask=attn_mask))
@@ -73,7 +73,7 @@ class ResidualAttentionBlock(nn.Module):
 
 
 class Transformer(nn.Module):
-    """Stack of residual attention blocks forming a transformer encoder with optional gradient checkpointing."""
+    """由残差注意力块堆叠而成的 Transformer 编码器，支持可选的梯度检查点。"""
 
     def __init__(
         self,
@@ -87,7 +87,7 @@ class Transformer(nn.Module):
         compile_mode: str | None = None,
         use_act_checkpoint: bool = False,
     ):
-        """Initialize transformer with configurable depth, width, and optional compilation/checkpointing."""
+        """初始化具有可配置深度、宽度以及可选编译和检查点功能的 Transformer。"""
         super().__init__()
         self.width = width
         self.layers = layers
@@ -112,7 +112,7 @@ class Transformer(nn.Module):
                 torch._dynamo.config.optimize_ddp = False
 
     def forward(self, x: torch.Tensor, attn_mask: torch.Tensor = None) -> torch.Tensor:
-        """Process input through all transformer blocks with optional gradient checkpointing during training."""
+        """在训练期间通过所有 Transformer 块处理输入，并可选使用梯度检查点。"""
         for _, r in enumerate(self.resblocks):
             if self.grad_checkpointing and not torch.jit.is_scripting() and self.training:
                 x = checkpoint(r, x, None, None, attn_mask, use_reentrant=False)
@@ -124,7 +124,7 @@ class Transformer(nn.Module):
 def text_global_pool(
     x: torch.Tensor, text: torch.Tensor = None, pool_type: str = "argmax"
 ) -> tuple[torch.Tensor, torch.Tensor]:
-    """Extract pooled representation and tokens from text embeddings using specified pooling strategy
+    """使用指定的池化策略从文本嵌入中提取池化表示和词元。
     (first/last/argmax/none).
     """
     if pool_type == "first":
@@ -132,7 +132,7 @@ def text_global_pool(
     elif pool_type == "last":
         pooled, tokens = x[:, -1], x[:, :-1]
     elif pool_type == "argmax":
-        # take features from the eot embedding (eot_token is the highest number in each sequence)
+        # 从 eot 嵌入中提取特征（eot_token 是每个序列中数值最大的令牌）
         assert text is not None
         pooled, tokens = x[torch.arange(x.shape[0]), text.argmax(dim=-1)], x
     else:
@@ -141,7 +141,7 @@ def text_global_pool(
 
 
 class TextTransformer(nn.Module):
-    """Text transformer encoder with causal masking and flexible pooling strategies."""
+    """带因果掩码和灵活池化策略的文本 Transformer 编码器。"""
 
     def __init__(
         self,
@@ -163,7 +163,7 @@ class TextTransformer(nn.Module):
         compile_mode: str | None = None,
         use_act_checkpoint: bool = False,
     ):
-        """Initialize text transformer with embedding layers, transformer blocks, and pooling options."""
+        """初始化文本 Transformer，包括嵌入层、Transformer 块和池化选项。"""
         super().__init__()
         assert pool_type in ("first", "last", "argmax", "none")
         self.output_tokens = output_tokens
@@ -198,16 +198,16 @@ class TextTransformer(nn.Module):
             self.text_projection = nn.Parameter(torch.empty(width, output_dim))
 
     def build_causal_mask(self) -> torch.Tensor:
-        """Create a causal attention mask to prevent attention to future tokens."""
-        # lazily create causal attention mask, with full attention between the tokens
-        # pytorch uses additive attention mask; fill with -inf
+        """创建因果注意力掩码，防止关注未来词元。"""
+            # 延迟创建因果注意力掩码，令牌之间使用完整注意力
+        # PyTorch 使用加性注意力掩码；使用 -inf 填充
         mask = torch.empty(self.num_pos, self.num_pos)
         mask.fill_(float("-inf"))
-        mask.triu_(1)  # zero out the lower diagonal
+        mask.triu_(1)  # 将下三角区域置零
         return mask
 
     def forward(self, text: torch.Tensor) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]:
-        """Forward pass through the text transformer, returning pooled output and optionally token embeddings."""
+        """执行文本 Transformer 的前向传播，返回池化输出，并可选返回词元嵌入。"""
         seq_len = text.shape[1]
         x = self.token_embedding(text)  # [batch_size, n_ctx, d_model]
 
@@ -231,7 +231,7 @@ class TextTransformer(nn.Module):
 
 
 class VETextEncoder(nn.Module):
-    """Text encoder for Vision Encoder (VE) models, combining a text transformer and a linear resizer."""
+    """用于视觉编码器（VE）模型的文本编码器，由文本 Transformer 和线性调整器组成。"""
 
     def __init__(
         self,
@@ -246,7 +246,7 @@ class VETextEncoder(nn.Module):
         compile_mode: str | None = None,
         use_act_checkpoint: bool = True,
     ):
-        """Initialize VE text encoder with a text transformer and a linear resizer to match decoder dimensions."""
+        """初始化 VE 文本编码器，并使用线性调整器匹配解码器维度。"""
         super().__init__()
         self.context_length = context_length
         self.use_ln_post = use_ln_post
@@ -258,7 +258,7 @@ class VETextEncoder(nn.Module):
             width=width,
             heads=heads,
             layers=layers,
-            # we want the tokens, not just the pooled output
+            # 需要令牌序列，而不仅是池化输出
             output_tokens=True,
             use_ln_post=use_ln_post,
             compile_mode=compile_mode,
@@ -269,35 +269,35 @@ class VETextEncoder(nn.Module):
     def forward(
         self, text: list[str] | tuple[torch.Tensor, torch.Tensor, dict], input_boxes: list | None = None
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        """Encode text input, either raw strings or pre-encoded tensors, and resize to match decoder dimensions."""
+        """编码文本输入（原始字符串或预编码张量），并调整到解码器维度。"""
         if isinstance(text[0], str):
-            # no use case for this
+            # 当前没有使用场景
             assert input_boxes is None or len(input_boxes) == 0, "not supported"
 
-            # Encode the text
+            # 编码文本
             tokenized = self.tokenizer(text, context_length=self.context_length).to(
                 self.resizer.weight.device
             )  # [b, seq_len]
             text_attention_mask = (tokenized != 0).bool()
 
-            # manually embed the tokens
+            # 手动嵌入令牌
             inputs_embeds = self.encoder.token_embedding(tokenized)  # [b, seq_len, d=1024]
             _, text_memory = self.encoder(tokenized)  # [b, seq_len, d=1024]
 
             assert text_memory.shape[1] == inputs_embeds.shape[1]
-            # Invert attention mask because its the opposite in pytorch transformer
+            # 反转注意力掩码，因为它与 PyTorch Transformer 中的定义相反
             text_attention_mask = text_attention_mask.ne(1)
-            # Transpose memory because pytorch's attention expects sequence first
+            # 转置记忆特征，因为 PyTorch 注意力模块要求序列维在前
             text_memory = text_memory.transpose(0, 1)
-            # Resize the encoder hidden states to be of the same d_model as the decoder
+            # 将编码器隐藏状态调整为与解码器相同的 d_model
             text_memory_resized = self.resizer(text_memory)
         else:
-            # The text is already encoded, use as is.
+            # 文本已经编码，直接使用。
             text_attention_mask, text_memory_resized, tokenized = text
             inputs_embeds = tokenized["inputs_embeds"]
             assert input_boxes is None or len(input_boxes) == 0, "Can't replace boxes in text if it's already encoded"
 
-        # Note that the input_embeds are returned in pytorch's convention (sequence first)
+        # 注意，input_embeds 按 PyTorch 约定返回（序列优先）
         return (
             text_attention_mask,
             text_memory_resized,

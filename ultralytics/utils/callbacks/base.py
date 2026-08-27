@@ -1,125 +1,123 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
-"""Base callbacks for Ultralytics training, validation, prediction, and export processes."""
+"""Ultralytics 训练、验证、预测和导出流程的基础回调函数。"""
 
 from collections import defaultdict
 from copy import deepcopy
 
-# Trainer callbacks ----------------------------------------------------------------------------------------------------
+# 训练器回调 -----------------------------------------------------------------------------------------------------------
 
 
 def on_pretrain_routine_start(trainer):
-    """Called at the beginning of the pre-training routine, before data loading and model setup."""
+    """在预训练流程开始时调用，此时尚未加载数据和设置模型。"""
 
 
 def on_pretrain_routine_end(trainer):
-    """Called at the end of the pre-training routine, after data loading and model setup are complete."""
+    """在预训练流程结束时调用，此时数据加载和模型设置已经完成。"""
 
 
 def on_train_start(trainer):
-    """Called when the training starts, before the first epoch begins."""
+    """训练开始时调用，此时第一个周期尚未开始。"""
 
 
 def on_train_epoch_start(trainer):
-    """Called at the start of each training epoch, before batch iteration begins."""
+    """每个训练周期开始时调用，此时尚未开始遍历批次。"""
 
 
 def on_train_batch_start(trainer):
-    """Called at the start of each training batch, before the forward pass."""
+    """每个训练批次开始时调用，此时尚未执行前向传播。"""
 
 
 def optimizer_step(trainer):
-    """Called during the optimizer step. Reserved for custom integrations; not called by default."""
+    """优化器执行更新步骤时调用。此回调保留给自定义集成，默认不会调用。"""
 
 
 def on_before_zero_grad(trainer):
-    """Called before the gradients are set to zero. Reserved for custom integrations; not called by default."""
+    """梯度清零前调用。此回调保留给自定义集成，默认不会调用。"""
 
 
 def on_train_batch_end(trainer):
-    """Called at the end of each training batch, after the backward pass. Optimizer step may be deferred by
-    accumulation.
-    """
+    """每个训练批次结束时调用，此时已经完成反向传播。优化器更新可能因梯度累积而延后。"""
 
 
 def on_train_epoch_end(trainer):
-    """Called at the end of each training epoch, after all batches but before validation."""
+    """每个训练周期结束时调用，此时已完成所有批次，但尚未开始验证。"""
 
 
 def on_fit_epoch_end(trainer):
-    """Called at the end of each fit epoch (train + val), after validation and any checkpoint save."""
+    """每个完整周期（训练 + 验证）结束时调用，此时已完成验证和所有必要的检查点保存。"""
 
 
 def on_model_save(trainer):
-    """Called when the model checkpoint is saved, after validation."""
+    """模型检查点保存后调用。"""
 
 
 def on_train_end(trainer):
-    """Called when the training ends, after final evaluation of the best model."""
+    """训练结束时调用，此时已经完成最佳模型的最终评估。"""
 
 
 def on_params_update(trainer):
-    """Called when the model parameters are updated. Reserved for custom integrations; not called by default."""
+    """模型参数更新后调用。此回调保留给自定义集成，默认不会调用。"""
 
 
 def teardown(trainer):
-    """Called during the teardown of the training process."""
+    """训练流程清理阶段调用。"""
 
 
-# Validator callbacks --------------------------------------------------------------------------------------------------
+# 验证器回调 -----------------------------------------------------------------------------------------------------------
 
 
 def on_val_start(validator):
-    """Called when the validation starts."""
+    """验证开始时调用。"""
 
 
 def on_val_batch_start(validator):
-    """Called at the start of each validation batch."""
+    """每个验证批次开始时调用。"""
 
 
 def on_val_batch_end(validator):
-    """Called at the end of each validation batch."""
+    """每个验证批次结束时调用。"""
 
 
 def on_val_end(validator):
-    """Called when the validation ends."""
+    """验证结束时调用。"""
 
 
-# Predictor callbacks --------------------------------------------------------------------------------------------------
+# 预测器回调 -----------------------------------------------------------------------------------------------------------
 
 
 def on_predict_start(predictor):
-    """Called when the prediction starts."""
+    """预测开始时调用。"""
 
 
 def on_predict_batch_start(predictor):
-    """Called at the start of each prediction batch."""
+    """每个预测批次开始时调用。"""
 
 
 def on_predict_batch_end(predictor):
-    """Called at the end of each prediction batch."""
+    """每个预测批次结束时调用。"""
 
 
 def on_predict_postprocess_end(predictor):
-    """Called after the post-processing of the prediction ends."""
+    """预测后处理结束后调用。"""
 
 
 def on_predict_end(predictor):
-    """Called when the prediction ends."""
+    """预测结束时调用。"""
 
 
-# Exporter callbacks ---------------------------------------------------------------------------------------------------
+# 导出器回调 -----------------------------------------------------------------------------------------------------------
 
 
 def on_export_start(exporter):
-    """Called when the model export starts."""
+    """模型导出开始时调用。"""
 
 
 def on_export_end(exporter):
-    """Called when the model export ends."""
+    """模型导出结束时调用。"""
 
 
 default_callbacks = {
-    # Run in trainer
+    # 在训练器中运行
     "on_pretrain_routine_start": [on_pretrain_routine_start],
     "on_pretrain_routine_end": [on_pretrain_routine_end],
     "on_train_start": [on_train_start],
@@ -134,50 +132,49 @@ default_callbacks = {
     "on_train_end": [on_train_end],
     "on_params_update": [on_params_update],
     "teardown": [teardown],
-    # Run in validator
+    # 在验证器中运行
     "on_val_start": [on_val_start],
     "on_val_batch_start": [on_val_batch_start],
     "on_val_batch_end": [on_val_batch_end],
     "on_val_end": [on_val_end],
-    # Run in predictor
+    # 在预测器中运行
     "on_predict_start": [on_predict_start],
     "on_predict_batch_start": [on_predict_batch_start],
     "on_predict_postprocess_end": [on_predict_postprocess_end],
     "on_predict_batch_end": [on_predict_batch_end],
     "on_predict_end": [on_predict_end],
-    # Run in exporter
+    # 在导出器中运行
     "on_export_start": [on_export_start],
     "on_export_end": [on_export_end],
 }
 
 
 def get_default_callbacks():
-    """Get the default callbacks for Ultralytics training, validation, prediction, and export processes.
+    """获取 Ultralytics 训练、验证、预测和导出流程的默认回调。
 
-    Returns:
-        (dict): Dictionary of default callbacks for various training events. Each key represents an event during the
-            training process, and the corresponding value is a list of callback functions executed when that
-            event occurs.
+    返回：
+        (dict): 各类训练事件的默认回调字典。每个键表示训练流程中的一个事件，对应值是该事件发生时执行的
+            回调函数列表。
 
-    Examples:
+    示例：
         >>> callbacks = get_default_callbacks()
-        >>> print(list(callbacks.keys()))  # show all available callback events
+        >>> print(list(callbacks.keys()))  # 显示所有可用的回调事件
         ['on_pretrain_routine_start', 'on_pretrain_routine_end', ...]
     """
     return defaultdict(list, deepcopy(default_callbacks))
 
 
 def add_integration_callbacks(instance):
-    """Add integration callbacks to the instance's callbacks dictionary.
+    """将集成回调添加到实例的回调字典中。
 
-    This function loads and adds analytics callbacks to every instance. Trainer instances also receive Platform and
-    experiment logger callbacks for ClearML, Comet, DVC, MLflow, Neptune, Ray Tune, TensorBoard, and Weights & Biases.
+    此函数为每个实例加载并添加分析回调。训练器实例还会接收 Platform，以及 ClearML、Comet、DVC、MLflow、
+    Neptune、Ray Tune、TensorBoard 和 Weights & Biases 的实验日志回调。
 
-    Args:
-        instance (Trainer | Predictor | Validator | Exporter): The object instance to which callbacks will be added. The
+    参数：
+        instance (Trainer | Predictor | Validator | Exporter): 要添加回调的对象实例。
             type of instance determines which callbacks are loaded.
 
-    Examples:
+    示例：
         >>> from ultralytics.engine.trainer import BaseTrainer
         >>> trainer = BaseTrainer()
         >>> add_integration_callbacks(trainer)
@@ -186,7 +183,7 @@ def add_integration_callbacks(instance):
 
     callbacks_list = [events_cb]
 
-    # Load training callbacks
+    # 加载训练回调
     if "Trainer" in instance.__class__.__name__:
         from .clearml import callbacks as clear_cb
         from .comet import callbacks as comet_cb
@@ -200,7 +197,7 @@ def add_integration_callbacks(instance):
 
         callbacks_list.extend([platform_cb, clear_cb, comet_cb, dvc_cb, mlflow_cb, neptune_cb, tune_cb, tb_cb, wb_cb])
 
-    # Add the callbacks to the callbacks dictionary
+    # 将回调添加到回调字典
     for callbacks in callbacks_list:
         for k, v in callbacks.items():
             if v not in instance.callbacks[k]:

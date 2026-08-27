@@ -1,15 +1,15 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
-# Builds ultralytics/ultralytics:latest-export image on DockerHub https://hub.docker.com/r/ultralytics/ultralytics
-# Export-optimized derivative of ultralytics/ultralytics:latest for testing and benchmarks
-# Includes all export format dependencies and pre-installed export packages
+# 在 Docker Hub 上构建 ultralytics/ultralytics:latest-export 镜像：https://hub.docker.com/r/ultralytics/ultralytics
+# ultralytics/ultralytics:latest 的导出优化版本，用于测试和基准评测
+# 包含所有导出格式依赖及预安装的导出软件包
 
 FROM ultralytics/ultralytics:latest
 
-# Install export dependencies
-# Numpy 1.26.4 required for TensorFlow export compatibility
-# onnxruntime-gpu pinned <1.27.0 as 1.27.0 dropped CUDA 12 support and ships CUDA 13 binaries (base image is CUDA 12.8)
-# Note tensorrt installed on-demand as depends on runtime environment CUDA version
+# 安装导出依赖
+# TensorFlow 导出兼容性需要 Numpy 1.26.4
+# onnxruntime-gpu 固定为 <1.27.0，因为 1.27.0 放弃了 CUDA 12 支持并提供 CUDA 13 二进制文件（基础镜像为 CUDA 12.8）
+# 注意：tensorrt 按需安装，因为它取决于运行环境的 CUDA 版本
 RUN uv pip install --system --no-cache -e ".[export]" numpy==1.26.4 && \
     uv pip install --system --no-cache "onnxruntime-gpu<1.27.0" paddlepaddle x2paddle numpy==1.26.4 && \
     rm -rf tmp ~/.cache /root/.config/Ultralytics/persistent_cache.json

@@ -14,18 +14,18 @@ import torch
 def is_box_near_crop_edge(
     boxes: torch.Tensor, crop_box: list[int], orig_box: list[int], atol: float = 20.0
 ) -> torch.Tensor:
-    """Determine if bounding boxes are near the edge of a cropped image region using a specified tolerance.
+    """根据指定容差判断边界框是否靠近裁剪图像区域的边缘。
 
-    Args:
-        boxes (torch.Tensor): Bounding boxes in XYXY format.
-        crop_box (list[int]): Crop box coordinates in [x0, y0, x1, y1] format.
-        orig_box (list[int]): Original image box coordinates in [x0, y0, x1, y1] format.
-        atol (float, optional): Absolute tolerance for edge proximity detection.
+    参数：
+        boxes (torch.Tensor): XYXY 格式的边界框。
+        crop_box (列表[int]): 裁剪边界框坐标，格式为 [x0, y0, x1, y1]。
+        orig_box (列表[int]): 原始图像边界框坐标，格式为 [x0, y0, x1, y1]。
+        atol (float, 可选): 判断边缘接近程度的绝对容差。
 
-    Returns:
-        (torch.Tensor): Boolean tensor indicating which boxes are near crop edges.
+    返回：
+        (torch.Tensor): 表示哪些边界框靠近裁剪边缘的布尔张量。
 
-    Examples:
+    示例：
         >>> boxes = torch.tensor([[10, 10, 50, 50], [100, 100, 150, 150]])
         >>> crop_box = [0, 0, 200, 200]
         >>> orig_box = [0, 0, 300, 300]
@@ -41,19 +41,19 @@ def is_box_near_crop_edge(
 
 
 def batch_iterator(batch_size: int, *args) -> Generator[list[Any]]:
-    """Yield batches of data from input arguments with specified batch size for efficient processing.
+    """以指定批次大小从输入参数中生成数据批次，以提高处理效率。
 
-    This function takes a batch size and any number of iterables, then yields batches of elements from those
-    iterables. All input iterables must have the same length.
+    此函数接收批次大小和任意数量的可迭代对象，然后从这些可迭代对象中生成元素批次。
+    所有输入可迭代对象的长度必须相同。
 
-    Args:
-        batch_size (int): Size of each batch to yield.
-        *args (Any): Variable length input iterables to batch. All iterables must have the same length.
+    参数：
+        batch_size (int): 要生成的每个批次大小。
+        *args (Any): 要分批处理的可变长度输入可迭代对象，所有对象长度必须相同。
 
     Yields:
-        (list[Any]): A list of batched elements from each input iterable.
+        (列表[Any]): 从每个输入可迭代对象中生成的分批元素列表。
 
-    Examples:
+    示例：
         >>> data = [1, 2, 3, 4, 5]
         >>> labels = ["a", "b", "c", "d", "e"]
         >>> for batch in batch_iterator(2, data, labels):
@@ -69,28 +69,27 @@ def batch_iterator(batch_size: int, *args) -> Generator[list[Any]]:
 
 
 def calculate_stability_score(masks: torch.Tensor, mask_threshold: float, threshold_offset: float) -> torch.Tensor:
-    """Compute the stability score for a batch of masks.
+    """计算一个掩码批次的稳定性分数。
 
-    The stability score is the IoU between binary masks obtained by thresholding the predicted mask logits at high and
-    low values.
+    稳定性分数是二值掩码之间的 IoU，这些二值掩码分别由高阈值和低阈值对预测掩码 logits 进行阈值化得到。
 
-    Args:
-        masks (torch.Tensor): Batch of predicted mask logits.
-        mask_threshold (float): Threshold value for creating binary masks.
-        threshold_offset (float): Offset applied to the threshold for creating high and low binary masks.
+    参数：
+        masks (torch.Tensor): 预测掩码 logits 批次。
+        mask_threshold (float): 创建二值掩码的阈值。
+        threshold_offset (float): 用于生成高、低阈值二值掩码的偏移量。
 
-    Returns:
-        (torch.Tensor): Stability scores for each mask in the batch.
+    返回：
+        (torch.Tensor): 批次中每个掩码的稳定性分数。
 
-    Examples:
+    示例：
         >>> masks = torch.rand(10, 256, 256)  # Batch of 10 masks
         >>> mask_threshold = 0.5
         >>> threshold_offset = 0.1
         >>> stability_scores = calculate_stability_score(masks, mask_threshold, threshold_offset)
 
-    Notes:
-        - One mask is always contained inside the other.
-        - Memory is saved by preventing unnecessary cast to torch.int64.
+    注意：
+        - 一个掩码始终包含在另一个掩码内。
+        - 通过避免不必要地转换为 torch.int64 来节省内存。
     """
     intersections = (masks > (mask_threshold + threshold_offset)).sum(-1, dtype=torch.int16).sum(-1, dtype=torch.int32)
     unions = (masks > (mask_threshold - threshold_offset)).sum(-1, dtype=torch.int16).sum(-1, dtype=torch.int32)
@@ -98,7 +97,7 @@ def calculate_stability_score(masks: torch.Tensor, mask_threshold: float, thresh
 
 
 def build_point_grid(n_per_side: int) -> np.ndarray:
-    """Generate a 2D grid of evenly spaced points in the range [0,1]x[0,1] for image segmentation tasks."""
+    """为图像分割任务生成 [0,1]x[0,1] 范围内均匀分布的二维点网格。"""
     offset = 1 / (2 * n_per_side)
     points_one_side = np.linspace(offset, 1 - offset, n_per_side)
     points_x = np.tile(points_one_side[None, :], (n_per_side, 1))
@@ -107,25 +106,25 @@ def build_point_grid(n_per_side: int) -> np.ndarray:
 
 
 def build_all_layer_point_grids(n_per_side: int, n_layers: int, scale_per_layer: int) -> list[np.ndarray]:
-    """Generate point grids for multiple crop layers with varying scales and densities."""
+    """为多个裁剪层生成具有不同尺度和密度的点网格。"""
     return [build_point_grid(int(n_per_side / (scale_per_layer**i))) for i in range(n_layers + 1)]
 
 
 def generate_crop_boxes(
     im_size: tuple[int, ...], n_layers: int, overlap_ratio: float
 ) -> tuple[list[list[int]], list[int]]:
-    """Generate crop boxes of varying sizes for multiscale image processing, with layered overlapping regions.
+    """为多尺度图像处理生成不同大小的裁剪边界框，并设置分层重叠区域。
 
-    Args:
-        im_size (tuple[int, ...]): Height and width of the input image.
-        n_layers (int): Number of layers to generate crop boxes for.
-        overlap_ratio (float): Ratio of overlap between adjacent crop boxes.
+    参数：
+        im_size (tuple[int, ...]): 输入图像的高度和宽度。
+        n_layers (int): 要生成裁剪边界框的层数。
+        overlap_ratio (float): 相邻裁剪边界框之间的重叠比例。
 
-    Returns:
-        crop_boxes (list[list[int]]): List of crop boxes in [x0, y0, x1, y1] format.
-        layer_idxs (list[int]): List of layer indices corresponding to each crop box.
+    返回：
+        crop_boxes (列表[列表[int]]): [x0, y0, x1, y1] 格式的裁剪边界框列表。
+        layer_idxs (列表[int]): 与每个裁剪边界框对应的层索引列表。
 
-    Examples:
+    示例：
         >>> im_size = (800, 1200)  # Height, width
         >>> n_layers = 3
         >>> overlap_ratio = 0.25
@@ -135,12 +134,12 @@ def generate_crop_boxes(
     im_h, im_w = im_size
     short_side = min(im_h, im_w)
 
-    # Original image
+    # 原始图像
     crop_boxes.append([0, 0, im_w, im_h])
     layer_idxs.append(0)
 
     def crop_len(orig_len, n_crops, overlap):
-        """Calculate the length of each crop given the original length, number of crops, and overlap."""
+        """根据原始长度、裁剪数量和重叠比例计算每个裁剪区域的长度。"""
         return math.ceil((overlap * (n_crops - 1) + orig_len) / n_crops)
 
     for i_layer in range(n_layers):
@@ -153,7 +152,7 @@ def generate_crop_boxes(
         crop_box_x0 = [int((crop_w - overlap) * i) for i in range(n_crops_per_side)]
         crop_box_y0 = [int((crop_h - overlap) * i) for i in range(n_crops_per_side)]
 
-        # Crops in XYWH format
+        # 裁剪框采用 XYWH 格式计算
         for x0, y0 in product(crop_box_x0, crop_box_y0):
             box = [x0, y0, min(x0 + crop_w, im_w), min(y0 + crop_h, im_h)]
             crop_boxes.append(box)
@@ -163,50 +162,49 @@ def generate_crop_boxes(
 
 
 def uncrop_boxes_xyxy(boxes: torch.Tensor, crop_box: list[int]) -> torch.Tensor:
-    """Uncrop bounding boxes by adding the crop box offset to their coordinates."""
+    """将裁剪边界框偏移量加回坐标，从而恢复边界框在原图中的位置。"""
     x0, y0, _, _ = crop_box
     offset = torch.tensor([[x0, y0, x0, y0]], device=boxes.device)
-    # Check if boxes has a channel dimension
+    # 检查边界框是否包含通道维度
     if len(boxes.shape) == 3:
         offset = offset.unsqueeze(1)
     return boxes + offset
 
 
 def uncrop_points(points: torch.Tensor, crop_box: list[int]) -> torch.Tensor:
-    """Uncrop points by adding the crop box offset to their coordinates."""
+    """将裁剪边界框偏移量加回点坐标，从而恢复点在原图中的位置。"""
     x0, y0, _, _ = crop_box
     offset = torch.tensor([[x0, y0]], device=points.device)
-    # Check if points has a channel dimension
+    # 检查点是否包含通道维度
     if len(points.shape) == 3:
         offset = offset.unsqueeze(1)
     return points + offset
 
 
 def uncrop_masks(masks: torch.Tensor, crop_box: list[int], orig_h: int, orig_w: int) -> torch.Tensor:
-    """Uncrop masks by padding them to the original image size, handling coordinate transformations."""
+    """通过填充掩码恢复到原始图像尺寸，并处理坐标变换。"""
     x0, y0, x1, y1 = crop_box
     if x0 == 0 and y0 == 0 and x1 == orig_w and y1 == orig_h:
         return masks
-    # Coordinate transform masks
+    # 对掩码执行坐标变换
     pad_x, pad_y = orig_w - (x1 - x0), orig_h - (y1 - y0)
     pad = (x0, pad_x - x0, y0, pad_y - y0)
     return torch.nn.functional.pad(masks, pad, value=0)
 
 
 def remove_small_regions(mask: np.ndarray, area_thresh: float, mode: str) -> tuple[np.ndarray, bool]:
-    """Remove small disconnected regions or holes in a mask based on area threshold and mode.
+    """根据面积阈值和模式移除掩码中的小型断开区域或孔洞。
 
-    Args:
-        mask (np.ndarray): Binary mask to process.
-        area_thresh (float): Area threshold below which regions will be removed.
-        mode (str): Processing mode, either 'holes' to fill small holes or 'islands' to remove small disconnected
-            regions.
+    参数：
+        mask (np.ndarray): 要处理的二值掩码。
+        area_thresh (float): 小于此面积阈值的区域将被移除。
+        mode (str): 处理模式，可选 'holes'（填充小孔洞）或 'islands'（移除小型断开区域）。
 
-    Returns:
-        processed_mask (np.ndarray): Processed binary mask with small regions removed.
-        modified (bool): Whether any regions were modified.
+    返回：
+        processed_mask (np.ndarray): 移除小区域后的二值掩码。
+        modified (bool): 是否修改了任意区域。
 
-    Examples:
+    示例：
         >>> mask = np.zeros((100, 100), dtype=np.bool_)
         >>> mask[40:60, 40:60] = True  # Create a square
         >>> mask[45:55, 45:55] = False  # Create a hole
@@ -224,52 +222,52 @@ def remove_small_regions(mask: np.ndarray, area_thresh: float, mode: str) -> tup
         return mask, False
     fill_labels = [0, *small_regions]
     if not correct_holes:
-        # If every region is below threshold, keep largest
+        # 如果所有区域都低于阈值，则保留最大的区域
         fill_labels = [i for i in range(n_labels) if i not in fill_labels] or [int(np.argmax(sizes)) + 1]
     mask = np.isin(regions, fill_labels)
     return mask, True
 
 
 def batched_mask_to_box(masks: torch.Tensor) -> torch.Tensor:
-    """Calculate bounding boxes in XYXY format around binary masks.
+    """计算包围二值掩码的 XYXY 格式边界框。
 
-    Args:
-        masks (torch.Tensor): Binary masks with shape (B, H, W) or (B, C, H, W).
+    参数：
+        masks (torch.Tensor): 形状为 (B, H, W) 或 (B, C, H, W) 的二值掩码。
 
-    Returns:
-        (torch.Tensor): Bounding boxes in XYXY format with shape (B, 4) or (B, C, 4).
+    返回：
+        (torch.Tensor): XYXY 格式的边界框，形状为 (B, 4) 或 (B, C, 4)。
 
-    Notes:
-        - Handles empty masks by returning zero boxes.
-        - Preserves input tensor dimensions in the output.
+    注意：
+        - 空掩码将返回全零边界框。
+        - 输出会保留输入张量的维度。
     """
-    # torch.max below raises an error on empty inputs, just skip in this case
+    # torch.max 在空输入上会报错，因此此时直接跳过
     if torch.numel(masks) == 0:
         return torch.zeros(*masks.shape[:-2], 4, device=masks.device)
 
-    # Normalize shape to CxHxW
+    # 将形状统一为 CxHxW
     shape = masks.shape
     h, w = shape[-2:]
     masks = masks.flatten(0, -3) if len(shape) > 2 else masks.unsqueeze(0)
-    # Get top and bottom edges
+    # 获取顶部和底部边缘
     in_height, _ = torch.max(masks, dim=-1)
     in_height_coords = in_height * torch.arange(h, device=in_height.device)[None, :]
     bottom_edges, _ = torch.max(in_height_coords, dim=-1)
     in_height_coords = in_height_coords + h * (~in_height)
     top_edges, _ = torch.min(in_height_coords, dim=-1)
 
-    # Get left and right edges
+    # 获取左侧和右侧边缘
     in_width, _ = torch.max(masks, dim=-2)
     in_width_coords = in_width * torch.arange(w, device=in_width.device)[None, :]
     right_edges, _ = torch.max(in_width_coords, dim=-1)
     in_width_coords = in_width_coords + w * (~in_width)
     left_edges, _ = torch.min(in_width_coords, dim=-1)
 
-    # If the mask is empty the right edge will be to the left of the left edge.
-    # Replace these boxes with [0, 0, 0, 0]
+    # 如果掩码为空，右边缘会位于左边缘左侧。
+    # 将这些边界框替换为 [0, 0, 0, 0]
     empty_filter = (right_edges < left_edges) | (bottom_edges < top_edges)
     out = torch.stack([left_edges, top_edges, right_edges, bottom_edges], dim=-1)
     out = out * (~empty_filter).unsqueeze(-1)
 
-    # Return to original shape
+    # 恢复为原始形状
     return out.reshape(*shape[:-2], 4) if len(shape) > 2 else out[0]

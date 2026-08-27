@@ -15,23 +15,23 @@ from ultralytics.utils import YAML
 
 
 def _read_proto_map(file: Path, path: tuple[int, ...]) -> dict:
-    """Read a protobuf ``map<string, string>`` at a nested field path, without importing the format's framework.
+    """读取嵌套字段路径中的 protobuf ``map<string, string>``，无需导入对应格式的框架。
 
-    Args:
-        file (Path): Path to the protobuf file, i.e. an ONNX or CoreML model.
-        path (tuple[int, ...]): Field numbers to descend, the last holding the repeated ``key``/``value`` entries.
+    参数：
+        file (Path): protobuf 文件路径，例如 ONNX 或 CoreML 模型。
+        path (tuple[int, ...]): 要逐层进入的字段编号，最后一个字段包含重复的 ``key``/``value`` 条目。
 
-    Returns:
-        (dict): Map entries as string key-value pairs.
+    返回：
+        (dict): 以字符串键值对形式返回的映射条目。
     """
     import mmap
 
     def fields(buf):
-        """Yield ``(number, payload)`` for each length-delimited field of a message, stepping over varint fields."""
+        """遍历消息中的每个长度分隔字段，并跳过 varint 字段，返回 ``(编号, payload)``。"""
         i = 0
 
         def varint():
-            """Decode the base-128 varint at the current offset."""
+            """解码当前偏移处的 base-128 varint。"""
             nonlocal i
             v = shift = 0
             while buf[i] & 0x80:
@@ -41,14 +41,14 @@ def _read_proto_map(file: Path, path: tuple[int, ...]) -> dict:
 
         while i < len(buf):
             tag = varint()
-            if tag & 7 == 0:  # varint field, i.e. ONNX ir_version
+            if tag & 7 == 0:  # varint 字段，例如 ONNX ir_version
                 varint()
-            elif tag & 7 == 2:  # length-delimited field, i.e. a nested message, string or weights blob
+            elif tag & 7 == 2:  # 长度分隔字段，例如嵌套消息、字符串或权重数据块
                 n = varint()
-                yield tag >> 3, buf[i : i + n]  # a memoryview slice, so a large payload is never copied
+                yield tag >> 3, buf[i : i + n]  # 返回 memoryview 切片，避免复制大型 payload
                 i += n
             else:
-                return  # these protos carry no fixed-width fields
+                return  # 这些 protobuf 消息不包含固定宽度字段
 
     with open(file, "rb") as f:
         messages = [memoryview(mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ))]
@@ -58,36 +58,34 @@ def _read_proto_map(file: Path, path: tuple[int, ...]) -> dict:
 
 
 class BaseBackend(ABC):
-    """Base class for all inference backends.
+    """所有推理后端的基类。
 
-    This abstract class defines the interface that all inference backends must implement. It provides common
-    functionality for model loading, metadata processing, and device management.
+    此抽象类定义所有推理后端必须实现的接口，并提供模型加载、元数据处理和设备管理等通用功能。
 
-    Attributes:
-        model: The underlying inference model or runtime session.
-        device (torch.device): The device to run inference on.
-        fp16 (bool): Whether to use FP16 (half-precision) inference.
-        nhwc (bool): Whether the model expects NHWC input format instead of NCHW.
-        stride (int): Model stride, typically 32 for YOLO models.
-        names (dict): Dictionary mapping class indices to class names.
-        task (str | None): The task type (detect, segment, semantic, classify, pose, obb).
-        batch (int): Batch size for inference.
-        imgsz (tuple): Input image size as (height, width).
-        channels (int): Number of input channels, typically 3 for RGB.
-        end2end (bool): Whether the model includes end-to-end NMS post-processing.
-        dynamic (bool): Whether the model supports dynamic input shapes.
-        base_model (bool): Whether the loaded model is an Ultralytics `BaseModel`, and so implements the `augment` and
-            `embed` forward arguments.
-        metadata (dict): Model metadata dictionary containing export configuration.
+    属性：
+        model: 底层推理模型或运行时会话。
+        device (torch.device): 执行推理的设备。
+        fp16 (bool): 是否使用 FP16（半精度）推理。
+        nhwc (bool): 模型是否需要 NHWC 输入格式，而不是 NCHW。
+        stride (int): 模型步长，YOLO 模型通常为 32。
+        names (dict): 将类别索引映射到类别名称的字典。
+        task (str | None): 任务类型（detect、segment、semantic、classify、pose、obb）。
+        batch (int): 推理批次大小。
+        imgsz (tuple): 输入图像尺寸，格式为 (height, width)。
+        channels (int): 输入通道数，RGB 输入通常为 3。
+        end2end (bool): 模型是否包含端到端 NMS 后处理。
+        dynamic (bool): 模型是否支持动态输入形状。
+        base_model (bool): 已加载模型是否为 Ultralytics `BaseModel`，从而支持 `augment` 和 `embed` 前向参数。
+        metadata (dict): 包含导出配置的模型元数据字典。
     """
 
     def __init__(self, weight: str | torch.nn.Module, device: torch.device | str, fp16: bool = False):
-        """Initialize the base backend with common attributes and load the model.
+        """使用通用属性初始化基础后端并加载模型。
 
-        Args:
-            weight (str | torch.nn.Module): Path to the model weights file or a PyTorch module instance.
-            device (torch.device | str): Device to run inference on (e.g., 'cpu', 'cuda:0').
-            fp16 (bool): Whether to use FP16 half-precision inference.
+        参数：
+            weight (str | torch.nn.Module): 模型权重文件路径或 PyTorch 模块实例。
+            device (torch.device | str): 执行推理的设备（例如 'cpu'、'cuda:0'）。
+            fp16 (bool): 是否使用 FP16 半精度推理。
         """
         self.device = device
         self.fp16 = fp16
@@ -106,114 +104,112 @@ class BaseBackend(ABC):
 
     @abstractmethod
     def load_model(self, weight: str | torch.nn.Module) -> None:
-        """Load the model from a weights file or module instance.
+        """从权重文件或模块实例加载模型。
 
-        Args:
-            weight (str | torch.nn.Module): Path to model weights or a PyTorch module.
+        参数：
+            weight (str | torch.nn.Module): 模型权重文件路径或 PyTorch 模块。
         """
         raise NotImplementedError
 
     @abstractmethod
     def forward(self, im: torch.Tensor) -> Any:
-        """Run inference on the input image tensor.
+        """对输入图像张量执行推理。
 
-        Args:
-            im (torch.Tensor): Input image tensor in BCHW format, normalized to [0, 1].
+        参数：
+            im (torch.Tensor): BCHW 格式的输入图像张量，已归一化到 [0, 1]。
 
-        Returns:
-            (Any): The raw output from the model's forward pass, which may require post-processing.
+        返回：
+            (Any): 模型前向传播的原始输出，可能还需要后处理。
         """
         raise NotImplementedError
 
     def __call__(self, *args, **kwargs) -> Any:
-        """Allow the backend instance to be called directly to perform inference, forwarding arguments to the `forward`
-        method.
+        """允许直接调用后端实例执行推理，并将参数转发给 `forward` 方法。
         """
         return self.forward(*args, **kwargs)
 
     @staticmethod
     def engine_header(file: str | Path) -> tuple[int, dict]:
-        """Read the metadata header an Ultralytics ``.engine`` export writes ahead of its serialized engine.
+        """读取 Ultralytics ``.engine`` 导出文件写在序列化引擎之前的元数据头。
 
-        Args:
-            file (str | Path): Path to the TensorRT engine file.
+        参数：
+            file (str | Path): TensorRT 引擎文件路径。
 
-        Returns:
-            (tuple[int, dict]): Byte offset of the engine bytes and the header metadata, ``(0, {})`` without a header.
+        返回：
+            (tuple[int, dict]): 引擎数据的字节偏移量和头部元数据；没有头部时返回 ``(0, {})``。
         """
         with open(file, "rb") as f:
-            n = int.from_bytes(f.read(4), byteorder="little")  # 4-byte little-endian JSON length, if a header exists
-            if 0 < n <= f.seek(0, 2) - 4:  # a length overrunning the file is not a header
+            n = int.from_bytes(f.read(4), byteorder="little")  # 4 字节小端 JSON 长度（如果存在头部）
+            if 0 < n <= f.seek(0, 2) - 4:  # 长度超出文件范围时，不视为头部
                 f.seek(4)
-                with contextlib.suppress(ValueError):  # engine bytes are not JSON, so a real header parses
+                with contextlib.suppress(ValueError):  # 引擎数据不是 JSON，因此只有真正的头部才能解析成功
                     return 4 + n, json.loads(f.read(n))
         return 0, {}
 
     @staticmethod
     def read_metadata(file: str | Path) -> dict:
-        """Read Ultralytics metadata from an export without loading it or importing its framework.
+        """从导出文件中读取 Ultralytics 元数据，无需加载导出文件或导入对应框架。
 
-        Single-file formats embed metadata in a length-prefixed JSON header (``.engine``), a zip entry
-        (``.torchscript``, ``.tflite``) or protobuf string map entries (``.onnx``, ``.mlpackage``), and every other
-        format writes a ``metadata.yaml`` sidecar beside or inside the export. MNN keeps it in a flatbuffer
-        ``bizCode`` field and Triton serves it over HTTP, so neither is read here.
+        单文件格式会将元数据嵌入带长度前缀的 JSON 头（``.engine``）、ZIP 条目（``.torchscript``、``.tflite``）
+        或 protobuf 字符串映射条目（``.onnx``、``.mlpackage``）中；其他格式会在导出文件旁边或内部写入 ``metadata.yaml``。
+        MNN 将元数据保存在 flatbuffer 的 ``bizCode`` 字段中，Triton 则通过 HTTP 提供元数据，因此这里不读取这两种格式。
 
-        Args:
-            file (str | Path): Path to an exported model file or directory.
+        参数：
+            file (str | Path): 已导出模型文件或目录的路径。
 
-        Returns:
-            (dict): Parsed metadata, empty for a third-party export or one predating metadata embedding.
+        返回：
+            (dict): 解析后的元数据；对于第三方导出文件或不支持嵌入元数据的旧导出文件，返回空字典。
         """
         import zipfile
 
         p = Path(file)
         try:
-            if p.suffix == ".engine":  # 4-byte little-endian length then that many bytes of JSON
+            if p.suffix == ".engine":  # 4 字节小端长度，后面紧跟相应长度的 JSON 数据
                 return BaseBackend.engine_header(p)[1]
-            if p.suffix in {".tflite", ".torchscript"}:  # metadata appended to or saved inside the model zip
+            if p.suffix in {".tflite", ".torchscript"}:  # 元数据追加在模型 ZIP 中，或保存在 ZIP 内部
                 with zipfile.ZipFile(p) as z:
                     names = z.namelist()
-                    if "metadata.json" in names:  # litert-torch and single-file tflite exports
+                    if "metadata.json" in names:  # litert-torch 和单文件 tflite 导出格式
                         return json.loads(z.read("metadata.json"))
-                    name = next((n for n in names if n.endswith("extra/config.txt")), None)  # torch.jit extra file
+                    name = next((n for n in names if n.endswith("extra/config.txt")), None)  # torch.jit extra 文件
                     return json.loads(z.read(name)) if name else ast.literal_eval(z.read(names[0]).decode())
-            if p.suffix == ".onnx" or p.name.endswith("_imx_model"):  # IMX packages its ONNX in a directory
-                return _read_proto_map(next(p.glob("*.onnx")) if p.is_dir() else p, (14,))  # metadata_props
+            if p.suffix == ".onnx" or p.name.endswith("_imx_model"):  # IMX 会将 ONNX 打包在目录中
+                return _read_proto_map(next(p.glob("*.onnx")) if p.is_dir() else p, (14,))  # 元数据属性
             if p.suffix in {".mlpackage", ".mlmodel"}:  # description.metadata.userDefined
                 return _read_proto_map(next(p.rglob("*.mlmodel")) if p.is_dir() else p, (2, 100, 100))
-            sidecar = (p if p.is_dir() else p.parent) / "metadata.yaml"  # openvino, ncnn, paddle, saved_model, ...
-            if p.suffix == ".pb":  # a frozen graph keeps its metadata in the sibling saved_model directory
+            sidecar = (p if p.is_dir() else p.parent) / "metadata.yaml"  # openvino、ncnn、paddle、saved_model 等格式
+            if p.suffix == ".pb":  # 冻结图会将元数据保存在同级 saved_model 目录中
                 sidecar = next(p.resolve().parent.rglob(f"{p.stem}_saved_model*/metadata.yaml"), sidecar)
             return YAML.load(sidecar) if sidecar.exists() else {}
-        except Exception:  # a third-party, truncated or metadata-less artifact
+        except Exception:  # 第三方、截断或不包含元数据的文件
             return {}
 
     def apply_metadata(self, metadata: dict | None) -> None:
-        """Process and apply model metadata to backend attributes.
+        """处理模型元数据，并将其应用到后端属性。
 
-        Handles type conversions for common metadata fields (e.g., stride, batch, names) and sets them as
-        instance attributes. Also resolves end-to-end NMS and dynamic shape settings from export args.
+        此方法会转换常见元数据字段（例如 stride、batch 和 names）的类型，并将它们设置为实例属性；
+        同时根据导出参数解析端到端 NMS 和动态形状设置。
 
-        Args:
-            metadata (dict | None): Dictionary containing metadata key-value pairs from model export.
+        参数：
+            metadata (dict | None): 包含模型导出元数据键值对的字典。
         """
         if not metadata:
             return
 
-        # Store raw metadata
+        # 保存原始元数据
         self.metadata = metadata
 
-        # Process type conversions for known fields
+        # 转换已知字段的类型
         for k, v in metadata.items():
             if k in {"stride", "batch", "channels"}:
                 metadata[k] = int(v)
             elif k in {"imgsz", "names", "kpt_shape", "kpt_names", "args", "end2end"} and isinstance(v, str):
                 metadata[k] = ast.literal_eval(v)
 
-        # Handle models exported with end-to-end NMS
+        # 处理包含端到端 NMS 的导出模型
         metadata["end2end"] = metadata.get("end2end", False) or metadata.get("args", {}).get("nms", False)
         metadata["dynamic"] = metadata.get("args", {}).get("dynamic", self.dynamic)
 
-        # Apply all metadata fields as backend attributes
+        # 将所有元数据字段应用为后端属性
         for k, v in metadata.items():
             setattr(self, k, v)

@@ -1,20 +1,20 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
-# Builds ultralytics/ultralytics:latest-jupyter image on DockerHub https://hub.docker.com/r/ultralytics/ultralytics
-# Image provides JupyterLab interface for interactive YOLO development and includes tutorial notebooks
+# 在 Docker Hub 上构建 ultralytics/ultralytics:latest-jupyter 镜像：https://hub.docker.com/r/ultralytics/ultralytics
+# 此镜像提供用于交互式 YOLO 开发的 JupyterLab 界面，并包含教程笔记本
 
-# Start from Python-based Ultralytics image for full Python environment
+# 基于 Ultralytics Python 镜像启动，以提供完整的 Python 环境
 FROM ultralytics/ultralytics:latest-python
 
-# Install JupyterLab for interactive development
+# 安装用于交互式开发的 JupyterLab
 RUN uv pip install --system jupyterlab && \
-    # Create persistent data directory structure
+    # 创建持久化数据目录结构
     mkdir -p /data/{datasets,weights,runs} && \
-    # Configure YOLO directories
+    # 配置 YOLO 目录
     yolo settings datasets_dir="/data/datasets" weights_dir="/data/weights" runs_dir="/data/runs" && \
     rm -rf tmp /root/.config/Ultralytics/persistent_cache.json
 
-# Start JupyterLab with tutorial notebook
+# 使用教程笔记本启动 JupyterLab
 ENTRYPOINT ["/usr/local/bin/jupyter", "lab", "--allow-root", "--ip=0.0.0.0", "/ultralytics/examples/tutorial.ipynb"]
 
 # Usage --------------------------------------------------------------------------------------------------------------

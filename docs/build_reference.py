@@ -1,11 +1,11 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 """
-Helper file to build Ultralytics Docs reference section.
+用于构建 Ultralytics 文档参考部分的辅助文件。
 
-This script recursively walks through the ultralytics directory and builds a MkDocs reference section of *.md files
-composed of classes and functions, and also creates a navigation menu for use in mkdocs.yaml.
+此脚本递归遍历 ultralytics 目录，根据类和函数构建 *.md 文件组成的 MkDocs 参考部分，
+同时创建供 mkdocs.yaml 使用的导航菜单。
 
-Note: Must be run from repository root directory. Do not run from docs directory.
+注意：必须从仓库根目录运行，不要从 docs 目录运行。
 """
 
 from __future__ import annotations
@@ -24,7 +24,7 @@ from typing import Literal
 from ultralytics.utils import LOGGER
 from ultralytics.utils.tqdm import TQDM
 
-# Constants
+# 常量
 FILE = Path(__file__).resolve()
 REPO_ROOT = FILE.parents[1]
 PACKAGE_DIR = REPO_ROOT / "ultralytics"
@@ -55,7 +55,7 @@ RETURNS_RE = re.compile(r"([^:]+):\s*(.*)")
 
 @dataclass
 class ParameterDoc:
-    """Structured documentation for parameters, attributes, and exceptions."""
+    """参数、属性和异常的结构化文档。"""
 
     name: str
     type: str | None
@@ -65,7 +65,7 @@ class ParameterDoc:
 
 @dataclass
 class ReturnDoc:
-    """Structured documentation for return and yield values."""
+    """返回值和 yield 值的结构化文档。"""
 
     type: str | None
     description: str
@@ -73,7 +73,7 @@ class ReturnDoc:
 
 @dataclass
 class ParsedDocstring:
-    """Normalized representation of a Google-style docstring."""
+    """Google 风格文档字符串的规范化表示。"""
 
     summary: str = ""
     description: str = ""
@@ -89,7 +89,7 @@ class ParsedDocstring:
 
 @dataclass
 class DocItem:
-    """Represents a documented symbol (class, function, method, or property)."""
+    """表示一个有文档说明的符号（类、函数、方法或属性）。"""
 
     name: str
     qualname: str
@@ -107,7 +107,7 @@ class DocItem:
 
 @dataclass
 class DocumentedModule:
-    """Container for all documented items within a Python module."""
+    """Python 模块中所有文档项的容器。"""
 
     path: Path
     module_path: str
@@ -116,12 +116,12 @@ class DocumentedModule:
 
 
 # --------------------------------------------------------------------------------------------- #
-# Placeholder (legacy) generation for reference stubs
+# 参考文档存根的占位符（旧版）生成
 # --------------------------------------------------------------------------------------------- #
 
 
 def extract_classes_and_functions(filepath: Path) -> tuple[list[str], list[str]]:
-    """Extract top-level class and (a)sync function names from a Python file."""
+    """从 Python 文件中提取顶层类和同步/异步函数名称。"""
     content = filepath.read_text()
     classes = CLASS_DEF_RE.findall(content)
     functions = FUNC_DEF_RE.findall(content)
@@ -129,11 +129,11 @@ def extract_classes_and_functions(filepath: Path) -> tuple[list[str], list[str]]
 
 
 def _with_reference_title(header_content: str, module_path: str) -> str:
-    """Inject a concise, front-loaded `title:` into reference frontmatter (idempotent).
+    """向参考文档前置元数据中注入简洁且靠前的 `title:`（幂等操作）。
 
-    The H1 keeps the full module path; the `<title>` uses `{module} API Reference` (with the redundant package prefix
-    dropped) to fit the 60-char SEO target once the docs renderer appends its ` | Ultralytics` brand suffix — a few of
-    the deepest module paths still rely on the renderer's truncation backstop. Curated description/keywords are kept.
+    H1 保留完整模块路径；`<title>` 使用 `{module} API Reference`（去掉多余的软件包前缀），
+    这样文档渲染器追加 ` | Ultralytics` 品牌后缀后仍能满足 60 字符的 SEO 目标；最深的少数模块路径
+    仍需依赖渲染器的截断保护。精选的 description/keywords 保持不变。
     """
     if re.search(r"(?m)^title\s*:", header_content):  # line-anchored: ignore `title:` inside a description
         return header_content
@@ -142,10 +142,10 @@ def _with_reference_title(header_content: str, module_path: str) -> str:
 
 
 def _existing_frontmatter(md_filepath: Path) -> str:
-    """Return a page's leading YAML frontmatter block, or "" when it has none.
+    """返回页面开头的 YAML 前置元数据块；没有时返回空字符串。
 
-    Anchored to the top of the file: splitting on every `---` also matches Markdown table separators, which folds page
-    content into the header when the generator runs over its own output instead of a freshly cloned stub.
+    匹配位置固定在文件开头：按每个 `---` 分割也会匹配 Markdown 表格分隔线，
+    当生成器处理自身输出而不是全新克隆的存根时，会把页面内容错误地并入头部。
     """
     if not md_filepath.exists():
         return ""
@@ -154,7 +154,7 @@ def _existing_frontmatter(md_filepath: Path) -> str:
 
 
 def create_placeholder_markdown(py_filepath: Path, module_path: str, classes: list[str], functions: list[str]) -> Path:
-    """Create a minimal Markdown reference stub."""
+    """创建最小 Markdown 参考存根。"""
     md_filepath = REFERENCE_DIR / py_filepath.relative_to(PACKAGE_DIR).with_suffix(".md")
 
     header_content = _existing_frontmatter(md_filepath)
@@ -187,7 +187,7 @@ def create_placeholder_markdown(py_filepath: Path, module_path: str, classes: li
 
 
 def _get_source(src: str, node: ast.AST) -> str:
-    """Return the source segment for an AST node with safe fallbacks."""
+    """返回 AST 节点的源代码片段，并提供安全的回退方案。"""
     segment = ast.get_source_segment(src, node)
     if segment:
         return segment
@@ -198,7 +198,7 @@ def _get_source(src: str, node: ast.AST) -> str:
 
 
 def _format_annotation(annotation: ast.AST | None, src: str) -> str | None:
-    """Format a type annotation into a compact string."""
+    """将类型注解格式化为紧凑字符串。"""
     if annotation is None:
         return None
     text = _get_source(src, annotation).strip()
@@ -206,7 +206,7 @@ def _format_annotation(annotation: ast.AST | None, src: str) -> str | None:
 
 
 def _format_default(default: ast.AST | None, src: str) -> str | None:
-    """Format a default value expression for display."""
+    """格式化默认值表达式以供显示。"""
     if default is None:
         return None
     text = _get_source(src, default).strip()
@@ -214,7 +214,7 @@ def _format_default(default: ast.AST | None, src: str) -> str | None:
 
 
 def _format_parameter(arg: ast.arg, default: ast.AST | None, src: str) -> str:
-    """Render a single parameter with annotation and default value."""
+    """渲染带有注解和默认值的单个参数。"""
     annotation = _format_annotation(arg.annotation, src)
     rendered = arg.arg
     if annotation:
@@ -226,11 +226,11 @@ def _format_parameter(arg: ast.arg, default: ast.AST | None, src: str) -> str:
 
 
 def collect_signature_parameters(args: ast.arguments, src: str, *, skip_self: bool = True) -> list[ParameterDoc]:
-    """Collect parameters from an ast.arguments object with types and defaults."""
+    """从 ast.arguments 对象中收集带类型和默认值的参数。"""
     params: list[ParameterDoc] = []
 
     def add_param(arg: ast.arg, default_value: ast.AST | None = None):
-        """Append a parameter entry, optionally skipping self/cls."""
+        """追加参数项，可选择跳过 self/cls。"""
         name = arg.arg
         if skip_self and name in {"self", "cls"}:
             return
@@ -275,12 +275,12 @@ def collect_signature_parameters(args: ast.arguments, src: str, *, skip_self: bo
 def format_signature(
     node: ast.AST, src: str, *, is_class: bool = False, is_async: bool = False, display_name: str | None = None
 ) -> str:
-    """Build a readable signature string for classes, functions, and methods."""
+    """为类、函数和方法构建可读的签名字符串。"""
     if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
         return ""
 
     if isinstance(node, ast.ClassDef):
-        # parse_class passes the ClassDef only when no __init__ exists anywhere in its in-module chain, so `Name()`.
+        # 只有模块内继承链的任何位置都不存在 __init__ 时，parse_class 才会传入 ClassDef，因此使用 `Name()`。
         args = ast.arguments(
             posonlyargs=[], args=[], vararg=None, kwonlyargs=[], kw_defaults=[], kwarg=None, defaults=[]
         )
@@ -299,8 +299,8 @@ def format_signature(
     pairs = [
         (arg, defaults[idx - default_offset] if idx >= default_offset else None) for idx, arg in enumerate(combined)
     ]
-    # A constructor is called as Class(...), so drop __init__'s leading bound parameter — and only that one,
-    # since `cls` is a real argument elsewhere (e.g. BOTrack(xywh, score, cls, feat=None)).
+    # 构造函数以 Class(...) 的形式调用，因此删除 __init__ 开头绑定的参数，而且只能删除这一个，
+    # 因为其他位置的 `cls` 是真实参数（例如 BOTrack(xywh, score, cls, feat=None)）。
     if is_class and pairs and pairs[0][0].arg in {"self", "cls"}:
         pairs, posonly = pairs[1:], posonly[1:]
     for idx, (arg, default) in enumerate(pairs):
@@ -339,7 +339,7 @@ def format_signature(
 
     if len(signature) <= SIGNATURE_LINE_LENGTH or not params:
         return signature
-    if is_class:  # the raw source of a long constructor is `def __init__(self, ...)`, not the call form
+    if is_class:  # 长构造函数的原始源码是 `def __init__(self, ...)`，而不是调用形式
         return "{}(\n    {},\n)".format(name, ",\n    ".join(params))
 
     raw_signature = _get_definition_signature(node, src)
@@ -347,7 +347,7 @@ def format_signature(
 
 
 def _split_section_entries(lines: list[str]) -> list[list[str]]:
-    """Split a docstring section into entries based on indentation."""
+    """根据缩进将文档字符串章节拆分为多个条目。"""
     entries: list[list[str]] = []
     current: list[str] = []
     base_indent: int | None = None
@@ -371,7 +371,7 @@ def _split_section_entries(lines: list[str]) -> list[list[str]]:
 
 
 def _parse_named_entries(lines: list[str]) -> list[ParameterDoc]:
-    """Parse Args/Attributes/Raises style sections."""
+    """解析 Args/Attributes/Raises 风格的章节。"""
     entries = []
     for block in _split_section_entries(lines):
         text = textwrap.dedent("\n".join(block)).strip()
@@ -381,7 +381,7 @@ def _parse_named_entries(lines: list[str]) -> list[ParameterDoc]:
         match = SECTION_ENTRY_RE.match(first_line)
         if match:
             name, type_hint, desc = match.groups()
-            # Dedent continuations so _normalize_text reflows a wrapped sentence; lists and code keep their breaks.
+            # 减少续行缩进，使 _normalize_text 能重新排列换行句子；列表和代码保留原有换行。
             description = "\n".join([" ".join(desc.split()), textwrap.dedent("\n".join(rest))]).strip()
             entries.append(ParameterDoc(name=name, type=type_hint, description=_normalize_text(description)))
         else:
@@ -390,7 +390,7 @@ def _parse_named_entries(lines: list[str]) -> list[ParameterDoc]:
 
 
 def _parse_returns(lines: list[str]) -> list[ReturnDoc]:
-    """Parse Returns/Yields sections."""
+    """解析 Returns/Yields 章节。"""
     entries = []
     for block in _split_section_entries(lines):
         text = textwrap.dedent("\n".join(block)).strip()
@@ -403,7 +403,7 @@ def _parse_returns(lines: list[str]) -> list[ReturnDoc]:
             cleaned_type = type_hint.strip()
             if cleaned_type.startswith("(") and cleaned_type.endswith(")"):
                 cleaned_type = cleaned_type[1:-1].strip()
-            # Continuation lines carry the rest of the sentence; dedent them so _normalize_text reflows the paragraph.
+            # 续行包含句子的其余部分；减少其缩进，使 _normalize_text 能重新排列段落。
             description = "\n".join([desc.strip(), textwrap.dedent("\n".join(rest))]).strip()
             entries.append(ReturnDoc(type=cleaned_type, description=_normalize_text(description)))
         else:
@@ -436,17 +436,17 @@ SECTION_ALIASES = {
 
 
 def _normalize_text(text: str) -> str:
-    """Normalize text while preserving Markdown structures like tables, admonitions, and code blocks."""
+    """规范化文本，同时保留表格、提示框和代码块等 Markdown 结构。"""
     if not text:
         return ""
-    # Check if text contains Markdown structures that need line preservation. The table check is line-anchored:
-    # a bare pipe is usually a union type in prose ("Array[M, 4] | Array[M, 5]"), not a table.
+    # 检查文本是否包含需要保留换行的 Markdown 结构。表格检查限定在行首：
+    # 纯粹的竖线通常是正文中的联合类型（"Array[M, 4] | Array[M, 5]"），而不是表格。
     if re.search(r"(?m)^\s*\|", text) or any(
         marker in text for marker in ("!!!", "```", "\n#", "\n- ", "\n* ", "\n1. ", "\n    ")
     ):
-        # Preserve Markdown formatting - just strip trailing whitespace from lines
+        # 保留 Markdown 格式，仅删除各行末尾的空白
         return "\n".join(line.rstrip() for line in text.splitlines()).strip()
-    # Simple text - collapse single newlines within paragraphs
+    # 简单文本：合并段落中的单个换行
     paragraphs: list[str] = []
     current: list[str] = []
     for line in text.splitlines():
@@ -463,7 +463,7 @@ def _normalize_text(text: str) -> str:
 
 
 def parse_google_docstring(docstring: str | None) -> ParsedDocstring:
-    """Parse a Google-style docstring into structured data."""
+    """将 Google 风格文档字符串解析为结构化数据。"""
     if not docstring:
         return ParsedDocstring()
 
@@ -484,7 +484,7 @@ def parse_google_docstring(docstring: str | None) -> ParsedDocstring:
         if key and stripped.endswith(":"):
             current = key
             continue
-        if current != "methods":  # ignore "Methods:" sections; methods are rendered from AST
+        if current != "methods":  # 忽略 "Methods:" 章节；方法会从 AST 渲染
             sections[current].append(line)
 
     description = "\n".join(sections.pop("description", [])).strip("\n")
@@ -505,9 +505,9 @@ def parse_google_docstring(docstring: str | None) -> ParsedDocstring:
 
 
 def merge_docstrings(base: ParsedDocstring, extra: ParsedDocstring, ignore_summary: bool = True) -> ParsedDocstring:
-    """Merge init docstring content into a class docstring."""
+    """将 init 文档字符串内容合并到类文档字符串中。"""
 
-    # Keep existing class docs; append init docs only when they introduce new entries (class takes priority).
+    # 保留现有类文档；只有在 init 文档引入新条目时才追加（类文档优先）。
     def _merge_unique(base_items, extra_items, key):
         seen = {key(item) for item in base_items}
         base_items.extend(item for item in extra_items if key(item) not in seen)
@@ -529,7 +529,7 @@ def merge_docstrings(base: ParsedDocstring, extra: ParsedDocstring, ignore_summa
 
 
 def _should_document(name: str, *, allow_private: bool = False) -> bool:
-    """Decide whether to include a symbol based on its name."""
+    """根据符号名称决定是否包含该符号。"""
     if name in INCLUDE_SPECIAL_METHODS:
         return True
     if name.startswith("_"):
@@ -538,11 +538,11 @@ def _should_document(name: str, *, allow_private: bool = False) -> bool:
 
 
 def _collect_source_block(src: str, node: ast.AST, end_line: int | None = None) -> str:
-    """Return a dedented source snippet for the given node up to an optional end line."""
+    """返回给定节点的去缩进源代码片段，可选择指定结束行。"""
     if not hasattr(node, "lineno") or not hasattr(node, "end_lineno"):
         return ""
     lines = src.splitlines()
-    # Include decorators by starting from the first decorator line if present
+    # 如果存在装饰器，则从第一个装饰器行开始包含
     decorator_lines = [getattr(d, "lineno", node.lineno) for d in getattr(node, "decorator_list", [])]
     start_line = min([*decorator_lines, node.lineno]) if decorator_lines else node.lineno
     start = max(start_line - 1, 0)
@@ -552,7 +552,7 @@ def _collect_source_block(src: str, node: ast.AST, end_line: int | None = None) 
 
 
 def _get_definition_signature(node: ast.AST, src: str) -> str:
-    """Return the original multi-line definition signature from source if available."""
+    """如果源代码中存在，则返回原始的多行定义签名。"""
     if not hasattr(node, "lineno"):
         return ""
     lines = src.splitlines()[node.lineno - 1 :]
@@ -576,7 +576,7 @@ def parse_function(
     parent: str | None = None,
     allow_private: bool = False,
 ) -> DocItem | None:
-    """Parse a function or method node into a DocItem."""
+    """将函数或方法节点解析为 DocItem。"""
     raw_docstring = ast.get_docstring(node)
     if not _should_document(node.name, allow_private=allow_private) and not raw_docstring:
         return None
@@ -608,18 +608,18 @@ def parse_function(
 
 
 def _class_init(node: ast.ClassDef) -> ast.FunctionDef | ast.AsyncFunctionDef | None:
-    """Return the class's own __init__, if it declares one."""
+    """如果类声明了自己的 __init__，则返回它。"""
     return next(
         (n for n in node.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)) and n.name == "__init__"), None
     )
 
 
 def _mro(node: ast.ClassDef, class_nodes: dict[str, ast.ClassDef], stack: tuple[str, ...] = ()) -> list[ast.ClassDef]:
-    """Return the C3 linearization of a class over the base classes defined in the same module.
+    """返回类相对于同一模块中定义的基类的 C3 线性化结果。
 
-    Bases from other modules are unresolvable here and drop out, which in rare multiple-inheritance shapes reorders the
-    in-module classes that remain — an absent base can no longer delay a sibling from becoming the next head. Resolving
-    that needs the imports, not the AST. A cyclic or inconsistent hierarchy stops early rather than looping.
+    这里无法解析其他模块中的基类，因此会将其移除；在少数多重继承结构中，这会重新排列剩余的模块内类，
+    因为缺失的基类不再阻止兄弟类成为下一个候选头。解析这些基类需要导入信息，而不是 AST。
+    遇到循环或不一致的继承层次时会提前停止，而不是陷入循环。
     """
     bases = [
         class_nodes[n] for n in (getattr(b, "id", None) for b in node.bases) if n in class_nodes and n not in stack
@@ -641,19 +641,19 @@ def _mro(node: ast.ClassDef, class_nodes: dict[str, ast.ClassDef], stack: tuple[
 def _inherited_init(
     node: ast.ClassDef, class_nodes: dict[str, ast.ClassDef]
 ) -> ast.FunctionDef | ast.AsyncFunctionDef | None:
-    """Return the __init__ Python binds for a class that declares none, following its method resolution order."""
+    """对于未声明 __init__ 的类，按照方法解析顺序返回 Python 绑定的 __init__。"""
     return next((init for base in _mro(node, class_nodes)[1:] if (init := _class_init(base))), None)
 
 
 def parse_class(node: ast.ClassDef, module_path: str, src: str, class_nodes: dict[str, ast.ClassDef]) -> DocItem:
-    """Parse a class node, merging __init__ docs and collecting methods."""
+    """解析类节点，合并 __init__ 文档并收集方法。"""
     class_doc = parse_google_docstring(ast.get_docstring(node))
 
     own_init = _class_init(node)
-    # A subclass that declares no __init__ is still constructed with its base's signature, so document that one.
+    # 未声明 __init__ 的子类仍使用基类签名构造，因此记录基类签名。
     init_node = own_init or _inherited_init(node, class_nodes)
-    # The class definition runs to the end of its own __init__, or to its first method when it declares none;
-    # 0 leaves _collect_source_block on its own end_lineno fallback for classes that define no methods at all.
+    # 类定义延伸到自身 __init__ 的末尾；如果没有 __init__，则延伸到第一个方法；
+    # 对于完全没有方法的类，0 会让 _collect_source_block 使用自身的 end_lineno 回退值。
     first_method = next(
         (n for n in node.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)) and n is not own_init), None
     )
@@ -662,7 +662,7 @@ def parse_class(node: ast.ClassDef, module_path: str, src: str, class_nodes: dic
     if init_node:
         init_doc = parse_google_docstring(ast.get_docstring(init_node))
         if init_node is not own_init:
-            # An inherited __init__ documents the signature we render, but its prose describes the base class.
+            # 继承的 __init__ 用于记录我们渲染的签名，但其中的说明描述的是基类。
             init_doc = ParsedDocstring(params=init_doc.params)
         class_doc = merge_docstrings(class_doc, init_doc, ignore_summary=True)
         signature_params = collect_signature_parameters(init_node.args, src, skip_self=True)
@@ -695,7 +695,7 @@ def parse_class(node: ast.ClassDef, module_path: str, src: str, class_nodes: dic
 
 
 def parse_module(py_filepath: Path) -> DocumentedModule | None:
-    """Parse a Python module into structured documentation objects."""
+    """将 Python 模块解析为结构化文档对象。"""
     try:
         src = py_filepath.read_text(encoding="utf-8")
     except Exception:
@@ -724,7 +724,7 @@ def parse_module(py_filepath: Path) -> DocumentedModule | None:
 
 
 def _render_section(title: str, entries: Iterable[str], level: int) -> str:
-    """Render a section with a given heading level."""
+    """使用给定的标题级别渲染章节。"""
     entries = list(entries)
     if not entries:
         return ""
@@ -734,12 +734,12 @@ def _render_section(title: str, entries: Iterable[str], level: int) -> str:
 
 
 def _render_table(headers: list[str], rows: list[list[str]], level: int, title: str | None = None) -> str:
-    """Render a Markdown table with an optional heading."""
+    """渲染带可选标题的 Markdown 表格。"""
     if not rows:
         return ""
 
     def _clean_cell(value: str | None) -> str:
-        """Normalize table cell values for Markdown output, escaping pipes so unions stay in one column."""
+        """规范化 Markdown 输出的表格单元格值，并转义竖线以使联合类型保持在同一列。"""
         if value is None:
             return ""
         return str(value).replace("\n", "<br>").replace("|", r"\|").strip()
@@ -753,12 +753,12 @@ def _render_table(headers: list[str], rows: list[list[str]], level: int, title: 
 
 
 def _code_fence(source: str, lang: str = "python") -> str:
-    """Return a fenced code block with optional language for highlighting."""
+    """返回带围栏的代码块，可选择用于高亮的语言。"""
     return f"```{lang}\n{source}\n```"
 
 
 def _merge_params(doc_params: list[ParameterDoc], signature_params: list[ParameterDoc]) -> list[ParameterDoc]:
-    """Merge docstring params with signature params to include defaults/types."""
+    """合并文档字符串参数和签名参数，以包含默认值和类型。"""
     sig_map = {p.name.lstrip("*"): p for p in signature_params}
     merged: list[ParameterDoc] = []
 
@@ -789,7 +789,7 @@ _missing_type_warnings: list[str] = []
 
 
 def contribution_admonition(pretty: str, url: str, *, kind: str = "note", title: str | None = None) -> str:
-    """Return a standardized contribution call-to-action admonition."""
+    """返回标准化的贡献行动提示框。"""
     label = f' "{title}"' if title else ""
     body = (
         f"This page is sourced from [{pretty}]({url}). Have an improvement or example to add? "
@@ -799,7 +799,7 @@ def contribution_admonition(pretty: str, url: str, *, kind: str = "note", title:
 
 
 def _relative_to_workspace(path: Path) -> Path:
-    """Return path relative to workspace root when possible."""
+    """如果可行，返回相对于工作区根目录的路径。"""
     try:
         return path.relative_to(PACKAGE_DIR.parent)
     except ValueError:
@@ -807,7 +807,7 @@ def _relative_to_workspace(path: Path) -> Path:
 
 
 def render_source_panel(item: DocItem, module_url: str, module_path: str) -> str:
-    """Render a collapsible source panel with a GitHub link."""
+    """渲染带 GitHub 链接的可折叠源代码面板。"""
     if not item.source:
         return ""
     source_url = f"{module_url}#L{item.lineno}-L{item.end_lineno}"
@@ -828,7 +828,7 @@ def render_docstring(
     section_order: list[str] | None = None,
     extra_sections: dict[str, str] | None = None,
 ) -> str:
-    """Convert a ParsedDocstring into Markdown with tables similar to mkdocstrings."""
+    """将 ParsedDocstring 转换为 Markdown，并生成类似 mkdocstrings 的表格。"""
     parts: list[str] = []
     if doc.summary:
         parts.append(doc.summary)
@@ -840,7 +840,7 @@ def render_docstring(
 
     sections: dict[str, str] = {}
 
-    # A table whose Type and Description cells are all empty repeats the signature above it and nothing else.
+    # 如果表格的 Type 和 Description 单元格全部为空，则它只重复上方的签名，不包含其他内容。
     if merged_params and any(p.type or p.description.strip() for p in merged_params):
         rows = []
         for p in merged_params:
@@ -864,7 +864,7 @@ def render_docstring(
         sections["returns"] = f"**Returns**\n\n{table}"
 
     if doc.examples:
-        # Google-style Examples interleave captions with >>> runs; fence only the runs so the captions stay prose.
+        # Google 风格的 Examples 会将说明文字与 >>> 代码交错排列；仅为代码段添加围栏，以保留说明文字。
         blocks: list[str] = []
         for paragraph in (p.strip() for example in doc.examples for p in re.split(r"\n\s*\n", example.strip())):
             lines = paragraph.splitlines()
@@ -911,7 +911,7 @@ def render_docstring(
 
     if extra_sections:
         sections.update({k: v for k, v in extra_sections.items() if v})
-    # Ensure section order contains unique entries to avoid duplicate renders (e.g., classes injecting "examples")
+    # 确保章节顺序中的条目唯一，避免重复渲染（例如类注入 "examples" 时）。
     order = list(dict.fromkeys(section_order or DEFAULT_SECTION_ORDER))
 
     ordered_sections: list[str] = []
@@ -931,17 +931,17 @@ def render_docstring(
 
 
 def item_anchor(item: DocItem) -> str:
-    """Create a stable anchor for a documented item."""
+    """为文档项创建稳定的锚点。"""
     return item.qualname
 
 
 def display_qualname(item: DocItem) -> str:
-    """Return a cleaned, fully-qualified name for display (strip __init__ noise)."""
+    """返回用于显示的清理后完全限定名称（去除 __init__ 噪声）。"""
     return item.qualname.replace(".__init__.", ".")
 
 
 def render_summary_tabs(module: DocumentedModule) -> str:
-    """Render a tabbed summary of classes, methods, and functions for quick navigation."""
+    """渲染类、方法和函数的选项卡摘要，便于快速导航。"""
     tab_entries: list[tuple[str, list[str]]] = []
 
     if module.classes:
@@ -983,15 +983,15 @@ def render_summary_tabs(module: DocumentedModule) -> str:
         label_badge = f'<span class="doc-kind doc-kind-{badge_class}">{label}</span>'
         lines.append(f'    === "{label_badge}"\n')
         lines.append("\n".join(f"        {line}" for line in bullets))
-        lines.append("")  # Blank line after each tab block
+        lines.append("")  # 每个选项卡块后添加空行
     return "\n".join(lines).rstrip() + "\n\n"
 
 
 def render_item(item: DocItem, module_url: str, module_path: str, level: int = 2) -> str:
-    """Render a class, function, or method to Markdown."""
+    """将类、函数或方法渲染为 Markdown。"""
     anchor = item_anchor(item)
     title_prefix = item.kind.capitalize()
-    anchor_id = anchor.replace("_", r"\_")  # escape underscores so attr_list keeps them in the id
+    anchor_id = anchor.replace("_", r"\_")  # 转义下划线，使 attr_list 将其保留在 ID 中
     heading = f"{'#' * level} {title_prefix} `{display_qualname(item)}` {{#{anchor_id}}}"
     signature_block = f"```python\n{item.signature}\n```\n"
 
@@ -1001,7 +1001,7 @@ def render_item(item: DocItem, module_url: str, module_path: str, level: int = 2
         bases = ", ".join(f"`{b}`" for b in item.bases)
         parts.append(f"**Bases:** {bases}\n")
 
-    # Check for parameters missing type annotations in both signature and docstring
+    # 检查签名和文档字符串中缺少类型注解的参数
     if item.signature_params and item.doc.params:
         merged = _merge_params(item.doc.params, item.signature_params)
         missing = [p.name for p in merged if not p.type]
@@ -1059,7 +1059,7 @@ def render_item(item: DocItem, module_url: str, module_path: str, level: int = 2
 
 
 def render_module_markdown(module: DocumentedModule) -> str:
-    """Render the full module reference content."""
+    """渲染完整的模块参考内容。"""
     module_path = module.module_path.replace(".", "/")
     module_url = f"https://github.com/{GITHUB_REPO}/blob/main/{module_path}.py"
     content: list[str] = ["<br>\n"]
@@ -1083,7 +1083,7 @@ def render_module_markdown(module: DocumentedModule) -> str:
 
 
 def create_markdown(module: DocumentedModule) -> Path:
-    """Create a Markdown file containing the API reference for the given Python module."""
+    """创建包含给定 Python 模块 API 参考的 Markdown 文件。"""
     md_filepath = REFERENCE_DIR / module.path.relative_to(PACKAGE_DIR).with_suffix(".md")
     exists = md_filepath.exists()
 
@@ -1113,29 +1113,29 @@ def create_markdown(module: DocumentedModule) -> Path:
 
 
 def nested_dict():
-    """Create and return a nested defaultdict."""
+    """创建并返回嵌套的 defaultdict。"""
     return defaultdict(nested_dict)
 
 
 def sort_nested_dict(d: dict) -> dict:
-    """Sort a nested dictionary recursively."""
+    """递归排序嵌套字典。"""
     return {k: sort_nested_dict(v) if isinstance(v, dict) else v for k, v in sorted(d.items())}
 
 
 def create_nav_menu_yaml(nav_items: list[str]) -> str:
-    """Create and return a YAML string for the navigation menu."""
+    """创建并返回导航菜单的 YAML 字符串。"""
     nav_tree = nested_dict()
 
     for item_str in nav_items:
         item = Path(item_str)
         parts = item.parts
         current_level = nav_tree["reference"]
-        for part in parts[2:-1]:  # Skip docs/reference and filename
+        for part in parts[2:-1]:  # 跳过 docs/reference 和文件名
             current_level = current_level[part]
         current_level[parts[-1].replace(".md", "")] = item
 
     def _dict_to_yaml(d, level=0):
-        """Convert a nested dictionary to a YAML-formatted string with indentation."""
+        """将嵌套字典转换为带缩进的 YAML 格式字符串。"""
         yaml_str = ""
         indent = "  " * level
         for k, v in sorted(d.items()):
@@ -1151,54 +1151,53 @@ def create_nav_menu_yaml(nav_items: list[str]) -> str:
 
 
 def extract_document_paths(yaml_section: str) -> list[str]:
-    """Extract document paths from a YAML section, ignoring formatting and structure."""
+    """从 YAML 章节中提取文档路径，忽略格式和结构。"""
     paths = []
-    # Match `key: path` entries
+    # 匹配 `key: path` 条目
     path_matches = re.findall(r":\s*([^\s][^:\n]*?)(?:\n|$)", yaml_section)
     for path in path_matches:
         path = path.strip()
         if path and not path.startswith("-") and not path.endswith(":"):
             paths.append(path)
-    # Also match bare `- path.md` entries (e.g. `- reference/index.md`)
+    # 同时匹配不带键名的 `- path.md` 条目（例如 `- reference/index.md`）
     paths.extend(re.findall(r"^\s*-\s+([^\s:][^:\n]*\.md)\s*$", yaml_section, re.MULTILINE))
     return sorted(paths)
 
 
 def update_mkdocs_file(reference_yaml: str) -> None:
-    """Update the mkdocs.yaml file with the new reference section only if changes in document paths are detected."""
+    """仅在检测到文档路径变化时，使用新的参考章节更新 mkdocs.yaml 文件。"""
     mkdocs_content = MKDOCS_YAML.read_text()
 
-    # Find the top-level Reference section
+    # 查找顶层 Reference 章节
     ref_pattern = r"(\n  - Reference:[\s\S]*?)(?=\n  - \w|$)"
     ref_match = re.search(ref_pattern, mkdocs_content)
 
-    # Build new section with proper indentation. The hand-written `reference/index.md`
-    # overview is pinned to the top so the Reference section has a landing page (matching
-    # the convention used by Modes, Tasks, Datasets, Help, etc.). It must share the same
-    # 4-space inner indent as the auto-generated sibling entries below so the resulting
-    # YAML is parseable (otherwise siblings nest under it as children of a string scalar).
+    # 使用正确缩进构建新章节。手写的 `reference/index.md` 概览固定在顶部，
+    # 使 Reference 章节拥有入口页（与 Modes、Tasks、Datasets、Help 等章节的约定一致）。
+    # 它必须与下方自动生成的同级条目使用相同的 4 空格内部缩进，
+    # 这样生成的 YAML 才可解析（否则同级条目会被嵌套为字符串标量的子项）。
     inner_lines = [line for line in reference_yaml.splitlines() if line.strip() != "- reference:"]
     inner_lines.insert(0, "    - reference/index.md")
     new_section_lines = ["\n  - Reference:", *(f"    {line}" for line in inner_lines)]
     new_ref_section = "\n".join(new_section_lines) + "\n"
 
     if ref_match:
-        # We found an existing Reference section
+        # 已找到现有的 Reference 章节
         ref_section = ref_match.group(1)
         LOGGER.info(f"Found existing top-level Reference section ({len(ref_section)} chars)")
 
-        # Compare only document paths
+        # 仅比较文档路径
         existing_paths = extract_document_paths(ref_section)
         new_paths = extract_document_paths(new_ref_section)
 
-        # Check if the document paths are the same (ignoring structure or formatting differences)
+        # 检查文档路径是否相同（忽略结构或格式差异）
         if len(existing_paths) == len(new_paths) and set(existing_paths) == set(new_paths):
             LOGGER.info(f"No changes detected in document paths ({len(existing_paths)} items). Skipping update.")
             return
 
         LOGGER.info(f"Changes detected: {len(new_paths)} document paths vs {len(existing_paths)} existing")
 
-        # Update content
+        # 更新内容
         new_content = mkdocs_content.replace(ref_section, new_ref_section)
         MKDOCS_YAML.write_text(new_content)
         try:
@@ -1215,9 +1214,9 @@ def update_mkdocs_file(reference_yaml: str) -> None:
             LOGGER.warning("prettier not found (install Node.js or run 'npm i -g prettier'), skipping YAML formatting")
         LOGGER.info(f"Updated Reference section in {MKDOCS_YAML}")
     elif help_match := re.search(r"(\n  - Help:)", mkdocs_content):
-        # No existing Reference section, we need to add it
+        # 不存在 Reference 章节，需要添加
         help_section = help_match.group(1)
-        # Insert before Help section
+        # 插入到 Help 章节之前
         new_content = mkdocs_content.replace(help_section, f"{new_ref_section}{help_section}")
         MKDOCS_YAML.write_text(new_content)
         LOGGER.info(f"Added new Reference section before Help in {MKDOCS_YAML}")
@@ -1226,7 +1225,7 @@ def update_mkdocs_file(reference_yaml: str) -> None:
 
 
 def _finalize_reference(nav_items: list[str], update_nav: bool, created: int, created_label: str) -> list[str]:
-    """Optionally sync navigation and print creation summary."""
+    """可选地同步导航并打印创建摘要。"""
     if update_nav:
         update_mkdocs_file(create_nav_menu_yaml(nav_items))
     if created:
@@ -1235,12 +1234,12 @@ def _finalize_reference(nav_items: list[str], update_nav: bool, created: int, cr
 
 
 def build_reference(update_nav: bool = True) -> list[str]:
-    """Create placeholder reference files for the legacy stub flow."""
+    """为旧版存根流程创建参考占位文件。"""
     return build_reference_placeholders(update_nav=update_nav)
 
 
 def build_reference_placeholders(update_nav: bool = True) -> list[str]:
-    """Create minimal placeholder reference files and optionally update nav."""
+    """创建最小参考占位文件，并可选地更新导航。"""
     nav_items: list[str] = []
     created = 0
     orphans = set(REFERENCE_DIR.rglob("*.md"))
@@ -1270,7 +1269,7 @@ def build_reference_placeholders(update_nav: bool = True) -> list[str]:
 
 
 def build_reference_docs(update_nav: bool = False) -> list[str]:
-    """Render full docstring-based reference content."""
+    """渲染完整的基于文档字符串的参考内容。"""
     _missing_type_warnings.clear()
     nav_items: list[str] = []
     created = 0
@@ -1305,7 +1304,7 @@ def build_reference_docs(update_nav: bool = False) -> list[str]:
 def build_reference_for(
     package_dir: Path, reference_dir: Path, github_repo: str, update_nav: bool = False
 ) -> list[str]:
-    """Temporarily switch package context to build reference docs for another project."""
+    """临时切换软件包上下文，为另一个项目构建参考文档。"""
     global PACKAGE_DIR, REFERENCE_DIR, GITHUB_REPO
     prev = (PACKAGE_DIR, REFERENCE_DIR, GITHUB_REPO)
     try:
@@ -1316,7 +1315,7 @@ def build_reference_for(
 
 
 def main():
-    """CLI entrypoint."""
+    """CLI 入口。"""
     build_reference(update_nav=True)
 
 

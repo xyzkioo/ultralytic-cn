@@ -35,7 +35,7 @@ from ultralytics.utils import (
     vscode_msg,
 )
 
-# Define valid solutions
+# 定义有效的解决方案
 SOLUTION_MAP = {
     "count": "ObjectCounter",
     "crop": "ObjectCropper",
@@ -55,7 +55,7 @@ SOLUTION_MAP = {
     "help": None,
 }
 
-# Define valid tasks and modes, ordered as they appear across the docs and Ultralytics Platform
+# 定义有效的任务和模式，顺序与文档及 Ultralytics Platform 中的出现顺序一致
 MODES = ("train", "val", "predict", "export", "track", "benchmark")
 TASKS = ("detect", "segment", "semantic", "depth", "classify", "pose", "obb")
 TASK2DATA = {
@@ -95,73 +95,73 @@ TASK2METRIC = {
     "obb": "metrics/mAP50-95(B)",
 }
 
-ARGV = sys.argv or ["", ""]  # sometimes sys.argv = []
+ARGV = sys.argv or ["", ""]  # sys.argv 有时为空列表
 _YOLO_CLI_COMMAND = [sys.executable, "-m", "ultralytics.cfg.__init__"]
 SOLUTIONS_HELP_MSG = f"""
-    Arguments received: {["yolo", *ARGV[1:]]!s}. Ultralytics 'yolo solutions' usage overview:
+    收到的参数：{["yolo", *ARGV[1:]]!s}。以下是 Ultralytics 'yolo solutions' 的用法概览：
 
         yolo solutions SOLUTION ARGS
 
-        Where SOLUTION (optional) is one of {list(SOLUTION_MAP.keys())[:-1]}
-              ARGS (optional) are any number of custom 'arg=value' pairs like 'show_in=True' that override defaults
-                  at https://docs.ultralytics.com/usage/cfg
+        其中 SOLUTION（可选）可以是 {list(SOLUTION_MAP.keys())[:-1]} 中的任意一个值
+              ARGS（可选）是任意数量的自定义 'arg=value' 参数，例如 'show_in=True'，用于覆盖默认值
+                  详见 https://docs.ultralytics.com/usage/cfg
 
-    1. Call object counting solution
+    1. 调用目标计数解决方案
         yolo solutions count source="path/to/video.mp4" region="[(20, 400), (1080, 400), (1080, 360), (20, 360)]"
 
-    2. Call heatmap solution
+    2. 调用热力图解决方案
         yolo solutions heatmap colormap=cv2.COLORMAP_PARULA model=yolo26n.pt
 
-    3. Call queue management solution
+    3. 调用队列管理解决方案
         yolo solutions queue region="[(20, 400), (1080, 400), (1080, 360), (20, 360)]" model=yolo26n.pt
 
-    4. Call workout monitoring solution for push-ups
+    4. 调用俯卧撑训练监测解决方案
         yolo solutions workout model=yolo26n-pose.pt kpts=[6, 8, 10]
 
-    5. Generate analytical graphs
+    5. 生成分析图表
         yolo solutions analytics analytics_type="pie"
 
-    6. Track objects within specific zones
+    6. 跟踪指定区域内的目标
         yolo solutions trackzone source="path/to/video.mp4" region="[(150, 150), (1130, 150), (1130, 570), (150, 570)]"
 
-    7. Count objects inside specific regions
+    7. 统计指定区域内的目标数量
         yolo solutions region source="path/to/video.mp4" region="[(20, 400), (1080, 400), (1080, 360), (20, 360)]"
 
-    8. Run security alarm monitoring (email alerts require Python API)
+    8. 运行安全告警监测（邮件提醒需要使用 Python API）
         yolo solutions security source="path/to/video.mp4"
 
-    9. Monitor parking occupancy (create JSON annotations first via Python ParkingPtsSelection)
+    9. 监测停车位占用情况（请先通过 Python 的 ParkingPtsSelection 创建 JSON 标注）
         yolo solutions parking source="path/to/video.mp4" json_file="bounding_boxes.json"
 
-    10. Streamlit real-time webcam inference GUI
+    10. 使用 Streamlit 运行实时摄像头推理界面
         yolo streamlit-predict
     """
 CLI_HELP_MSG = f"""
-    Arguments received: {["yolo", *ARGV[1:]]!s}. Ultralytics 'yolo' commands use the following syntax:
+    收到的参数：{["yolo", *ARGV[1:]]!s}。Ultralytics 'yolo' 命令使用以下语法：
 
         yolo TASK MODE ARGS
 
-        Where   TASK (optional) is one of {list(TASKS)}
-                MODE (required) is one of {list(MODES)}
-                ARGS (optional) are any number of custom 'arg=value' pairs like 'imgsz=320' that override defaults.
-                    See all ARGS at https://docs.ultralytics.com/usage/cfg or with 'yolo cfg'
+        其中 TASK（可选）可以是 {list(TASKS)} 中的任意一个值
+                MODE（必需）可以是 {list(MODES)} 中的任意一个值
+                ARGS（可选）是任意数量的自定义 'arg=value' 参数，例如 'imgsz=320'，用于覆盖默认值。
+                    所有 ARGS 详见 https://docs.ultralytics.com/usage/cfg，或运行 'yolo cfg' 查看
 
-    1. Train a detection model for 10 epochs with an initial learning_rate of 0.01
+    1. 使用初始 learning_rate 为 0.01 的设置训练检测模型 10 个周期
         yolo train data=coco8.yaml model=yolo26n.pt epochs=10 lr0=0.01
 
-    2. Predict a YouTube video using a pretrained segmentation model at image size 320:
+    2. 使用预训练分割模型，以图像尺寸 320 对 YouTube 视频进行预测：
         yolo predict model=yolo26n-seg.pt source='https://youtu.be/LNwODJXcvt4' imgsz=320
 
-    3. Validate a pretrained detection model at batch-size 1 and image size 640:
+    3. 使用批量大小 1、图像尺寸 640 验证预训练检测模型：
         yolo val model=yolo26n.pt data=coco8.yaml batch=1 imgsz=640
 
-    4. Export a YOLO26n classification model to ONNX format at image size 224 by 128 (no TASK required)
+    4. 将 YOLO26n 分类模型以图像尺寸 224×128 导出为 ONNX 格式（无需指定 TASK）
         yolo export model=yolo26n-cls.pt format=onnx imgsz=224,128
 
-    5. Ultralytics solutions usage
+    5. Ultralytics 解决方案用法
         yolo solutions count or any of {list(SOLUTION_MAP.keys())[1:-1]} source="path/to/video.mp4"
 
-    6. Run special commands:
+    6. 运行特殊命令：
         yolo help
         yolo checks
         yolo version
@@ -178,10 +178,9 @@ CLI_HELP_MSG = f"""
     GitHub: https://github.com/ultralytics/ultralytics
     """
 
-# Quantization aliases: maps any accepted `quantize` value to its canonical form. The common case is the integer
-# bit-width 8 (INT8) / 16 (FP16) / 32 (FP32); the verbose w<weights>a<activations> strings are accepted too and
-# collapse to the same ints, except the mixed-precision schemes that have no bit-width shorthand: 'w8a16' (INT8
-# weights + FP16 activations) and 'w8a32' (INT8 weights + FP32 activations, i.e. LiteRT dynamic/weight-only INT8).
+# 量化别名：将所有可接受的 `quantize` 值映射为规范形式。常用形式是整数位宽 8（INT8）、16（FP16）和 32（FP32）；
+# 同时也接受 w<权重>a<激活值> 形式，并将其归并为相同的整数值，但没有对应位宽简写的混合精度方案除外：
+# 'w8a16' 表示 INT8 权重和 FP16 激活值，'w8a32' 表示 INT8 权重和 FP32 激活值（即 LiteRT 动态量化/仅权重量化 INT8）。
 QUANTIZE_ALIASES = {
     "8": 8,
     "16": 16,
@@ -198,9 +197,9 @@ QUANTIZE_ALIASES = {
 QUANTIZE_DOCS_URL = "https://docs.ultralytics.com/modes/export#quantization-options"
 QUANTIZE_VALID_VALUES = "8, 16, 32, 'int8', 'fp16', 'fp32', 'w8a8', 'w16a16', 'w8a16', or 'w8a32'"
 
-# Define keys for arg type checks
+# 定义用于参数类型检查的键
 CFG_FLOAT_KEYS = frozenset(
-    {  # integer or float arguments, i.e. x=2 and x=2.0
+    {  # 整数或浮点数参数，例如 x=2 和 x=2.0
         "warmup_epochs",
         "box",
         "cls",
@@ -220,7 +219,7 @@ CFG_FLOAT_KEYS = frozenset(
     }
 )
 CFG_FRACTION_KEYS = frozenset(
-    {  # fractional floats use [0.0, 1.0], except dataset fraction uses (0.0, 1.0]
+    {  # 分数型浮点参数取值范围为 [0.0, 1.0]，但数据集 fraction 使用 (0.0, 1.0]
         "dropout",
         "lr0",
         "lrf",
@@ -250,7 +249,7 @@ CFG_FRACTION_KEYS = frozenset(
     }
 )
 CFG_INT_KEYS = frozenset(
-    {  # integer-only arguments
+    {  # 仅允许整数的参数
         "epochs",
         "patience",
         "workers",
@@ -264,7 +263,7 @@ CFG_INT_KEYS = frozenset(
         "save_period",
     }
 )
-CFG_INT_MIN = {  # minimum valid values for integer arguments used as divisors, sizes or seeds
+CFG_INT_MIN = {  # 用作除数、尺寸或随机种子的整数参数的最小有效值
     "nbs": 1,
     "max_det": 1,
     "mask_ratio": 1,
@@ -272,7 +271,7 @@ CFG_INT_MIN = {  # minimum valid values for integer arguments used as divisors, 
     "seed": 0,
 }
 CFG_BOOL_KEYS = frozenset(
-    {  # boolean-only arguments
+    {  # 仅允许布尔值的参数
         "save",
         "exist_ok",
         "verbose",
@@ -312,118 +311,114 @@ CFG_STR_KEYS = frozenset({"optimizer", "split", "copy_paste_mode", "auto_augment
 
 
 def cfg2dict(cfg: str | Path | dict | SimpleNamespace) -> dict:
-    """Convert a configuration object to a dictionary.
+    """将配置对象转换为字典。
 
-    Args:
-        cfg (str | Path | dict | SimpleNamespace): Configuration object to be converted. Can be a file path, a string, a
-            dictionary, or a SimpleNamespace object.
+    参数：
+        cfg (str | Path | dict | SimpleNamespace): 要转换的配置对象，可以是文件路径、字符串、字典或 SimpleNamespace 对象。
 
-    Returns:
-        (dict): Configuration object in dictionary format.
+    返回：
+        (dict): 字典格式的配置对象。
 
-    Examples:
-        Convert a YAML file path to a dictionary:
+    示例：
+        将 YAML 文件路径转换为字典：
         >>> config_dict = cfg2dict("config.yaml")
 
-        Convert a SimpleNamespace to a dictionary:
+        将 SimpleNamespace 转换为字典：
         >>> from types import SimpleNamespace
         >>> config_sn = SimpleNamespace(param1="value1", param2="value2")
         >>> config_dict = cfg2dict(config_sn)
 
-        Pass through an already existing dictionary:
+        直接传递已有字典：
         >>> config_dict = cfg2dict({"param1": "value1", "param2": "value2"})
 
-    Notes:
-        - If cfg is a path or string, it's loaded as YAML and converted to a dictionary.
-        - If cfg is a SimpleNamespace object, it's converted to a dictionary using vars().
-        - If cfg is already a dictionary, it's returned unchanged.
+    注意：
+        - 如果 cfg 是路径或字符串，则按 YAML 加载并转换为字典。
+        - 如果 cfg 是 SimpleNamespace 对象，则使用 vars() 将其转换为字典。
+        - 如果 cfg 已经是字典，则原样返回。
     """
     if isinstance(cfg, STR_OR_PATH):
-        cfg = YAML.load(cfg)  # load dict
+        cfg = YAML.load(cfg)  # 加载字典
     elif isinstance(cfg, SimpleNamespace):
-        cfg = vars(cfg)  # convert to dict
+        cfg = vars(cfg)  # 转换为字典
     return cfg
 
 
 def get_cfg(
     cfg: str | Path | dict | SimpleNamespace = DEFAULT_CFG_DICT, overrides: dict | None = None
 ) -> SimpleNamespace:
-    """Load and merge configuration data from a file or dictionary, with optional overrides.
+    """从文件或字典加载并合并配置数据，并应用可选的覆盖项。
 
-    Args:
-        cfg (str | Path | dict | SimpleNamespace): Configuration data source. Can be a file path, dictionary, or
-            SimpleNamespace object.
-        overrides (dict | None): Dictionary containing key-value pairs to override the base configuration.
+    参数：
+        cfg (str | Path | dict | SimpleNamespace): 配置数据源，可以是文件路径、字典或 SimpleNamespace 对象。
+        overrides (dict | None): 用于覆盖基础配置的键值对字典。
 
-    Returns:
-        (SimpleNamespace): Namespace containing the merged configuration arguments.
+    返回：
+        (SimpleNamespace): 包含合并后配置参数的命名空间。
 
-    Examples:
+    示例：
         >>> from ultralytics.cfg import get_cfg
-        >>> config = get_cfg()  # Load default configuration
+        >>> config = get_cfg()  # 加载默认配置
         >>> config_with_overrides = get_cfg("path/to/config.yaml", overrides={"epochs": 50, "batch": 16})
 
-    Notes:
-        - If both `cfg` and `overrides` are provided, the values in `overrides` will take precedence.
-        - Special handling ensures alignment and correctness of the configuration, such as converting numeric
-          `project` and `name` to strings and validating configuration keys and values.
-        - The function performs type and value checks on the configuration data.
+    注意：
+        - 如果同时提供 `cfg` 和 `overrides`，则优先使用 `overrides` 中的值。
+        - 特殊处理可确保配置的一致性和正确性，例如将数字形式的 `project` 和 `name` 转为字符串，并验证配置键和值。
+        - 此函数会检查配置数据的类型和值。
     """
     cfg = cfg2dict(cfg)
 
-    # Merge overrides
+    # 合并覆盖项
     if overrides:
         overrides = cfg2dict(overrides)
         check_dict_alignment(cfg, overrides)
-        cfg = {**cfg, **overrides}  # merge cfg and overrides dicts (prefer overrides)
+        cfg = {**cfg, **overrides}  # 合并 cfg 和 overrides 字典（优先使用 overrides）
 
-    # Special handling for numeric project/name
+    # 对数字形式的 project/name 做特殊处理
     for k in "project", "name":
         if k in cfg and isinstance(cfg[k], FLOAT_OR_INT):
             cfg[k] = str(cfg[k])
-    if cfg.get("name") == "model":  # assign model to 'name' arg
+    if cfg.get("name") == "model":  # 将模型名赋给 'name' 参数
         cfg["name"] = Path(str(cfg.get("model") or "")).stem
         LOGGER.warning(f"'name=model' automatically updated to 'name={cfg['name']}'.")
 
-    # Type and Value checks
+    # 类型和值检查
     check_cfg(cfg)
 
-    # Return instance
+    # 返回实例
     return IterableSimpleNamespace(**cfg)
 
 
 def check_cfg(cfg: dict, hard: bool = True) -> None:
-    """Check configuration argument types and values for the Ultralytics library.
+    """检查 Ultralytics 库配置参数的类型和值。
 
-    This function validates the types and values of configuration arguments, ensuring correctness and converting them if
-    necessary. It checks for specific key types defined in global variables such as `CFG_FLOAT_KEYS`,
-    `CFG_FRACTION_KEYS`, `CFG_INT_KEYS`, and `CFG_BOOL_KEYS`.
+    此函数验证配置参数的类型和值，在必要时进行转换以确保正确性，并检查 `CFG_FLOAT_KEYS`、
+    `CFG_FRACTION_KEYS`、`CFG_INT_KEYS` 和 `CFG_BOOL_KEYS` 等全局变量定义的键类型。
 
-    Args:
-        cfg (dict): Configuration dictionary to validate.
-        hard (bool): If True, raises exceptions for invalid types and values; if False, attempts to convert them.
+    参数：
+        cfg (dict): 要验证的配置字典。
+        hard (bool): 为 True 时对无效类型和值抛出异常；为 False 时尝试进行转换。
 
-    Examples:
+    示例：
         >>> config = {
-        ...     "epochs": 50,  # valid integer
-        ...     "lr0": 0.01,  # valid float
-        ...     "momentum": 0.937,  # valid float
-        ...     "save": "true",  # invalid bool
+        ...     "epochs": 50,  # 有效整数
+        ...     "lr0": 0.01,  # 有效浮点数
+        ...     "momentum": 0.937,  # 有效浮点数
+        ...     "save": "true",  # 无效布尔值
         ... }
         >>> check_cfg(config, hard=False)
         >>> print(config)
         {'epochs': 50, 'lr0': 0.01, 'momentum': 0.937, 'save': True}
 
-    Notes:
-        - The function modifies the input dictionary in-place.
-        - None values are ignored as they may be from optional arguments.
-        - Fraction keys use [0.0, 1.0], except dataset fraction, which uses (0.0, 1.0].
+    注意：
+        - 此函数会原地修改输入字典。
+        - None 值会被忽略，因为它们可能来自可选参数。
+        - fraction 键使用 [0.0, 1.0]，但数据集 fraction 使用 (0.0, 1.0]。
     """
     typed_keys = CFG_FLOAT_KEYS | CFG_FRACTION_KEYS | CFG_INT_KEYS | CFG_BOOL_KEYS | CFG_STR_KEYS | {"scale", "compile"}
     for k, v in cfg.items():
         if v is None and DEFAULT_CFG_DICT.get(k) is not None and k in typed_keys and k != "auto_augment":
             raise TypeError(f"'{k}=None' is invalid. '{k}' must not be None.")
-        if v is not None:  # None values may be from optional args
+        if v is not None:  # None 值可能来自可选参数
             if k in CFG_FLOAT_KEYS and not isinstance(v, FLOAT_OR_INT):
                 if hard:
                     raise TypeError(
@@ -480,14 +475,14 @@ def check_cfg(cfg: dict, hard: bool = True) -> None:
                 if hard:
                     raise TypeError(f"'{k}={v}' is of invalid type {type(v).__name__}. '{k}' must be a str.")
                 cfg[k] = str(v)
-            elif k == "compile" and not isinstance(v, (bool, str)):  # False=off, True="default", or a mode string
+            elif k == "compile" and not isinstance(v, (bool, str)):  # False 表示关闭，True 表示使用默认值，也可以传入模式字符串
                 if hard:
                     raise TypeError(
                         f"'{k}={v}' is of invalid type {type(v).__name__}. "
                         f"'{k}' must be a bool or str (i.e. '{k}=True' or '{k}=max-autotune')"
                     )
                 cfg[k] = bool(v)
-            elif k == "quantize":  # canonicalize 8/16/32 or w-notation to a scheme (unset stays None for FP32)
+            elif k == "quantize":  # 将 8/16/32 或 w 形式规范化为对应方案（未设置时保持 None，表示 FP32）
                 scheme = QUANTIZE_ALIASES.get(str(v).lower())
                 if scheme is None:
                     if hard:
@@ -500,18 +495,16 @@ def check_cfg(cfg: dict, hard: bool = True) -> None:
 
 
 def get_save_dir(args: SimpleNamespace, name: str | None = None) -> Path:
-    """Return the directory path for saving outputs, derived from arguments or default settings.
+    """根据参数或默认设置，返回用于保存输出结果的目录路径。
 
-    Args:
-        args (SimpleNamespace): Namespace object containing configurations such as 'project', 'name', 'task', 'mode',
-            and 'save_dir'.
-        name (str | None): Optional name for the output directory. If not provided, it defaults to 'args.name' or the
-            'args.mode'.
+    参数：
+        args (SimpleNamespace): 包含 'project'、'name'、'task'、'mode' 和 'save_dir' 等配置的命名空间对象。
+        name (str | None): 输出目录的可选名称。如果未提供，则使用 'args.name' 或 'args.mode'。
 
-    Returns:
-        (Path): Directory path where outputs should be saved.
+    返回：
+        (Path): 用于保存输出结果的目录路径。
 
-    Examples:
+    示例：
         >>> from types import SimpleNamespace
         >>> args = SimpleNamespace(project="my_project", name="exp", task="detect", mode="train", exist_ok=True)
         >>> get_save_dir(args).parts[-3:]
@@ -526,33 +519,32 @@ def get_save_dir(args: SimpleNamespace, name: str | None = None) -> Path:
         if not Path(project).is_absolute():
             base = ROOT.parent / "tests/tmp/runs" if TESTS_RUNNING else Path(SETTINGS["runs_dir"])
             worker = os.environ.get("PYTEST_XDIST_WORKER")
-            if worker and TESTS_RUNNING:  # isolate parallel pytest-xdist workers
+            if worker and TESTS_RUNNING:  # 为并行运行的 pytest-xdist 工作进程隔离目录
                 base = base / worker
             project = base / args.task / project
         name = name or args.name or f"{args.mode}"
         save_dir = increment_path(Path(project) / name, exist_ok=args.exist_ok if RANK in {-1, 0} else True)
 
-    return Path(save_dir).resolve()  # resolve to display full path in console
+    return Path(save_dir).resolve()  # 解析为完整路径，以便在控制台显示
 
 
 def _handle_deprecation(custom: dict) -> dict:
-    """Handle deprecated configuration keys by mapping them to current equivalents with deprecation warnings.
+    """处理已弃用的配置键，将其映射为当前配置键，并发出弃用警告。
 
-    Args:
-        custom (dict): Configuration dictionary potentially containing deprecated keys.
+    参数：
+        custom (dict): 可能包含已弃用配置键的配置字典。
 
-    Returns:
-        (dict): Updated configuration dictionary with deprecated keys replaced.
+    返回：
+        (dict): 替换已弃用配置键后的配置字典。
 
-    Examples:
+    示例：
         >>> custom_config = {"boxes": True, "hide_labels": "False", "line_thickness": 2}
         >>> _handle_deprecation(custom_config)
         {'show_boxes': True, 'show_labels': False, 'line_width': 2}
 
-    Notes:
-        This function modifies the input dictionary in-place, replacing deprecated keys with their current
-        equivalents. It also handles value conversions where necessary, such as inverting boolean values for
-        'hide_labels' and 'hide_conf'.
+    注意：
+        此函数会原地修改输入字典，将已弃用的配置键替换为当前配置键。
+        必要时还会转换配置值，例如反转 'hide_labels' 和 'hide_conf' 的布尔值。
     """
     deprecated_mappings = {
         "boxes": ("show_boxes", lambda v: v),
@@ -562,15 +554,15 @@ def _handle_deprecation(custom: dict) -> dict:
     }
     removed_keys = {"label_smoothing", "save_hybrid", "crop_fraction"}
 
-    # Forward the deprecated precision flags onto the unified `quantize` scheme (int8 wins over half). The value is read
-    # as a bool so quoted/string 'False' disables it while a bare CLI flag (empty string) enables it; an explicit false
-    # flag maps to None to clear any inherited quantize. An explicit `quantize=` always wins over the legacy flags.
+    # 将已弃用的精度标志转发到统一的 `quantize` 方案（int8 优先于 half）。先将值解析为布尔值：带引号的字符串
+    # 'False' 会禁用该选项，而不带值的 CLI 标志（空字符串）会启用该选项；显式传入 false 会映射为 None，
+    # 以清除继承的 quantize 设置。显式传入的 `quantize=` 始终优先于旧版精度标志。
     int8 = custom.pop("int8", None)
     half = custom.pop("half", None)
     if (int8 is not None or half is not None) and "quantize" not in custom:
         int8_on = int8 is not None and str(int8).strip().lower() not in {"none", "false", "0"}
         half_on = half is not None and str(half).strip().lower() not in {"none", "false", "0"}
-        custom["quantize"] = 8 if int8_on else 16 if half_on else None  # False/0 clears precision back to FP32
+        custom["quantize"] = 8 if int8_on else 16 if half_on else None  # False/0 清除精度设置并恢复为 FP32
         deprecation_warn("int8" if int8 is not None else "half", "quantize")
 
     for old_key, (new_key, transform) in deprecated_mappings.items():
@@ -591,19 +583,18 @@ def _handle_deprecation(custom: dict) -> dict:
 def check_dict_alignment(
     base: dict, custom: dict, e: Exception | None = None, allowed_custom_keys: set | None = None
 ) -> None:
-    """Check alignment between custom and base configuration dictionaries, handling deprecated keys and providing error
-    messages for mismatched keys.
+    """检查自定义配置字典与基础配置字典的一致性，处理已弃用的配置键，并为不匹配的键提供错误信息。
 
-    Args:
-        base (dict): The base configuration dictionary containing valid keys.
-        custom (dict): The custom configuration dictionary to be checked for alignment.
-        e (Exception | None): Optional error instance passed by the calling function.
-        allowed_custom_keys (set | None): Optional set of additional keys that are allowed in the custom dictionary.
+    参数：
+        base (dict): 包含有效配置键的基础配置字典。
+        custom (dict): 待检查一致性的自定义配置字典。
+        e (Exception | None): 可选的异常实例，由调用方传入。
+        allowed_custom_keys (set | None): 允许出现在自定义字典中的额外配置键集合。
 
-    Raises:
-        SyntaxError: If mismatched keys are found between the custom and base dictionaries.
+    异常：
+        SyntaxError: 自定义配置与基础配置之间存在不匹配的键时抛出。
 
-    Examples:
+    示例：
         >>> base_cfg = {"epochs": 50, "lr0": 0.01, "batch": 16}
         >>> custom_cfg = {"epoch": 100, "lr": 0.02, "batch": 32}
         >>> try:
@@ -612,14 +603,14 @@ def check_dict_alignment(
         ...     print("Mismatched keys found")
         Mismatched keys found
 
-    Notes:
-        - Suggests corrections for mismatched keys based on similarity to valid keys.
-        - Automatically replaces deprecated keys in the custom configuration with updated equivalents.
-        - Prints detailed error messages for each mismatched key to help users correct their configurations.
+    注意：
+        - 根据与有效键的相似度，为不匹配的键提供可能的修正建议。
+        - 自动将自定义配置中的已弃用配置键替换为当前配置键。
+        - 为每个不匹配的键输出详细错误信息，帮助用户修正配置。
     """
     custom = _handle_deprecation(custom)
     base_keys, custom_keys = (frozenset(x.keys()) for x in (base, custom))
-    # Allow 'augmentations' as a valid custom parameter for custom Albumentations transforms
+    # 允许将 'augmentations' 作为自定义 Albumentations 变换的有效参数
     if allowed_custom_keys is None:
         allowed_custom_keys = {"augmentations", "save_dir"}
     if mismatched := [k for k in custom_keys if k not in base_keys and k not in allowed_custom_keys]:
@@ -627,7 +618,7 @@ def check_dict_alignment(
 
         string = ""
         for x in mismatched:
-            matches = get_close_matches(x, base_keys)  # key list
+            matches = get_close_matches(x, base_keys)  # 获取相似的键列表
             matches = [f"{k}={base[k]}" if base.get(k) is not None else k for k in matches]
             match_str = f"Similar arguments are i.e. {matches}." if matches else ""
             string += f"'{colorstr('red', 'bold', x)}' is not a valid YOLO argument. {match_str}\n"
@@ -635,25 +626,24 @@ def check_dict_alignment(
 
 
 def merge_equals_args(args: list[str]) -> list[str]:
-    """Merge arguments around isolated '=' in a list of strings and join fragments with brackets.
+    """合并字符串列表中独立的 '=' 参数，并拼接被方括号拆开的参数片段。
 
-    This function handles the following cases:
-        1. ['arg', '=', 'val'] becomes ['arg=val']
-        2. ['arg=', 'val'] becomes ['arg=val']
-        3. ['arg', '=val'] becomes ['arg=val']
-        4. Joins fragments with brackets, e.g., ['imgsz=[3,', '640,', '640]'] becomes ['imgsz=[3,640,640]']
+    此函数处理以下情况：
+        1. ['arg', '=', 'val'] 合并为 ['arg=val']
+        2. ['arg=', 'val'] 合并为 ['arg=val']
+        3. ['arg', '=val'] 合并为 ['arg=val']
+        4. 拼接方括号中的片段，例如 ['imgsz=[3,', '640,', '640]'] 合并为 ['imgsz=[3,640,640]']
 
-    Args:
-        args (list[str]): A list of strings where each element represents an argument or fragment.
+    参数：
+        args (列表[str]): 字符串列表，其中每个元素表示一个参数或参数片段。
 
-    Returns:
-        (list[str]): A list of strings where the arguments around isolated '=' are merged and fragments with brackets
-            are joined.
+    返回：
+        (列表[str]): 合并独立 '=' 两侧参数并拼接方括号片段后的字符串列表。
 
-    Examples:
+    示例：
         >>> args = ["arg1", "=", "value", "arg2=", "value2", "arg3", "=value3", "imgsz=[3,", "640,", "640]"]
         >>> merge_equals_args(args)
-        ['arg1=value', 'arg2=value2', 'arg3=value3', 'imgsz=[3,640,640]']
+        ['arg1=值', 'arg2=value2', 'arg3=value3', 'imgsz=[3,640,640]']
     """
     new_args = []
     current = ""
@@ -663,21 +653,21 @@ def merge_equals_args(args: list[str]) -> list[str]:
     while i < len(args):
         arg = args[i]
 
-        # Handle equals sign merging
-        if arg == "=" and 0 < i < len(args) - 1:  # merge ['arg', '=', 'val']
+        # 处理等号的合并
+        if arg == "=" and 0 < i < len(args) - 1:  # 合并 ['arg', '=', 'val']
             new_args[-1] += f"={args[i + 1]}"
             i += 2
             continue
-        elif arg.endswith("=") and i < len(args) - 1 and "=" not in args[i + 1]:  # merge ['arg=', 'val']
+        elif arg.endswith("=") and i < len(args) - 1 and "=" not in args[i + 1]:  # 合并 ['arg=', 'val']
             new_args.append(f"{arg}{args[i + 1]}")
             i += 2
             continue
-        elif arg.startswith("=") and i > 0:  # merge ['arg', '=val']
+        elif arg.startswith("=") and i > 0:  # 合并 ['arg', '=val']
             new_args[-1] += arg
             i += 1
             continue
 
-        # Handle bracket joining
+        # 处理方括号片段的拼接
         depth += arg.count("[") - arg.count("]")
         current += arg
         if depth == 0:
@@ -686,7 +676,7 @@ def merge_equals_args(args: list[str]) -> list[str]:
 
         i += 1
 
-    # Append any remaining current string
+    # 添加剩余的当前字符串
     if current:
         new_args.append(current)
 
@@ -694,7 +684,7 @@ def merge_equals_args(args: list[str]) -> list[str]:
 
 
 def handle_yolo_login(args: list[str]) -> None:
-    """Log in to Ultralytics Platform with an API key or remove the saved key."""
+    """使用 API 密钥登录 Ultralytics Platform，或删除已保存的密钥。"""
     if args[0] == "logout":
         SETTINGS["api_key"] = ""
         LOGGER.info("Logged out ✅. To log in again, use 'yolo login API_KEY'.")
@@ -705,7 +695,7 @@ def handle_yolo_login(args: list[str]) -> None:
         LOGGER.info(f"Get an API key from {api_key_url} and then run 'yolo login API_KEY'.")
         return
 
-    import requests  # scoped as slow import
+    import requests  # 延迟导入，因为该模块加载较慢
 
     try:
         response = requests.get(
@@ -725,81 +715,81 @@ def handle_yolo_login(args: list[str]) -> None:
 
 
 def handle_yolo_settings(args: list[str]) -> None:
-    """Handle YOLO settings command-line interface (CLI) commands.
+    """处理 YOLO settings 命令行界面（CLI）命令。
 
-    This function processes YOLO settings CLI commands such as reset and updating individual settings. It should be
-    called when executing a script with arguments related to YOLO settings management.
+    此函数处理 YOLO settings CLI 命令，例如重置设置或更新单个设置项。
+    执行与 YOLO 设置管理相关的命令行参数时应调用此函数。
 
-    Args:
-        args (list[str]): A list of command line arguments for YOLO settings management.
+    参数：
+        args (list[str]): 用于管理 YOLO 设置的命令行参数列表。
 
-    Examples:
-        >>> handle_yolo_settings(["reset"])  # Reset YOLO settings
-        >>> handle_yolo_settings(["runs_dir=path/to/dir"])  # Update a specific setting
+    示例：
+        >>> handle_yolo_settings(["reset"])  # 重置 YOLO 设置
+        >>> handle_yolo_settings(["runs_dir=path/to/dir"])  # 更新指定设置
 
-    Notes:
-        - If no arguments are provided, the function will display the current settings.
-        - The 'reset' command will delete the existing settings file and create new default settings.
-        - Other arguments are treated as key-value pairs to update specific settings.
-        - The function will check for alignment between the provided settings and the existing ones.
-        - After processing, the updated settings will be displayed.
-        - For more information on handling YOLO settings, visit:
+    注意：
+        - 如果未提供参数，则显示当前设置。
+        - 'reset' 命令会删除现有设置文件，并创建新的默认设置。
+        - 其他参数会被视为键值对，用于更新指定设置。
+        - 此函数会检查传入设置与现有设置的一致性。
+        - 处理完成后会显示更新后的设置。
+        - 关于 YOLO 设置管理的更多信息，请访问：
           https://docs.ultralytics.com/quickstart#ultralytics-settings
     """
-    url = "https://docs.ultralytics.com/quickstart#ultralytics-settings"  # help URL
+    url = "https://docs.ultralytics.com/quickstart#ultralytics-settings"  # 帮助文档地址
     try:
         if any(args):
             if args[0] == "reset":
-                SETTINGS_FILE.unlink()  # delete the settings file
-                SETTINGS.reset()  # create new settings
-                LOGGER.info("Settings reset successfully")  # inform the user that settings have been reset
-            else:  # save a new setting
+                SETTINGS_FILE.unlink()  # 删除设置文件
+                SETTINGS.reset()  # 创建新的默认设置
+                LOGGER.info("Settings reset successfully")  # 提示用户设置已重置
+            else:  # 保存新的设置
                 new = dict(parse_key_value_pair(a) for a in args)
                 check_dict_alignment(SETTINGS, new)
                 SETTINGS.update(new)
                 for k, v in new.items():
                     LOGGER.info(f"✅ Updated '{k}={v}'")
 
-        LOGGER.info(SETTINGS)  # print the current settings
+        LOGGER.info(SETTINGS)  # 打印当前设置
         LOGGER.info(f"💡 Learn more about Ultralytics Settings at {url}")
     except Exception as e:
         LOGGER.warning(f"settings error: '{e}'. Please see {url} for help.")
 
 
 def handle_yolo_solutions(args: list[str]) -> None:
-    """Process YOLO solutions arguments and run the specified computer vision solutions pipeline.
+    """解析 YOLO solutions 参数，并运行指定的计算机视觉解决方案流程。
 
-    Args:
-        args (list[str]): Command-line arguments for configuring and running the Ultralytics YOLO solutions.
+    参数：
+        args (列表[str]): 用于配置和运行 Ultralytics YOLO 解决方案的命令行参数。
 
-    Examples:
-        Run people counting solution with default settings:
+    示例：
+        使用默认设置运行人数统计解决方案：
         >>> handle_yolo_solutions(["count"])
 
-        Run analytics with custom configuration:
+        使用自定义配置运行分析功能：
         >>> handle_yolo_solutions(["analytics", "conf=0.25", "source=path/to/video.mp4"])
 
-        Run inference with custom configuration, requires Streamlit version 1.29.0 or higher.
+        使用自定义配置运行推理，需要 Streamlit 1.29.0 或更高版本。
         >>> handle_yolo_solutions(["inference", "model=yolo26n.pt"])
 
-    Notes:
-        - Arguments can be provided in the format 'key=value' or as boolean flags
-        - Available solutions are defined in SOLUTION_MAP with their respective classes and methods
-        - If an invalid solution is provided, defaults to 'count' solution
-        - Output videos are saved in 'runs/solutions/exp' directory
-        - For 'analytics' solution, frame numbers are tracked for generating analytical graphs
-        - Video processing can be interrupted by pressing 'q'
-        - Processes video frames sequentially and saves output in .avi format
-        - If no source is specified, downloads and uses a default sample video
-        - The inference solution will be launched using the 'streamlit run' command.
-        - The Streamlit app file is located in the Ultralytics package directory.
+    注意：
+        - 参数可以使用 'key=value' 格式提供，也可以使用布尔标志。
+        - 可用的解决方案定义在 SOLUTION_MAP 中，并对应相应的类和方法。
+        - 如果提供了无效的解决方案，则默认使用 'count' 解决方案。
+        - 输出视频会保存到 'runs/solutions/exp' 目录。
+        - 对于 'analytics' 解决方案，会跟踪帧编号以生成分析图表。
+        - 按下 'q' 键可以中断视频处理。
+        - 函数会按顺序处理视频帧，并将输出保存为 .avi 格式。
+        - 如果未指定 source，则下载并使用默认示例视频。
+        - 推理解决方案会通过 'streamlit run' 命令启动。
+        - Streamlit 应用文件位于 Ultralytics 软件包目录中。
     """
     from ultralytics.solutions.config import SolutionConfig
 
-    full_args_dict = vars(SolutionConfig())  # arguments dictionary
+    full_args_dict = vars(SolutionConfig())  # 参数字典
     overrides = {}
 
-    # check dictionary alignment
+    # 检查字典的一致性
     for arg in merge_equals_args(args):
         arg = arg.lstrip("-").rstrip(",")
         if "=" in arg:
@@ -810,29 +800,29 @@ def handle_yolo_solutions(args: list[str]) -> None:
                 check_dict_alignment(full_args_dict, {arg: ""}, e)
         elif arg in full_args_dict and isinstance(full_args_dict.get(arg), bool):
             overrides[arg] = True
-    check_dict_alignment(full_args_dict, overrides)  # dict alignment
+    check_dict_alignment(full_args_dict, overrides)  # 检查字典一致性
 
-    # Get solution name
+    # 获取解决方案名称
     if not args:
         LOGGER.warning("No solution name provided. i.e `yolo solutions count`. Defaulting to 'count'.")
         args = ["count"]
     if args[0] == "help":
         LOGGER.info(SOLUTIONS_HELP_MSG)
-        return  # Early return for 'help' case
+        return  # 'help' 情况直接返回
     elif args[0] in SOLUTION_MAP:
-        solution_name = args.pop(0)  # Extract the solution name directly
+        solution_name = args.pop(0)  # 直接提取解决方案名称
     else:
         LOGGER.warning(
             f"❌ '{args[0]}' is not a valid solution. 💡 Defaulting to 'count'.\n"
             f"🚀 Available solutions: {', '.join(list(SOLUTION_MAP.keys())[:-1])}\n"
         )
-        solution_name = "count"  # Default for invalid solution
+        solution_name = "count"  # 无效解决方案的默认值
 
     if solution_name == "inference":
         checks.check_requirements("streamlit>=1.29.0")
         LOGGER.info("💡 Loading Ultralytics live inference app...")
         subprocess.run(
-            [  # Run subprocess with Streamlit custom argument
+            [  # 使用自定义 Streamlit 参数运行子进程
                 "streamlit",
                 "run",
                 str(ROOT / "solutions/streamlit_inference.py"),
@@ -843,26 +833,26 @@ def handle_yolo_solutions(args: list[str]) -> None:
             check=False,
         )
     else:
-        import cv2  # Only needed for cap and vw functionality
+        import cv2  # 仅 cap 和 vw 功能需要使用
 
         from ultralytics import solutions
 
-        solution = getattr(solutions, SOLUTION_MAP[solution_name])(is_cli=True, **overrides)  # class i.e. ObjectCounter
+        solution = getattr(solutions, SOLUTION_MAP[solution_name])(is_cli=True, **overrides)  # 类，例如 ObjectCounter
 
-        cap = cv2.VideoCapture(solution.CFG["source"])  # read the video file
+        cap = cv2.VideoCapture(solution.CFG["source"])  # 读取视频文件
         if solution_name != "crop":
-            # extract width, height and fps of the video file, create save directory and initialize video writer
+            # 获取视频文件的宽度、高度和帧率，创建保存目录并初始化视频写入器
             w, h, fps = (
                 int(cap.get(x)) for x in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT, cv2.CAP_PROP_FPS)
             )
-            if solution_name == "analytics":  # analytical graphs follow fixed shape for output i.e w=1280, h=720
+            if solution_name == "analytics":  # 分析图表的输出尺寸固定为 w=1280、h=720
                 w, h = 1280, 720
             save_dir = get_save_dir(SimpleNamespace(task="solutions", name="exp", exist_ok=False, project=None))
-            save_dir.mkdir(parents=True, exist_ok=True)  # create the output directory i.e. runs/solutions/exp
+            save_dir.mkdir(parents=True, exist_ok=True)  # 创建输出目录，例如 runs/solutions/exp
             vw = cv2.VideoWriter(str(save_dir / f"{solution_name}.avi"), cv2.VideoWriter_fourcc(*"mp4v"), fps, (w, h))
 
-        try:  # Process video frames
-            f_n = 0  # frame number, required for analytical graphs
+        try:  # 处理视频帧
+            f_n = 0  # 帧数量，分析图表需要使用
             while cap.isOpened():
                 success, frame = cap.read()
                 if not success:
@@ -877,19 +867,19 @@ def handle_yolo_solutions(args: list[str]) -> None:
 
 
 def parse_key_value_pair(pair: str = "key=value") -> tuple:
-    """Parse a key-value pair string into separate key and value components.
+    """将键值对字符串解析为独立的键和值。
 
-    Args:
-        pair (str): A string containing a key-value pair in the format "key=value".
+    参数：
+        pair (str): 包含键值对的字符串，格式为 "key=value"。
 
-    Returns:
-        key (str): The parsed key.
-        value (str): The parsed value.
+    返回：
+        key (str): 解析得到的键。
+        value (str): 解析得到的值。
 
-    Raises:
-        AssertionError: If the value is missing or empty.
+    异常：
+        AssertionError: 值缺失或为空时抛出。
 
-    Examples:
+    示例：
         >>> key, value = parse_key_value_pair("model=yolo26n.pt")
         >>> print(f"Key: {key}, Value: {value}")
         Key: model, Value: yolo26n.pt
@@ -898,31 +888,30 @@ def parse_key_value_pair(pair: str = "key=value") -> tuple:
         >>> print(f"Key: {key}, Value: {value}")
         Key: epochs, Value: 100
 
-    Notes:
-        - The function splits the input string on the first '=' character.
-        - Leading and trailing whitespace is removed from both key and value.
-        - An assertion error is raised if the value is empty after stripping.
+    注意：
+        - 此函数按第一个 '=' 字符拆分输入字符串。
+        - 会删除键和值首尾的空白字符。
+        - 如果删除空白后值为空，则抛出断言错误。
     """
-    k, v = pair.split("=", 1)  # split on first '=' sign
-    k, v = k.strip(), v.strip()  # remove spaces
+    k, v = pair.split("=", 1)  # 按第一个 '=' 符号拆分
+    k, v = k.strip(), v.strip()  # 删除首尾空白
     assert v, f"missing '{k}' value"
     return k, smart_value(v)
 
 
 def smart_value(v: str) -> Any:
-    """Convert a string representation of a value to its appropriate Python type.
+    """将值的字符串表示转换为合适的 Python 类型。
 
-    This function attempts to convert a given string into a Python object of the most appropriate type. It handles
-    conversions to None, bool, int, float, and other types that can be evaluated safely.
+    此函数会尝试将给定字符串转换为最合适的 Python 对象，支持转换为 None、bool、int、float
+    以及其他可以安全求值的类型。
 
-    Args:
-        v (str): The string representation of the value to be converted.
+    参数：
+        v (str): 待转换值的字符串表示。
 
-    Returns:
-        (Any): The converted value. The type can be None, bool, int, float, or the original string if no conversion is
-            applicable.
+    返回：
+        (Any): 转换后的值。类型可以是 None、bool、int、float；如果无法转换，则返回原始字符串。
 
-    Examples:
+    示例：
         >>> smart_value("42")
         42
         >>> smart_value("3.14")
@@ -934,10 +923,10 @@ def smart_value(v: str) -> Any:
         >>> smart_value("some_string")
         'some_string'
 
-    Notes:
-        - The function uses a case-insensitive comparison for boolean and None values.
-        - For other types, it attempts to use Python's ast.literal_eval() function for safe evaluation.
-        - If no conversion is possible, the original string is returned.
+    注意：
+        - 此函数会以不区分大小写的方式比较布尔值和 None 值。
+        - 对于其他类型，函数会尝试使用 Python 的 ast.literal_eval() 进行安全求值。
+        - 如果无法完成转换，则返回原始字符串。
     """
     v_lower = v.lower()
     if v_lower == "none":
@@ -959,31 +948,30 @@ def smart_value(v: str) -> Any:
 
 
 def entrypoint(debug: str = "") -> None:
-    """Ultralytics entrypoint function for parsing and executing command-line arguments.
+    """解析并执行命令行参数的 Ultralytics 入口函数。
 
-    This function serves as the main entry point for the Ultralytics CLI, parsing command-line arguments and executing
-    the corresponding tasks such as training, validation, prediction, exporting models, and more.
+    此函数是 Ultralytics CLI 的主要入口，负责解析命令行参数并执行相应任务，
+    例如训练、验证、预测和导出模型等。
 
-    Args:
-        debug (str): Space-separated string of command-line arguments for debugging purposes.
+    参数：
+        debug (str): 用于调试的、以空格分隔的命令行参数字符串。
 
-    Examples:
-        Train a detection model for 10 epochs with an initial learning_rate of 0.01:
+    示例：
+        使用初始 learning_rate 为 0.01 的设置训练检测模型 10 个周期：
         >>> entrypoint("train data=coco8.yaml model=yolo26n.pt epochs=10 lr0=0.01")
 
-        Predict a YouTube video using a pretrained segmentation model at image size 320:
+        使用预训练分割模型，以图像尺寸 320 对 YouTube 视频进行预测：
         >>> entrypoint("predict model=yolo26n-seg.pt source='https://youtu.be/LNwODJXcvt4' imgsz=320")
 
-        Validate a pretrained detection model at batch-size 1 and image size 640:
+        使用批量大小 1、图像尺寸 640 验证预训练检测模型：
         >>> entrypoint("val model=yolo26n.pt data=coco8.yaml batch=1 imgsz=640")
 
-    Notes:
-        - If no arguments are passed, the function will display the usage help message.
-        - For a list of all available commands and their arguments, see the provided help messages and the
-          Ultralytics documentation at https://docs.ultralytics.com.
+    注意：
+        - 如果未传入参数，则显示用法帮助信息。
+        - 所有可用命令及其参数请参阅帮助信息，以及 Ultralytics 文档：https://docs.ultralytics.com。
     """
     args = (debug.split(" ") if debug else ARGV)[1:]
-    if not args:  # no arguments passed
+    if not args:  # 未传入参数
         LOGGER.info(CLI_HELP_MSG)
         return
 
@@ -1000,13 +988,13 @@ def entrypoint(debug: str = "") -> None:
     }
     full_args_dict = {**DEFAULT_CFG_DICT, **{k: None for k in TASKS}, **{k: None for k in MODES}, **special}
 
-    # Define common misuses of special commands, i.e. -h, -help, --help
-    special.update({k[0]: v for k, v in special.items()})  # singular
-    special.update({k[:-1]: v for k, v in special.items() if len(k) > 1 and k.endswith("s")})  # singular
+    # 定义特殊命令的常见误用形式，例如 -h、-help 和 --help
+    special.update({k[0]: v for k, v in special.items()})  # 单字符形式
+    special.update({k[:-1]: v for k, v in special.items() if len(k) > 1 and k.endswith("s")})  # 去掉末尾 s 的形式
     special = {**special, **{f"-{k}": v for k, v in special.items()}, **{f"--{k}": v for k, v in special.items()}}
 
-    overrides = {}  # basic overrides, i.e. imgsz=320
-    for a in merge_equals_args(args):  # merge spaces around '=' sign
+    overrides = {}  # 基础覆盖项，例如 imgsz=320
+    for a in merge_equals_args(args):  # 合并 '=' 符号两侧的空格
         if a.startswith("--"):
             LOGGER.warning(f"argument '{a}' does not require leading dashes '--', updating to '{a[2:]}'.")
             a = a[2:]
@@ -1016,7 +1004,7 @@ def entrypoint(debug: str = "") -> None:
         if "=" in a:
             try:
                 k, v = parse_key_value_pair(a)
-                if k == "cfg" and v is not None:  # custom.yaml passed
+                if k == "cfg" and v is not None:  # 传入了自定义 YAML 配置文件
                     LOGGER.info(f"Overriding {DEFAULT_CFG_PATH} with {v}")
                     overrides = {k: val for k, val in YAML.load(checks.check_yaml(v)).items() if k != "cfg"}
                 else:
@@ -1032,9 +1020,9 @@ def entrypoint(debug: str = "") -> None:
             special[a.lower()]()
             return
         elif a in DEFAULT_CFG_DICT and isinstance(DEFAULT_CFG_DICT[a], bool):
-            overrides[a] = True  # auto-True for default bool args, i.e. 'yolo show' sets show=True
+            overrides[a] = True  # 默认布尔参数自动设为 True，例如 'yolo show' 会设置 show=True
         elif a in {"half", "int8"}:
-            overrides[a] = True  # deprecated bare precision flags, forwarded to quantize by _handle_deprecation
+            overrides[a] = True  # 不带值的已弃用精度标志，之后由 _handle_deprecation 转发到 quantize
         elif a in DEFAULT_CFG_DICT:
             raise SyntaxError(
                 f"'{colorstr('red', 'bold', a)}' is a valid YOLO argument but is missing an '=' sign "
@@ -1043,10 +1031,10 @@ def entrypoint(debug: str = "") -> None:
         else:
             check_dict_alignment(full_args_dict, {a: ""})
 
-    # Check keys
+    # 检查配置键
     check_dict_alignment(full_args_dict, overrides)
 
-    # Mode
+    # 模式
     mode = overrides.get("mode")
     if mode is None:
         mode = DEFAULT_CFG.mode or "predict"
@@ -1054,7 +1042,7 @@ def entrypoint(debug: str = "") -> None:
     elif mode not in MODES:
         raise ValueError(f"Invalid 'mode={mode}'. Valid modes are {list(MODES)}.\n{CLI_HELP_MSG}")
 
-    # Task
+    # 任务
     task = overrides.pop("task", None)
     if task:
         if task not in TASKS:
@@ -1068,17 +1056,17 @@ def entrypoint(debug: str = "") -> None:
         if "model" not in overrides:
             overrides["model"] = TASK2MODEL[task]
 
-    # Model
+    # 模型
     model = overrides.pop("model", DEFAULT_CFG.model)
     if model is None:
         model = "yolo26n.pt"
         LOGGER.warning(f"'model' argument is missing. Using default 'model={model}'.")
     overrides["model"] = model
     stem = Path(model).stem.lower()
-    if "rtdetr" in stem:  # guess architecture
+    if "rtdetr" in stem:  # 推测模型架构
         from ultralytics import RTDETR
 
-        model = RTDETR(model)  # no task argument
+        model = RTDETR(model)  # 无需传入 task 参数
     elif "fastsam" in stem:
         from ultralytics import FastSAM
 
@@ -1095,7 +1083,7 @@ def entrypoint(debug: str = "") -> None:
             cls_list = overrides.pop("classes", DEFAULT_CFG.classes)
             if cls_list is not None and isinstance(cls_list, str):
                 model.set_classes([c.strip() for c in cls_list.split(",")])  # "person, bus" -> ['person', 'bus']
-    # Task Update
+    # 更新任务
     if task != model.task:
         if task:
             LOGGER.warning(
@@ -1104,7 +1092,7 @@ def entrypoint(debug: str = "") -> None:
             )
         task = model.task
 
-    # Mode
+    # 模式
     if mode in {"predict", "track"} and "source" not in overrides:
         overrides["source"] = (
             "https://ultralytics.com/images/boats.jpg" if task == "obb" else DEFAULT_CFG.source or ASSETS
@@ -1119,43 +1107,40 @@ def entrypoint(debug: str = "") -> None:
             overrides["format"] = DEFAULT_CFG.format or "torchscript"
             LOGGER.warning(f"'format' argument is missing. Using default 'format={overrides['format']}'.")
 
-    # Run command in python
-    getattr(model, mode)(**overrides)  # default args from model
+    # 在 Python 中运行命令
+    getattr(model, mode)(**overrides)  # 使用模型的默认参数
 
-    # Show help
+    # 显示帮助信息
     LOGGER.info(f"💡 Learn more at https://docs.ultralytics.com/modes/{mode}")
 
-    # Recommend VS Code extension
+    # 推荐 VS Code 扩展
     if IS_VSCODE and SETTINGS.get("vscode_msg", True):
         LOGGER.info(vscode_msg())
 
 
-# Special modes --------------------------------------------------------------------------------------------------------
+# 特殊模式 ------------------------------------------------------------------------------------------------------------
 def copy_default_cfg() -> None:
-    """Copy the default configuration file and create a new one with '_copy' appended to its name.
+    """复制默认配置文件，并创建一个名称末尾带有 '_copy' 的新配置文件。
 
-    This function duplicates the existing default configuration file (DEFAULT_CFG_PATH) and saves it with '_copy'
-    appended to its name in the current working directory. It provides a convenient way to create a custom configuration
-    file based on the default settings.
+    此函数复制现有的默认配置文件（DEFAULT_CFG_PATH），并将副本保存到当前工作目录，
+    文件名末尾添加 '_copy'。这为用户基于默认设置创建自定义配置文件提供了便利。
 
-    Examples:
+    示例：
         >>> copy_default_cfg()
 
-    Notes:
-        - The new configuration file is created in the current working directory.
-        - After copying, the function prints a message with the new file's location and an example
-          YOLO command demonstrating how to use the new configuration file.
-        - This function is useful for users who want to modify the default configuration without
-          altering the original file.
+    注意：
+        - 新配置文件会创建在当前工作目录中。
+        - 复制完成后，函数会输出新文件的位置，以及展示如何使用该配置文件的 YOLO 命令示例。
+        - 对于希望修改默认配置、但不想改动原始文件的用户，此函数非常实用。
     """
     new_file = Path.cwd() / DEFAULT_CFG_PATH.name.replace(".yaml", "_copy.yaml")
     shutil.copy2(DEFAULT_CFG_PATH, new_file)
     LOGGER.info(
         f"{DEFAULT_CFG_PATH} copied to {new_file}\n"
-        f"Example YOLO command with this new custom cfg:\n    yolo cfg='{new_file}' imgsz=320 batch=8"
+        f"使用此自定义配置文件的 YOLO 命令示例：\n    yolo cfg='{new_file}' imgsz=320 batch=8"
     )
 
 
 if __name__ == "__main__":
-    # Example: entrypoint(debug='yolo predict model=yolo26n.pt')
+    # 示例：entrypoint(debug='yolo predict model=yolo26n.pt')
     entrypoint(debug="")

@@ -10,53 +10,51 @@ import cv2
 
 @dataclass
 class SolutionConfig:
-    """Manages configuration parameters for Ultralytics Vision AI solutions.
+    """管理 Ultralytics Vision AI 解决方案配置参数的类。
 
-    The SolutionConfig class serves as a centralized configuration container for all the Ultralytics solution modules:
-    https://docs.ultralytics.com/solutions#solutions. It leverages Python `dataclass` for clear, type-safe, and
-    maintainable parameter definitions.
+    SolutionConfig 是所有 Ultralytics 解决方案模块的集中配置容器，参见
+    https://docs.ultralytics.com/solutions#solutions。它使用 Python `dataclass`，使参数定义清晰、类型安全且易于维护。
 
-    Attributes:
-        source (str, optional): Path to the input source (video, RTSP, etc.). Only usable with Solutions CLI.
-        model (str, optional): Path to the Ultralytics YOLO model to be used for inference.
-        classes (list[int], optional): List of class indices to filter detections.
-        show_conf (bool): Whether to show confidence scores on the visual output.
-        show_labels (bool): Whether to display class labels on visual output.
-        show_boxes (bool): Whether to display bounding boxes on the visual output.
-        region (list[tuple[int, int]], optional): Polygonal region or line for object counting.
-        colormap (int, optional): OpenCV colormap constant for visual overlays (e.g., cv2.COLORMAP_DEEPGREEN).
-        show_in (bool): Whether to display count number for objects entering the region.
-        show_out (bool): Whether to display count number for objects leaving the region.
-        up_angle (float): Upper angle threshold used in pose-based workouts monitoring.
-        down_angle (int): Lower angle threshold used in pose-based workouts monitoring.
-        kpts (list[int]): Keypoint indices to monitor, e.g., for pose analytics.
-        analytics_type (str): Type of analytics to perform ("line", "area", "bar", "pie", etc.).
-        figsize (tuple[float, float], optional): Size of the matplotlib figure used for analytical plots (width,
-            height).
-        blur_ratio (float): Ratio used to blur objects in the video frames (0.0 to 1.0).
-        vision_point (tuple[int, int]): Reference point for directional tracking or perspective drawing.
-        crop_dir (str): Directory path to save cropped detection images.
-        json_file (str, optional): Path to a JSON file containing data for parking areas.
-        line_width (int): Width for visual display, e.g. bounding boxes, keypoints, and counts.
-        records (int): Number of detection records to send email alerts.
-        fps (float): Frame rate (Frames Per Second) for speed estimation calculation.
-        max_hist (int): Maximum number of historical points or states stored per tracked object for speed estimation.
-        meter_per_pixel (float): Scale for real-world measurement, used in speed or distance calculations.
-        max_speed (int): Maximum speed limit (e.g., km/h or mph) used in visual alerts or constraints.
-        show (bool): Whether to display the visual output on screen.
-        iou (float): Intersection-over-Union threshold for detection filtering.
-        conf (float): Confidence threshold for keeping predictions.
-        device (str, optional): Device to run inference on (e.g., 'cpu', '0' for CUDA GPU).
-        max_det (int): Maximum number of detections allowed per video frame.
-        quantize (int | str | None): Inference precision, e.g. 16 (FP16); replaces the deprecated half flag.
-        tracker (str): Path to tracking configuration YAML file (e.g., 'botsort.yaml').
-        verbose (bool): Enable verbose logging output for debugging or diagnostics.
-        data (str): Path to image directory used for similarity search.
+    属性：
+        source (str, 可选): 输入源路径（视频、RTSP 等），仅可与 Solutions CLI 一起使用。
+        model (str, 可选): 用于推理的 Ultralytics YOLO 模型路径。
+        classes (list[int], 可选): 用于筛选检测结果的类别索引列表。
+        show_conf (bool): 是否在可视化输出中显示置信度分数。
+        show_labels (bool): 是否在可视化输出中显示类别标签。
+        show_boxes (bool): 是否在可视化输出中显示边界框。
+        region (list[tuple[int, int]], 可选): 用于对象计数的多边形区域或线段。
+        colormap (int, 可选): 可视化叠加使用的 OpenCV 颜色映射常量。
+        show_in (bool): 是否显示进入区域的对象数量。
+        show_out (bool): 是否显示离开区域的对象数量。
+        up_angle (float): 基于姿态的健身动作监控中使用的上方角度阈值。
+        down_angle (int): 基于姿态的健身动作监控中使用的下方角度阈值。
+        kpts (list[int]): 要监控的关键点索引，例如姿态分析所需的关键点。
+        analytics_type (str): 要执行的分析类型（"line"、"area"、"bar"、"pie" 等）。
+        figsize (tuple[float, float], 可选): 分析图表 Matplotlib 图形尺寸（宽度、高度）。
+        blur_ratio (float): 视频帧中的对象模糊比例（0.0 到 1.0）。
+        vision_point (tuple[int, int]): 方向跟踪或透视绘制的参考点。
+        crop_dir (str): 保存裁剪检测图像的目录路径。
+        json_file (str, 可选): 包含停车区域数据的 JSON 文件路径。
+        line_width (int): 可视化显示线宽，例如边界框、关键点和计数的线宽。
+        records (int): 用于发送邮件提醒的检测记录数量。
+        fps (float): 速度估计计算使用的帧率。
+        max_hist (int): 每个跟踪对象为速度估计保存的历史点或状态最大数量。
+        meter_per_pixel (float): 真实世界测量比例，用于速度或距离计算。
+        max_speed (int): 可视化提醒或约束中使用的最大速度限制。
+        show (bool): 是否在屏幕上显示可视化输出。
+        iou (float): 用于筛选检测结果的交并比阈值。
+        conf (float): 保留预测结果的置信度阈值。
+        device (str, 可选): 执行推理的设备，例如 'cpu' 或 CUDA GPU 的 '0'。
+        max_det (int): 每个视频帧允许的最大检测数。
+        quantize (int | str | None): 推理精度，例如 16（FP16），用于替代已弃用的 half 标志。
+        tracker (str): 跟踪配置 YAML 文件路径，例如 'botsort.yaml'。
+        verbose (bool): 是否启用详细日志输出，用于调试或诊断。
+        data (str): 相似度搜索使用的图像目录路径。
 
-    Methods:
-        update: Update the configuration with user-defined keyword arguments and raise error on invalid keys.
+    方法：
+        update: 使用用户定义的关键字参数更新配置，并在键无效时抛出错误。
 
-    Examples:
+    示例：
         >>> from ultralytics.solutions.config import SolutionConfig
         >>> cfg = SolutionConfig(model="yolo26n.pt", region=[(0, 0), (100, 0), (100, 100), (0, 100)])
         >>> cfg.update(show=False, conf=0.3)
@@ -100,8 +98,8 @@ class SolutionConfig:
     data: str = "images"
 
     def update(self, **kwargs: Any):
-        """Update configuration parameters with new values provided as keyword arguments."""
-        if "half" in kwargs:  # deprecated alias, forwarded to quantize
+        """使用关键字参数提供的新值更新配置参数。"""
+        if "half" in kwargs:  # 已弃用的别名，转发到 quantize
             from ultralytics.utils import deprecation_warn
 
             deprecation_warn("half", "quantize")

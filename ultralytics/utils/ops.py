@@ -18,35 +18,34 @@ from ultralytics.utils.torch_utils import get_torch_device_backend
 
 
 class Profile(contextlib.ContextDecorator):
-    """Ultralytics Profile class for timing code execution.
+    """用于测量代码执行时间的 Ultralytics Profile 类。
 
-    Use as a decorator with @Profile() or as a context manager with 'with Profile():'. Provides accurate timing
-    measurements with accelerator synchronization support.
+    可作为 @Profile() 装饰器或 'with Profile():' 上下文管理器使用，并支持加速器同步以获得准确计时。
 
-    Attributes:
-        t (float): Accumulated time in seconds.
-        device (torch.device): Device used for model inference.
-        accelerator (module): PyTorch device module used for timing synchronization.
+    属性：
+        t (float): 累计时间，单位为秒。
+        device (torch.device): 模型推理使用的设备。
+        accelerator (模块): 用于计时同步的 PyTorch 设备模块。
 
-    Examples:
-        Use as a context manager to time code execution
+    示例：
+        作为上下文管理器使用，用于统计代码执行时间：
         >>> with Profile() as dt:
         ...     pass  # slow operation here
         >>> str(dt).startswith("Elapsed time is ")
         True
 
-        Use as a decorator to time function execution
+        作为装饰器使用，用于统计函数执行时间：
         >>> @Profile()
         ... def slow_function():
         ...     time.sleep(0.1)
     """
 
     def __init__(self, t: float = 0.0, device: torch.device | None = None):
-        """Initialize the Profile class.
+        """初始化 Profile 类。
 
-        Args:
+        参数：
             t (float): Initial accumulated time in seconds.
-            device (torch.device, optional): Device used for model inference to enable accelerator synchronization.
+            device (torch.device, 可选): 模型推理使用的设备，用于启用加速器同步。
         """
         self.t = t
         self.device = device
@@ -54,50 +53,49 @@ class Profile(contextlib.ContextDecorator):
         self.accelerator = get_torch_device_backend(device_type) if device_type in {"cuda", "npu", "xpu"} else None
 
     def __enter__(self):
-        """Start timing."""
+        """开始计时。"""
         self.start = self.time()
         return self
 
     def __exit__(self, type, value, traceback):
-        """Stop timing."""
-        self.dt = self.time() - self.start  # delta-time
-        self.t += self.dt  # accumulate dt
+        """停止计时。"""
+        self.dt = self.time() - self.start  # 时间增量
+        self.t += self.dt  # 累加时间增量
 
     def __str__(self):
-        """Return a human-readable string representing the accumulated elapsed time."""
+        """返回表示累计耗时的易读字符串。"""
         return f"Elapsed time is {self.t} s"
 
     def time(self):
-        """Get current time with accelerator synchronization if applicable."""
+        """获取当前时间，并在适用时执行加速器同步。"""
         if self.accelerator is not None:
             self.accelerator.synchronize(self.device)
         return time.perf_counter()
 
 
 def segment2box(segment: np.ndarray, width: int = 640, height: int = 640) -> np.ndarray:
-    """Convert segment coordinates to bounding box coordinates.
+    """将分割线坐标转换为边界框坐标。
 
-    Converts a single segment label to a box label by finding the minimum and maximum x and y coordinates of the polygon
-    clipped to the image, so segments crossing the image boundary keep their visible extent. Segments already inside the
-    image return immediately without clipping.
+    通过查找裁剪到图像范围内的多边形 x、y 最小和最大坐标，将单个分割标签转换为边界框标签，
+    因此跨越图像边界的分割线仍保留可见范围。已经位于图像内部的分割线会直接返回，无需裁剪。
 
-    Args:
-        segment (np.ndarray): Segment coordinates in format (N, 2) where N is number of points.
-        width (int): Width of the image in pixels.
-        height (int): Height of the image in pixels.
+    参数：
+        segment (np.ndarray): 分割线坐标，形状为 (N, 2)，N 为点数。
+        width (int): 图像宽度，单位为像素。
+        height (int): 图像高度，单位为像素。
 
-    Returns:
-        (np.ndarray): Bounding box coordinates in xyxy format [x1, y1, x2, y2].
+    返回：
+        (np.ndarray): xyxy 格式的边界框坐标 [x1, y1, x2, y2]。
     """
     if not len(segment):
         return np.zeros(4, dtype=segment.dtype)
     x, y = segment[:, 0], segment[:, 1]
     xmin, ymin, xmax, ymax = x.min(), y.min(), x.max(), y.max()
-    if xmin >= 0 and ymin >= 0 and xmax <= width and ymax <= height:  # fully inside image
+    if xmin >= 0 and ymin >= 0 and xmax <= width and ymax <= height:  # fully inside 图像
         return np.array([xmin, ymin, xmax, ymax], dtype=segment.dtype)
     axes = np.array((0, 0, 1, 1))
     bounds = np.array((0, width, 0, height), dtype=segment.dtype)
-    lims = np.array((height, height, width, width), dtype=segment.dtype)  # (height, width)[axis] per boundary
+    lims = np.array((height, height, width, width), dtype=segment.dtype)  # (高度, 宽度)[axis] per boundary
     start, delta = segment, np.roll(segment, -1, axis=0) - segment
     with np.errstate(divide="ignore", invalid="ignore"):
         t = (bounds - start[:, axes]) / delta[:, axes]
@@ -127,24 +125,24 @@ def scale_boxes(
     padding: bool = True,
     xywh: bool = False,
 ) -> torch.Tensor | np.ndarray:
-    """Rescale bounding boxes from one image shape to another.
+    """将边界框从一种图像尺寸缩放到另一种图像尺寸。
 
-    Rescales bounding boxes from img1_shape to img0_shape, accounting for padding and aspect ratio changes. Supports
-    both xyxy and xywh box formats.
+    将边界框从 img1_shape 缩放到 img0_shape，同时处理填充和宽高比变化。
+    同时支持 xyxy 和 xywh 边界框格式。
 
-    Args:
-        img1_shape (tuple[int, int]): Shape of the source image (height, width).
-        boxes (torch.Tensor | np.ndarray): Bounding boxes to rescale in format (N, 4).
-        img0_shape (tuple[int, int]): Shape of the target image (height, width).
-        ratio_pad (tuple, optional): Ratio and padding as ((ratio_h, ratio_w), (pad_w, pad_h)).
-        padding (bool): Whether boxes are based on YOLO-style augmented images with padding.
-        xywh (bool): Whether box format is xywh (True) or xyxy (False).
+    参数：
+        img1_shape (tuple[int, int]): 源图像尺寸 (高度, 宽度)。
+        boxes (torch.Tensor | np.ndarray): 要缩放的边界框，形状为 (N, 4)。
+        img0_shape (tuple[int, int]): 目标图像尺寸 (高度, 宽度)。
+        ratio_pad (tuple, 可选): 缩放比例和填充值，格式为 ((ratio_h, ratio_w), (pad_w, pad_h))。
+        padding (bool): 边界框是否来自带有填充的 YOLO 风格增强图像。
+        xywh (bool): 边界框格式是否为 xywh；为 False 时使用 xyxy 格式。
 
-    Returns:
-        (torch.Tensor | np.ndarray): Rescaled bounding boxes in the same format as input.
+    返回：
+        (torch.Tensor | np.ndarray): 缩放后的边界框，格式与输入相同。
     """
-    if ratio_pad is None:  # calculate from img0_shape
-        gain = min(img1_shape[0] / img0_shape[0], img1_shape[1] / img0_shape[1])  # gain  = old / new
+    if ratio_pad is None:  # 根据 img0_shape 计算缩放参数
+        gain = min(img1_shape[0] / img0_shape[0], img1_shape[1] / img0_shape[1])  # 缩放比例 = 旧尺寸 / 新尺寸
         gain_y = gain_x = gain
         pad_x = round((img1_shape[1] - round(img0_shape[1] * gain)) / 2 - 0.1)
         pad_y = round((img1_shape[0] - round(img0_shape[0] * gain)) / 2 - 0.1)
@@ -153,11 +151,11 @@ def scale_boxes(
         pad_x, pad_y = ratio_pad[1]
 
     if padding:
-        boxes[..., 0] -= pad_x  # x padding
-        boxes[..., 1] -= pad_y  # y padding
+        boxes[..., 0] -= pad_x  # x 填充
+        boxes[..., 1] -= pad_y  # y 填充
         if not xywh:
-            boxes[..., 2] -= pad_x  # x padding
-            boxes[..., 3] -= pad_y  # y padding
+            boxes[..., 2] -= pad_x  # x 填充
+            boxes[..., 3] -= pad_y  # y 填充
     boxes[..., 0] /= gain_x
     boxes[..., 1] /= gain_y
     boxes[..., 2] /= gain_x
@@ -166,228 +164,229 @@ def scale_boxes(
 
 
 def make_divisible(x: int, divisor):
-    """Return the smallest number >= x that is divisible by the given divisor.
+    """返回大于等于 x 且可被给定除数整除的最小数值。
 
-    Args:
-        x (int): The number to make divisible.
-        divisor (int | torch.Tensor): The divisor.
+    参数：
+        x (int): 要调整为可整除的数值。
+        divisor (int | torch.Tensor): 除数。
 
-    Returns:
-        (int): The smallest number >= x divisible by the divisor.
+    返回：
+        (int): 大于等于 x 且可被除数整除的最小数值。
     """
     if isinstance(divisor, torch.Tensor):
-        divisor = int(divisor.max())  # to int
+        divisor = int(divisor.max())  # 转换为整数
     return math.ceil(x / divisor) * divisor
 
 
 def clip_boxes(boxes, shape):
-    """Clip bounding boxes to image boundaries.
+    """将边界框裁剪到图像边界内。
 
-    Args:
-        boxes (torch.Tensor | np.ndarray): Bounding boxes to clip.
-        shape (tuple): Image shape as HWC or HW (supports both).
+    参数：
+        boxes (torch.Tensor | np.ndarray): 要裁剪的边界框。
+        shape (tuple): 图像尺寸，可为 HWC 或 HW 格式。
 
-    Returns:
-        (torch.Tensor | np.ndarray): Clipped bounding boxes.
+    返回：
+        (torch.Tensor | np.ndarray): 裁剪后的边界框。
     """
-    h, w = shape[:2]  # supports both HWC or HW shapes
-    if isinstance(boxes, torch.Tensor):  # faster individually
+    h, w = shape[:2]  # 同时支持 HWC 和 HW 尺寸
+    if isinstance(boxes, torch.Tensor):  # 逐项裁剪更快
         if NOT_MACOS14 and not (boxes.device.type == "mps" and check_version(TORCH_VERSION, "<2.5.0")):
             boxes[..., 0].clamp_(0, w)  # x1
             boxes[..., 1].clamp_(0, h)  # y1
             boxes[..., 2].clamp_(0, w)  # x2
             boxes[..., 3].clamp_(0, h)  # y2
-        else:  # MPS strided in-place bug on macOS 14 or torch<2.5
+        else:  # macOS 14 或 torch<2.5 存在 MPS 跨步原地操作错误
             boxes[..., 0] = boxes[..., 0].clamp(0, w)
             boxes[..., 1] = boxes[..., 1].clamp(0, h)
             boxes[..., 2] = boxes[..., 2].clamp(0, w)
             boxes[..., 3] = boxes[..., 3].clamp(0, h)
-    else:  # np.array (faster grouped)
+    else:  # NumPy 数组（分组裁剪更快）
         boxes[..., [0, 2]] = boxes[..., [0, 2]].clip(0, w)  # x1, x2
         boxes[..., [1, 3]] = boxes[..., [1, 3]].clip(0, h)  # y1, y2
     return boxes
 
 
 def clip_coords(coords, shape):
-    """Clip line coordinates to image boundaries.
+    """将线段坐标裁剪到图像边界内。
 
-    Args:
-        coords (torch.Tensor | np.ndarray): Line coordinates to clip.
-        shape (tuple): Image shape as HWC or HW (supports both).
+    参数：
+        coords (torch.Tensor | np.ndarray): 要裁剪的线段坐标。
+        shape (tuple): 图像尺寸，可为 HWC 或 HW 格式。
 
-    Returns:
-        (torch.Tensor | np.ndarray): Clipped coordinates.
+    返回：
+        (torch.Tensor | np.ndarray): 裁剪后的坐标。
     """
-    h, w = shape[:2]  # supports both HWC or HW shapes
+    h, w = shape[:2]  # 同时支持 HWC 和 HW 尺寸
     if isinstance(coords, torch.Tensor):
         if NOT_MACOS14 and not (coords.device.type == "mps" and check_version(TORCH_VERSION, "<2.5.0")):
             coords[..., 0].clamp_(0, w)  # x
             coords[..., 1].clamp_(0, h)  # y
-        else:  # MPS strided in-place bug on macOS 14 or torch<2.5
+        else:  # macOS 14 或 torch<2.5 存在 MPS 跨步原地操作错误
             coords[..., 0] = coords[..., 0].clamp(0, w)
             coords[..., 1] = coords[..., 1].clamp(0, h)
-    else:  # np.array
+    else:  # np.数组
         coords[..., 0] = coords[..., 0].clip(0, w)  # x
         coords[..., 1] = coords[..., 1].clip(0, h)  # y
     return coords
 
 
 def xyxy2xywh(x):
-    """Convert bounding box coordinates from (x1, y1, x2, y2) format to (x, y, width, height) format where (x1, y1) is
-    the top-left corner and (x2, y2) is the bottom-right corner.
+    """将边界框坐标从 (x1, y1, x2, y2) 格式转换为 (x, y, 宽度, 高度) 格式。
 
-    Args:
-        x (np.ndarray | torch.Tensor): Input bounding box coordinates in (x1, y1, x2, y2) format.
+    其中 (x1, y1) 是左上角，(x2, y2) 是右下角。
 
-    Returns:
-        (np.ndarray | torch.Tensor): Bounding box coordinates in (x, y, width, height) format.
+    参数：
+        x (np.ndarray | torch.Tensor): 输入的边界框坐标，格式为 (x1, y1, x2, y2)。
+
+    返回：
+        (np.ndarray | torch.Tensor): 转换后的边界框坐标，格式为 (x, y, 宽度, 高度)。
     """
     assert x.shape[-1] == 4, f"input shape last dimension expected 4 but input shape is {x.shape}"
-    y = empty_like(x)  # faster than clone/copy
+    y = empty_like(x)  # 比克隆或复制更快
     x1, y1, x2, y2 = x[..., 0], x[..., 1], x[..., 2], x[..., 3]
-    y[..., 0] = (x1 + x2) / 2  # x center
-    y[..., 1] = (y1 + y2) / 2  # y center
-    y[..., 2] = x2 - x1  # width
-    y[..., 3] = y2 - y1  # height
+    y[..., 0] = (x1 + x2) / 2  # x 中心坐标
+    y[..., 1] = (y1 + y2) / 2  # y 中心坐标
+    y[..., 2] = x2 - x1  # 宽度
+    y[..., 3] = y2 - y1  # 高度
     return y
 
 
 def xywh2xyxy(x):
-    """Convert bounding box coordinates from (x, y, width, height) format to (x1, y1, x2, y2) format where (x1, y1) is
-    the top-left corner and (x2, y2) is the bottom-right corner. Note: ops per 2 channels faster than per channel.
+    """将边界框坐标从 (x, y, 宽度, 高度) 格式转换为 (x1, y1, x2, y2) 格式。
 
-    Args:
-        x (np.ndarray | torch.Tensor): Input bounding box coordinates in (x, y, width, height) format.
+    其中 (x1, y1) 是左上角，(x2, y2) 是右下角。注意：按两个通道一组执行运算比逐通道运算更快。
 
-    Returns:
-        (np.ndarray | torch.Tensor): Bounding box coordinates in (x1, y1, x2, y2) format.
+    参数：
+        x (np.ndarray | torch.Tensor): 输入的边界框坐标，格式为 (x, y, 宽度, 高度)。
+
+    返回：
+        (np.ndarray | torch.Tensor): 转换后的边界框坐标，格式为 (x1, y1, x2, y2)。
     """
     assert x.shape[-1] == 4, f"input shape last dimension expected 4 but input shape is {x.shape}"
-    y = empty_like(x)  # faster than clone/copy
-    xy = x[..., :2]  # centers
-    wh = x[..., 2:] / 2  # half width-height
-    y[..., :2] = xy - wh  # top left xy
-    y[..., 2:] = xy + wh  # bottom right xy
+    y = empty_like(x)  # 比克隆或复制更快
+    xy = x[..., :2]  # 中心坐标
+    wh = x[..., 2:] / 2  # 宽度和高度的一半
+    y[..., :2] = xy - wh  # 左上角坐标
+    y[..., 2:] = xy + wh  # 右下角坐标
     return y
 
 
 def xywhn2xyxy(x, w: int = 640, h: int = 640, padw: int = 0, padh: int = 0):
-    """Convert normalized bounding box coordinates to pixel coordinates.
+    """将归一化边界框坐标转换为像素坐标。
 
-    Args:
-        x (np.ndarray | torch.Tensor): Normalized bounding box coordinates in (x, y, w, h) format.
-        w (int): Image width in pixels.
-        h (int): Image height in pixels.
-        padw (int): Padding width in pixels.
-        padh (int): Padding height in pixels.
+    参数：
+        x (np.ndarray | torch.Tensor): 归一化边界框坐标，格式为 (x, y, w, h)。
+        w (int): 图像宽度，单位为像素。
+        h (int): 图像高度，单位为像素。
+        padw (int): 宽度方向的填充，单位为像素。
+        padh (int): 高度方向的填充，单位为像素。
 
-    Returns:
-        (np.ndarray | torch.Tensor): Bounding box coordinates in (x1, y1, x2, y2) format.
+    返回：
+        (np.ndarray | torch.Tensor): 边界框坐标，格式为 (x1, y1, x2, y2)。
     """
     assert x.shape[-1] == 4, f"input shape last dimension expected 4 but input shape is {x.shape}"
-    y = empty_like(x)  # faster than clone/copy
+    y = empty_like(x)  # 比克隆或复制更快
     xc, yc, xw, xh = x[..., 0], x[..., 1], x[..., 2], x[..., 3]
     half_w, half_h = xw / 2, xh / 2
-    y[..., 0] = w * (xc - half_w) + padw  # top left x
-    y[..., 1] = h * (yc - half_h) + padh  # top left y
-    y[..., 2] = w * (xc + half_w) + padw  # bottom right x
-    y[..., 3] = h * (yc + half_h) + padh  # bottom right y
+    y[..., 0] = w * (xc - half_w) + padw  # 左上角 x
+    y[..., 1] = h * (yc - half_h) + padh  # 左上角 y
+    y[..., 2] = w * (xc + half_w) + padw  # 右下角 x
+    y[..., 3] = h * (yc + half_h) + padh  # 右下角 y
     return y
 
 
 def xyxy2xywhn(x, w: int = 640, h: int = 640, clip: bool = False, eps: float = 0.0):
-    """Convert bounding box coordinates from (x1, y1, x2, y2) format to normalized (x, y, width, height) format. x, y,
-    width and height are normalized to image dimensions.
+    """将边界框坐标从 (x1, y1, x2, y2) 格式转换为归一化的 (x, y, 宽度, 高度) 格式。
 
-    Args:
-        x (np.ndarray | torch.Tensor): Input bounding box coordinates in (x1, y1, x2, y2) format.
-        w (int): Image width in pixels.
-        h (int): Image height in pixels.
-        clip (bool): Whether to clip boxes to image boundaries.
-        eps (float): Minimum value for box width and height.
+    x、y、宽度和高度均按照图像尺寸进行归一化。
 
-    Returns:
-        (np.ndarray | torch.Tensor): Normalized bounding box coordinates in (x, y, width, height) format.
+    参数：
+        x (np.ndarray | torch.Tensor): 输入的边界框坐标，格式为 (x1, y1, x2, y2)。
+        w (int): 图像宽度，单位为像素。
+        h (int): 图像高度，单位为像素。
+        clip (bool): 是否将边界框裁剪到图像边界内。
+        eps (float): 边界框宽度和高度的最小值。
+
+    返回：
+        (np.ndarray | torch.Tensor): 归一化后的边界框坐标，格式为 (x, y, 宽度, 高度)。
     """
     if clip:
         x = clip_boxes(x, (h - eps, w - eps))
     assert x.shape[-1] == 4, f"input shape last dimension expected 4 but input shape is {x.shape}"
-    y = empty_like(x)  # faster than clone/copy
+    y = empty_like(x)  # 比克隆或复制更快
     x1, y1, x2, y2 = x[..., 0], x[..., 1], x[..., 2], x[..., 3]
-    y[..., 0] = ((x1 + x2) / 2) / w  # x center
-    y[..., 1] = ((y1 + y2) / 2) / h  # y center
-    y[..., 2] = (x2 - x1) / w  # width
-    y[..., 3] = (y2 - y1) / h  # height
+    y[..., 0] = ((x1 + x2) / 2) / w  # x 中心坐标
+    y[..., 1] = ((y1 + y2) / 2) / h  # y 中心坐标
+    y[..., 2] = (x2 - x1) / w  # 宽度
+    y[..., 3] = (y2 - y1) / h  # 高度
     return y
 
 
 def xywh2ltwh(x):
-    """Convert bounding box format from [x, y, w, h] to [x1, y1, w, h] where x1, y1 are top-left coordinates.
+    """将边界框格式从 [x, y, w, h] 转换为 [x1, y1, w, h]，其中 x1、y1 是左上角坐标。
 
-    Args:
-        x (np.ndarray | torch.Tensor): Input bounding box coordinates in xywh format.
+    参数：
+        x (np.ndarray | torch.Tensor): 输入的边界框坐标，格式为 xywh。
 
-    Returns:
-        (np.ndarray | torch.Tensor): Bounding box coordinates in ltwh format.
+    返回：
+        (np.ndarray | torch.Tensor): 转换后的边界框坐标，格式为 ltwh。
     """
     y = x.clone() if isinstance(x, torch.Tensor) else np.copy(x)
-    y[..., 0] = x[..., 0] - x[..., 2] / 2  # top left x
-    y[..., 1] = x[..., 1] - x[..., 3] / 2  # top left y
+    y[..., 0] = x[..., 0] - x[..., 2] / 2  # 左上角 x
+    y[..., 1] = x[..., 1] - x[..., 3] / 2  # 左上角 y
     return y
 
 
 def xyxy2ltwh(x):
-    """Convert bounding boxes from [x1, y1, x2, y2] to [x1, y1, w, h] format.
+    """将边界框从 [x1, y1, x2, y2] 格式转换为 [x1, y1, w, h] 格式。
 
-    Args:
-        x (np.ndarray | torch.Tensor): Input bounding box coordinates in xyxy format.
+    参数：
+        x (np.ndarray | torch.Tensor): 输入的边界框坐标，格式为 xyxy。
 
-    Returns:
-        (np.ndarray | torch.Tensor): Bounding box coordinates in ltwh format.
+    返回：
+        (np.ndarray | torch.Tensor): 转换后的边界框坐标，格式为 ltwh。
     """
     y = x.clone() if isinstance(x, torch.Tensor) else np.copy(x)
-    y[..., 2] = x[..., 2] - x[..., 0]  # width
-    y[..., 3] = x[..., 3] - x[..., 1]  # height
+    y[..., 2] = x[..., 2] - x[..., 0]  # 宽度
+    y[..., 3] = x[..., 3] - x[..., 1]  # 高度
     return y
 
 
 def ltwh2xywh(x):
-    """Convert bounding boxes from [x1, y1, w, h] to [x, y, w, h] where xy1=top-left, xy=center.
+    """将边界框从 [x1, y1, w, h] 格式转换为 [x, y, w, h] 格式，其中 xy1 表示左上角，xy 表示中心点。
 
-    Args:
-        x (np.ndarray | torch.Tensor): Input bounding box coordinates.
+    参数：
+        x (np.ndarray | torch.Tensor): 输入的边界框坐标。
 
-    Returns:
-        (np.ndarray | torch.Tensor): Bounding box coordinates in xywh format.
+    返回：
+        (np.ndarray | torch.Tensor): 转换后的边界框坐标，格式为 xywh。
     """
     y = x.clone() if isinstance(x, torch.Tensor) else np.copy(x)
-    y[..., 0] = x[..., 0] + x[..., 2] / 2  # center x
-    y[..., 1] = x[..., 1] + x[..., 3] / 2  # center y
+    y[..., 0] = x[..., 0] + x[..., 2] / 2  # 中心点 x
+    y[..., 1] = x[..., 1] + x[..., 3] / 2  # 中心点 y
     return y
 
 
 def xyxyxyxy2xywhr(x):
-    """Convert batched Oriented Bounding Boxes (OBB) from [xy1, xy2, xy3, xy4] to [xywh, rotation] format.
+    """将批量旋转边界框（OBB）从 [xy1, xy2, xy3, xy4] 格式转换为 [xywh, rotation] 格式。
 
-    Args:
-        x (np.ndarray | torch.Tensor): Input box corners with shape (N, 8) or (N, 4, 2) in [xy1, xy2, xy3, xy4] format.
-            Polygons with more than four points are accepted in the same two layouts, (N, 2P) or (N, P, 2), and are
-            reduced to their minimum-area rectangle.
+    参数：
+        x (np.ndarray | torch.Tensor): 输入的边界框角点，形状为 (N, 8) 或 (N, 4, 2)，格式为 [xy1, xy2, xy3, xy4]。
+            也接受相同两种布局 (N, 2P) 或 (N, P, 2) 的多于四个点的多边形，并将其转换为最小面积矩形。
 
-    Returns:
-        (np.ndarray | torch.Tensor): Converted data in [cx, cy, w, h, rotation] format with shape (N, 5). The
-            parameterization is canonical rather than the caller's: w is the longer side and rotation is in radians
-            from [-pi/4, 3pi/4), so a box given with w < h comes back with w and h swapped and its angle shifted by
-            pi/2 modulo pi.
+    返回：
+        (np.ndarray | torch.Tensor): 转换后的数据，格式为 [cx, cy, w, h, rotation]，形状为 (N, 5)。
+            结果使用规范化参数表示：w 是较长边，rotation 是范围为 [-pi/4, 3pi/4) 的弧度角。
+            因此，输入 w < h 的边界框返回时会交换 w 和 h，并将角度按 pi/2 调整（模 pi）。
     """
     is_torch = isinstance(x, torch.Tensor)
     points = x.cpu().numpy() if is_torch else x
     rboxes = []
     for pts in points:
-        # NOTE: Use cv2.minAreaRect to get accurate xywhr,
-        # especially some objects are cut off by augmentations in dataloader.
+        # 注意：使用 cv2.minAreaRect 获取准确的 xywhr，
+        # 尤其适用于数据加载器增强操作裁切了部分目标的情况。
         (cx, cy), (w, h), angle = cv2.minAreaRect(pts.reshape(-1, 2))
-        # convert angle to radian and normalize to [-pi/4, 3pi/4)
+        # 将角度转换为弧度，并规范化到 [-pi/4, 3pi/4)
         theta = angle / 180 * np.pi
         if w < h:
             w, h = h, w
@@ -397,21 +396,20 @@ def xyxyxyxy2xywhr(x):
         while theta < -np.pi / 4:
             theta += np.pi
         rboxes.append([cx, cy, w, h, theta])
-    rboxes = np.asarray(rboxes).reshape(-1, 5)  # reshape keeps the (0, 5) shape on an empty input
+    rboxes = np.asarray(rboxes).reshape(-1, 5)  # reshape 会在输入为空时保留 (0, 5) 形状
     return torch.tensor(rboxes, device=x.device, dtype=x.dtype) if is_torch else rboxes
 
 
 def xywhr2xyxyxyxy(x):
-    """Convert batched Oriented Bounding Boxes (OBB) from [xywh, rotation] to [xy1, xy2, xy3, xy4] format.
+    """将批量旋转边界框（OBB）从 [xywh, rotation] 格式转换为 [xy1, xy2, xy3, xy4] 格式。
 
-    Args:
-        x (np.ndarray | torch.Tensor): Boxes in [cx, cy, w, h, rotation] format with shape (N, 5) or (B, N, 5). Rotation
-            is in radians and is neither range-checked nor normalized; the box is not canonicalized, so converting the
-            (N, 4, 2) corners back with xyxyxyxy2xywhr returns the canonical form of the same rectangle rather than
-            these values.
+    参数：
+        x (np.ndarray | torch.Tensor): 输入边界框，格式为 [cx, cy, w, h, rotation]，形状为 (N, 5) 或 (B, N, 5)。
+            rotation 使用弧度表示，函数不会检查或规范化其范围；边界框也不会被规范化。
+            因此，将 (N, 4, 2) 角点通过 xyxyxyxy2xywhr 转换回来时，返回的是同一矩形的规范化表示，而不是这些原始值。
 
-    Returns:
-        (np.ndarray | torch.Tensor): Converted corner points with shape (N, 4, 2) or (B, N, 4, 2).
+    返回：
+        (np.ndarray | torch.Tensor): 转换后的角点，形状为 (N, 4, 2) 或 (B, N, 4, 2)。
     """
     cos, sin, cat, stack = (
         (torch.cos, torch.sin, torch.cat, torch.stack)
@@ -434,13 +432,13 @@ def xywhr2xyxyxyxy(x):
 
 
 def ltwh2xyxy(x):
-    """Convert bounding box from [x1, y1, w, h] to [x1, y1, x2, y2] where xy1=top-left, xy2=bottom-right.
+    """将边界框从 [x1, y1, w, h] 格式转换为 [x1, y1, x2, y2] 格式，其中 xy1 是左上角，xy2 是右下角。
 
-    Args:
-        x (np.ndarray | torch.Tensor): Input bounding box coordinates.
+    参数：
+        x (np.ndarray | torch.Tensor): 输入的边界框坐标。
 
-    Returns:
-        (np.ndarray | torch.Tensor): Bounding box coordinates in xyxy format.
+    返回：
+        (np.ndarray | torch.Tensor): 转换后的边界框坐标，格式为 xyxy。
     """
     y = x.clone() if isinstance(x, torch.Tensor) else np.copy(x)
     y[..., 2] = x[..., 2] + x[..., 0]  # x2
@@ -449,30 +447,30 @@ def ltwh2xyxy(x):
 
 
 def segments2boxes(segments):
-    """Convert segment coordinates to bounding box labels in xywh format.
+    """将分割段坐标转换为 xywh 格式的边界框标签。
 
-    Args:
-        segments (list): List of segments where each segment is a list of points, each point is [x, y] coordinates.
+    参数：
+        segments (列表): 分割段列表，每个分割段由 [x, y] 坐标点组成。
 
-    Returns:
-        (np.ndarray): Bounding box coordinates in xywh format.
+    返回：
+        (np.ndarray): xywh 格式的边界框坐标。
     """
     boxes = []
     for s in segments:
-        x, y = s.T  # segment xy
-        boxes.append([x.min(), y.min(), x.max(), y.max()])  # cls, xyxy
-    return xyxy2xywh(np.array(boxes).reshape(-1, 4))  # cls, xywh
+        x, y = s.T  # 分割段的 xy 坐标
+        boxes.append([x.min(), y.min(), x.max(), y.max()])  # xyxy
+    return xyxy2xywh(np.array(boxes).reshape(-1, 4))  # xywh
 
 
 def resample_segments(segments, n: int = 1000):
-    """Resample segments to n points each using linear interpolation.
+    """使用线性插值将每条分割线重采样为 n 个点。
 
-    Args:
-        segments (list): List of (N, 2) arrays where N is the number of points in each segment.
-        n (int): Number of points to resample each segment to.
+    参数：
+        segments (列表): 形状为 (N, 2) 的数组列表，其中 N 是每个分割段的点数。
+        n (int): 每个分割段重采样后的点数。
 
-    Returns:
-        (list): Resampled segments with n points each.
+    返回：
+        (列表): 重采样后的分割段，每个分割段包含 n 个点。
     """
     for i, s in enumerate(segments):
         if len(s) == n:
@@ -483,84 +481,83 @@ def resample_segments(segments, n: int = 1000):
         x = np.insert(x, np.searchsorted(x, xp), xp) if len(s) < n else x
         segments[i] = (
             np.concatenate([np.interp(x, xp, s[:, i]) for i in range(2)], dtype=np.float32).reshape(2, -1).T
-        )  # segment xy
+        )  # 分割段的 xy 坐标
     return segments
 
 
 def crop_mask(masks: torch.Tensor, boxes: torch.Tensor) -> torch.Tensor:
-    """Crop masks to bounding box regions.
+    """将掩码裁剪到边界框区域。
 
-    Args:
-        masks (torch.Tensor): Masks with shape (N, H, W).
-        boxes (torch.Tensor): Bounding box coordinates with shape (N, 4) in xyxy pixel format.
+    参数：
+        masks (torch.Tensor): 形状为 (N, H, W) 的掩码。
+        boxes (torch.Tensor): 形状为 (N, 4) 的边界框坐标，使用 xyxy 像素格式。
 
-    Returns:
-        (torch.Tensor): Cropped masks.
+    返回：
+        (torch.Tensor): Cropped 掩码.
     """
     if boxes.device != masks.device:
         boxes = boxes.to(masks.device)
     _, h, w = masks.shape
-    x1, y1, x2, y2 = torch.chunk(boxes[:, :, None], 4, 1)  # each shape (n,1,1)
+    x1, y1, x2, y2 = torch.chunk(boxes[:, :, None], 4, 1)  # 每个 形状 (n,1,1)
     r = torch.arange(w, device=masks.device, dtype=x1.dtype)[None, None, :]  # columns (1,1,w)
     c = torch.arange(h, device=masks.device, dtype=x1.dtype)[None, :, None]  # rows (1,h,1)
-    # Apply the column and row masks separately and in place: the box region is separable, so this avoids ever
-    # materializing the full (n, h, w) boolean grid the combined product would build, and has no per-mask Python loop.
-    masks *= (r >= x1) * (r < x2)  # zero columns outside the box
-    masks *= (c >= y1) * (c < y2)  # zero rows outside the box
+    # 分别原地应用列掩码和行掩码。由于边界框区域可分离，
+    # 这样无需构造完整的 (n, h, w) 布尔网格，也不需要针对每个掩码执行 Python 循环。
+    masks *= (r >= x1) * (r < x2)  # 将边界框外的列置零
+    masks *= (c >= y1) * (c < y2)  # 将边界框外的行置零
     return masks
 
 
 def process_mask(protos, masks_in, bboxes, shape, upsample: bool = False):
-    """Apply masks to bounding boxes using mask head output.
+    """使用掩码头输出将掩码应用到边界框。
 
-    Args:
-        protos (torch.Tensor): Mask prototypes with shape (mask_dim, mask_h, mask_w).
-        masks_in (torch.Tensor): Mask coefficients with shape (N, mask_dim) where N is number of masks after NMS.
-        bboxes (torch.Tensor): Bounding boxes with shape (N, 4) where N is number of masks after NMS.
-        shape (tuple): Input image size as (height, width).
-        upsample (bool): Whether to upsample masks to original image size.
+    参数：
+        protos (torch.Tensor): 掩码原型，形状为 (mask_dim, mask_h, mask_w)。
+        masks_in (torch.Tensor): 掩码系数，形状为 (N, mask_dim)，其中 N 是 NMS 后的掩码数量。
+        bboxes (torch.Tensor): 边界框，形状为 (N, 4)，其中 N 是 NMS 后的掩码数量。
+        shape (tuple): 输入图像尺寸，格式为 (高度, 宽度)。
+        upsample (bool): 是否将掩码上采样到原始图像尺寸。
 
-    Returns:
-        (torch.Tensor): A binary mask tensor of shape [n, h, w], where n is the number of masks after NMS. When
-            upsample=True h and w match the input image size; otherwise they are the prototype mask resolution.
+    返回：
+        (torch.Tensor): 形状为 [n, h, w] 的二值掩码张量，其中 n 是 NMS 后的掩码数量。
+            当 upsample=True 时，h 和 w 与输入图像尺寸一致；否则使用掩码原型的分辨率。
     """
     c, mh, mw = protos.shape  # CHW
-    if masks_in.shape[0] == 0:  # no detections: F.interpolate below rejects an empty (N=0) batch
+    if masks_in.shape[0] == 0:  # 没有检测结果：下面的 F.interpolate 不接受空的 (N=0) 批次
         return torch.zeros((0, *(shape if upsample else (mh, mw))), dtype=torch.uint8, device=masks_in.device)
     masks = (masks_in @ protos.float().view(c, -1)).view(-1, mh, mw)  # NHW
 
     if upsample:
-        # Upsample then crop at image resolution; cropping first smears the bilinear edge outside the bbox (#24272)
+        # 先上采样到图像分辨率再裁剪；先裁剪会使双线性插值边缘扩散到边界框外（#24272）
         masks = F.interpolate(masks[None], shape, mode="bilinear")[0]  # NHW
     else:
         width_ratio = mw / shape[1]
         height_ratio = mh / shape[0]
         ratios = torch.tensor([[width_ratio, height_ratio, width_ratio, height_ratio]], device=bboxes.device)
-        bboxes = bboxes * ratios  # scale boxes to prototype resolution
-    # Binarize before cropping so crop_mask runs on uint8 instead of float32, as in process_mask_native
+        bboxes = bboxes * ratios  # 将边界框缩放到原型分辨率
+    # 先二值化再裁剪，使 crop_mask 在 uint8 而不是 float32 上运行，与 process_mask_native 保持一致
     return crop_mask(masks.gt_(0.0).byte(), bboxes)
 
 
 def process_mask_native(protos, masks_in, bboxes, shape):
-    """Apply masks to bounding boxes using mask head output with native upsampling.
+    """使用掩码头输出和原生上采样将掩码应用到边界框。
 
-    Args:
-        protos (torch.Tensor): Mask prototypes with shape (mask_dim, mask_h, mask_w).
-        masks_in (torch.Tensor): Mask coefficients with shape (N, mask_dim) where N is number of masks after NMS.
-        bboxes (torch.Tensor): Bounding boxes with shape (N, 4) where N is number of masks after NMS.
-        shape (tuple): Input image size as (height, width).
+    参数：
+        protos (torch.Tensor): 掩码原型，形状为 (mask_dim, mask_h, mask_w)。
+        masks_in (torch.Tensor): 掩码系数，形状为 (N, mask_dim)，其中 N 是 NMS 后的掩码数量。
+        bboxes (torch.Tensor): 边界框，形状为 (N, 4)，其中 N 是 NMS 后的掩码数量。
+        shape (tuple): 输入图像尺寸，格式为 (高度, 宽度)。
 
-    Returns:
-        (torch.Tensor): Binary mask tensor with shape (N, H, W).
+    返回：
+        (torch.Tensor): 形状为 (N, H, W) 的二值掩码张量。
     """
     c, mh, mw = protos.shape  # CHW
     h, w = shape
-    if masks_in.shape[0] == 0:  # no detections: return a well-formed empty mask stack
+    if masks_in.shape[0] == 0:  # no detections: 返回 a well-formed empty 掩码 stack
         return torch.zeros((0, h, w), dtype=torch.uint8, device=masks_in.device)
-    coeffs = masks_in @ protos.float().view(c, -1)  # (N, mh*mw) prototype-resolution mask logits
-    # Upsampling all N masks at once allocates an N*H*W float intermediate (~9 GB on a large image with many
-    # detections), which OOMs the worker. Upsample in chunks bounded by a pixel budget, thresholding each chunk to
-    # uint8 immediately so the float intermediate stays small, then crop the assembled uint8 stack.
+    coeffs = masks_in @ protos.float().view(c, -1)  # (N, mh*mw) prototype-resolution 掩码 logits
+    # 一次性上采样全部 N 个掩码会分配 N*H*W 大小的浮点中间结果；在包含大量检测的大图像上约占 9 GB，可能导致工作进程内存溢出。
+    # 按像素预算分块上采样，并立即将每个分块二值化为 uint8，保持较小的浮点中间结果，最后裁剪拼接后的 uint8 堆栈。
     step = max(1, 32_000_000 // (h * w))
     masks = [
         scale_masks(coeffs[i : i + step].view(-1, mh, mw)[None], shape)[0].gt_(0.0).byte()
@@ -576,28 +573,28 @@ def scale_masks(
     padding: bool = True,
     mode: str = "bilinear",
 ) -> torch.Tensor:
-    """Rescale segment masks to target shape.
+    """将分割掩码缩放到目标尺寸。
 
-    Args:
-        masks (torch.Tensor): Masks with shape (N, C, H, W).
-        shape (tuple[int, int]): Target height and width as (height, width).
-        ratio_pad (tuple, optional): Ratio and padding values as ((ratio_h, ratio_w), (pad_w, pad_h)).
-        padding (bool): Whether masks are based on YOLO-style augmented images with padding.
-        mode (str): Interpolation mode, e.g. 'bilinear' for logits or 'nearest' for integer class maps.
+    参数：
+        masks (torch.Tensor): 形状为 (N, C, H, W) 的掩码。
+        shape (tuple[int, int]): 目标尺寸，格式为 (高度, 宽度)。
+        ratio_pad (tuple, 可选): 缩放比例和填充值，格式为 ((ratio_h, ratio_w), (pad_w, pad_h))。
+        padding (bool): 掩码是否来自带有填充的 YOLO 风格增强图像。
+        mode (str): 插值模式，例如 logits 使用 'bilinear'，整数类别图使用 'nearest'。
 
-    Returns:
-        (torch.Tensor): Rescaled masks.
+    返回：
+        (torch.Tensor): Rescaled 掩码.
     """
     im1_h, im1_w = masks.shape[2:]
     im0_h, im0_w = shape[:2]
     if im1_h == im0_h and im1_w == im0_w:
         return masks
-    if masks.shape[1] == 0:  # empty mask stack: F.interpolate rejects a 0-length channel dim
+    if masks.shape[1] == 0:  # 空掩码堆栈：F.interpolate 不接受长度为 0 的通道维度
         return masks.new_zeros((*masks.shape[:2], im0_h, im0_w), dtype=torch.float32)
 
-    if ratio_pad is None:  # calculate from im0_shape
-        gain = min(im1_h / im0_h, im1_w / im0_w)  # gain  = old / new
-        pad_w, pad_h = (im1_w - round(im0_w * gain)), (im1_h - round(im0_h * gain))  # wh padding
+    if ratio_pad is None:  # 根据 im0_shape 计算缩放参数
+        gain = min(im1_h / im0_h, im1_w / im0_w)  # 缩放比例 = 旧尺寸 / 新尺寸
+        pad_w, pad_h = (im1_w - round(im0_w * gain)), (im1_h - round(im0_h * gain))  # 宽高方向的填充
         if padding:
             pad_w /= 2
             pad_h /= 2
@@ -606,27 +603,27 @@ def scale_masks(
     top, left = (round(pad_h - 0.1), round(pad_w - 0.1)) if padding else (0, 0)
     bottom = im1_h - round(pad_h + 0.1)
     right = im1_w - round(pad_w + 0.1)
-    return F.interpolate(masks[..., top:bottom, left:right].float(), shape, mode=mode)  # NCHW masks
+    return F.interpolate(masks[..., top:bottom, left:right].float(), shape, mode=mode)  # NCHW 掩码
 
 
 def scale_coords(img1_shape, coords, img0_shape, ratio_pad=None, normalize: bool = False, padding: bool = True):
-    """Rescale segment coordinates from img1_shape to img0_shape.
+    """将分割线坐标从 img1_shape 缩放到 img0_shape。
 
-    Args:
-        img1_shape (tuple): Source image shape as HWC or HW (supports both).
-        coords (torch.Tensor): Coordinates to scale with shape (N, 2).
-        img0_shape (tuple): Image 0 shape as HWC or HW (supports both).
-        ratio_pad (tuple, optional): Ratio and padding values as ((ratio_h, ratio_w), (pad_w, pad_h)).
-        normalize (bool): Whether to normalize coordinates to range [0, 1].
-        padding (bool): Whether coordinates are based on YOLO-style augmented images with padding.
+    参数：
+        img1_shape (tuple): 源图像尺寸，可为 HWC 或 HW 格式。
+        coords (torch.Tensor): 要缩放的坐标，形状为 (N, 2)。
+        img0_shape (tuple): 目标图像尺寸，可为 HWC 或 HW 格式。
+        ratio_pad (tuple, 可选): 缩放比例和填充值，格式为 ((ratio_h, ratio_w), (pad_w, pad_h))。
+        normalize (bool): 是否将坐标归一化到 [0, 1] 范围。
+        padding (bool): 坐标是否来自带有填充的 YOLO 风格增强图像。
 
-    Returns:
-        (torch.Tensor): Scaled coordinates.
+    返回：
+        (torch.Tensor): 缩放后的坐标。
     """
-    img0_h, img0_w = img0_shape[:2]  # supports both HWC or HW shapes
-    if ratio_pad is None:  # calculate from img0_shape
-        img1_h, img1_w = img1_shape[:2]  # supports both HWC or HW shapes
-        gain = min(img1_h / img0_h, img1_w / img0_w)  # gain  = old / new
+    img0_h, img0_w = img0_shape[:2]  # 同时支持 HWC 和 HW 尺寸
+    if ratio_pad is None:  # 根据 img0_shape 计算缩放参数
+        img1_h, img1_w = img1_shape[:2]  # 同时支持 HWC 和 HW 尺寸
+        gain = min(img1_h / img0_h, img1_w / img0_w)  # 缩放比例 = 旧尺寸 / 新尺寸
         gain_y = gain_x = gain
         pad = round((img1_w - round(img0_w * gain)) / 2 - 0.1), round((img1_h - round(img0_h * gain)) / 2 - 0.1)
     else:
@@ -634,44 +631,44 @@ def scale_coords(img1_shape, coords, img0_shape, ratio_pad=None, normalize: bool
         pad = ratio_pad[1]
 
     if padding:
-        coords[..., 0] -= pad[0]  # x padding
-        coords[..., 1] -= pad[1]  # y padding
+        coords[..., 0] -= pad[0]  # x 填充
+        coords[..., 1] -= pad[1]  # y 填充
     coords[..., 0] /= gain_x
     coords[..., 1] /= gain_y
     coords = clip_coords(coords, img0_shape)
     if normalize:
-        coords[..., 0] /= img0_w  # width
-        coords[..., 1] /= img0_h  # height
+        coords[..., 0] /= img0_w  # 宽度
+        coords[..., 1] /= img0_h  # 高度
     return coords
 
 
 def regularize_rboxes(rboxes):
-    """Regularize rotated bounding boxes to range [0, pi/2).
+    """将旋转边界框的角度规范化到 [0, pi/2) 范围。
 
-    Args:
-        rboxes (torch.Tensor): Input rotated boxes with shape (N, 5) in xywhr format.
+    参数：
+        rboxes (torch.Tensor): 输入的旋转边界框，采用 xywhr 格式，形状为 (N, 5)。
 
-    Returns:
-        (torch.Tensor): Regularized rotated boxes.
+    返回：
+        (torch.Tensor): Regularized rotated 边界框.
     """
     x, y, w, h, t = rboxes.unbind(dim=-1)
-    # Swap edge if t >= pi/2 while not being symmetrically opposite
+    # 当 t >= pi/2 且不是中心对称的相反边时交换宽高
     swap = t % math.pi >= math.pi / 2
     w_ = torch.where(swap, h, w)
     h_ = torch.where(swap, w, h)
     t = t % (math.pi / 2)
-    return torch.stack([x, y, w_, h_, t], dim=-1)  # regularized boxes
+    return torch.stack([x, y, w_, h_, t], dim=-1)  # regularized 边界框
 
 
 def masks2segments(masks: np.ndarray | torch.Tensor, strategy: str = "all") -> list[np.ndarray]:
-    """Convert masks to segments using contour detection.
+    """使用轮廓检测将掩码转换为分割段。
 
-    Args:
-        masks (np.ndarray | torch.Tensor): Binary masks with shape (N, H, W).
-        strategy (str): Segmentation strategy, either 'all' or 'largest'.
+    参数：
+        masks (np.ndarray | torch.Tensor): 形状为 (N, H, W) 的二值掩码。
+        strategy (str): 分割策略，可选 'all'（全部轮廓）或 'largest'（最大轮廓）。
 
-    Returns:
-        (list): List of segment masks as float32 arrays.
+    返回：
+        (列表): float32 数组格式的分割段列表。
     """
     from ultralytics.data.converter import merge_multi_segment
 
@@ -680,92 +677,89 @@ def masks2segments(masks: np.ndarray | torch.Tensor, strategy: str = "all") -> l
     for x in np.ascontiguousarray(masks):
         c = cv2.findContours(x, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[0]
         if c:
-            if strategy == "all":  # merge and concatenate all segments
+            if strategy == "all":  # 合并并拼接所有分割段
                 c = (
                     np.concatenate(merge_multi_segment([x.reshape(-1, 2) for x in c]))
                     if len(c) > 1
                     else c[0].reshape(-1, 2)
                 )
-            elif strategy == "largest":  # select largest segment
+            elif strategy == "largest":  # 选择最大的分割段
                 c = np.array(c[np.array([len(x) for x in c]).argmax()]).reshape(-1, 2)
         else:
-            c = np.zeros((0, 2))  # no segments found
+            c = np.zeros((0, 2))  # 未找到分割段
         segments.append(c.astype("float32"))
     return segments
 
 
 def convert_torch2numpy_batch(batch: torch.Tensor) -> np.ndarray:
-    """Convert a batch of FP32 torch tensors to NumPy uint8 arrays, changing from BCHW to BHWC layout.
+    """将 FP32 torch 张量批次转换为 NumPy uint8 数组，并将布局从 BCHW 改为 BHWC。
 
-    Args:
-        batch (torch.Tensor): Input tensor batch with shape (Batch, Channels, Height, Width) and dtype torch.float32.
+    参数：
+        batch (torch.Tensor): 输入张量批次，形状为 (批次, 通道, 高度, 宽度)，数据类型为 torch.float32。
 
-    Returns:
-        (np.ndarray): Output NumPy array batch with shape (Batch, Height, Width, Channels) and dtype uint8.
+    返回：
+        (np.ndarray): 输出的 NumPy 数组批次，形状为 (批次, 高度, 宽度, 通道)，数据类型为 uint8。
     """
     return (batch.permute(0, 2, 3, 1).contiguous() * 255).clamp(0, 255).byte().cpu().numpy()
 
 
 def clean_str(s):
-    """Clean a string by replacing special characters with '_' character.
+    """通过将特殊字符替换为 '_' 清理字符串。
 
-    Args:
-        s (str): A string needing special characters replaced.
+    参数：
+        s (str): 需要替换特殊字符的字符串。
 
-    Returns:
-        (str): A string with special characters replaced by an underscore _.
+    返回：
+        (str): 已将特殊字符替换为下划线的字符串。
     """
     return re.sub(pattern="[|@#!¡·$€%&()=?¿^*;:,¨`><+]", repl="_", string=s)
 
 
 def empty_like(x):
-    """Create empty torch.Tensor or np.ndarray with same shape and dtype as input."""
+    """创建与输入具有相同形状和数据类型的空 torch.Tensor 或 np.ndarray。"""
     return torch.empty_like(x, dtype=x.dtype) if isinstance(x, torch.Tensor) else np.empty_like(x, dtype=x.dtype)
 
 
-_assignment_solver = None  # resolved once on first call: SciPy's solver if installed, else the NumPy fallback
+    _assignment_solver = None  # 首次调用时确定：优先使用已安装的 SciPy 求解器，否则使用 NumPy 回退实现
 
 
 def linear_sum_assignment(cost_matrix):
-    """Solve the rectangular linear sum assignment problem (minimum-cost one-to-one matching).
+    """求解矩形线性和分配问题（最小代价的一对一匹配）。
 
-    Uses `scipy.optimize.linear_sum_assignment` when SciPy is installed (faster compiled C++ solver), and otherwise
-    falls back to an equivalent pure-NumPy implementation of the same modified Jonker-Volgenant shortest augmenting path
-    algorithm (Crouse 2016). This keeps SciPy out of Ultralytics' required dependencies while preserving its speed when
-    present. SciPy is imported lazily so it never slows `import ultralytics`. For a rectangular matrix only min(rows,
-    columns) entries are matched.
+    安装 SciPy 时使用 `scipy.optimize.linear_sum_assignment`（更快的编译版 C++ 求解器），否则使用等价的纯 NumPy
+    实现。两者都采用改进的 Jonker-Volgenant 最短增广路径算法（Crouse 2016）。这样既不将 SciPy 加入 Ultralytics
+    的必需依赖，又能在其存在时保留更高速度。SciPy 采用延迟导入，因此不会拖慢 `import ultralytics`。
+    对于矩形矩阵，只匹配 min(行数, 列数) 个元素。
 
-    The NumPy fallback supports `+inf` as a forbidden assignment and raises `ValueError("cost matrix is infeasible")`
-    when no assignment exists; callers must sanitize `NaN` and `-inf`. The two backends may return a different
-    equal-cost assignment under exact ties, but the total cost is identical.
+    NumPy 回退实现支持使用 `+inf` 表示禁止分配；当不存在可行分配时会抛出 `ValueError("cost matrix is infeasible")`。
+    调用方必须先处理 `NaN` 和 `-inf`。两个后端在代价完全相同的并列情况下可能返回不同的分配结果，但总成本相同。
 
-    The NumPy fallback is validated against SciPy with exact optimal-cost parity across ~6.9k randomized cases (every
-    shape including empty/tall/wide, ties, negatives, IoU- and RT-DETR-style matrices, `maximize` via negation,
-    torch-tensor input) plus ~2k independent brute-force global-optimum checks. SciPy's compiled inner loop is faster,
-    but at the call-site sizes (smaller dimension = object count) the fallback runs in well under a millisecond:
+    NumPy 回退实现已通过约 6,900 个随机测试用例与 SciPy 进行验证，最优成本完全一致（涵盖空矩阵、高矩阵、宽矩阵、
+    并列值、负值、IoU 和 RT-DETR 风格矩阵、通过取负实现的 `maximize` 以及 torch 张量输入），另有约 2,000 个独立的
+    暴力全局最优检查。SciPy 的编译内循环更快，但在调用点规模下（较小的维度等于目标数量），回退实现通常远低于 1 毫秒：
 
-        cost matrix   NumPy   SciPy
+        成本矩阵       NumPy   SciPy
         300 x 20      0.2ms   0.02ms
         300 x 80      0.6ms   0.1ms
         300 x 300     28ms    1.5ms
 
-    Args:
-        cost_matrix (np.ndarray | torch.Tensor): Cost matrix with shape (N, M); `+inf` forbids assignments.
+    参数：
+        cost_matrix (np.ndarray | torch.Tensor): 形状为 (N, M) 的成本矩阵；`+inf` 表示禁止分配。
 
-    Returns:
-        row_ind (np.ndarray): Row indices of the optimal assignment, sorted ascending, with length min(N, M).
-        col_ind (np.ndarray): Column indices matched to each row in row_ind.
+    返回：
+        row_ind (np.ndarray): 最优分配的行索引，按升序排列，长度为 min(N, M)。
+        col_ind (np.ndarray): 与 row_ind 中每一行匹配的列索引。
 
-    Examples:
+    示例：
         >>> cost = np.array([[4, 1, 3], [2, 0, 5], [3, 2, 2]], dtype=float)
         >>> row_ind, col_ind = linear_sum_assignment(cost)
         >>> float(cost[row_ind, col_ind].sum())
         5.0
     """
     global _assignment_solver
-    if _assignment_solver is None:  # resolve the backend once, then reuse it on every later call
+    if _assignment_solver is None:  # 仅首次确定后端，后续调用复用该后端
         try:
-            from scipy.optimize import linear_sum_assignment as solver  # faster compiled C++ solver when installed
+            from scipy.optimize import linear_sum_assignment as solver  # 安装 SciPy 时使用更快的编译版 C++ 求解器
 
             _assignment_solver = solver
         except ImportError:
@@ -774,14 +768,14 @@ def linear_sum_assignment(cost_matrix):
 
 
 def _linear_sum_assignment_numpy(a):
-    """Solve the rectangular linear sum assignment problem with NumPy (Jonker-Volgenant SciPy-free fallback).
+    """使用 NumPy 求解矩形线性和分配问题（无 SciPy 的 Jonker-Volgenant 回退实现）。
 
-    Args:
-        a (np.ndarray): Float64 cost matrix of shape (N, M); `+inf` forbids assignments.
+    参数：
+        a (np.ndarray): Float64 cost matrix of 形状 (N, M); `+inf` forbids assignments.
 
-    Returns:
-        row_ind (np.ndarray): Row indices of the optimal assignment, sorted ascending, with length min(N, M).
-        col_ind (np.ndarray): Column indices matched to each row in row_ind.
+    返回：
+        row_ind (np.ndarray): 最优分配的行索引，按升序排列，长度为 min(N, M)。
+        col_ind (np.ndarray): Column 索引 matched to 每个 row in row_ind.
     """
     n, m = a.shape
     if n == 0 or m == 0:
@@ -789,12 +783,12 @@ def _linear_sum_assignment_numpy(a):
     transposed = n > m
     if transposed:
         a, n, m = a.T, m, n  # ensure rows <= columns
-    u, v = np.zeros(n + 1), np.zeros(m + 1)  # row and column dual potentials
-    p, way = np.zeros(m + 1, np.intp), np.zeros(m + 1, np.intp)  # column->row matches and path pointers
+    u, v = np.zeros(n + 1), np.zeros(m + 1)  # 行和列的对偶势
+    p, way = np.zeros(m + 1, np.intp), np.zeros(m + 1, np.intp)  # 列到行的匹配和路径指针
     for i in range(1, n + 1):
         p[0], j0 = i, 0
         minv, used = np.full(m + 1, np.inf), np.zeros(m + 1, bool)
-        while True:  # grow a shortest augmenting path from row i
+        while True:  # 从第 i 行扩展最短增广路径
             used[j0] = True
             i0 = p[j0]
             cur = a[i0 - 1] - u[i0] - v[1:]
@@ -811,11 +805,11 @@ def _linear_sum_assignment_numpy(a):
             j0 = j1
             if p[j0] == 0:
                 break
-        while j0:  # augment along the path
+        while j0:  # 沿路径进行增广
             p[j0] = p[way[j0]]
             j0 = way[j0]
     cols = np.nonzero(p[1:])[0]
     rows = p[1:][cols] - 1
     row_ind, col_ind = (cols, rows) if transposed else (rows, cols)
-    order = np.argsort(row_ind, kind="stable")  # match scipy's row-sorted output
+    order = np.argsort(row_ind, kind="stable")  # match scipy's row-sorted 输出
     return row_ind[order].astype(np.intp), col_ind[order].astype(np.intp)

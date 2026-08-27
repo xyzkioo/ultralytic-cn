@@ -1,5 +1,5 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
-"""Depth estimation trainer for YOLO models."""
+"""YOLO 模型的深度估计训练器。"""
 
 from __future__ import annotations
 
@@ -15,11 +15,11 @@ from ultralytics.utils.plotting import plt_settings
 
 
 class DepthTrainer(DetectionTrainer):
-    """Trainer for YOLO depth estimation models.
+    """YOLO 深度估计模型的训练器。
 
-    Multi-source training (list of img_paths) is handled transparently by the base DetectionTrainer/BaseDataset.
+    多源训练（img_paths 列表）由基础 DetectionTrainer/BaseDataset 透明处理。
 
-    Examples:
+    示例：
         >>> from ultralytics.models.yolo.depth import DepthTrainer
         >>> args = dict(model="yolo26s-depth.yaml", data="nyu-depth.yaml", epochs=100)
         >>> trainer = DepthTrainer(overrides=args)
@@ -29,14 +29,14 @@ class DepthTrainer(DetectionTrainer):
     def __init__(
         self, cfg=DEFAULT_CFG, overrides: dict[str, Any] | None = None, _callbacks: dict | None = None
     ) -> None:
-        """Initialize DepthTrainer."""
+        """初始化 DepthTrainer."""
         if overrides is None:
             overrides = {}
         overrides["task"] = "depth"
         super().__init__(cfg, overrides, _callbacks)
 
     def get_model(self, cfg: str | None = None, weights: str | None = None, verbose: bool = True) -> DepthModel:
-        """Return a DepthModel initialized with the given config and weights."""
+        """返回使用给定配置和权重初始化的 DepthModel。"""
         model = DepthModel(
             cfg, ch=self.data.get("channels", 3), nc=self.data["nc"], verbose=verbose and RANK in {-1, 0}
         )
@@ -45,26 +45,24 @@ class DepthTrainer(DetectionTrainer):
         return model
 
     def preprocess_batch(self, batch: dict[str, Any]) -> dict[str, Any]:
-        """Preprocess batch: normalize images and keep depth as float32."""
+        """预处理批次：归一化图像，并将深度保持为 float32。"""
         batch = super().preprocess_batch(batch)
         batch["depth"] = batch["depth"].float()
         return batch
 
     def get_validator(self) -> yolo.depth.DepthValidator:
-        """Return a DepthValidator for model validation."""
+        """返回用于模型验证的 DepthValidator。"""
         return yolo.depth.DepthValidator(
             self.test_loader, save_dir=self.save_dir, args=copy(self.args), _callbacks=self.callbacks
         )
 
     @plt_settings()
     def plot_training_labels(self) -> None:
-        """Plot the training-set GT depth distribution to ``labels.jpg``.
+        """将训练集 GT 深度分布绘制到 ``labels.jpg``。
 
-        The depth analog of the detection/semantic label plots. The inherited DetectionTrainer
-        version concatenates per-image ``bboxes``/``cls`` (all empty for depth) and hands them to
-        ``plot_labels``, whose reductions raise "zero-size array to reduction operation maximum
-        which has no identity". Instead, sample GT depth maps from the training set and plot a
-        histogram of valid (``> 0``) depth values, annotated with basic statistics.
+        这是检测/语义分割标签图的深度任务对应版本。继承的 DetectionTrainer 实现会拼接每张图像的
+        ``bboxes``/``cls``（深度任务中全部为空）并传给 ``plot_labels``，导致归约操作报错。
+        因此改为从训练集中采样 GT 深度图，绘制有效（``> 0``）深度值的直方图，并标注基本统计信息。
         """
         import matplotlib.pyplot as plt
         import numpy as np
@@ -78,7 +76,7 @@ class DepthTrainer(DetectionTrainer):
 
         sample_size = min(1000, n)
         indices = np.linspace(0, n - 1, sample_size).astype(int)
-        per_map_cap = max(1, 1_000_000 // sample_size)  # bound total memory to ~1M values
+        per_map_cap = max(1, 1_000_000 // sample_size)  # bound total memory to ~1M 值
         values = []
         for idx in indices:
             d = dataset._load_depth(idx)
@@ -87,7 +85,7 @@ class DepthTrainer(DetectionTrainer):
             v = d[d > 0].ravel()
             if v.size == 0:
                 continue
-            if v.size > per_map_cap:  # uniform stride keeps the spatial distribution unbiased
+            if v.size > per_map_cap:  # 均匀步长可保持空间分布无偏
                 v = v[np.linspace(0, v.size - 1, per_map_cap).astype(int)]
             values.append(v)
 
@@ -128,12 +126,11 @@ class DepthTrainer(DetectionTrainer):
             self.on_plot(fname)
 
     def final_eval(self) -> None:
-        """Run the standard final evaluation, then calibrate the saved checkpoints.
+        """执行标准最终评估，然后校准已保存的检查点。
 
-        After training, fits the scale-only log-affine (``cal_a``/``cal_b``) on the validation
-        set and writes it into best.pt/last.pt, so the model outputs metric-scaled depth out of
-        the box. When ``plots`` is set, also writes ``val_batch{ni}_calibrated.jpg``
-        (RGB | GT | raw | calibrated) comparison panels.
+        训练完成后，在验证集上拟合仅缩放的对数仿射参数（``cal_a``/``cal_b``），并写入 best.pt/last.pt，
+        使模型输出经过指标尺度校准的深度。当设置 ``plots`` 时，还会写入
+        ``val_batch{ni}_calibrated.jpg``（RGB | GT | 原始 | 校准后）对比面板。
         """
         super().final_eval()
         if RANK not in {-1, 0}:
@@ -157,7 +154,7 @@ class DepthTrainer(DetectionTrainer):
                                 .as_posix()
                             )
                         except ValueError:
-                            pass  # External validation paths have no portable dataset-root-relative identifier.
+                            pass  # 外部验证路径没有可移植的相对数据集根目录标识。
                     provenance = calibrate_checkpoint(
                         ckpt,
                         self.test_loader,

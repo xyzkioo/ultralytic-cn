@@ -15,10 +15,10 @@ from .base import BaseBackend
 
 
 class PyTorchBackend(BaseBackend):
-    """PyTorch inference backend for native model execution.
+    """用于原生模型执行的 PyTorch 推理后端。
 
-    Loads and runs inference with native PyTorch models (.pt checkpoint files) or pre-loaded nn.Module
-    instances. Supports model layer fusion, FP16 precision, and NVIDIA Jetson compatibility.
+    加载并执行原生 PyTorch 模型（.pt 检查点文件）或预加载的 nn.Module 实例推理。
+    支持模型层融合、FP16 精度和 NVIDIA Jetson 兼容性。
     """
 
     def __init__(
@@ -29,24 +29,24 @@ class PyTorchBackend(BaseBackend):
         fuse: bool = True,
         verbose: bool = True,
     ):
-        """Initialize the PyTorch backend.
+        """初始化 PyTorch 后端。
 
-        Args:
-            weight (str | Path | nn.Module): Path to the .pt model file or a pre-loaded nn.Module instance.
-            device (torch.device): Device to run inference on (e.g., 'cpu', 'cuda:0').
-            fp16 (bool): Whether to use FP16 half-precision inference.
-            fuse (bool): Whether to fuse Conv2D + BatchNorm layers for optimization.
-            verbose (bool): Whether to print verbose model loading messages.
+        参数：
+            weight (str | Path | nn.Module): .pt 模型文件路径或预加载的 nn.Module 实例。
+            device (torch.device): 执行推理的设备（例如 'cpu'、'cuda:0'）。
+            fp16 (bool): 是否使用 FP16 半精度推理。
+            fuse (bool): 是否融合 Conv2D + BatchNorm 层以进行优化。
+            verbose (bool): 是否输出详细的模型加载消息。
         """
         self.fuse = fuse
         self.verbose = verbose
         super().__init__(weight, device, fp16)
 
     def load_model(self, weight: str | torch.nn.Module) -> None:
-        """Load a PyTorch model from a checkpoint file or nn.Module instance.
+        """从检查点文件或 nn.Module 实例加载 PyTorch 模型。
 
-        Args:
-            weight (str | torch.nn.Module): Path to the .pt checkpoint or a pre-loaded module.
+        参数：
+            weight (str | torch.nn.Module): .pt 检查点路径或预加载的模块。
         """
         from ultralytics.nn.tasks import BaseModel, load_checkpoint
 
@@ -59,7 +59,7 @@ class PyTorchBackend(BaseBackend):
         else:
             model, _ = load_checkpoint(weight, device=self.device, fuse=self.fuse)
 
-        # Extract model attributes
+        # 提取模型属性
         if hasattr(model, "kpt_shape"):
             self.kpt_shape = model.kpt_shape
         self.stride = max(int(model.stride.max()), 32) if hasattr(model, "stride") else 32
@@ -77,16 +77,16 @@ class PyTorchBackend(BaseBackend):
     def forward(
         self, im: torch.Tensor, augment: bool = False, embed: list | None = None, **kwargs: Any
     ) -> torch.Tensor | list[torch.Tensor]:
-        """Run native PyTorch inference with support for augmentation and embeddings.
+        """执行原生 PyTorch 推理，并支持增强和嵌入提取。
 
-        Args:
-            im (torch.Tensor): Input image tensor in BCHW format, normalized to [0, 1].
+        参数：
+            im (torch.Tensor): 输入图像 张量 in BCHW format, normalized to [0, 1].
             augment (bool): Whether to apply test-time augmentation.
-            embed (list | None): List of layer indices to extract embeddings from, or None.
-            **kwargs (Any): Additional keyword arguments passed to the model forward method.
+            embed (列表 | None): 用于提取嵌入的层索引列表，或 None。
+            **kwargs (Any): 传递给模型 forward 方法的其他关键字参数。
 
-        Returns:
-            (torch.Tensor | list[torch.Tensor]): Model predictions as tensor(s).
+        返回：
+            (torch.Tensor | 列表[torch.Tensor]): 张量或张量列表形式的模型预测结果。
         """
         if not self.base_model:  # a foreign nn.Module defines no `augment`/`embed` contract to honor
             return self.model(im, **kwargs)
@@ -94,29 +94,29 @@ class PyTorchBackend(BaseBackend):
 
 
 class TorchScriptBackend(BaseBackend):
-    """PyTorch TorchScript inference backend for serialized model execution.
+    """用于执行序列化模型的 PyTorch TorchScript 推理后端。
 
-    Loads and runs inference with TorchScript models (.torchscript files) created via torch.jit.trace or
+    加载并执行通过 torch.jit.trace 创建的 TorchScript 模型（.torchscript 文件）推理，或
     torch.jit.script. Supports FP16 precision and embedded metadata extraction.
     """
 
     def __init__(self, weight: str | Path, device: torch.device, fp16: bool = False):
-        """Initialize the TorchScript backend.
+        """初始化 TorchScript 后端。
 
-        Args:
-            weight (str | Path): Path to the .torchscript model file.
-            device (torch.device): Device to run inference on (e.g., 'cpu', 'cuda:0').
-            fp16 (bool): Whether to use FP16 half-precision inference.
+        参数：
+            weight (str | Path): .torchscript 模型文件路径。
+            device (torch.device): 执行推理的设备（例如 'cpu'、'cuda:0'）。
+            fp16 (bool): 是否使用 FP16 半精度推理。
         """
         super().__init__(weight, device, fp16)
 
     def load_model(self, weight: str) -> None:
-        """Load a TorchScript model from a .torchscript file with optional embedded metadata.
+        """从 .torchscript 文件加载 TorchScript 模型，并读取可选的嵌入元数据。
 
-        Args:
-            weight (str): Path to the .torchscript model file.
+        参数：
+            weight (str): .torchscript 模型文件的路径。
         """
-        import torchvision  # noqa - required for TorchScript model deserialization
+        import torchvision  # noqa - TorchScript 模型反序列化所需
 
         LOGGER.info(f"Loading {weight} for TorchScript inference...")
         self.model = torch.jit.load(weight, map_location=self.device)
@@ -124,12 +124,12 @@ class TorchScriptBackend(BaseBackend):
         self.apply_metadata(self.read_metadata(weight))
 
     def forward(self, im: torch.Tensor) -> torch.Tensor | list[torch.Tensor]:
-        """Run TorchScript inference.
+        """执行 TorchScript 推理。
 
-        Args:
-            im (torch.Tensor): Input image tensor in BCHW format, normalized to [0, 1].
+        参数：
+            im (torch.Tensor): 输入图像 张量 in BCHW format, normalized to [0, 1].
 
-        Returns:
-            (torch.Tensor | list[torch.Tensor]): Model predictions as tensor(s).
+        返回：
+            (torch.Tensor | 列表[torch.Tensor]): 张量或张量列表形式的模型预测结果。
         """
         return self.model(im)

@@ -78,7 +78,7 @@ body:
         When asking a question, people will be better able to provide help if you provide code that they can easily understand and use to **reproduce** the problem. This is referred to by community members as creating a [minimal reproducible example](https://docs.ultralytics.com/help/minimum-reproducible-example).
       placeholder: |
         ```
-        # Code to reproduce your issue here
+        # 在此填写可复现问题的代码
         ```
     validations:
       required: true

@@ -23,7 +23,7 @@ from ultralytics.utils.tal import make_anchors
 
 
 def tf_wrapper(model: torch.nn.Module) -> torch.nn.Module:
-    """A wrapper for TensorFlow export compatibility (TF-specific handling is now in head modules)."""
+    """用于 TensorFlow 导出兼容性的包装器（TensorFlow 专用处理现在位于 head 模块）。"""
     for m in model.modules():
         if not isinstance(m, Detect):
             continue
@@ -36,7 +36,7 @@ def tf_wrapper(model: torch.nn.Module) -> torch.nn.Module:
 
 
 def _tf_decode_boxes(self, x: dict[str, torch.Tensor]) -> torch.Tensor:
-    """Decode bounding boxes for TensorFlow export."""
+    """为 TensorFlow 导出解码边界框。"""
     shape = x["feats"][0].shape  # BCHW
     boxes = x["boxes"]
     if self.format != "imx" and (self.dynamic or self.shape != shape):
@@ -50,10 +50,10 @@ def _tf_decode_boxes(self, x: dict[str, torch.Tensor]) -> torch.Tensor:
 
 
 def _tf_kpts_decode(self, kpts: torch.Tensor, is_pose26: bool = False) -> torch.Tensor:
-    """Decode keypoints for TensorFlow export."""
+    """为 TensorFlow 导出解码关键点。"""
     ndim = self.kpt_shape[1]
     bs = kpts.shape[0]
-    # Precompute normalization factor to increase numerical stability
+    # 预先计算归一化因子，以提高数值稳定性
     y = kpts.view(bs, *self.kpt_shape, -1)
     grid_h, grid_w = self.shape[2:4]
     grid_size = torch.tensor([grid_w, grid_h], device=y.device).reshape(1, 2, 1)
@@ -73,25 +73,25 @@ def onnx2saved_model(
     cuda: bool = False,
     prefix: str = "",
 ):
-    """Convert an ONNX model to TensorFlow SavedModel format using onnx2tf.
+    """使用 onnx2tf 将 ONNX 模型转换为 TensorFlow SavedModel 格式。
 
-    Args:
-        onnx_file (str): ONNX file path.
-        output_dir (Path | str): Output directory path for the SavedModel.
-        quantize (int | str | None): Precision scheme, 8 for INT8.
-        images (np.ndarray | None, optional): Calibration images for INT8 quantization in BHWC format.
-        disable_group_convolution (bool, optional): Disable group convolution optimization. Defaults to False.
-        cuda (bool, optional): True if exporting on a CUDA device; selects GPU onnxruntime and keeps GPUs visible to
-            TensorFlow, which are otherwise hidden so CPU exports never touch GPU memory. Defaults to False.
-        prefix (str, optional): Logging prefix. Defaults to "".
+    参数：
+        onnx_file (str): ONNX 文件路径。
+        output_dir (Path | str): 保存 SavedModel 的输出目录路径。
+        quantize (int | str | None): 精度方案，8 表示 INT8。
+        images (np.ndarray | None, 可选): 用于 INT8 量化的校准图像，格式为 BHWC。
+        disable_group_convolution (bool, 可选): 是否禁用分组卷积优化。默认为 False。
+        cuda (bool, 可选): 是否在 CUDA 设备上导出；为 True 时选择 GPU 版 onnxruntime，并让 TensorFlow 保持 GPU 可见，
+            否则 CPU 导出不会占用 GPU 内存。默认为 False。
+        prefix (str, 可选): 日志前缀。默认为 ""。
 
-    Returns:
-        (keras.Model): Converted Keras model.
+    返回：
+        (keras.Model): 转换后的 Keras 模型。
 
-    Notes:
-        - Auto-installs tensorflow, onnx2tf, and all required dependencies if not present.
-        - Downloads calibration data if INT8 quantization is enabled.
-        - Removes temporary files and renames quantized models after conversion.
+    注意：
+        - 如果尚未安装，则自动安装 tensorflow、onnx2tf 及所有必需依赖。
+        - 启用 INT8 量化时下载校准数据。
+        - 转换完成后删除临时文件并重命名量化模型。
     """
     try:
         import tensorflow as tf
@@ -99,9 +99,9 @@ def onnx2saved_model(
         check_requirements("tensorflow>2.19.0" if IS_PYTHON_MINIMUM_3_13 else "tensorflow>=2.0.0,<=2.19.0")
         import tensorflow as tf
     if not cuda:
-        with contextlib.suppress(Exception):  # fails only if TF GPUs are already initialized by earlier user code
+        with contextlib.suppress(Exception):  # 仅当用户之前的代码已初始化 TF GPU 时失败
             tf.config.set_visible_devices([], "GPU")  # hide GPUs so non-CUDA exports never allocate GPU memory
-    check_requirements(
+        check_requirements(
         f"onnx2tf{'>=2.3.0,<2.3.16' if IS_PYTHON_MINIMUM_3_13 else '>=1.26.3,<1.29.0'}",  # pin to avoid h5py build issues on aarch64
         cmds="--no-deps",
     )
@@ -114,7 +114,7 @@ def onnx2saved_model(
             "onnx>=1.12.0,<2.0.0",
             f"onnx2tf{'>=2.3.0,<2.3.16' if IS_PYTHON_MINIMUM_3_13 else '>=1.26.3,<1.29.0'}",
             "onnxslim>=0.1.82",
-            # Interchangeable candidates so an installed variant (e.g. onnxruntime-gpu) is never dual-installed over
+            # 这些候选项可互换，避免已安装的变体（例如 onnxruntime-gpu）被重复安装
             ("onnxruntime-gpu" if cuda else "onnxruntime", "onnxruntime", "onnxruntime-gpu", "onnxruntime-qnn"),
             "protobuf>=6.31.1,<7.0.0"
             if IS_PYTHON_MINIMUM_3_13
@@ -133,27 +133,27 @@ def onnx2saved_model(
 
     output_dir = Path(output_dir)
     use_int8 = quantize == 8
-    # Pre-download calibration file to fix https://github.com/PINTO0309/onnx2tf/issues/545
+    # 预先下载校准文件，以修复 https://github.com/PINTO0309/onnx2tf/issues/545
     onnx2tf_file = Path("calibration_image_sample_data_20x128x128x3_float32.npy")
     if not onnx2tf_file.exists():
         attempt_download_asset(f"{onnx2tf_file}.zip", unzip=True, delete=True)
     np_data = None
     if use_int8:
-        tmp_file = output_dir / "tmp_tflite_int8_calibration_images.npy"  # int8 calibration images file
+        tmp_file = output_dir / "tmp_tflite_int8_calibration_images.npy"  # int8 calibration 图像 文件
         if images is not None:
             output_dir.mkdir(parents=True, exist_ok=True)
             np.save(str(tmp_file), images)  # BHWC
             np_data = [["images", tmp_file, [[[[0, 0, 0]]]], [[[[255, 255, 255]]]]]]
 
-    # Patch onnx.helper for onnx_graphsurgeon compatibility with ONNX>=1.17
-    # The float32_to_bfloat16 function was removed in ONNX 1.17, but onnx_graphsurgeon still uses it
+    # 修补 onnx.helper，以兼容 ONNX>=1.17 的 onnx_graphsurgeon
+    # ONNX 1.17 删除了 float32_to_bfloat16 函数，但 onnx_graphsurgeon 仍在使用它
     import onnx.helper
 
     if not hasattr(onnx.helper, "float32_to_bfloat16"):
         import struct
 
         def float32_to_bfloat16(fval):
-            """Convert float32 to bfloat16 (truncates lower 16 bits of mantissa)."""
+            """将 float32 转换为 bfloat16（截断尾数的低 16 位）。"""
             ival = struct.unpack("=I", struct.pack("=f", fval))[0]
             return ival >> 16
 
@@ -175,52 +175,52 @@ def onnx2saved_model(
         try:
             _path.write_text(_patched)
             importlib.reload(_t)
-        except OSError as e:  # read-only install: continue unpatched, only TopK-containing models are affected
+        except OSError as e:  # 安装目录只读：保持未修补状态继续运行，只有包含 TopK 的模型会受影响
             LOGGER.warning(f"{prefix} unable to apply onnx2tf TopK patch: {e}")
-    import onnx2tf  # scoped for after ONNX export for reduced conflict during import
+    import onnx2tf  # 在 ONNX 导出后按需导入，以减少导入期间的冲突
 
     LOGGER.info(f"{prefix} starting TFLite export with onnx2tf {onnx2tf.__version__}...")
     keras_model = onnx2tf.convert(
         input_onnx_file_path=onnx_file,
         output_folder_path=str(output_dir),
         not_use_onnxsim=True,
-        verbosity="error",  # note INT8-FP16 activation bug https://github.com/ultralytics/ultralytics/issues/15873
+        verbosity="error",  # 注意 INT8-FP16 激活值问题：https://github.com/ultralytics/ultralytics/issues/15873
         output_integer_quantized_tflite=use_int8,
         custom_input_op_name_np_data_path=np_data,
-        enable_batchmatmul_unfold=not use_int8,  # fix lower no. of detected objects on GPU delegate
-        output_signaturedefs=True,  # fix error with Attention block group convolution
-        disable_group_convolution=disable_group_convolution,  # fix error with group convolution
+        enable_batchmatmul_unfold=not use_int8,  # 修复 GPU 委托上检测对象数量减少的问题
+        output_signaturedefs=True,  # 修复 Attention 模块组卷积错误
+        disable_group_convolution=disable_group_convolution,  # 修复组卷积错误
     )
 
-    # Remove/rename TFLite models
+    # 删除或重命名 TFLite 模型
     if use_int8:
         tmp_file.unlink(missing_ok=True)
         for file in output_dir.rglob("*_dynamic_range_quant.tflite"):
             file.rename(file.with_name(file.stem.replace("_dynamic_range_quant", "_int8") + file.suffix))
         for file in output_dir.rglob("*_integer_quant_with_int16_act.tflite"):
-            file.unlink()  # delete extra fp16 activation TFLite files
+            file.unlink()  # 删除多余的 FP16 激活值 TFLite 文件
     return keras_model
 
 
 def keras2pb(keras_model, output_file: Path | str, prefix: str = "") -> str:
-    """Convert a Keras model to TensorFlow GraphDef (.pb) format.
+    """将 Keras 模型转换为 TensorFlow GraphDef（.pb）格式。
 
-    Args:
-        keras_model (keras.Model): Keras model to convert to frozen graph format.
-        output_file (Path | str): Output file path (suffix will be changed to .pb).
-        prefix (str, optional): Logging prefix. Defaults to "".
+    参数：
+        keras_model (keras.Model): 要转换为冻结图格式的 Keras 模型。
+        output_file (Path | str): 输出文件路径（后缀会改为 .pb）。
+        prefix (str, 可选): 日志前缀，默认为 ""。
 
-    Returns:
-        (str): Path to the exported ``.pb`` file.
+    返回：
+        (str): 导出的 ``.pb`` 文件路径。
 
-    Notes:
-        Creates a frozen graph by converting variables to constants for inference optimization.
+    注意：
+        将变量转换为常量，创建用于推理优化的冻结图。
     """
     import tensorflow as tf
     from tensorflow.python.framework.convert_to_constants import convert_variables_to_constants_v2
 
     LOGGER.info(f"\n{prefix} starting export with tensorflow {tf.__version__}...")
-    m = tf.function(lambda x: keras_model(x))  # full model
+    m = tf.function(lambda x: keras_model(x))  # full 模型
     m = m.get_concrete_function(tf.TensorSpec(keras_model.inputs[0].shape, keras_model.inputs[0].dtype))
     frozen_func = convert_variables_to_constants_v2(m)
     frozen_func.graph.as_graph_def()
@@ -232,27 +232,27 @@ def keras2pb(keras_model, output_file: Path | str, prefix: str = "") -> str:
 
 
 def tflite2edgetpu(tflite_file: str | Path, output_dir: str | Path, prefix: str = "") -> str:
-    """Convert a TensorFlow Lite model to Edge TPU format using the Edge TPU compiler.
+    """使用 Edge TPU 编译器将 TensorFlow Lite 模型转换为 Edge TPU 格式。
 
-    Args:
-        tflite_file (str | Path): Path to the input TensorFlow Lite (.tflite) model file.
-        output_dir (str | Path): Output directory path for the compiled Edge TPU model.
-        prefix (str, optional): Logging prefix. Defaults to "".
+    参数：
+        tflite_file (str | Path): 输入 TensorFlow Lite（.tflite）模型文件的路径。
+        output_dir (str | Path): 保存编译后 Edge TPU 模型的输出目录路径。
+        prefix (str, 可选): 日志前缀，默认为 ""。
 
-    Returns:
-        (str): Path to the exported Edge TPU model file.
+    返回：
+        (str): 导出的 Edge TPU 模型文件路径。
 
-    Notes:
-        Auto-installs the Edge TPU compiler if not found. The function compiles the TFLite model
-        for optimal performance on Google's Edge TPU hardware accelerator.
+    注意：
+        如果找不到 Edge TPU 编译器则自动安装。此函数编译 TFLite 模型
+        以便在 Google Edge TPU 硬件加速器上获得最佳性能。
     """
     import shlex
     import subprocess
 
-    # Install Edge TPU compiler if not found
+    # 如果未找到，则安装 Edge TPU 编译器
     check_cmd = "edgetpu_compiler --version"
     help_url = "https://coral.ai/docs/edgetpu/compiler/"
-    assert LINUX, f"export only supported on Linux. See {help_url}"
+    assert LINUX, f"导出仅支持 Linux 系统。参见 {help_url}"
     if (
         subprocess.run(
             check_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, shell=True, check=False
@@ -283,14 +283,14 @@ def tflite2edgetpu(tflite_file: str | Path, output_dir: str | Path, prefix: str 
         "--timeout_sec",
         "180",
         str(tflite_file),
-    ]  # argv list avoids shell metacharacter issues in output_dir/tflite_file paths
+    ]  # argv 列表可避免 output_dir/tflite_file 路径中的 shell 元字符问题
     LOGGER.info(f"{prefix} running '{shlex.join(cmd)}'")
     subprocess.run(cmd, check=True)
     return str(Path(output_dir) / f"{Path(tflite_file).stem}_edgetpu.tflite")
 
 
 def gd_outputs(gd):
-    """Return TensorFlow GraphDef model output node names."""
+    """返回 TensorFlow GraphDef 模型的输出节点名称。"""
     name_list, input_list = [], []
     for node in gd.node:  # tensorflow.core.framework.node_def_pb2.NodeDef
         name_list.append(node.name)

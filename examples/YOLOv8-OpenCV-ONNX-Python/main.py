@@ -45,31 +45,31 @@ def main(onnx_model: str, input_image: str) -> list[dict[str, Any]]:
         (list[dict[str, Any]]): List of dictionaries containing detection information such as class_id, class_name,
             confidence, box coordinates, and scale factor.
     """
-    # Load the ONNX model
+    # 加载 ONNX 模型
     model: cv2.dnn.Net = cv2.dnn.readNetFromONNX(onnx_model)
 
-    # Read the input image
+    # 读取输入图像
     original_image: np.ndarray = cv2.imread(input_image)
     if original_image is None:
         raise FileNotFoundError(f"Image Not Found {input_image}")
     [height, width, _] = original_image.shape
 
-    # Prepare a square image for inference
+    # 准备用于推理的正方形图像
     length = max((height, width))
     image = np.zeros((length, length, 3), np.uint8)
     image[0:height, 0:width] = original_image
 
-    # Calculate scale factor
+    # 计算缩放因子
     scale = length / 640
 
-    # Preprocess the image and prepare blob for model
+    # 预处理图像并为模型准备 blob
     blob = cv2.dnn.blobFromImage(image, scalefactor=1 / 255, size=(640, 640), swapRB=True)
     model.setInput(blob)
 
-    # Perform inference
+    # 执行推理
     outputs = model.forward()
 
-    # Prepare output array
+    # 准备输出数组
     outputs = np.array([cv2.transpose(outputs[0])])
     rows = outputs.shape[1]
 
@@ -77,7 +77,7 @@ def main(onnx_model: str, input_image: str) -> list[dict[str, Any]]:
     scores = []
     class_ids = []
 
-    # Iterate through output to collect bounding boxes, confidence scores, and class IDs
+    # 遍历输出，收集边界框、置信度分数和类别 ID
     for i in range(rows):
         classes_scores = outputs[0][i][4:]
         (_minScore, maxScore, _minClassLoc, (_x, maxClassIndex)) = cv2.minMaxLoc(classes_scores)
@@ -92,12 +92,12 @@ def main(onnx_model: str, input_image: str) -> list[dict[str, Any]]:
             scores.append(maxScore)
             class_ids.append(maxClassIndex)
 
-    # Apply NMS (Non-maximum suppression)
+    # 应用 NMS（非极大值抑制）
     result_boxes = np.array(cv2.dnn.NMSBoxes(boxes, scores, 0.25, 0.45, 0.5)).flatten()
 
     detections = []
 
-    # Iterate through NMS results to draw bounding boxes and labels
+    # 遍历 NMS 结果，绘制边界框和标签
     for index in result_boxes:
         index = int(index)
         box = boxes[index]
@@ -119,7 +119,7 @@ def main(onnx_model: str, input_image: str) -> list[dict[str, Any]]:
             round((box[1] + box[3]) * scale),
         )
 
-    # Display the image with bounding boxes
+    # 显示带边界框的图像
     cv2.imshow("image", original_image)
     cv2.waitKey(0)
     cv2.destroyAllWindows()

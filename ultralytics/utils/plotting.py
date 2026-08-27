@@ -21,26 +21,26 @@ from ultralytics.utils.torch_utils import TORCH_1_10
 
 
 def _gaussian_filter1d(y, sigma: int = 3, truncate: float = 4.0) -> np.ndarray:
-    """Smooth a 1D array with a Gaussian kernel (NumPy replacement for scipy.ndimage.gaussian_filter1d).
+    """使用高斯核平滑一维数组（scipy.ndimage.gaussian_filter1d 的 NumPy 替代实现）。
 
-    Args:
-        y (np.ndarray): Input 1D array to smooth.
+    参数：
+        y (np.ndarray): 要平滑的一维输入数组。
         sigma (int): Standard deviation of the Gaussian kernel.
         truncate (float): Truncate the kernel at this many standard deviations.
 
-    Returns:
-        (np.ndarray): Smoothed 1D array with the same length as the input.
+    返回：
+        (np.ndarray): 平滑后的一维数组，长度与输入相同。
     """
     y = np.asarray(y, dtype=float)
     radius = int(truncate * sigma + 0.5)
     kernel = np.exp(-0.5 * (np.arange(-radius, radius + 1) / sigma) ** 2)
     kernel /= kernel.sum()
-    # scipy 'reflect' boundary mode is equivalent to NumPy 'symmetric'
+    # scipy 的“reflect”边界模式等价于 NumPy 的“symmetric”。
     return np.convolve(np.pad(y, radius, mode="symmetric"), kernel, mode="valid")
 
 
 class Colors:
-    """Ultralytics color palette for visualization and plotting.
+    """用于可视化和绘图的 Ultralytics 调色板。
 
     This class provides methods to work with the Ultralytics color palette, including converting hex color codes to RGB
     values and accessing predefined color schemes for object detection and pose estimation.
@@ -97,23 +97,23 @@ class Colors:
 
     !!! note "Ultralytics Brand Colors"
 
-        For Ultralytics brand colors see [https://www.ultralytics.com/brand](https://www.ultralytics.com/brand).
+        Ultralytics 品牌颜色参见 [https://www.ultralytics.com/brand](https://www.ultralytics.com/brand)。
         Please use the official Ultralytics colors for all marketing materials.
 
-    Attributes:
+    属性：
         palette (list[tuple]): List of RGB color tuples for general use.
         n (int): The number of colors in the palette.
         pose_palette (np.ndarray): A specific color palette array for pose estimation with dtype np.uint8.
 
-    Examples:
+    示例：
         >>> from ultralytics.utils.plotting import Colors
         >>> colors = Colors()
-        >>> colors(5, True)  # Returns BGR format: (221, 111, 255)
-        >>> colors(5, False)  # Returns RGB format: (255, 111, 221)
+            >>> colors(5, True)  # 返回 BGR 格式：(221, 111, 255)
+            >>> colors(5, False)  # 返回 RGB 格式：(255, 111, 221)
     """
 
     def __init__(self):
-        """Initialize the Ultralytics color palette from a fixed list of hex color codes."""
+        """根据固定的十六进制颜色代码列表初始化 Ultralytics 调色板。"""
         hexs = (
             "042AFF",
             "0BDBEB",
@@ -165,13 +165,13 @@ class Colors:
         )
 
     def __call__(self, i: int | torch.Tensor, bgr: bool = False) -> tuple:
-        """Return a color from the palette by index.
+        """根据索引返回调色板中的颜色。
 
-        Args:
-            i (int | torch.Tensor): Color index.
-            bgr (bool, optional): Whether to return BGR format instead of RGB.
+        参数：
+            i (int | torch.Tensor): 颜色索引。
+            bgr (bool, 可选): 是否返回 BGR 格式，而不是 RGB 格式。
 
-        Returns:
+        返回：
             (tuple): RGB or BGR color tuple.
         """
         c = self.palette[int(i) % self.n]
@@ -179,14 +179,14 @@ class Colors:
 
     @staticmethod
     def hex2rgb(h: str) -> tuple:
-        """Convert hex color codes to RGB values (i.e. default PIL order)."""
+        """将十六进制颜色代码转换为 RGB 值（即 PIL 默认顺序）。"""
         return tuple(int(h[1 + i : 1 + i + 2], 16) for i in (0, 2, 4))
 
 
-colors = Colors()  # create instance for 'from utils.plots import colors'
+colors = Colors()  # 为 'from utils.plots import colors' 创建实例
 
 
-# Spectral_r anchors (RGB, far→near) baked into a LUT so colorize_depth needs no matplotlib import.
+# Spectral_r 锚框（RGB，从远到近）已预先写入 LUT，因此 colorize_depth 无需导入 matplotlib。
 _SPECTRAL_R_ANCHORS = np.array(
     [
         [94, 79, 162],
@@ -206,12 +206,12 @@ _SPECTRAL_R_ANCHORS = np.array(
 
 
 def _spectral_lut() -> np.ndarray:
-    """Build the 256x1x3 BGR uint8 Spectral_r LUT for cv2.applyColorMap by linearly interpolating the anchors."""
+    """通过线性插值锚点，为 cv2.applyColorMap 构建 256x1x3 的 BGR uint8 Spectral_r 查找表。"""
     xs = np.linspace(0.0, 10.0, 256)
     i = np.clip(xs.astype(int), 0, 9)
     f = (xs - i)[:, None]
     rgb = _SPECTRAL_R_ANCHORS[i] * (1.0 - f) + _SPECTRAL_R_ANCHORS[i + 1] * f
-    return rgb.round().astype(np.uint8)[:, ::-1].reshape(256, 1, 3)  # RGB→BGR for cv2 convention
+    return rgb.round().astype(np.uint8)[:, ::-1].reshape(256, 1, 3)  # 按 cv2 约定将 RGB 转为 BGR
 
 
 _SPECTRAL_LUT = _spectral_lut()
@@ -225,20 +225,18 @@ def colorize_depth(
     cmap: str = "jet",
     mode: str = "disparity",
 ) -> np.ndarray:
-    """Map a (H, W) metric-depth array to a BGR uint8 colorized image, invalid (<= 0) pixels black.
+    """将 (H, W) 的度量深度数组映射为 BGR uint8 彩色图像，无效（<= 0）像素显示为黑色。
 
-    Args:
-        depth (np.ndarray): (H, W) depth in meters.
-        vmin (float, optional): Lower bound of the color range; defaults to the valid-pixel minimum (metric mode) or the
-            2nd disparity percentile (disparity mode).
-        vmax (float, optional): Upper bound of the color range; defaults to the valid-pixel maximum (metric mode) or the
-            98th disparity percentile (disparity mode).
-        cmap (str): Colormap, one of "inferno", "jet", "spectral" (matplotlib Spectral_r, near = warm).
-        mode (str): "metric" normalizes depth linearly; "disparity" normalizes inverse depth (1/d) between the 2nd and
-            98th percentiles for the DepthAnything look (near objects warm, robust to far outliers).
+    参数：
+        depth (np.ndarray): 以米为单位的 (H, W) 深度数组。
+        vmin (float, 可选): 颜色范围下界；默认为有效像素最小值（度量模式）或第 2 个视差百分位数（视差模式）。
+        vmax (float, 可选): 颜色范围上界；默认为有效像素最大值（度量模式）或第 98 个视差百分位数（视差模式）。
+        cmap (str): 颜色映射，可选 ``"inferno"``、``"jet"`` 或 ``"spectral"``（matplotlib Spectral_r，近处偏暖）。
+        mode (str): ``"metric"`` 对深度进行线性归一化；``"disparity"`` 在第 2 到第 98 个百分位数之间
+            对逆深度（1/d）进行归一化，以模拟 DepthAnything 的视觉效果，使近处对象偏暖并降低远处异常值的影响。
 
-    Returns:
-        (np.ndarray): (H, W, 3) BGR uint8 colorized depth.
+    返回：
+        (np.ndarray): 形状为 (H, W, 3) 的 BGR uint8 彩色深度图。
     """
     d = np.asarray(depth, dtype=np.float32)
     valid = d > 0
@@ -262,22 +260,22 @@ def colorize_depth(
 
 
 class Annotator:
-    """Ultralytics Annotator for train/val mosaics and JPGs and predictions annotations.
+    """用于训练/验证拼图、JPG 图像和预测结果标注的 Ultralytics 标注器。
 
-    Tensor images must be contiguous HWC BGR uint8.
+    Tensor 图像必须是连续的 HWC BGR uint8 格式。
 
-    Attributes:
-        im (Image.Image | np.ndarray | torch.Tensor): The image to annotate.
+    属性：
+        im (Image.Image | np.ndarray | torch.Tensor): 要进行标注的图像。
         pil (bool): Whether to use PIL or cv2 for drawing annotations.
         font (ImageFont.truetype | ImageFont.load_default): Font used for text annotations.
-        lw (int): Line width for drawing.
-        skeleton (list[list[int]]): Skeleton structure for keypoints.
+        lw (int): 绘制线条的宽度。
+        skeleton (列表[列表[int]]): 关键点的骨架连接结构。
         limb_color (np.ndarray): Color palette for limbs.
-        kpt_color (np.ndarray): Color palette for keypoints.
+        kpt_color (np.ndarray): 关键点颜色调色板。
         dark_colors (set): Set of colors considered dark for text contrast.
         light_colors (set): Set of colors considered light for text contrast.
 
-    Examples:
+    示例：
         >>> from ultralytics.utils.plotting import Annotator
         >>> im0 = cv2.imread("test.png")
         >>> annotator = Annotator(im0, line_width=10)
@@ -293,8 +291,8 @@ class Annotator:
         pil: bool = False,
         example: str = "abc",
     ):
-        """Initialize the Annotator class with image and line width along with color palette for keypoints and limbs."""
-        non_ascii = not is_ascii(example)  # non-latin labels, i.e. asian, arabic, cyrillic
+        """使用图像、线宽以及关键点和肢体的颜色调色板初始化 Annotator 类。"""
+        non_ascii = not is_ascii(example)  # 非拉丁标签，例如中文、阿拉伯文或西里尔文
         input_is_pil = isinstance(im, Image.Image)
         input_is_tensor = isinstance(im, torch.Tensor)
         self.pil = pil or non_ascii or input_is_pil
@@ -308,12 +306,12 @@ class Annotator:
         if not input_is_pil:
             if im.shape[2] == 1:  # handle grayscale
                 im = cv2.cvtColor(im, cv2.COLOR_GRAY2BGR)
-            elif im.shape[2] == 2:  # handle 2-channel images
+            elif im.shape[2] == 2:  # 处理双通道图像
                 im = np.ascontiguousarray(np.dstack((im, np.zeros_like(im[..., :1]))))
             elif im.shape[2] > 3:  # multispectral
                 im = np.ascontiguousarray(im[..., :3])
         if self.pil:  # use PIL
-            self.im = im if input_is_pil else Image.fromarray(im)  # stay in BGR since color palette is in BGR
+            self.im = im if input_is_pil else Image.fromarray(im)  # 保持 BGR，因为颜色调色板为 BGR
             if self.im.mode not in {"RGB", "RGBA"}:  # multispectral
                 self.im = self.im.convert("RGB")
             self.draw = ImageDraw.Draw(self.im, "RGBA")
@@ -323,16 +321,16 @@ class Annotator:
                 self.font = ImageFont.truetype(str(font), size)
             except Exception:
                 self.font = ImageFont.load_default()
-            # Deprecation fix for w, h = getsize(string) -> _, _, w, h = getbox(string)
+            # 兼容弃用接口：将 w, h = getsize(string) 改为 _, _, w, h = getbox(string)。
             if check_version(pil_version, "9.2.0"):
-                self.font.getsize = lambda x: self.font.getbbox(x)[2:4]  # text width, height
+                self.font.getsize = lambda x: self.font.getbbox(x)[2:4]  # 文本宽度和高度
         else:  # use cv2
             assert im.is_contiguous() if input_is_tensor else im.data.contiguous, (
                 "Image not contiguous. Apply contiguous() or np.ascontiguousarray(im) to Annotator input images."
             )
             self.im = im if input_is_tensor or im.flags.writeable else im.copy()
             self.tf = max(self.lw - 1, 1)  # font thickness
-            self.sf = self.lw / 3  # font scale
+        self.sf = self.lw / 3  # 字体缩放比例
         # Pose
         self.skeleton = [
             [16, 14],
@@ -384,20 +382,20 @@ class Annotator:
         }
 
     def get_txt_color(self, color: tuple = (128, 128, 128), txt_color: tuple = (255, 255, 255)) -> tuple:
-        """Assign text color based on background color.
+        """根据背景颜色指定文本颜色。
 
-        Args:
-            color (tuple, optional): The background color of the rectangle for text.
-            txt_color (tuple, optional): The fallback color of the text.
+        参数：
+            color (tuple, 可选): 文本矩形框的背景颜色。
+            txt_color (tuple, 可选): 文本的备用颜色。
 
-        Returns:
+        返回：
             (tuple): Text color for label.
 
-        Examples:
+        示例：
             >>> from ultralytics.utils.plotting import Annotator
             >>> im0 = cv2.imread("test.png")
             >>> annotator = Annotator(im0, line_width=10)
-            >>> annotator.get_txt_color(color=(104, 31, 17))  # return (255, 255, 255)
+            >>> annotator.get_txt_color(color=(104, 31, 17))  # 返回 (255, 255, 255)
         """
         if color in self.dark_colors:
             return 104, 31, 17
@@ -407,15 +405,15 @@ class Annotator:
             return txt_color
 
     def box_label(self, box, label: str = "", color: tuple = (128, 128, 128), txt_color: tuple = (255, 255, 255)):
-        """Draw a bounding box on an image with a given label.
+        """在图像上绘制带指定标签的边界框。
 
-        Args:
-            box (tuple): The bounding box coordinates (x1, y1, x2, y2).
-            label (str, optional): The text label to be displayed.
-            color (tuple, optional): The background color of the rectangle.
-            txt_color (tuple, optional): The color of the text.
+        参数：
+            box (tuple): 边界框坐标 (x1, y1, x2, y2)。
+            label (str, 可选): 要显示的文本标签。
+            color (tuple, 可选): 矩形框的背景颜色。
+            txt_color (tuple, 可选): 文本颜色。
 
-        Examples:
+        示例：
             >>> from ultralytics.utils.plotting import Annotator
             >>> im0 = cv2.imread("test.png")
             >>> annotator = Annotator(im0, line_width=10)
@@ -426,22 +424,22 @@ class Annotator:
         if isinstance(box, (torch.Tensor, np.ndarray)):
             box = box.tolist()
 
-        multi_points = isinstance(box[0], list)  # multiple points with shape (n, 2)
+        multi_points = isinstance(box[0], list)  # 形状为 (n, 2) 的多个点
         p1 = [int(b) for b in box[0]] if multi_points else (int(box[0]), int(box[1]))
         if self.pil:
             self.draw.polygon(
                 [tuple(b) for b in box], width=self.lw, outline=color
             ) if multi_points else self.draw.rectangle(box, width=self.lw, outline=color)
             if label:
-                w, h = self.font.getsize(label)  # text width, height
-                outside = p1[1] >= h  # label fits outside box
-                if p1[0] > self.im.size[0] - w:  # size is (w, h), check if label extend beyond right side of image
+                w, h = self.font.getsize(label)  # 文本宽度和高度
+                outside = p1[1] >= h  # 标签是否能放在边界框外
+                if p1[0] > self.im.size[0] - w:  # 尺寸为 (w, h)，检查标签是否超出图像右侧
                     p1 = self.im.size[0] - w, p1[1]
                 self.draw.rectangle(
                     (p1[0], p1[1] - h if outside else p1[1], p1[0] + w + 1, p1[1] + 1 if outside else p1[1] + h + 1),
                     fill=color,
                 )
-                # self.draw.text([box[0], box[1]], label, fill=txt_color, font=self.font, anchor='ls')  # for PIL>8.0
+                # self.draw.text([边界框[0], 边界框[1]], label, fill=txt_color, font=self.font, 锚框='ls')  # 适用于 PIL>8.0
                 self.draw.text((p1[0], p1[1] - h if outside else p1[1]), label, fill=txt_color, font=self.font)
         else:  # cv2
             cv2.polylines(
@@ -450,10 +448,10 @@ class Annotator:
                 self.im, p1, (int(box[2]), int(box[3])), color, thickness=self.lw, lineType=cv2.LINE_AA
             )
             if label:
-                w, h = cv2.getTextSize(label, 0, fontScale=self.sf, thickness=self.tf)[0]  # text width, height
-                h += 3  # add pixels to pad text
-                outside = p1[1] >= h  # label fits outside box
-                if p1[0] > self.im.shape[1] - w:  # shape is (h, w), check if label extend beyond right side of image
+                w, h = cv2.getTextSize(label, 0, fontScale=self.sf, thickness=self.tf)[0]  # 文本宽度和高度
+                h += 3  # 增加像素以填充文本
+                outside = p1[1] >= h  # 标签是否能放在边界框外
+                if p1[0] > self.im.shape[1] - w:  # 形状为 (h, w)，检查标签是否超出图像右侧
                     p1 = self.im.shape[1] - w, p1[1]
                 p2 = p1[0] + w, p1[1] - h if outside else p1[1] + h
                 cv2.rectangle(self.im, p1, p2, color, -1, cv2.LINE_AA)  # filled
@@ -469,15 +467,15 @@ class Annotator:
                 )
 
     def masks(self, masks, colors, alpha: float = 0.5):
-        """Plot masks on image.
+        """在图像上绘制掩码。
 
-        Args:
-            masks (torch.Tensor | np.ndarray): Predicted masks with shape [n, h, w].
-            colors (list[list[int]]): BGR colors for predicted masks, [[b, g, r] * n], matching `self.im`.
-            alpha (float, optional): Mask transparency: 0.0 fully transparent, 1.0 opaque.
+        参数：
+            masks (torch.Tensor | np.ndarray): 形状为 [n, h, w] 的预测掩码。
+            colors (列表[列表[int]]): 预测掩码的 BGR 颜色，格式为 [[b, g, r] * n]，与 `self.im` 一致。
+            alpha (float, 可选): 掩码透明度：0.0 表示完全透明，1.0 表示完全不透明。
         """
         if self.pil:
-            # Convert to numpy first
+            # 先转换为 NumPy 数组。
             self.im = np.asarray(self.im).copy()
         if isinstance(masks, np.ndarray):
             self._to_numpy()
@@ -486,17 +484,17 @@ class Annotator:
                 overlay[mask.astype(bool)] = colors[i]
             self.im = cv2.addWeighted(self.im, 1 - alpha, overlay, alpha, 0)
         elif len(masks):
-            # Use scale_masks to properly remove padding and upsample, convert bool to float first
+            # 使用 scale_masks 正确移除填充并上采样，先将布尔值转换为浮点数。
             tensor_image = isinstance(self.im, torch.Tensor)
             device = self.im.device if tensor_image else masks.device
             masks = ops.scale_masks(masks[None].to(device).float(), self.im.shape[:2])[0] > 0.5
-            colors = torch.tensor(colors, device=device, dtype=torch.float32) / 255.0  # shape(n,3)
-            colors = colors[:, None, None] * alpha  # shape(n,1,1,3), premultiplied by alpha
-            masks = masks.unsqueeze(3)  # shape(n,h,w,1)
-            mcs = torch.empty((*masks.shape[1:3], 3), device=device, dtype=torch.float32)  # shape(h,w,3)
-            inv_alpha_masks = torch.empty((*masks.shape[1:3], 1), device=device, dtype=torch.float32)  # shape(h,w,1)
-            # Reduce in row bands so the (n,h,w,*) intermediates never span the full height
-            bands = max(1, masks.numel() * 12 // 2**23)  # 12 bytes per mask element downstream, 8 MB per band
+            colors = torch.tensor(colors, device=device, dtype=torch.float32) / 255.0  # 形状(n,3)
+            colors = colors[:, None, None] * alpha  # 形状(n,1,1,3)，预先乘以透明度
+            masks = masks.unsqueeze(3)  # 形状(n,h,w,1)
+            mcs = torch.empty((*masks.shape[1:3], 3), device=device, dtype=torch.float32)  # 形状(h,w,3)
+            inv_alpha_masks = torch.empty((*masks.shape[1:3], 1), device=device, dtype=torch.float32)  # 形状(h,w,1)
+            # 按行分带处理，避免 (n,h,w,*) 中间张量覆盖完整高度。
+            bands = max(1, masks.numel() * 12 // 2**23)  # 下游每个掩码元素占 12 字节，每个分带约 8 MB
             for m, mcs_band, inv_band in zip(masks.chunk(bands, 1), mcs.chunk(bands), inv_alpha_masks.chunk(bands)):
                 torch.amax(m * colors, 0, out=mcs_band)
                 torch.prod(1 - m * alpha, 0, out=inv_band)
@@ -504,27 +502,27 @@ class Annotator:
             im = ((im * inv_alpha_masks + mcs) * 255).byte()
             self.im[:] = im if tensor_image else im.cpu().numpy()
         if self.pil:
-            # Convert im back to PIL and update draw
+            # 将 im 转回 PIL，并更新绘图对象。
             self.fromarray(self.im)
 
     def semantic_mask(self, mask, alpha: float = 0.5, ignore_index: int = 255):
-        """Plot a semantic segmentation mask on the image.
+        """在图像上绘制语义分割掩码。
 
-        Args:
-            mask (np.ndarray): Semantic mask with shape [h, w] containing integer class indices.
-            alpha (float, optional): Mask transparency: 0.0 fully transparent, 1.0 opaque.
-            ignore_index (int, optional): Class index to ignore (e.g., 255 for void/ignore).
+        参数：
+            mask (np.ndarray): 形状为 [h, w]、包含整数类别索引的语义掩码。
+            alpha (float, 可选): 掩码透明度：0.0 表示完全透明，1.0 表示完全不透明。
+            ignore_index (int, 可选): 要忽略的类别索引（例如表示空白或忽略区域的 255）。
         """
         self._to_numpy()
         if self.pil:
-            # Convert to numpy first
+            # 先转换为 NumPy 数组。
             self.im = np.asarray(self.im).copy()
-        ids = np.unique(mask)  # class IDs present, ascending
+        ids = np.unique(mask)  # 存在的类别 ID，按升序排列
         palette = np.array([(0, 0, 0) if i == ignore_index else colors(int(i), True) for i in ids], self.im.dtype)
         overlay = palette[np.searchsorted(ids, mask)] if len(ids) else np.zeros_like(self.im)
         self.im = cv2.addWeighted(self.im, 1 - alpha, overlay, alpha, 0)
         if self.pil:
-            # Convert im back to PIL and update draw
+            # 将 im 转回 PIL，并更新绘图对象。
             self.fromarray(self.im)
 
     def depth_map(
@@ -534,9 +532,9 @@ class Annotator:
         cmap: str = "jet",
         mode: str = "disparity",
     ) -> None:
-        """Render a colorized depth map blended over the image.
+        """渲染彩色深度图，并将其叠加到图像上。
 
-        Args:
+        参数：
             depth (np.ndarray): (H, W) depth in meters.
             alpha (float): Blend factor for the heatmap overlay.
             cmap (str): Colormap, one of "inferno", "jet", "spectral". See `colorize_depth`.
@@ -545,7 +543,7 @@ class Annotator:
         self._to_numpy()
         if self.pil:
             self.im = np.asarray(self.im).copy()
-        heat = colorize_depth(depth, cmap=cmap, mode=mode)  # BGR, matching the Annotator buffer convention
+        heat = colorize_depth(depth, cmap=cmap, mode=mode)  # BGR，与 Annotator 缓冲区约定一致
         if heat.shape[:2] != self.im.shape[:2]:
             heat = cv2.resize(heat, (self.im.shape[1], self.im.shape[0]))
         self.im = cv2.addWeighted(self.im, 1 - alpha, heat, alpha, 0)
@@ -561,36 +559,36 @@ class Annotator:
         conf_thres: float = 0.25,
         kpt_color: tuple | None = None,
     ):
-        """Plot keypoints on the image.
+        """在图像上绘制关键点。
 
-        Args:
-            kpts (torch.Tensor): Keypoints, shape [17, 3] (x, y, confidence).
-            shape (tuple, optional): Image shape (h, w).
-            radius (int, optional): Keypoint radius.
-            kpt_line (bool, optional): Draw lines between keypoints.
-            conf_thres (float, optional): Confidence threshold.
-            kpt_color (tuple, optional): Keypoint color.
+        参数：
+            kpts (torch.Tensor): 关键点，形状为 [17, 3]（x、y、置信度）。
+            shape (tuple, 可选): 图像形状 (h, w)。
+            radius (int, 可选): 关键点半径。
+            kpt_line (bool, 可选): 是否绘制关键点之间的连线。
+            conf_thres (float, 可选): 置信度阈值。
+            kpt_color (tuple, 可选): 关键点颜色。
 
-        Notes:
-            - `kpt_line=True` currently only supports human pose plotting.
-            - Modifies self.im in-place.
-            - If self.pil is True, converts image to numpy array and back to PIL.
+        注意：
+            - `kpt_line=True` 当前仅支持人体姿态绘图。
+            - 原地修改 self.im。
+            - 如果 self.pil 为 True，则将图像转换为 NumPy 数组，再转换回 PIL 图像。
         """
         radius = radius if radius is not None else self.lw
         self._to_numpy()
         if self.pil:
-            # Convert to numpy first
+            # 先转换为 NumPy 数组。
             self.im = np.asarray(self.im).copy()
         nkpt, ndim = kpts.shape
         is_pose = nkpt == 17 and ndim in {2, 3}
-        kpt_line &= is_pose  # `kpt_line=True` for now only supports human pose plotting
+        kpt_line &= is_pose  # 当前 `kpt_line=True` 仅支持人体姿态绘图
         for i, k in enumerate(kpts):
             color_k = kpt_color or (self.kpt_color[i].tolist() if is_pose else colors(i))
             x_coord, y_coord = k[0], k[1]
             if len(k) == 3:
                 if k[2] < conf_thres:
                     continue
-            elif x_coord == 0 and y_coord == 0:  # (0, 0) marks a missing keypoint when there is no confidence channel
+            elif x_coord == 0 and y_coord == 0:  # 没有置信度通道时，(0, 0) 表示缺失的关键点
                 continue
             cv2.circle(self.im, (int(x_coord), int(y_coord)), radius, color_k, -1, lineType=cv2.LINE_AA)
 
@@ -617,31 +615,31 @@ class Annotator:
                     lineType=cv2.LINE_AA,
                 )
         if self.pil:
-            # Convert im back to PIL and update draw
+            # 将 im 转回 PIL，并更新绘图对象。
             self.fromarray(self.im)
 
     def rectangle(self, xy, fill=None, outline=None, width: int = 1):
-        """Add rectangle to image (PIL-only)."""
+        """向图像添加矩形（仅 PIL 模式）。"""
         self.draw.rectangle(xy, fill, outline, width)
 
     def text(self, xy, text: str, txt_color: tuple = (255, 255, 255), anchor: str = "top", box_color: tuple = ()):
-        """Add text to an image using PIL or cv2.
+        """使用 PIL 或 cv2 向图像添加文本。
 
-        Args:
-            xy (list[int]): Top-left coordinates for text placement.
+        参数：
+            xy (列表[int]): 放置文本的左上角坐标。
             text (str): Text to be drawn.
-            txt_color (tuple, optional): Text color.
-            anchor (str, optional): Text anchor position ('top' or 'bottom').
-            box_color (tuple, optional): Box background color with optional alpha.
+            txt_color (tuple, 可选): 文本颜色。
+            anchor (str, 可选): 文本锚点位置（``'top'`` 或 ``'bottom'``）。
+            box_color (tuple, 可选): 文本框背景颜色，可包含透明度。
         """
         self._to_numpy()
         if self.pil:
             w, h = self.font.getsize(text)
-            if anchor == "bottom":  # start y from font bottom
+            if anchor == "bottom":  # 从字体底部开始计算 y
                 xy[1] += 1 - h
             for line in text.split("\n"):
                 if box_color:
-                    # Draw rectangle for each line
+                    # 为每条线绘制矩形。
                     w, h = self.font.getsize(line)
                     self.draw.rectangle((xy[0], xy[1], xy[0] + w + 1, xy[1] + h + 1), fill=box_color)
                 self.draw.text(xy, line, fill=txt_color, font=self.font)
@@ -649,56 +647,56 @@ class Annotator:
         else:
             if box_color:
                 w, h = cv2.getTextSize(text, 0, fontScale=self.sf, thickness=self.tf)[0]
-                h += 3  # add pixels to pad text
-                outside = xy[1] >= h  # label fits outside box
+                h += 3  # 增加像素以填充文本
+                outside = xy[1] >= h  # 标签是否能放在边界框外
                 p2 = xy[0] + w, xy[1] - h if outside else xy[1] + h
                 cv2.rectangle(self.im, xy, p2, box_color, -1, cv2.LINE_AA)  # filled
             cv2.putText(self.im, text, xy, 0, self.sf, txt_color, thickness=self.tf, lineType=cv2.LINE_AA)
 
     def fromarray(self, im):
-        """Update `self.im` from a NumPy array or PIL image."""
+        """使用 NumPy 数组或 PIL 图像更新 `self.im`。"""
         self.im = im if isinstance(im, Image.Image) else Image.fromarray(im)
         self.draw = ImageDraw.Draw(self.im)
 
     def _to_numpy(self):
-        """Move a tensor image to CPU only when a CPU drawing operation requires it."""
+        """仅在 CPU 绘图操作需要时将张量图像移动到 CPU。"""
         if isinstance(self.im, torch.Tensor):
             self.im = self.im.cpu().numpy()
 
     def result(self, pil=False):
-        """Return annotated image as array or PIL image."""
+        """将标注后的图像作为数组或 PIL 图像返回。"""
         self._to_numpy()
-        im = np.asarray(self.im)  # self.im is in BGR
+        im = np.asarray(self.im)  # self.im 为 BGR
         return Image.fromarray(im[..., ::-1]) if pil else im
 
     def show(self, title: str | None = None):
-        """Show the annotated image."""
-        im = Image.fromarray(self.result()[..., ::-1])  # Convert BGR NumPy array to RGB PIL Image
-        if IS_COLAB or IS_KAGGLE:  # cannot use IS_JUPYTER as it runs for all IPython environments
+        """显示标注后的图像。"""
+        im = Image.fromarray(self.result()[..., ::-1])  # 将 BGR NumPy 数组转换为 RGB PIL 图像
+        if IS_COLAB or IS_KAGGLE:  # 不能使用 IS_JUPYTER，因为它适用于所有 IPython 环境
             try:
-                display(im)  # noqa - display() function only available in ipython environments
+                display(im)  # noqa - display() 函数仅在 IPython 环境中可用
             except ImportError as e:
                 LOGGER.warning(f"Unable to display image in Jupyter notebooks: {e}")
         else:
             im.show(title=title)
 
     def save(self, filename: str = "image.jpg"):
-        """Save the annotated image to 'filename'."""
+        """将标注后的图像保存到 filename。"""
         cv2.imwrite(filename, self.result())
 
     @staticmethod
     def get_bbox_dimension(bbox: tuple | list):
-        """Calculate the dimensions and area of a bounding box.
+        """计算边界框的尺寸和面积。
 
-        Args:
-            bbox (tuple | list): Bounding box coordinates in the format (x_min, y_min, x_max, y_max).
+        参数：
+            bbox (tuple | 列表): 格式为 (x_min, y_min, x_max, y_max) 的边界框坐标。
 
-        Returns:
-            width (float): Width of the bounding box.
-            height (float): Height of the bounding box.
-            area (float): Area enclosed by the bounding box.
+        返回：
+            width (float): 边界框宽度。
+            height (float): 边界框高度。
+            area (float): 边界框包围的面积。
 
-        Examples:
+        示例：
             >>> from ultralytics.utils.plotting import Annotator
             >>> im0 = cv2.imread("test.png")
             >>> annotator = Annotator(im0, line_width=10)
@@ -713,26 +711,26 @@ class Annotator:
 @TryExcept()
 @plt_settings()
 def plot_labels(boxes, cls, names=(), save_dir=Path(""), on_plot=None):
-    """Plot training labels including class histograms and box statistics.
+    """绘制训练标签，包括类别直方图和边界框统计信息。
 
-    Args:
-        boxes (np.ndarray): Bounding box coordinates in format [x, y, width, height].
-        cls (np.ndarray): Class indices.
-        names (dict, optional): Dictionary mapping class indices to class names.
-        save_dir (Path, optional): Directory to save the plot.
-        on_plot (Callable, optional): Function to call after plot is saved.
+    参数：
+        boxes (np.ndarray): 格式为 [x, y, 宽度, 高度] 的边界框坐标。
+        cls (np.ndarray): 类别索引。
+        names (dict, 可选): 将类别索引映射到类别名称的字典。
+        save_dir (Path, 可选): 保存绘图的目录。
+        on_plot (Callable, 可选): 绘图保存后调用的函数。
     """
     import matplotlib.pyplot as plt  # scope for faster 'import ultralytics'
     import polars
     from matplotlib.colors import LinearSegmentedColormap
 
-    # Plot dataset labels
+    # 绘制数据集标签
     LOGGER.info(f"Plotting labels to {save_dir / 'labels.jpg'}... ")
-    nc = int(cls.max() + 1)  # number of classes
-    boxes = boxes[:1000000]  # limit to 1M boxes
+    nc = int(cls.max() + 1)  # 类别数量
+    boxes = boxes[:1000000]  # 最多处理 100 万个边界框
     x = polars.DataFrame(boxes, schema=["x", "y", "width", "height"])
 
-    # Matplotlib labels
+    # Matplotlib 标签
     subplot_3_4_color = LinearSegmentedColormap.from_list("white_blue", ["white", "blue"])
     ax = plt.subplots(2, 2, figsize=(8, 8), tight_layout=True)[1].ravel()
     y = ax[0].hist(cls, bins=np.linspace(0, nc, nc + 1) - 0.5, rwidth=0.8)
@@ -779,26 +777,25 @@ def save_one_box(
     BGR: bool = False,
     save: bool = True,
 ):
-    """Save image crop as {file} with crop size multiple {gain} and {pad} pixels. Save and/or return crop.
+    """将图像裁剪保存为 {file}，裁剪尺寸按 {gain} 倍放大并添加 {pad} 像素填充；可保存和/或返回裁剪结果。
 
-    This function takes a bounding box and an image, and then saves a cropped portion of the image according to the
-    bounding box. Optionally, the crop can be squared, and the function allows for gain and padding adjustments to the
-    bounding box.
+    此函数接收一个边界框和一张图像，然后根据边界框裁剪图像的一部分并保存。
+    还可以选择将裁剪区域调整为正方形，并通过 gain 和填充参数调整边界框。
 
-    Args:
-        xyxy (torch.Tensor | list): A tensor or list representing the bounding box in xyxy format.
-        im (np.ndarray): The input image.
-        file (Path, optional): The path where the cropped image will be saved.
-        gain (float, optional): A multiplicative factor to increase the size of the bounding box.
-        pad (int, optional): The number of pixels to add to the width and height of the bounding box.
-        square (bool, optional): If True, the bounding box will be transformed into a square.
-        BGR (bool, optional): If True, the image will be returned in BGR format, otherwise in RGB.
-        save (bool, optional): If True, the cropped image will be saved to disk.
+    参数：
+        xyxy (torch.Tensor | 列表): 表示 xyxy 格式边界框的张量或列表。
+        im (np.ndarray): 输入图像。
+        file (Path, 可选): 保存裁剪图像的路径。
+        gain (float, 可选): 增大边界框尺寸的乘数。
+        pad (int, 可选): 添加到边界框宽度和高度上的像素数量。
+        square (bool, 可选): 为 True 时，将边界框转换为正方形。
+        BGR (bool, 可选): 为 True 时以 BGR 格式返回图像，否则以 RGB 格式返回。
+        save (bool, 可选): 为 True 时，将裁剪图像保存到磁盘。
 
-    Returns:
-        (np.ndarray): The cropped image.
+    返回：
+        (np.ndarray): 裁剪后的图像。
 
-    Examples:
+    示例：
         >>> from ultralytics.utils.plotting import save_one_box
         >>> xyxy = [50, 50, 150, 150]
         >>> im = cv2.imread("image.jpg")
@@ -806,20 +803,20 @@ def save_one_box(
     """
     if isinstance(xyxy, np.ndarray):
         xyxy = torch.from_numpy(xyxy)
-    elif not isinstance(xyxy, torch.Tensor):  # may be list
+    elif not isinstance(xyxy, torch.Tensor):  # 也可以是列表
         xyxy = torch.stack(xyxy)
-    b = ops.xyxy2xywh(xyxy.view(-1, 4))  # boxes
+    b = ops.xyxy2xywh(xyxy.view(-1, 4))  # 边界框
     if square:
-        b[:, 2:] = b[:, 2:].max(1)[0].unsqueeze(1)  # attempt rectangle to square
-    b[:, 2:] = b[:, 2:] * gain + pad  # box wh * gain + pad
+        b[:, 2:] = b[:, 2:].max(1)[0].unsqueeze(1)  # 尝试将矩形调整为正方形
+    b[:, 2:] = b[:, 2:] * gain + pad  # 边界框 wh * gain + pad
     xyxy = ops.xywh2xyxy(b).long()
     xyxy = ops.clip_boxes(xyxy, im.shape)
-    grayscale = im.shape[2] == 1  # grayscale image
+    grayscale = im.shape[2] == 1  # 灰度图像
     crop = im[int(xyxy[0, 1]) : int(xyxy[0, 3]), int(xyxy[0, 0]) : int(xyxy[0, 2]), :: (1 if BGR or grayscale else -1)]
     if save:
-        file.parent.mkdir(parents=True, exist_ok=True)  # make directory
+        file.parent.mkdir(parents=True, exist_ok=True)  # 创建目录
         f = str(increment_path(file).with_suffix(".jpg"))
-        # cv2.imwrite(f, crop)  # save BGR, https://github.com/ultralytics/yolov5/issues/7007 chroma subsampling issue
+        # cv2.imwrite(f, crop)  # 保存 BGR；参见 https://github.com/ultralytics/yolov5/issues/7007 的色度抽样问题
         im_save = crop.squeeze(-1) if grayscale else crop[..., ::-1] if BGR else crop
         Image.fromarray(im_save).save(f, quality=95, subsampling=0)  # save RGB
     return crop
@@ -840,42 +837,41 @@ def plot_images(
     show_labels: bool = True,
     show_conf: bool = True,
 ) -> np.ndarray | None:
-    """Plot image grid with labels, bounding boxes, masks, and keypoints.
+    """绘制带标签、边界框、掩码和关键点的图像网格。
 
-    Args:
-        labels (dict[str, Any]): Dictionary containing detection data with keys like 'cls', 'bboxes', 'conf', 'masks',
-            'keypoints', 'batch_idx', 'img'.
-        images (torch.Tensor | np.ndarray): Batch of images to plot. Shape: (batch_size, channels, height, width).
-        paths (list[str] | None): List of file paths for each image in the batch.
-        fname (str): Output filename for the plotted image grid.
-        names (dict[int, str] | None): Dictionary mapping class indices to class names.
+    参数：
+        labels (dict[str, Any]): 包含检测数据的字典，键包括 'cls'、'bboxes'、'conf'、'masks'、
+            '关键点', 'batch_idx', 'img'.
+        images (torch.Tensor | np.ndarray): 要绘制的图像批次，形状为 (batch_size, 通道, 高度, 宽度)。
+        paths (列表[str] | None): 批次中每张图像对应的文件路径列表。
+        fname (str): 绘图网格的输出文件名。
+        names (dict[int, str] | None): 将类别索引映射到类别名称的字典。
         on_plot (Callable | None): Callback function to be called after saving the plot.
-        max_size (int): Maximum size of the output image grid.
-        max_subplots (int): Maximum number of subplots in the image grid.
-        save (bool): Whether to save the plotted image grid to a file.
-        conf_thres (float): Confidence threshold for displaying detections.
-        show_labels (bool): Whether to display class labels.
-        show_conf (bool): Whether to display confidence values.
+        max_size (int): 输出图像网格的最大尺寸。
+        max_subplots (int): 图像网格中子图的最大数量。
+        save (bool): 是否将绘制的图像网格保存到文件。
+        conf_thres (float): 显示检测结果所需的置信度阈值。
+        show_labels (bool): 是否显示类别标签。
+        show_conf (bool): 是否显示置信度值。
 
-    Returns:
-        (np.ndarray | None): Plotted image grid as a numpy array if save is False, None otherwise.
+    返回：
+        (np.ndarray | None): 当 save 为 False 时返回绘制的图像网格，否则返回 None。
 
-    Notes:
-        This function supports both tensor and numpy array inputs. It will automatically
-        convert tensor inputs to numpy arrays for processing.
+    注意：
+        此函数同时支持张量和 NumPy 数组输入，并会自动将张量转换为 NumPy 数组进行处理。
 
         Channel Support:
-        - 1 channel: Grayscale
-        - 2 channels: Third channel added as zeros
-        - 3 channels: Used as-is (standard RGB)
-        - 4+ channels: Cropped to first 3 channels
+        - 1 通道：灰度图像
+        - 2 通道：添加全零的第三通道
+        - 3 通道：直接使用（标准 RGB）
+        - 4 个及以上通道：裁剪为前 3 个通道
     """
     images = np.zeros((0, 3, 640, 640), dtype=np.float32) if images is None else images
     for k in ("cls", "bboxes", "conf", "masks", "keypoints", "batch_idx", "images", "semantic_mask", "depth"):
         if k not in labels:
             continue
         if k == "cls" and labels[k].ndim == 2:
-            labels[k] = labels[k].squeeze(1)  # squeeze if shape is (n, 1)
+            labels[k] = labels[k].squeeze(1)  # 当形状为 (n, 1) 时去除多余维度
         if isinstance(labels[k], torch.Tensor):
             labels[k] = labels[k].cpu().numpy()
 
@@ -887,32 +883,32 @@ def plot_images(
     kpts = labels.get("keypoints", np.zeros(0, dtype=np.float32))
     semantic_masks = labels.get("semantic_mask", np.zeros(0, dtype=np.int64))
     depth_maps = labels.get("depth", np.zeros(0, dtype=np.float32))
-    images = labels.get("img", images)  # default to input images
+    images = labels.get("img", images)  # 默认使用输入图像
 
     if len(images) and isinstance(images, torch.Tensor):
         images = images.cpu().float().numpy()
 
-    # Handle 2-ch and n-ch images
+    # 处理双通道和多通道图像。
     c = images.shape[1]
     if c == 2:
         zero = np.zeros_like(images[:, :1])
-        images = np.concatenate((images, zero), axis=1)  # pad 2-ch with a black channel
+        images = np.concatenate((images, zero), axis=1)  # 为双通道图像填充黑色通道
     elif c > 3:
-        images = images[:, :3]  # crop multispectral images to first 3 channels
+        images = images[:, :3]  # 将多光谱图像裁剪为前 3 个通道
 
-    bs, _, h, w = images.shape  # batch size, _, height, width
-    bs = min(bs, max_subplots)  # limit plot images
-    ns = np.ceil(bs**0.5)  # number of subplots (square)
+    bs, _, h, w = images.shape  # 批次大小, _, 高度, 宽度
+    bs = min(bs, max_subplots)  # 限制绘图图像数量
+    ns = np.ceil(bs**0.5)  # 子图数量（尽量排列为正方形）
     if np.max(images[0]) <= 1:
-        images *= 255  # de-normalise (optional)
+        images *= 255  # 取消归一化（可选）
 
-    # Build Image
+    # 构建图像网格
     mosaic = np.full((int(ns * h), int(ns * w), 3), 255, dtype=np.uint8)  # init
     for i in range(bs):
         x, y = int(w * (i // ns)), int(h * (i % ns))  # block origin
         mosaic[y : y + h, x : x + w, :] = images[i].transpose(1, 2, 0)
 
-    # Resize (optional)
+    # 调整尺寸（可选）
     scale = max_size / ns / max(h, w)
     if scale < 1:
         h = math.ceil(scale * h)
@@ -920,8 +916,8 @@ def plot_images(
         mosaic = cv2.resize(mosaic, tuple(int(x * ns) for x in (w, h)))
 
     # Annotate
-    fs = int((h + w) * ns * 0.01)  # font size
-    fs = max(fs, 18)  # ensure that the font size is large enough to be easily readable.
+    fs = int((h + w) * ns * 0.01)  # 字体尺寸
+    fs = max(fs, 18)  # 确保字体尺寸足够大，便于阅读
     annotator = Annotator(mosaic, line_width=round(fs / 10), font_size=fs, pil=True, example=str(names))
     for i in range(bs):
         x, y = int(w * (i // ns)), int(h * (i % ns))  # block origin
@@ -932,15 +928,15 @@ def plot_images(
             idx = batch_idx == i
             classes = cls[idx].astype("int")
             labels = confs is None
-            conf = confs[idx] if confs is not None else None  # check for confidence presence (label vs pred)
+            conf = confs[idx] if confs is not None else None  # 检查是否存在置信度（标签或预测）
 
             if len(bboxes):
                 boxes = bboxes[idx]
                 if len(boxes):
                     if boxes[:, :4].max() <= 1.1:  # if normalized with tolerance 0.1
-                        boxes[..., [0, 2]] *= w  # scale to pixels
+                        boxes[..., [0, 2]] *= w  # 缩放到像素坐标
                         boxes[..., [1, 3]] *= h
-                    elif scale < 1:  # absolute coords need scale if image scales
+                    elif scale < 1:  # 图像缩放时需要对绝对坐标进行缩放
                         boxes[..., :4] *= scale
                 boxes[..., 0] += x
                 boxes[..., 1] += y
@@ -963,14 +959,14 @@ def plot_images(
                     label = f"{c}" if labels else f"{c} {conf[0]:.1f}"
                     annotator.text([x, y], label, txt_color=color, box_color=(64, 64, 64, 128))
 
-            # Plot keypoints
+            # 绘制关键点
             if len(kpts):
                 kpts_ = kpts[idx].copy()
                 if len(kpts_):
                     if kpts_[..., 0].max() <= 1.01 or kpts_[..., 1].max() <= 1.01:  # if normalized with tolerance .01
-                        kpts_[..., 0] *= w  # scale to pixels
+                        kpts_[..., 0] *= w  # 缩放到像素坐标
                         kpts_[..., 1] *= h
-                    elif scale < 1:  # absolute coords need scale if image scales
+                    elif scale < 1:  # 图像缩放时需要对绝对坐标进行缩放
                         kpts_ *= scale
                 kpts_[..., 0] += x
                 kpts_[..., 1] += y
@@ -978,7 +974,7 @@ def plot_images(
                     if labels or conf[j] > conf_thres:
                         annotator.kpts(kpts_[j], conf_thres=conf_thres)
 
-            # Plot masks
+            # 绘制掩码
             if len(masks):
                 if idx.shape[0] == masks.shape[0] and masks.max() <= 1:  # overlap_mask=False
                     image_masks = masks[idx]
@@ -1007,7 +1003,7 @@ def plot_images(
                             pass
                 annotator.fromarray(im)
 
-        # Plot semantic masks
+        # 绘制语义掩码
         if len(semantic_masks) and i < len(semantic_masks):
             mask = semantic_masks[i]
             mh, mw = mask.shape
@@ -1019,7 +1015,7 @@ def plot_images(
             im[y : y + h, x : x + w] = sub_annotator.im
             annotator.fromarray(im)
 
-        # Plot depth maps
+        # 绘制深度图
         if len(depth_maps) and i < len(depth_maps):
             d = depth_maps[i]
             if d.ndim == 3:
@@ -1028,8 +1024,8 @@ def plot_images(
             if dh != h or dw != w:
                 d = cv2.resize(d.astype(np.float32), (w, h), interpolation=cv2.INTER_NEAREST)
             im = np.asarray(annotator.im).copy()
-            # The mosaic deviates from the Annotator BGR-buffer convention (it holds RGB), so convert the patch
-            # to BGR for the overlay, then back to RGB for the mosaic.
+            # 拼图使用 RGB，而 Annotator 约定使用 BGR 缓冲区，因此先将图块转为 BGR 进行叠加，
+            # 再转回 RGB 写入拼图。
             sub_bgr = cv2.cvtColor(np.ascontiguousarray(im[y : y + h, x : x + w]), cv2.COLOR_RGB2BGR)
             sub_annotator = Annotator(sub_bgr, line_width=1, pil=False)
             sub_annotator.depth_map(d, alpha=0.6)
@@ -1038,23 +1034,22 @@ def plot_images(
 
     if not save:
         return np.asarray(annotator.im)
-    annotator.im.save(fname)  # save
+    annotator.im.save(fname)  # 保存结果
     if on_plot:
         on_plot(fname)
 
 
 @plt_settings()
 def plot_results(file: str = "path/to/results.csv", dir: str = "", on_plot: Callable | None = None):
-    """Plot training results from a results CSV file. The function supports various types of data including instance
-    segmentation, semantic segmentation, pose estimation, and classification. Plots are saved as 'results.png' in
-    the directory where the CSV is located.
+    """从结果 CSV 文件绘制训练结果。此函数支持实例分割、语义分割、姿态估计和分类等多种数据。
+    绘图结果将以 ``results.png`` 文件保存到 CSV 所在目录。
 
-    Args:
-        file (str, optional): Path to the CSV file containing the training results.
-        dir (str, optional): Directory where the CSV file is located if 'file' is not provided.
-        on_plot (Callable, optional): Callback function to be executed after plotting. Takes filename as an argument.
+    参数：
+        file (str, 可选): 包含训练结果的 CSV 文件路径。
+        dir (str, 可选): 未提供 ``file`` 时，CSV 文件所在的目录。
+        on_plot (Callable, 可选): 绘图完成后执行的回调函数，接收输出文件名作为参数。
 
-    Examples:
+    示例：
         >>> from ultralytics.utils.plotting import plot_results
         >>> plot_results("path/to/results.csv")
     """
@@ -1085,8 +1080,8 @@ def plot_results(file: str = "path/to/results.csv", dir: str = "", on_plot: Call
             x = data.select(data.columns[0]).to_numpy().flatten()
             for i, j in enumerate(columns):
                 y = data.select(j).to_numpy().flatten().astype("float")
-                ax[i].plot(x, y, marker=".", label=f.stem, linewidth=2, markersize=8)  # actual results
-                ax[i].plot(x, _gaussian_filter1d(y, sigma=3), ":", label="smooth", linewidth=2)  # smoothing line
+                ax[i].plot(x, y, marker=".", label=f.stem, linewidth=2, markersize=8)  # 实际结果
+                ax[i].plot(x, _gaussian_filter1d(y, sigma=3), ":", label="smooth", linewidth=2)  # 平滑曲线
                 ax[i].set_title(j, fontsize=12)
         except Exception as e:
             LOGGER.error(f"Plotting error for {f}: {e}")
@@ -1101,21 +1096,21 @@ def plot_results(file: str = "path/to/results.csv", dir: str = "", on_plot: Call
 
 @plt_settings()
 def plot_multitrain_results(scores: dict, key: str = "fitness", save_dir=Path()):
-    """Plot per-dataset metrics from a multi-dataset training run as a bar chart with the cross-dataset mean.
+    """将多数据集训练运行中的各数据集指标绘制为柱状图，并显示跨数据集均值。
 
-    Args:
-        scores (dict): Mapping of dataset name to its scalar metric value.
-        key (str): Name of the plotted metric, used as the y-axis label.
-        save_dir (str | Path): Directory to save the 'multitrain_results.png' figure.
+    参数：
+        scores (dict): 数据集名称到标量指标值的映射。
+        key (str): 要绘制的指标名称，同时用作 y 轴标签。
+        save_dir (str | Path): 保存 ``multitrain_results.png`` 图像的目录。
 
-    Returns:
-        (Path): Path to the saved figure.
+    返回：
+        (Path): 保存后的图像路径。
 
-    Examples:
+    示例：
         >>> from ultralytics.utils.plotting import plot_multitrain_results
         >>> plot_multitrain_results({"coco8": 0.61, "dota8": 0.48}, key="metrics/mAP50-95(B)")
     """
-    import matplotlib.pyplot as plt  # scope for faster 'import ultralytics'
+    import matplotlib.pyplot as plt  # 在函数作用域导入，以加快 ``import ultralytics`` 的速度
 
     mean = sum(scores.values()) / len(scores)
     fig, ax = plt.subplots(figsize=(max(6.0, len(scores) * 0.45), 5), tight_layout=True)
@@ -1133,24 +1128,24 @@ def plot_multitrain_results(scores: dict, key: str = "fitness", save_dir=Path())
 
 
 def plt_color_scatter(v, f, bins: int = 20, cmap: str = "viridis", alpha: float = 0.8, edgecolors: str = "none"):
-    """Plot a scatter plot with points colored based on a 2D histogram.
+    """绘制散点图，并根据二维直方图为点着色。
 
-    Args:
-        v (array-like): Values for the x-axis.
-        f (array-like): Values for the y-axis.
-        bins (int, optional): Number of bins for the histogram.
-        cmap (str, optional): Colormap for the scatter plot.
-        alpha (float, optional): Alpha for the scatter plot.
-        edgecolors (str, optional): Edge colors for the scatter plot.
+    参数：
+        v (数组): x 轴数据。
+        f (数组): y 轴数据。
+        bins (int, 可选): 直方图的分箱数量。
+        cmap (str, 可选): 散点图使用的颜色映射。
+        alpha (float, 可选): 散点图的透明度。
+        edgecolors (str, 可选): 散点图的边缘颜色。
 
-    Examples:
+    示例：
         >>> v = np.random.rand(100)
         >>> f = np.random.rand(100)
         >>> plt_color_scatter(v, f)
     """
-    import matplotlib.pyplot as plt  # scope for faster 'import ultralytics'
+    import matplotlib.pyplot as plt  # 在函数作用域导入，以加快 ``import ultralytics`` 的速度
 
-    # Calculate 2D histogram and corresponding colors
+    # 计算二维直方图及其对应颜色。
     hist, xedges, yedges = np.histogram2d(v, f, bins=bins)
     colors = [
         hist[
@@ -1160,7 +1155,7 @@ def plt_color_scatter(v, f, bins: int = 20, cmap: str = "viridis", alpha: float 
         for i in range(len(v))
     ]
 
-    # Scatter plot
+    # 散点图
     plt.scatter(v, f, c=colors, cmap=cmap, alpha=alpha, edgecolors=edgecolors)
 
 
@@ -1172,20 +1167,19 @@ def plot_depth_panels(
     titles: list[str] | None = None,
     max_images: int = 4,
 ) -> None:
-    """Write a depth panel grid: one row per image, columns RGB | GT (if provided) | one per entry of ``preds``.
+    """写入深度面板网格：每行一张图像，列为 RGB、GT（如果提供）以及 ``preds`` 中每个预测结果。
 
-    All depth columns share the GT valid-pixel range per row, so a scale error between GT and any prediction shows up
-    directly as a color mismatch. Panels are resized to the RGB image size, so predictions at head stride need no prior
-    interpolation.
+    每行的所有深度列共用 GT 有效像素范围，因此 GT 与任意预测之间的尺度误差会直接表现为颜色不匹配。
+    各面板会调整到 RGB 图像尺寸，因此来自不同检测头步长的预测结果无需提前插值。
 
-    Args:
-        imgs (torch.Tensor): (B,3,H,W) float image tensor in [0,1].
-        preds (list): List of (B,1,H,W) or (B,H,W) predicted depth tensors; each adds one column.
-        fname (str | Path): Output image path.
-        gt (torch.Tensor, optional): (B,1,H,W) or (B,H,W) ground-truth depth in meters (pixels <= 0 invalid, drawn
-            black). Used for the GT column and to set the shared color scale.
-        titles (list, optional): List of column labels, drawn in a 24 px header strip. None keeps the strip-free layout.
-        max_images (int): Maximum number of rows.
+    参数：
+        imgs (torch.Tensor): 形状为 (B, 3, H, W)、取值范围为 [0, 1] 的浮点图像张量。
+        preds (列表): 形状为 (B, 1, H, W) 或 (B, H, W) 的预测深度张量列表，每个张量对应一列。
+        fname (str | Path): 输出图像路径。
+        gt (torch.Tensor, 可选): 形状为 (B, 1, H, W) 或 (B, H, W)、单位为米的真实深度；像素值 <= 0
+            视为无效并绘制为黑色。用于生成 GT 列并设置共享颜色范围。
+        titles (列表, 可选): 列标题列表，绘制在 24 像素高的标题栏中。为 None 时不显示标题栏。
+        max_images (int): 最大行数。
     """
     preds = [p.unsqueeze(1) if p.ndim == 3 else p for p in preds]
     h, w = imgs.shape[-2:]
@@ -1204,7 +1198,7 @@ def plot_depth_panels(
                 cv2.resize(colorize_depth(d, vmin, vmax, mode="metric"), (w, h), interpolation=cv2.INTER_NEAREST)
             )
         else:
-            # No GT: scale each prediction by its own valid range.
+            # 没有 GT：根据每个预测自身的有效范围进行缩放。
             vmin = vmax = None
 
         for p in preds:
@@ -1228,13 +1222,13 @@ def plot_depth_panels(
 
 @plt_settings()
 def plot_tune_results(results_file: str = "tune_results.ndjson", exclude_zero_fitness_points: bool = True):
-    """Plot the evolution results stored in a tuning NDJSON file.
+    """绘制调优 NDJSON 文件中保存的演化结果。
 
-    Args:
-        results_file (str, optional): Path to the NDJSON file containing the tuning results.
-        exclude_zero_fitness_points (bool, optional): Don't include points with zero fitness in tuning plots.
+    参数：
+        results_file (str, 可选): 包含调优结果的 NDJSON 文件路径。
+        exclude_zero_fitness_points (bool, 可选): 是否在调优图中排除适应度为零的点。
 
-    Examples:
+    示例：
         >>> plot_tune_results("path/to/tune_results.ndjson")
     """
     import json
@@ -1242,7 +1236,7 @@ def plot_tune_results(results_file: str = "tune_results.ndjson", exclude_zero_fi
     import matplotlib.pyplot as plt  # scope for faster 'import ultralytics'
 
     def _save_one_file(file):
-        """Save one matplotlib plot to 'file'."""
+        """将一个 matplotlib 绘图保存到文件。"""
         plt.savefig(file, dpi=200)
         plt.close()
         LOGGER.info(f"Saved {file}")
@@ -1268,30 +1262,30 @@ def plot_tune_results(results_file: str = "tune_results.ndjson", exclude_zero_fi
         LOGGER.warning("No valid fitness values to plot (all iterations may have failed)")
         return
     fitness = all_fitness.copy()
-    # Iterative sigma rejection on lower bound only
+    # 仅对下界执行迭代式 sigma 拒绝。
     for _ in range(3):  # max 3 iterations
         mean, std = fitness.mean(), fitness.std()
         lower_bound = mean - 3 * std
         mask = fitness >= lower_bound
-        if mask.all():  # no more outliers
+        if mask.all():  # 没有更多异常值
             break
         x, fitness = x[mask], fitness[mask]
-    j = np.argmax(fitness)  # max fitness index
-    n = math.ceil(len(keys) ** 0.5)  # columns and rows in plot
+    j = np.argmax(fitness)  # 最大适应度的索引
+    n = math.ceil(len(keys) ** 0.5)  # 绘图中的列数和行数
     plt.figure(figsize=(10, 10), tight_layout=True)
     for i, k in enumerate(keys):
         v = x[:, i + 1]
-        mu = v[j]  # best single result
+        mu = v[j]  # 最佳单项结果
         plt.subplot(n, n, i + 1)
         plt_color_scatter(v, fitness, cmap="viridis", alpha=0.8, edgecolors="none")
         plt.plot(mu, fitness.max(), "k+", markersize=15)
-        plt.title(f"{k} = {mu:.3g}", fontdict={"size": 9})  # limit to 40 characters
-        plt.tick_params(axis="both", labelsize=8)  # Set axis label size to 8
+        plt.title(f"{k} = {mu:.3g}", fontdict={"size": 9})  # 限制为 40 个字符
+        plt.tick_params(axis="both", labelsize=8)  # 将坐标轴标签字体大小设为 8
         if i % n != 0:
             plt.yticks([])
     _save_one_file(results_file.with_name("tune_scatter_plots.png"))
 
-    # Fitness vs iteration
+    # 适应度与迭代次数的关系
     x = range(1, len(all_fitness) + 1)
     plt.figure(figsize=(10, 6), tight_layout=True)
     for dataset in sorted({k for r in records for k in r.get("datasets", {})}):
@@ -1319,69 +1313,68 @@ def class_activation_map(
     topk: int = 16,
     **kwargs,
 ) -> Any:
-    """Run inference and save a class activation heatmap for each image of the batch.
+    """运行推理，并为批次中的每张图像保存类别激活热力图。
 
-    LayerCAM weights each head-input position by its positive gradient toward the predicted class score. Each prediction
-    and head level is normalized independently before taking their element-wise maximum, preventing stronger predictions
-    or levels from hiding weaker ones.
+    LayerCAM 根据预测类别分数沿正梯度方向的大小，为每个检测头输入位置分配权重。
+    每个预测结果和检测头层级会先独立归一化，再取逐元素最大值，避免较强的预测结果或层级掩盖较弱结果。
 
-    Args:
-        model (torch.nn.Module): AutoBackend wrapping a PyTorch model.
-        im (torch.Tensor): Preprocessed images of shape (B, 3, H, W).
-        paths (list[str]): Source path of each image of the batch, used to name the saved overlays.
-        save_dir (Path): Directory to save the overlays in.
-        *args (Any): Additional positional arguments passed to the model forward.
-        conf (float): Score threshold a prediction must pass to contribute, falling back to the single best prediction
-            for images where nothing passes it, so that a near miss can still be inspected.
-        classes (int | list[int], optional): Only let these class ids contribute, as in the predict `classes` filter.
-        topk (int): Maximum number of predictions to explain per image, each one costing a backward pass.
-        **kwargs (Any): Additional keyword arguments passed to the model forward.
+    参数：
+        model (torch.nn.Module): 封装 PyTorch 模型的 AutoBackend。
+        im (torch.Tensor): 形状为 (B, 3, H, W) 的预处理图像。
+        paths (列表[str]): 批次中每张图像的源路径，用于命名保存的叠加图。
+        save_dir (Path): 保存叠加图的目录。
+        *args (Any): 传递给模型前向传播的其他位置参数。
+        conf (float): 预测结果参与计算所需通过的分数阈值。对于没有预测结果达到阈值的图像，
+            会回退到其最佳预测结果，以便仍可检查接近正确的结果。
+        classes (int | 列表[int], 可选): 仅允许这些类别 ID 参与计算，与预测中的 ``classes`` 过滤器一致。
+        topk (int): 每张图像最多解释的预测结果数量，每个结果都会消耗一次反向传播。
+        **kwargs (Any): 传递给模型前向传播的其他关键字参数。
 
-    Returns:
-        (Any): Model predictions, detached from the autograd graph.
+    返回：
+        (Any): 从自动求导图中分离后的模型预测结果。
     """
     acts, scores = [], []
 
     def pre_hook(module, inputs):
-        """Capture the feature maps entering the head, before heads like WorldDetect overwrite them in place."""
+        """捕获进入检测头的特征图，避免 WorldDetect 等检测头原地覆盖这些特征。"""
         x = inputs[0]
         acts.extend(a for a in (x if isinstance(x, (list, tuple)) else [x]) if a.ndim == 4)
 
     def hook(module, inputs, output):
-        """Capture the class logits leaving the head."""
-        raw = output[1] if isinstance(output, tuple) else output  # heads returning (predictions, raw) keep the raw
+        """捕获离开检测头的类别 logits。"""
+        raw = output[1] if isinstance(output, tuple) else output  # 返回（预测结果，raw）的检测头保留 raw 输出
         if isinstance(raw, dict):  # Detect and subclasses, end2end heads predict from their one2one branch
-            s = raw.get("one2one", raw)["scores"]  # (B, nc, anchors)
+            s = raw.get("one2one", raw)["scores"]  # (B, nc, 锚框)
         elif isinstance(raw, tuple):  # RTDETRDecoder, raw = (dec_bboxes, dec_scores, ...)
-            s = raw[1][-1].transpose(1, 2)  # last decoder layer, (B, nc, queries)
+            s = raw[1][-1].transpose(1, 2)  # 最后一个解码器层，形状为 (B, nc, queries)
         else:  # Classify (B, nc), SemanticSegment (B, nc, h, w), Depth (B, 1, h, w)
             s = raw
-        scores.append(s.reshape(*s.shape[:2], -1))  # class logits, (B, nc, predictions)
+    scores.append(s.reshape(*s.shape[:2], -1))  # 类别 logits，（B，nc，预测结果）
 
-    head = model.model.model[-1]  # AutoBackend -> PyTorch model -> head
-    head.shape = head.shapes = None  # rebuild the anchor caches, inference tensors in them break the autograd graph
+    head = model.model.model[-1]  # AutoBackend -> PyTorch 模型 -> 检测头
+    head.shape = head.shapes = None  # 重建锚框缓存，其中的推理张量会破坏自动求导图
     handles = [head.register_forward_pre_hook(pre_hook), head.register_forward_hook(hook)]
-    # smart_inference_mode() wraps the caller in inference_mode from torch 1.10 and in no_grad below it, and only the
-    # former has to be left before autograd will record anything.
+    # smart_inference_mode() 在 torch 1.10 及更高版本中将调用方包装在 inference_mode 中，
+    # 在更低版本中包装在 no_grad 中；只有前者需要退出，之后 autograd 才能记录计算。
     with torch.inference_mode(False) if TORCH_1_10 else contextlib.nullcontext(), torch.enable_grad():
         try:
-            im = im.clone().requires_grad_(True)  # model parameters have requires_grad=False, so seed the graph here
+            im = im.clone().requires_grad_(True)  # 模型参数 requires_grad=False，因此在此处建立计算图
             preds = model(im, *args, **kwargs)
         finally:
             for handle in handles:
                 handle.remove()
-        s = torch.cat(scores, 2)  # (B, nc, predictions) class logits
+        s = torch.cat(scores, 2)  # (B, nc, 预测结果) 类别 logits
         if classes is not None:
             cls = torch.as_tensor(classes, dtype=torch.long, device=s.device).flatten()
-            cls = cls[(cls >= 0) & (cls < s.shape[1])]  # drop ids outside this model's output channels
+            cls = cls[(cls >= 0) & (cls < s.shape[1])]  # 丢弃超出模型输出通道范围的类别 ID
             if len(cls):
-                s = s[:, cls]  # heatmap for the requested classes only
-        s = s.amax(1)  # (B, predictions) best class logit of each prediction
-        keep = (s.sigmoid() >= conf) | (s == s.amax(1, keepdim=True))  # top prediction alone if none above conf
-        n = min(int(keep.sum(1).amax()), topk)  # predictions to explain, one backward pass each
+                s = s[:, cls]  # 仅保留请求类别的热力图
+        s = s.amax(1)  # (B, 预测结果)，每个预测结果的最佳类别 logit
+        keep = (s.sigmoid() >= conf) | (s == s.amax(1, keepdim=True))  # 没有结果超过阈值时至少保留最佳预测
+        n = min(int(keep.sum(1).amax()), topk)  # 要解释的预测结果数量，每个结果执行一次反向传播
         if int(keep.sum(1).amax()) > n:
             LOGGER.warning(f"Explaining the {n} strongest predictions per image out of {int(keep.sum(1).amax())}.")
-        rank = torch.arange(n, device=s.device) % keep.sum(1, keepdim=True).clamp(min=1)  # short images repeat
+        rank = torch.arange(n, device=s.device) % keep.sum(1, keepdim=True).clamp(min=1)  # 对较短的图像重复索引
         order = s.masked_fill(~keep, float("-inf")).argsort(1, descending=True).gather(1, rank)  # (B, n)
         cam = None
         for k in range(n):
@@ -1389,11 +1382,10 @@ def class_activation_map(
             grads = torch.autograd.grad(s.gather(1, order[:, k : k + 1]).sum(), acts, retain_graph=k < n - 1)
             for a, g in zip(acts, grads):
                 c = (g.float().clamp(min=0) * a.float()).sum(1, keepdim=True)  # LayerCAM, per-position weighting
-                c = c.clamp(min=0)  # activations can be negative, keep only evidence for the prediction
+                c = c.clamp(min=0)  # 激活值可能为负数，仅保留支持该预测的证据
                 c = torch.nn.functional.interpolate(c, im.shape[2:], mode="bilinear", align_corners=False)
                 levels.append(c / c.amax((2, 3), keepdim=True).clamp(min=1e-7))
-            # The level a prediction is made on peaks far higher than the rest, so summing raw would shrink the
-            # broader evidence the other levels hold down to a faint background.
+            # 某一预测层的峰值可能远高于其他层，直接求和会把其他层保留的更广泛证据压缩成微弱背景。
             level = torch.stack(levels).amax(0)
             cam = level if cam is None else torch.maximum(cam, level)
 
@@ -1404,13 +1396,13 @@ def class_activation_map(
     save_dir.mkdir(parents=True, exist_ok=True)
     for c, img, p in zip(cam, ims, paths):
         f = increment_path(save_dir / f"{Path(p).stem}_cam.jpg")
-        img = np.ascontiguousarray(img if img.shape[2] == 3 else img[..., :1].repeat(3, 2))  # grayscale to BGR
+        img = np.ascontiguousarray(img if img.shape[2] == 3 else img[..., :1].repeat(3, 2))  # 灰度图转为 BGR
         heatmap = cv2.addWeighted(cv2.applyColorMap(c, cv2.COLORMAP_JET), 0.5, img, 0.5, 0)
         cv2.imwrite(str(f), heatmap)
         LOGGER.info(f"Saving {f}... (LayerCAM)")
 
     def detach(x):
-        """Detach tensors in nested model outputs from the autograd graph."""
+        """将嵌套模型输出中的张量从 autograd 计算图中分离。"""
         if isinstance(x, torch.Tensor):
             return x.detach()
         if isinstance(x, dict):

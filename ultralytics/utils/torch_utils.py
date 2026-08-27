@@ -36,7 +36,7 @@ from ultralytics.utils.checks import check_version
 from ultralytics.utils.cpu import CPUInfo
 from ultralytics.utils.patches import torch_load
 
-# Version checks (all default to version>=min_version)
+# 版本检查（所有标志默认表示版本 >= min_version）
 TORCH_1_9 = check_version(TORCH_VERSION, "1.9.0")
 TORCH_1_10 = check_version(TORCH_VERSION, "1.10.0")
 TORCH_1_11 = check_version(TORCH_VERSION, "1.11.0")
@@ -63,14 +63,14 @@ if WINDOWS and check_version(TORCH_VERSION, "==2.4.0"):  # reject version 2.4.0 
 
 
 def get_torch_device_backend(device: torch.device | str):
-    """Return the PyTorch module that owns the selected device backend."""
+    """返回负责所选设备后端的 PyTorch 模块。"""
     device_type = getattr(device, "type", str(device).split(":")[0])
     return torch.get_device_module(device_type) if hasattr(torch, "get_device_module") else getattr(torch, device_type)
 
 
 @contextmanager
 def torch_distributed_zero_first(local_rank: int):
-    """Ensure all processes in distributed training wait for the local master (rank 0) to complete a task first."""
+    """确保分布式训练中的所有进程等待本地主进程（rank 0）先完成任务。"""
     initialized = dist.is_available() and dist.is_initialized()
     use_ids = initialized and dist.get_backend() == "nccl"
 
@@ -82,14 +82,14 @@ def torch_distributed_zero_first(local_rank: int):
 
 
 def smart_inference_mode(mode=True):
-    """Apply or disable torch inference mode while supporting the minimum torch version."""
+    """启用或禁用 torch 推理模式，同时兼容最低支持的 torch 版本。"""
 
     def decorate(fn):
-        """Apply appropriate torch decorator for inference mode based on torch version."""
+        """根据 torch 版本应用适用的推理模式装饰器。"""
         if not mode:
             return torch.inference_mode(False)(torch.no_grad()(fn)) if TORCH_1_9 else torch.no_grad()(fn)
         if TORCH_1_9 and torch.is_inference_mode_enabled():
-            return fn  # already in inference_mode, act as a pass-through
+            return fn  # 已处于 inference_mode，直接透传
         else:
             return (torch.inference_mode if TORCH_1_10 else torch.no_grad)()(fn)
 
@@ -97,26 +97,26 @@ def smart_inference_mode(mode=True):
 
 
 def autocast(enabled: bool, device: str = "cuda"):
-    """Get the appropriate autocast context manager based on PyTorch version and AMP setting.
+    """根据 PyTorch 版本和 AMP 设置获取适用的 autocast 上下文管理器。
 
-    This function returns a context manager for automatic mixed precision (AMP) training that is compatible with both
-    older and newer versions of PyTorch. It handles the differences in the autocast API between PyTorch versions.
+    此函数返回一个适用于自动混合精度（AMP）训练的上下文管理器，兼容新旧 PyTorch 版本，
+    并处理不同 PyTorch 版本之间 autocast API 的差异。
 
-    Args:
-        enabled (bool): Whether to enable automatic mixed precision.
-        device (str, optional): Device type to use for autocast, e.g. "cuda" or "npu".
+    参数：
+        enabled (bool): 是否启用自动混合精度。
+        device (str, 可选): autocast 使用的设备类型，例如 "cuda" 或 "npu"。
 
-    Returns:
-        (torch.amp.autocast): The appropriate autocast context manager.
+    返回：
+        (torch.amp.autocast): 适用的 autocast 上下文管理器。
 
-    Examples:
+    示例：
         >>> with autocast(enabled=True):
-        ...     # Your mixed precision operations here
+        ...     # 在此处执行混合精度操作
         ...     pass
 
-    Notes:
-        - For PyTorch versions 1.13 and newer, it uses `torch.amp.autocast`.
-        - For older versions, it uses the backend-specific AMP context.
+    注意：
+        - 对于 PyTorch 1.13 及更高版本，使用 `torch.amp.autocast`。
+        - 对于更早版本，使用特定后端的 AMP 上下文。
     """
     if device == "npu":
         import torch_npu
@@ -132,50 +132,48 @@ def autocast(enabled: bool, device: str = "cuda"):
 
 @functools.lru_cache
 def get_cpu_info():
-    """Return a string with system CPU information, i.e. 'Apple M2'."""
+    """返回系统 CPU 信息字符串，例如 'Apple M2'。"""
     return CPUInfo.name()
 
 
 @functools.lru_cache
 def get_gpu_info(index):
-    """Return a string with system GPU information, i.e. 'Tesla T4, 15102MiB'."""
+    """返回系统 GPU 信息字符串，例如 'Tesla T4, 15102MiB'。"""
     properties = torch.cuda.get_device_properties(index)
     return f"{properties.name}, {properties.total_memory / (1 << 20):.0f}MiB"
 
 
 def parse_device(device: str | int | list | tuple | torch.device = "") -> str:
-    """Parse a device request of any form into a canonical device string.
+    """将任意形式的设备请求解析为规范设备字符串。
 
-    Args:
-        device (str | int | list | tuple | torch.device, optional): Device request, e.g. 'cuda:0', '0,1', [0, 1], 'cpu',
-            'mps', or '-1' to auto-select an idle GPU ('-1,-1' for two).
+    参数：
+        device (str | int | 列表 | tuple | torch.device, 可选): 设备请求，例如 'cuda:0'、'0,1'、[0, 1]、'cpu'、
+            'mps' 或 '-1'（自动选择空闲 GPU；两个设备可使用 '-1,-1'）。
 
-    Returns:
+    返回：
         (str): Canonical device string, e.g. '', 'cpu', 'mps', '0', or '0,1'.
 
-    Examples:
+    示例：
         >>> parse_device("cuda:0")
         '0'
 
         >>> parse_device([0, 1])
         '0,1'
 
-    Notes:
-        Each '-1' is replaced with an idle GPU index. Requested ids exceeding the torch device count that match
-        physical GPU ids visible under an external CUDA_VISIBLE_DEVICES restriction are translated to the
-        corresponding torch indices, e.g. '3' -> '0' when CUDA_VISIBLE_DEVICES='3'; in-range ids are always torch
-        indices, keeping parsing idempotent. Returned indices are relative to the active restriction, so strings
-        persisted under one environment (e.g. resumed checkpoint args) address the same physical GPUs only in that
-        environment.
+    注意：
+        每个 '-1' 都会替换为空闲 GPU 索引。若请求的 ID 超出 torch 设备数量、但与外部 CUDA_VISIBLE_DEVICES
+        限制下可见的物理 GPU ID 匹配，则将其转换为对应的 torch 索引；例如 CUDA_VISIBLE_DEVICES='3' 时，
+        '3' 会转换为 '0'。范围内的 ID 始终视为 torch 索引，以保证重复解析结果稳定。返回的索引相对于当前限制，
+        因此在同一环境中保存的字符串（例如恢复检查点参数）始终指向相同的物理 GPU。
     """
     if isinstance(device, torch.device):
         if device.type == "cuda" and device.index is None:
-            return ""  # indexless torch.device('cuda') means the current CUDA device, i.e. the '' default request
+            return ""  # 无索引的 torch.device('cuda') 表示当前 CUDA 设备，即默认的 '' 请求
         if device.type in {"npu", "xpu"}:
             return device.type if device.index is None else f"{device.type}:{device.index}"
     device = str(device).lower()
     for remove in "cuda:", "none", "(", ")", "[", "]", "'", " ":
-        device = device.replace(remove, "")  # to string, 'cuda:0' -> '0' and '(0, 1)' -> '0,1'
+        device = device.replace(remove, "")  # 转为字符串：'cuda:0' -> '0'，'(0, 1)' -> '0,1'
     if device == "cuda":
         device = "0"
     for backend in ("npu", "xpu"):
@@ -184,20 +182,20 @@ def parse_device(device: str | int | list | tuple | torch.device = "") -> str:
             indices = ",".join(str(int(x)) if x.isdigit() else x for x in indices.split(",") if x)
             return f"{backend}:{indices}" if indices else backend
     device = ",".join(str(int(x)) if x.isdigit() else x for x in device.split(",") if x)  # "0,,01" -> "0,1"
-    # Visible physical ids normalized like requested ids and truncated to the torch device count, mirroring CUDA's
-    # atoi-style parsing and its stop at the first invalid CVD entry
+    # 将可见物理设备 ID 规范化为与请求 ID 相同的形式，并截断到 torch 设备数量，
+    # 这与 CUDA 的 atoi 式解析以及遇到首个无效 CVD 条目时停止的行为一致。
     cvd = os.environ.get("CUDA_VISIBLE_DEVICES", "").replace(" ", "")
     visible = [str(int(x)) if x.isdigit() else x for x in cvd.split(",") if x][: torch.cuda.device_count()]
-    indices = [x for x in device.split(",") if x.isdigit()]  # requested ids, excluding '-1' and non-numeric tokens
+    indices = [x for x in device.split(",") if x.isdigit()]  # 请求的 ID，排除 '-1' 和非数字标记
     if indices and all(x in visible for x in indices) and any(int(x) >= torch.cuda.device_count() for x in indices):
-        # Ids exceeding the torch device count can only be physical GPU ids under an external CUDA_VISIBLE_DEVICES
-        # restriction -> translate to torch indices; in-range ids are torch indices, keeping repeated parses stable
+        # 超出 torch 设备数量的 ID 只能是外部 CUDA_VISIBLE_DEVICES 限制下的物理 GPU ID，
+        # 因此将其转换为 torch 索引；范围内的 ID 已经是 torch 索引，重复解析时保持稳定。
         device = ",".join(str(visible.index(x)) if x.isdigit() else x for x in device.split(","))
     if "-1" in device:
         from ultralytics.utils.autodevice import GPUInfo
 
-        # Replace each -1 with an idle GPU or remove it; GPUInfo searches physical NVML ids among externally visible
-        # GPUs only, translated back to torch indices under a CUDA_VISIBLE_DEVICES restriction
+        # 将每个 -1 替换为空闲 GPU，或将其移除；GPUInfo 只在外部可见 GPU 中搜索 NVML 物理 ID，
+        # 再在 CUDA_VISIBLE_DEVICES 限制下将结果转换回 torch 索引。
         parts = device.split(",")
         candidates = [int(x) for x in visible if x.isdigit()] if visible else None
         selected = GPUInfo().select_idle_gpu(count=parts.count("-1"), min_memory_fraction=0.2, indices=candidates)
@@ -210,39 +208,37 @@ def parse_device(device: str | int | list | tuple | torch.device = "") -> str:
 
 
 def select_device(device="", newline=False, verbose=True):
-    """Select the appropriate PyTorch device based on the provided arguments.
+    """根据提供的参数选择适用的 PyTorch 设备。
 
-    The function takes a string specifying the device or a torch.device object and returns a torch.device object
-    representing the selected device. The function also validates the number of available devices and raises an
-    exception if the requested device(s) are not available.
+    此函数接收指定设备的字符串或 torch.device 对象，并返回代表所选设备的 torch.device 对象。
+    同时验证可用设备数量；请求的设备不可用时抛出异常。
 
-    Args:
-        device (str | torch.device, optional): Device string or torch.device object. Options include 'cpu', 'cuda', '0',
+    参数：
+        device (str | torch.device, 可选): 设备字符串或 torch.device 对象。可选值包括 'cpu'、'cuda'、'0'、
             '0,1,2,3', 'mps', 'npu:0', 'npu:0,1', 'xpu:0', 'xpu:0,1', or '-1' for auto-select. Defaults to auto-selecting
             the first available GPU, or CPU if no GPU is available.
-        newline (bool, optional): If True, adds a newline at the end of the log string.
-        verbose (bool, optional): If True, logs the device information.
+        newline (bool, 可选): 为 True 时在日志字符串末尾添加换行符。
+        verbose (bool, 可选): 为 True 时记录设备信息。
 
-    Returns:
+    返回：
         (torch.device): Selected device.
 
-    Examples:
+    示例：
         >>> select_device("cuda:0")
-        device(type='cuda', index=0)
+        device(type='cuda', 索引=0)
 
         >>> select_device("cpu")
         device(type='cpu')
 
-    Notes:
-        CUDA indices are torch device indices, which reflect any externally set CUDA_VISIBLE_DEVICES. This function
-        never modifies CUDA_VISIBLE_DEVICES; an explicit single-GPU request is made the default CUDA device with
-        torch.cuda.set_device() so that indexless 'cuda' operations land on it, while default '' requests (resolved
-        to the current device) and multi-GPU requests (DDP ranks pin their own device in trainer._setup_ddp()) leave
-        the current device untouched.
+    注意：
+        CUDA 索引就是 torch 设备索引，会反映外部设置的 CUDA_VISIBLE_DEVICES。此函数不会修改
+        CUDA_VISIBLE_DEVICES；显式的单 GPU 请求会通过 torch.cuda.set_device() 设置为默认 CUDA 设备，
+        使无索引的 'cuda' 操作落到该设备上，而默认的 '' 请求（解析为当前设备）和多 GPU 请求
+        （DDP rank 在 trainer._setup_ddp() 中绑定自己的设备）不会改变当前设备。
     """
     if isinstance(device, torch.device):
         if device.type not in {"cuda", "npu", "xpu"}:
-            return device  # other torch.device inputs pass through; accelerator inputs canonicalize and validate below
+            return device  # 其他 torch.device 输入直接透传；加速器输入会在下方规范化并验证
     elif str(device).startswith(("tpu", "intel", "vulkan")):
         return device
 
@@ -278,7 +274,7 @@ def select_device(device="", newline=False, verbose=True):
             )
 
         if len(indices) == 1:
-            backend.set_device(indices[0])  # multi-device DDP ranks each pin their device in trainer._setup_ddp()
+            backend.set_device(indices[0])  # 多设备 DDP 的每个 rank 在 trainer._setup_ddp() 中绑定自己的设备
         if verbose:
             space = " " * len(s)
             for i, idx in enumerate(indices):
@@ -288,7 +284,7 @@ def select_device(device="", newline=False, verbose=True):
 
     cpu = device == "cpu"
     mps = device in {"mps", "mps:0"}  # Apple Metal Performance Shaders (MPS)
-    if not cpu and not mps and device:  # non-cpu device requested
+    if not cpu and not mps and device:  # 请求了非 CPU 设备
         valid = all(x.isdigit() and int(x) < torch.cuda.device_count() for x in device.split(","))
         if not (torch.cuda.is_available() and valid):
             LOGGER.info(s)
@@ -308,31 +304,31 @@ def select_device(device="", newline=False, verbose=True):
                 f"{install}"
             )
 
-    if not cpu and not mps and torch.cuda.is_available():  # prefer GPU if available
+    if not cpu and not mps and torch.cuda.is_available():  # 如果可用，优先使用 GPU
         devices = device.split(",") if device else [str(torch.cuda.current_device())]  # '' -> current default device
         space = " " * len(s)
         for i, d in enumerate(devices):
             s += f"{'' if i == 0 else space}CUDA:{d} ({get_gpu_info(int(d))})\n"
         arg = f"cuda:{devices[0]}"
-        if device and len(devices) == 1:  # explicit single-GPU request only: '' never moves the current device, and
-            torch.cuda.set_device(int(devices[0]))  # multi-GPU DDP ranks each pin their own device in _setup_ddp()
+        if device and len(devices) == 1:  # 仅处理明确的单 GPU 请求：'' 不会移动当前设备，且
+            torch.cuda.set_device(int(devices[0]))  # 多 GPU DDP 的每个 rank 在 _setup_ddp() 中绑定自己的设备
     elif mps and TORCH_2_0 and torch.backends.mps.is_available():
-        # Prefer MPS if available
+        # 如果可用，优先使用 MPS
         s += f"MPS ({get_cpu_info()})\n"
         arg = "mps"
-    else:  # revert to CPU
+    else:  # 回退到 CPU
         s += f"CPU ({get_cpu_info()})\n"
         arg = "cpu"
 
     if arg in {"cpu", "mps"}:
-        torch.set_num_threads(NUM_THREADS)  # reset OMP_NUM_THREADS for cpu training
+        torch.set_num_threads(NUM_THREADS)  # 为 CPU 训练重置 OMP_NUM_THREADS
     if verbose:
         LOGGER.info(s if newline else s.rstrip())
     return torch.device(arg)
 
 
 def time_sync(device: torch.device | None = None):
-    """Return PyTorch-accurate time."""
+    """返回与 PyTorch 同步的准确时间。"""
     if device is None or device.type not in {"cpu", "mps"}:
         accelerator = get_torch_device_backend(device or "cuda")
         if accelerator.is_available() and hasattr(accelerator, "synchronize"):
@@ -341,25 +337,25 @@ def time_sync(device: torch.device | None = None):
 
 
 def fuse_conv_and_bn(conv, bn):
-    """Fuse Conv2d and BatchNorm2d layers for inference optimization.
+    """融合 Conv2d 和 BatchNorm2d 层，以优化推理。
 
-    Args:
-        conv (nn.Conv2d): Convolutional layer to fuse.
-        bn (nn.BatchNorm2d): Batch normalization layer to fuse.
+    参数：
+        conv (nn.Conv2d): 要融合的卷积层。
+        bn (nn.BatchNorm2d): 要融合的批归一化层。
 
-    Returns:
-        (nn.Conv2d): The fused convolutional layer with gradients disabled.
+    返回：
+        (nn.Conv2d): 已融合且禁用梯度的卷积层。
 
-    Examples:
+    示例：
         >>> conv = nn.Conv2d(3, 16, 3)
         >>> bn = nn.BatchNorm2d(16)
         >>> fused_conv = fuse_conv_and_bn(conv, bn)
     """
-    # Compute fused weights: Conv2d weight is [out_channels, in_channels // groups, kH, kW], scale along axis 0
+    # 计算融合权重：Conv2d 权重形状为 [out_channels, in_channels // groups, kH, kW]，沿轴 0 缩放。
     bn_scale = bn.weight.div(torch.sqrt(bn.eps + bn.running_var))
     conv.weight.data = conv.weight * bn_scale.view(-1, 1, 1, 1)
 
-    # Compute fused bias
+    # 计算融合后的偏置
     b_conv = (
         torch.zeros(conv.out_channels, device=conv.weight.device, dtype=conv.weight.dtype)
         if conv.bias is None
@@ -377,29 +373,29 @@ def fuse_conv_and_bn(conv, bn):
 
 
 def fuse_deconv_and_bn(deconv, bn):
-    """Fuse ConvTranspose2d and BatchNorm2d layers for inference optimization.
+    """融合 ConvTranspose2d 和 BatchNorm2d 层，以优化推理。
 
-    Args:
-        deconv (nn.ConvTranspose2d): Transposed convolutional layer to fuse.
-        bn (nn.BatchNorm2d): Batch normalization layer to fuse.
+    参数：
+        deconv (nn.ConvTranspose2d): 要融合的转置卷积层。
+        bn (nn.BatchNorm2d): 要融合的批归一化层。
 
-    Returns:
-        (nn.ConvTranspose2d): The fused transposed convolutional layer with gradients disabled.
+    返回：
+        (nn.ConvTranspose2d): 已融合且禁用梯度的转置卷积层。
 
-    Examples:
+    示例：
         >>> deconv = nn.ConvTranspose2d(16, 3, 3)
         >>> bn = nn.BatchNorm2d(3)
         >>> fused_deconv = fuse_deconv_and_bn(deconv, bn)
     """
-    if isinstance(bn, nn.Identity):  # ConvTranspose(bn=False) leaves bn as nn.Identity, nothing to fuse
+    if isinstance(bn, nn.Identity):  # ConvTranspose(bn=False) 会保留 nn.Identity，无需融合
         return deconv.requires_grad_(False)
-    # Compute fused weights: ConvTranspose2d weight is [in_channels, out_channels // groups, kH, kW], so the
-    # per-output-channel BN scale applies along axis 1 (group-mapped from axis 0), not axis 0 as for Conv2d.
+    # 计算融合权重：ConvTranspose2d 权重形状为 [in_channels, out_channels // groups, kH, kW]，
+    # 因此每个输出通道的 BN 缩放沿轴 1 应用（从轴 0 按分组映射），而不是像 Conv2d 那样沿轴 0 应用。
     bn_scale = bn.weight.div(torch.sqrt(bn.eps + bn.running_var))
     w_scale = bn_scale.view(deconv.groups, -1).repeat_interleave(deconv.in_channels // deconv.groups, 0)
     deconv.weight.data = deconv.weight * w_scale[:, :, None, None]
 
-    # Compute fused bias
+    # 计算融合后的偏置
     b_conv = (
         torch.zeros(deconv.out_channels, device=deconv.weight.device, dtype=deconv.weight.dtype)
         if deconv.bias is None
@@ -417,27 +413,27 @@ def fuse_deconv_and_bn(deconv, bn):
 
 
 def model_info(model, detailed=False, verbose=True, imgsz=640):
-    """Print and return detailed model information layer by layer.
+    """逐层打印并返回详细的模型信息。
 
-    Args:
-        model (nn.Module): Model to analyze.
-        detailed (bool, optional): Whether to print detailed layer information.
-        verbose (bool, optional): Whether to print model information.
-        imgsz (int | list, optional): Input image size.
+    参数：
+        model (nn.Module): 要分析的模型。
+        detailed (bool, 可选): 是否打印详细的层信息。
+        verbose (bool, 可选): 是否打印模型信息。
+        imgsz (int | 列表, 可选): 输入图像尺寸。
 
-    Returns:
+    返回：
         (tuple): Tuple containing:
-            - n_l (int): Number of layers.
-            - n_p (int): Number of parameters.
-            - n_g (int): Number of gradients.
+            - n_l (int): 层数.
+            - n_p (int): 参数数量。
+            - n_g (int): 梯度数量。
             - flops (float): GFLOPs.
     """
     if not verbose:
         return
-    n_p = get_num_params(model)  # number of parameters
-    n_g = get_num_gradients(model)  # number of gradients
+    n_p = get_num_params(model)  # 参数数量
+    n_g = get_num_gradients(model)  # 梯度数量
     layers = __import__("collections").OrderedDict((n, m) for n, m in model.named_modules() if len(m._modules) == 0)
-    n_l = len(layers)  # number of layers
+    n_l = len(layers)  # 层数
     if detailed:
         h = f"{'layer':>5}{'name':>40}{'type':>20}{'gradient':>10}{'parameters':>12}{'shape':>20}{'mu':>10}{'sigma':>10}"
         LOGGER.info(h)
@@ -449,10 +445,10 @@ def model_info(model, detailed=False, verbose=True, imgsz=640):
                     LOGGER.info(
                         f"{i:>5g}{f'{mn}.{pn}':>40}{mt:>20}{p.requires_grad!r:>10}{p.numel():>12g}{list(p.shape)!s:>20}{p.mean():>10.3g}{p.std():>10.3g}{str(p.dtype).replace('torch.', ''):>15}"
                     )
-            else:  # layers with no learnable params
+            else:  # 没有可学习参数的层
                 LOGGER.info(f"{i:>5g}{mn:>40}{mt:>20}{False!r:>10}{0:>12g}{[]!s:>20}{'-':>10}{'-':>10}{'-':>15}")
 
-    flops = get_flops(model, imgsz)  # imgsz may be int or list, i.e. imgsz=640 or imgsz=[640, 320]
+    flops = get_flops(model, imgsz)  # imgsz 可以是整数或列表，例如 imgsz=640 或 imgsz=[640, 320]
     fused = " (fused)" if getattr(model, "is_fused", lambda: False)() else ""
     fs = f", {flops:.1f} GFLOPs" if flops else ""
     yaml_file = getattr(model, "yaml_file", "") or getattr(model, "yaml", {}).get("yaml_file", "")
@@ -462,26 +458,26 @@ def model_info(model, detailed=False, verbose=True, imgsz=640):
 
 
 def get_num_params(model):
-    """Return the total number of parameters in a YOLO model."""
+    """返回 YOLO 模型中的参数总量。"""
     return sum(x.numel() for x in model.parameters())
 
 
 def get_num_gradients(model):
-    """Return the total number of parameters with gradients in a YOLO model."""
+    """返回 YOLO 模型中需要梯度的参数总量。"""
     return sum(x.numel() for x in model.parameters() if x.requires_grad)
 
 
 def model_info_for_loggers(trainer):
-    """Return model info dict with useful model information.
+    """返回包含有用模型信息的模型信息字典。
 
-    Args:
-        trainer (ultralytics.engine.trainer.BaseTrainer): The trainer object containing model and validation data.
+    参数：
+            trainer (ultralytics.engine.trainer.BaseTrainer): 包含模型和验证数据的训练器对象。
 
-    Returns:
-        (dict): Dictionary containing model parameters, GFLOPs, and inference speeds.
+    返回：
+        (dict): 包含模型参数、GFLOPs 和推理速度的字典。
 
-    Examples:
-        YOLOv8n info for loggers
+    示例：
+        用于日志记录的 YOLOv8n 信息
         >>> results = {
         ...     "model/parameters": 3151904,
         ...     "model/GFLOPs": 8.746,
@@ -490,12 +486,12 @@ def model_info_for_loggers(trainer):
         ...     "model/speed_PyTorch(ms)": 18.755,
         ... }
     """
-    if trainer.args.profile:  # profile ONNX and TensorRT times
+    if trainer.args.profile:  # 分析 ONNX 和 TensorRT 耗时
         from ultralytics.utils.benchmarks import ProfileModels
 
         results = ProfileModels([trainer.last], device=trainer.device, imgsz=trainer.args.imgsz).run()[0]
         results.pop("model/name")
-    else:  # only return PyTorch times from most recent validation
+    else:  # 仅返回最近一次验证的 PyTorch 耗时
         results = {
             "model/parameters": get_num_params(trainer.model),
             "model/GFLOPs": round(get_flops(trainer.model, trainer.args.imgsz), 3),
@@ -505,55 +501,54 @@ def model_info_for_loggers(trainer):
 
 
 def _attention_ops(m, x, y):
-    """Count the query-key and attention-value matmuls of an attention block for THOP.
+    """统计注意力块中查询-键和注意力-值矩阵乘法的 THOP 运算量。
 
-    Both run functionally on reshaped tensors, so no child-module hook observes them and the block would otherwise be
-    charged only for its qkv/proj/pe convolutions. Each output element of the two products costs one multiply-add over
-    the contracted axis, giving `tokens**2 * (key_dim + head_dim)` per head.
+    两种运算都在重塑后的张量上以函数形式运行，因此子模块 hook 无法观测到它们；否则该模块只会统计
+    qkv/proj/pe 卷积的运算量。两个乘积的每个输出元素在收缩轴上产生一次乘加操作，因此每个头的运算量为
+    `tokens**2 * (key_dim + head_dim)`。
     """
     b, _, h, w = x[0].shape
-    area = getattr(m, "area", 1)  # area attention attends within that many independent groups, AAttn only
+    area = getattr(m, "area", 1)  # area attention 在指定数量的独立组内执行注意力，仅 AAttn 使用
     tokens = h * w // area
-    key_dim = getattr(m, "key_dim", m.head_dim)  # Attention narrows q and k by attn_ratio, AAttn does not
+    key_dim = getattr(m, "key_dim", m.head_dim)  # Attention 按 attn_ratio 缩小 q 和 k，AAttn 不执行此操作
     m.total_ops += b * area * m.num_heads * tokens * tokens * (key_dim + m.head_dim)
 
 
 def get_flops(model, imgsz=640):
-    """Calculate FLOPs (floating point operations) for a model in GFLOPs.
+    """计算模型的 FLOPs（浮点运算次数），单位为 GFLOPs。
 
-    Uses THOP's stride-aware image profiling for efficiency and accurate size-independent operations. Returns 0.0 if
-    thop is unavailable or profiling fails.
+    使用 THOP 的步长感知图像分析来提高效率，并准确统计与尺寸无关的操作。如果 thop 不可用或分析失败，则返回 0.0。
 
-    Args:
-        model (nn.Module): The model to calculate FLOPs for.
-        imgsz (int | list, optional): Input image size.
+    参数：
+        model (nn.Module): 要计算 FLOPs 的模型。
+        imgsz (int | 列表, 可选): 输入图像尺寸。
 
-    Returns:
-        (float): The model's GFLOPs (billions of floating point operations).
+    返回：
+        (float): 模型的 GFLOPs（十亿次浮点运算）。
     """
     try:
         import thop
     except ImportError:
-        thop = None  # conda support without 'ultralytics-thop' installed
+        thop = None  # 未安装 'ultralytics-thop' 时支持 conda 环境
 
     if not thop:
-        return 0.0  # if not installed return 0.0 GFLOPs
+        return 0.0  # 未安装时返回 0.0 GFLOPs
 
     try:
-        from ultralytics.nn.modules.block import AAttn, Attention  # imported here: block.py imports this module
+        from ultralytics.nn.modules.block import AAttn, Attention  # 在此处导入：block.py 会导入此模块
         from ultralytics.nn.modules.head import RTDETRDecoder
 
         model = unwrap_model(model)
         p = next(model.parameters())
         if not isinstance(imgsz, list):
-            imgsz = [imgsz, imgsz]  # expand if int/float
+            imgsz = [imgsz, imgsz]  # 输入为 int/float 时扩展为二维
         attn = tuple(m for m in model.modules() if isinstance(m, (Attention, AAttn)))
         rtdetr = any(isinstance(m, RTDETRDecoder) for m in model.modules())
-        # Attention costs are quadratic in image area, so disable THOP's affine proxy.
+        # 注意力的计算量与图像面积呈平方关系，因此禁用 THOP 的仿射代理计算。
         stride = None if attn else max(int(model.stride.max()), 32) if hasattr(model, "stride") else 32
-        im = torch.empty((1, p.shape[1], *imgsz), device=p.device, dtype=p.dtype)  # input image in BCHW format
+        im = torch.empty((1, p.shape[1], *imgsz), device=p.device, dtype=p.dtype)  # BCHW 格式的输入图像
         custom_ops = {Attention: _attention_ops, AAttn: _attention_ops} if attn else None
-        if rtdetr:  # RT-DETR cannot run the stride-sized proxy input
+        if rtdetr:  # RT-DETR 无法运行步长大小的代理输入
             return thop.profile(model, inputs=[im], custom_ops=custom_ops, verbose=False)[0] / 1e9 * 2
         return thop.profile(model, inputs=[im], stride=stride, custom_ops=custom_ops, verbose=False)[0] / 1e9 * 2
     except Exception:
@@ -561,7 +556,7 @@ def get_flops(model, imgsz=640):
 
 
 def initialize_weights(model):
-    """Initialize model weights, biases, and module settings to default values."""
+    """将模型权重、偏置和模块配置初始化为默认值。"""
     for m in model.modules():
         t = type(m)
         if t is nn.Conv2d:
@@ -574,35 +569,35 @@ def initialize_weights(model):
 
 
 def scale_img(img, ratio=1.0, same_shape=False, gs=32):
-    """Scale and pad an image tensor, optionally maintaining aspect ratio and padding to gs multiple.
+    """缩放并填充图像张量，可选择保持宽高比并填充到 gs 的整数倍。
 
-    Args:
-        img (torch.Tensor): Input image tensor.
-        ratio (float, optional): Scaling ratio.
-        same_shape (bool, optional): Whether to maintain the same shape.
-        gs (int, optional): Grid size for padding.
+    参数：
+        img (torch.Tensor): 输入图像张量。
+        ratio (float, 可选): 缩放比例。
+        same_shape (bool, 可选): 是否保持相同形状。
+        gs (int, 可选): 用于填充的网格尺寸。
 
-    Returns:
-        (torch.Tensor): Scaled and padded image tensor.
+    返回：
+        (torch.Tensor): 缩放并填充后的图像张量。
     """
     if ratio == 1.0:
         return img
     h, w = img.shape[2:]
-    s = (int(h * ratio), int(w * ratio))  # new size
-    img = F.interpolate(img, size=s, mode="bilinear", align_corners=False)  # resize
-    if not same_shape:  # pad/crop img
+    s = (int(h * ratio), int(w * ratio))  # 新尺寸
+    img = F.interpolate(img, size=s, mode="bilinear", align_corners=False)  # 调整尺寸
+    if not same_shape:  # 填充或裁剪图像
         h, w = (math.ceil(x * ratio / gs) * gs for x in (h, w))
     return F.pad(img, [0, w - s[1], 0, h - s[0]], value=0.447)  # value = imagenet mean
 
 
 def copy_attr(a, b, include=(), exclude=()):
-    """Copy attributes from object 'b' to object 'a', with options to include/exclude certain attributes.
+    """将对象 b 的属性复制到对象 a，并支持包含或排除指定属性。
 
-    Args:
-        a (Any): Destination object to copy attributes to.
-        b (Any): Source object to copy attributes from.
-        include (tuple, optional): Attributes to include. If empty, all attributes are included.
-        exclude (tuple, optional): Attributes to exclude.
+    参数：
+        a (Any): 接收属性的目标对象。
+        b (Any): 提供属性的源对象。
+        include (tuple, 可选): 要包含的属性。为空时包含所有属性。
+        exclude (tuple, 可选): 要排除的属性。
     """
     for k, v in b.__dict__.items():
         if (len(include) and k not in include) or k.startswith("_") or k in exclude:
@@ -612,40 +607,39 @@ def copy_attr(a, b, include=(), exclude=()):
 
 
 def intersect_dicts(da, db, exclude=()):
-    """Return a dictionary of intersecting keys with matching shapes, excluding 'exclude' keys, using da values.
+    """返回形状匹配的交集键字典，排除 exclude 键，并使用 da 值。
 
-    Args:
-        da (dict): First dictionary.
-        db (dict): Second dictionary.
-        exclude (tuple, optional): Keys to exclude.
+    参数：
+        da (dict): 第一个字典。
+        db (dict): 第二个字典。
+        exclude (tuple, 可选): 要排除的键。
 
-    Returns:
-        (dict): Dictionary of intersecting keys with matching shapes.
+    返回：
+        (dict): 包含形状匹配交集键的字典。
     """
     return {k: v for k, v in da.items() if k in db and all(x not in k for x in exclude) and v.shape == db[k].shape}
 
 
 def is_parallel(model):
-    """Return True if model is of type DP or DDP.
+    """如果模型类型为 DP 或 DDP，则返回 True。
 
-    Args:
-        model (nn.Module): Model to check.
+    参数：
+        模型 (nn.Module): 要检查的模型。
 
-    Returns:
-        (bool): True if model is DataParallel or DistributedDataParallel.
+    返回：
+        (bool): 模型为 DataParallel 或 DistributedDataParallel 时返回 True。
     """
     return isinstance(model, (nn.parallel.DataParallel, nn.parallel.DistributedDataParallel))
 
 
 def unwrap_model(m: nn.Module) -> nn.Module:
-    """Unwrap compiled and parallel models to get the base model.
+    """解除编译模型和并行模型的包装，获取基础模型。
 
-    Args:
-        m (nn.Module): A model that may be wrapped by torch.compile (._orig_mod) or parallel wrappers such as
-            DataParallel/DistributedDataParallel (.module).
+    参数：
+        m (nn.Module): 可能被 torch.compile（._orig_mod）或 DataParallel/DistributedDataParallel（.module）等并行包装器封装的模型。
 
-    Returns:
-        (nn.Module): The unwrapped base model without compile or parallel wrappers.
+    返回：
+        (nn.Module): 移除编译和并行包装器后的基础模型。
     """
     while True:
         if hasattr(m, "_orig_mod") and isinstance(m._orig_mod, nn.Module):
@@ -657,23 +651,23 @@ def unwrap_model(m: nn.Module) -> nn.Module:
 
 
 def one_cycle(y1=0.0, y2=1.0, steps=100):
-    """Return a lambda function for sinusoidal ramp from y1 to y2 https://arxiv.org/pdf/1812.01187.pdf.
+    """返回从 y1 到 y2 的正弦渐变 lambda 函数，参见 https://arxiv.org/pdf/1812.01187.pdf。
 
-    Args:
+    参数：
         y1 (float, optional): Initial value.
         y2 (float, optional): Final value.
         steps (int, optional): Number of steps.
 
-    Returns:
+    返回：
         (function): Lambda function for computing the sinusoidal ramp.
     """
     return lambda x: max((1 - math.cos(x * math.pi / steps)) / 2, 0) * (y2 - y1) + y1
 
 
 def init_seeds(seed=0, deterministic=False):
-    """Initialize random number generator (RNG) seeds https://pytorch.org/docs/stable/notes/randomness.html.
+    """初始化随机数生成器（RNG）种子，参见 https://pytorch.org/docs/stable/notes/randomness.html。
 
-    Args:
+    参数：
         seed (int, optional): Random seed.
         deterministic (bool, optional): Whether to set deterministic algorithms.
     """
@@ -681,8 +675,8 @@ def init_seeds(seed=0, deterministic=False):
     np.random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)  # for Multi-GPU, exception safe
-    # torch.backends.cudnn.benchmark = True  # AutoBatch problem https://github.com/ultralytics/yolov5/issues/9287
+    torch.cuda.manual_seed_all(seed)  # 用于多 GPU，并安全处理异常
+    # torch.backends.cudnn.benchmark = True  # AutoBatch 问题：https://github.com/ultralytics/yolov5/issues/9287
     if deterministic:
         if TORCH_2_0:
             torch.use_deterministic_algorithms(True, warn_only=True)  # warn if deterministic is not possible
@@ -696,7 +690,7 @@ def init_seeds(seed=0, deterministic=False):
 
 
 def unset_deterministic():
-    """Unset all the configurations applied for deterministic training."""
+    """取消为确定性训练应用的所有配置。"""
     torch.use_deterministic_algorithms(False)
     torch.backends.cudnn.deterministic = False
     os.environ.pop("CUBLAS_WORKSPACE_CONFIG", None)
@@ -704,92 +698,90 @@ def unset_deterministic():
 
 
 class ModelEMA:
-    """Updated Exponential Moving Average (EMA) implementation.
+    """更新后的指数移动平均（EMA）实现。
 
-    Keeps a moving average of everything in the model state_dict (parameters and buffers). For EMA details see
-    References.
+    保存模型 state_dict 中所有参数和缓冲区的移动平均值。有关 EMA 的详细信息，请参阅参考资料。
 
-    To disable EMA set the `enabled` attribute to `False`.
+    要禁用 EMA，请将 `enabled` 属性设置为 `False`。
 
-    Attributes:
+    属性：
         ema (nn.Module): Copy of the model in evaluation mode.
         updates (int): Number of EMA updates.
         decay (function): Decay function that determines the EMA weight.
         enabled (bool): Whether EMA is enabled.
 
-    References:
+    参考：
         - https://github.com/rwightman/pytorch-image-models
         - https://www.tensorflow.org/api_docs/python/tf/train/ExponentialMovingAverage
     """
 
     def __init__(self, model, decay=0.9999, tau=2000, updates=0):
-        """Initialize EMA for 'model' with given arguments.
+        """使用给定参数为“模型”初始化 EMA。
 
-        Args:
-            model (nn.Module): Model to create EMA for.
-            decay (float, optional): Maximum EMA decay rate.
-            tau (int, optional): EMA decay time constant.
-            updates (int, optional): Initial number of updates.
+        参数：
+            model (nn.Module): 用于创建 EMA 的模型。
+            decay (float, 可选): EMA 最大衰减率。
+            tau (int, 可选): EMA 衰减时间常数。
+            updates (int, 可选): 初始更新次数。
         """
         self.ema = deepcopy(unwrap_model(model)).eval()  # FP32 EMA
         if hasattr(self.ema, "teacher_model"):
-            # DistillationModel: strip the teacher so the EMA does not carry a full duplicate copy.
+            # DistillationModel：移除教师模型，避免 EMA 携带一份完整的重复副本。
             self.ema.teacher_model = None
-        self.updates = updates  # number of EMA updates
-        self.decay = lambda x: decay * (1 - math.exp(-x / tau))  # decay exponential ramp (to help early epochs)
+        self.updates = updates  # EMA 更新次数
+        self.decay = lambda x: decay * (1 - math.exp(-x / tau))  # 指数衰减曲线，帮助训练早期稳定
         for p in self.ema.parameters():
             p.requires_grad_(False)
         self.enabled = True
 
     def update(self, model):
-        """Update EMA parameters.
+        """更新 EMA 参数。
 
-        Args:
-            model (nn.Module): Model to update EMA from.
+        参数：
+            model (nn.Module): 用于更新 EMA 的模型。
         """
         if self.enabled:
             self.updates += 1
             d = self.decay(self.updates)
 
-            msd = unwrap_model(model).state_dict()  # model state_dict
+            msd = unwrap_model(model).state_dict()  # 模型 state_dict
             ema_v, model_v = [], []
             for k, v in self.ema.state_dict().items():
-                if v.dtype.is_floating_point:  # true for FP16 and FP32
+                if v.dtype.is_floating_point:  # FP16 和 FP32 满足此条件
                     ema_v.append(v)
                     model_v.append(msd[k])
             if (
                 ema_v and TORCH_2_0 and ema_v[0].device.type != "npu" and (TORCH_2_4 or ema_v[0].device.type != "mps")
-            ):  # one kernel launch per op
+            ):  # 每个操作启动一次内核
                 torch._foreach_lerp_(ema_v, model_v, 1 - d)
-            else:  # _foreach_lerp_ needs torch>=2.0, MPS torch>=2.4, and is unavailable on NPU
+            else:  # _foreach_lerp_ 需要 torch>=2.0，MPS 需要 torch>=2.4，且 NPU 不支持
                 for v, m in zip(ema_v, model_v):
                     v.mul_(d).add_(m, alpha=1 - d)
 
     def update_attr(self, model, include=(), exclude=("process_group", "reducer")):
-        """Copy attributes from model to EMA, with options to include/exclude certain attributes.
+        """将模型属性复制到 EMA，并支持包含或排除指定属性。
 
-        Args:
-            model (nn.Module): Model to copy attributes from.
-            include (tuple, optional): Attributes to include.
-            exclude (tuple, optional): Attributes to exclude.
+        参数：
+            model (nn.Module): 要复制属性的模型。
+            include (tuple, 可选): 要包含的属性。
+            exclude (tuple, 可选): 要排除的属性。
         """
         if self.enabled:
             copy_attr(self.ema, model, include, exclude)
 
 
 def strip_optimizer(f: str | Path = "best.pt", s: str = "", updates: dict[str, Any] | None = None) -> dict[str, Any]:
-    """Strip optimizer from 'f' to finalize training, optionally save as 's'.
+    """从 f 中移除优化器以完成训练，并可选择保存为 s。
 
-    Args:
-        f (str | Path): File path to model to strip the optimizer from.
-        s (str, optional): File path to save the model with stripped optimizer to. If not provided, 'f' will be
-            overwritten.
-        updates (dict, optional): A dictionary of updates to overlay onto the checkpoint before saving.
+    参数：
+        f (str | Path): 要从中移除优化器的模型文件路径。
+        s (str, 可选): 保存已移除优化器模型的文件路径。未提供时覆盖 'f'。
+        updates (dict, 可选): 保存前叠加到检查点上的更新字典。
 
-    Returns:
-        (dict): The combined checkpoint dictionary.
+    返回：
+        (dict): 合并后的检查点字典。
 
-    Examples:
+    示例：
         >>> from pathlib import Path
         >>> from ultralytics.utils.torch_utils import strip_optimizer
         >>> for f in Path("path/to/model/checkpoints").rglob("*.pt"):
@@ -810,11 +802,11 @@ def strip_optimizer(f: str | Path = "best.pt", s: str = "", updates: dict[str, A
         "docs": "https://docs.ultralytics.com",
     }
 
-    # Update model
+    # 更新模型
     if x.get("ema"):
-        x["model"] = x["ema"]  # replace model with EMA
+        x["model"] = x["ema"]  # 使用 EMA 模型替换原模型
 
-    # Unwrap DistillationModel to save only the student model
+    # 解包 DistillationModel，仅保存学生模型
     from ultralytics.nn.distill_model import DistillationModel
 
     if isinstance(x["model"], DistillationModel):
@@ -822,37 +814,37 @@ def strip_optimizer(f: str | Path = "best.pt", s: str = "", updates: dict[str, A
         x["model"] = x["model"].student_model
 
     if hasattr(x["model"], "args"):
-        x["model"].args = dict(x["model"].args)  # convert from IterableSimpleNamespace to dict
+        x["model"].args = dict(x["model"].args)  # 从 IterableSimpleNamespace 转换为字典
     if hasattr(x["model"], "criterion"):
-        x["model"].criterion = None  # strip loss criterion
-    x["model"].half()  # to FP16
+        x["model"].criterion = None  # 移除损失函数
+    x["model"].half()  # 转换为 FP16
     for p in x["model"].parameters():
         p.requires_grad = False
 
-    # Update other keys
-    args = {**DEFAULT_CFG_DICT, **x.get("train_args", {})}  # combine args
-    for k in "optimizer", "best_fitness", "ema", "updates", "scaler":  # keys
+    # 更新其他键
+    args = {**DEFAULT_CFG_DICT, **x.get("train_args", {})}  # 合并参数
+    for k in "optimizer", "best_fitness", "ema", "updates", "scaler":  # 键名
         x[k] = None
     x["epoch"] = -1
-    x["train_args"] = {k: v for k, v in args.items() if k in DEFAULT_CFG_KEYS}  # strip non-default keys
+    x["train_args"] = {k: v for k, v in args.items() if k in DEFAULT_CFG_KEYS}  # 移除非默认键
     # x['model'].args = x['train_args']
 
-    # Save
+    # 保存
     combined = {**metadata, **x, **(updates or {})}
-    torch.save(combined, s or f)  # combine dicts (prefer to the right)
-    mb = os.path.getsize(s or f) / 1e6  # file size
+    torch.save(combined, s or f)  # 合并字典（右侧值优先）
+    mb = os.path.getsize(s or f) / 1e6  # 文件 尺寸
     LOGGER.info(f"Optimizer stripped from {f},{f' saved as {s},' if s else ''} {mb:.1f}MB")
     return combined
 
 
 def convert_optimizer_state_dict_to_fp16(state_dict):
-    """Convert the state_dict of a given optimizer to FP16, focusing on the 'state' key for tensor conversions.
+    """将给定优化器的 state_dict 转换为 FP16，重点转换 state 键中的张量。
 
-    Args:
-        state_dict (dict): Optimizer state dictionary.
+    参数：
+        state_dict (dict): 优化器状态字典。
 
-    Returns:
-        (dict): Converted optimizer state dictionary with FP16 tensors.
+    返回：
+        (dict): 转换后的优化器状态字典，其中张量为 FP16。
     """
     for state in state_dict["state"].values():
         for k, v in state.items():
@@ -864,16 +856,15 @@ def convert_optimizer_state_dict_to_fp16(state_dict):
 
 @contextmanager
 def cuda_memory_usage(device=None):
-    """Monitor and manage accelerator memory usage.
+    """监控并管理加速器内存使用情况。
 
-    This function empties the active accelerator cache, yields a dictionary containing memory usage information, and
-    then records the reserved memory on the specified device.
+    此函数清空当前加速器缓存，返回包含内存使用信息的字典，然后记录指定设备上的已保留内存。
 
-    Args:
-        device (torch.device, optional): The accelerator device to query memory usage for.
+    参数：
+        device (torch.device, 可选): 要查询内存使用情况的加速器设备。
 
     Yields:
-        (dict): A dictionary with a key 'memory' initialized to 0, updated with reserved memory.
+        (dict): 包含键 'memory' 的字典，该键初始为 0，随后更新为已保留内存。
     """
     info = {"memory": 0}
     if device is not None and device.type in {"cpu", "mps"}:
@@ -891,29 +882,29 @@ def cuda_memory_usage(device=None):
 
 
 def profile_ops(input, ops, n=10, device=None, max_num_obj=0):
-    """Ultralytics speed, memory and FLOPs profiler.
+    """Ultralytics 速度、内存和 FLOPs 分析器。
 
-    Args:
-        input (torch.Tensor | list): Input tensor(s) to profile.
-        ops (nn.Module | list): Model or list of operations to profile.
-        n (int, optional): Number of iterations to average.
-        device (str | torch.device, optional): Device to profile on.
-        max_num_obj (int, optional): Maximum number of objects for simulation.
+    参数：
+        input (torch.Tensor | 列表): 要分析的输入张量。
+        ops (nn.Module | 列表): 要分析的模型或操作列表。
+        n (int, 可选): 用于求平均值的迭代次数。
+        device (str | torch.device, 可选): 执行分析的设备。
+        max_num_obj (int, 可选): 模拟使用的最大目标数量。
 
-    Returns:
-        (list): Profile results for each operation.
+    返回：
+        (列表): 每个操作的分析结果。
 
-    Examples:
+    示例：
         >>> from ultralytics.utils.torch_utils import profile_ops
         >>> input = torch.randn(16, 3, 640, 640)
         >>> m1 = lambda x: x * torch.sigmoid(x)
         >>> m2 = nn.SiLU()
-        >>> profile_ops(input, [m1, m2], n=100)  # profile over 100 iterations
+        >>> profile_ops(input, [m1, m2], n=100)  # 分析 100 次迭代
     """
     try:
         import thop
     except ImportError:
-        thop = None  # conda support without 'ultralytics-thop' installed
+        thop = None  # 未安装 'ultralytics-thop' 时支持 conda 环境
 
     results = []
     if not isinstance(device, torch.device):
@@ -922,7 +913,7 @@ def profile_ops(input, ops, n=10, device=None, max_num_obj=0):
         f"{'Params':>12s}{'GFLOPs':>12s}{'GPU_mem (GB)':>14s}{'forward (ms)':>14s}{'backward (ms)':>14s}"
         f"{'input':>24s}{'output':>24s}"
     )
-    gc.collect()  # attempt to free unused memory
+    gc.collect()  # 尝试释放未使用的内存
     accelerator = get_torch_device_backend(device) if device.type not in {"cpu", "mps"} else None
     if accelerator is not None:
         accelerator.empty_cache()
@@ -949,19 +940,19 @@ def profile_ops(input, ops, n=10, device=None, max_num_obj=0):
                             (sum(yi.sum() for yi in y) if isinstance(y, list) else y).sum().backward()
                             t[2] = time_sync(device)
                         except Exception:  # no backward method
-                            # print(e)  # for debug
+                            # print(e)  # 调试时使用
                             t[2] = float("nan")
                     mem += cuda_info["memory"] / 1e9  # (GB)
                     tf += (t[1] - t[0]) * 1000 / n  # ms per op forward
                     tb += (t[2] - t[1]) * 1000 / n  # ms per op backward
-                    if max_num_obj:  # simulate training with predictions per image grid (for AutoBatch)
+                    if max_num_obj:  # 为 AutoBatch 模拟每张图像网格上的预测结果
                         with cuda_memory_usage(device) as cuda_info:
                             anchors = int(sum((x.shape[-1] / s) * (x.shape[-2] / s) for s in m.stride.tolist()))
-                            # Envelope of the detect-loss memory peaks: TaskAlignedAssigner.get_box_metrics holds ~6
-                            # simultaneous (bs, max_num_obj, anchors) fp32 buffers (overlaps, bbox_scores, gathered
-                            # pd_scores, two pow temps + align_metric); the cls path holds ~6 (bs, anchors, nc)
-                            # fp32-equivalents (pred/target + two op temps of the unreduced BCE in v8DetectionLoss:
-                            # ~4 in pure fp32, ~6 under AMP where autocast upcasts both BCE inputs to fp32 copies)
+                            # 检测损失的内存峰值范围：TaskAlignedAssigner.get_box_metrics 会同时保存约 6 个
+                            # (bs, max_num_obj, 锚框) 的 fp32 缓冲区（overlaps、bbox_scores、gathered
+                            # pd_scores、两个幂运算临时量和 align_metric）；分类路径会保存约 6 个
+                            # (bs, 锚框, nc) 的 fp32 等价缓冲区（预测/目标，以及 v8DetectionLoss 中未归约 BCE
+                            # 的两个临时量：纯 fp32 约 4 个，AMP 下 autocast 将两个 BCE 输入提升为 fp32 副本后约 6 个）。
                             sim = (
                                 torch.randn(x.shape[0], 6 * max_num_obj, anchors, device=device, dtype=torch.float32),
                                 torch.randn(x.shape[0], anchors, 6 * len(m.names), device=device, dtype=torch.float32),
@@ -969,59 +960,59 @@ def profile_ops(input, ops, n=10, device=None, max_num_obj=0):
                         del sim
                         mem += cuda_info["memory"] / 1e9  # (GB)
                 s_in, s_out = (tuple(x.shape) if isinstance(x, torch.Tensor) else "list" for x in (x, y))  # shapes
-                p = sum(x.numel() for x in m.parameters()) if isinstance(m, nn.Module) else 0  # parameters
+                p = sum(x.numel() for x in m.parameters()) if isinstance(m, nn.Module) else 0  # 参数
                 LOGGER.info(f"{p:12}{flops:12.4g}{mem:>14.3f}{tf:14.4g}{tb:14.4g}{s_in!s:>24s}{s_out!s:>24s}")
                 results.append([p, flops, mem, tf, tb, s_in, s_out])
             except Exception as e:
                 LOGGER.info(e)
                 results.append(None)
             finally:
-                gc.collect()  # attempt to free unused memory
+                gc.collect()  # 尝试释放未使用的内存
                 if accelerator is not None:
                     accelerator.empty_cache()
     return results
 
 
 class EarlyStopping:
-    """Early stopping class that stops training when a specified number of epochs have passed without improvement.
+    """早停类：指定数量的周期没有改进时停止训练。
 
-    Attributes:
-        best_fitness (float): Best fitness value observed.
+    属性：
+        best_fitness (float): 观察到的最佳适应度值。
         best_epoch (int): Epoch where best fitness was observed.
         patience (int): Number of epochs to wait after fitness stops improving before stopping.
         possible_stop (bool): Flag indicating if stopping may occur next epoch.
     """
 
     def __init__(self, patience=50):
-        """Initialize early stopping object.
+        """初始化早停对象。
 
-        Args:
-            patience (int, optional): Number of epochs to wait after fitness stops improving before stopping.
+        参数：
+            patience (int, 可选): 适应度停止改善后、停止训练前等待的轮数。
         """
         self.best_fitness = 0.0  # i.e. mAP
         self.best_epoch = 0
-        self.patience = patience or float("inf")  # epochs to wait after fitness stops improving to stop
+        self.patience = patience or float("inf")  # fitness 停止提升后等待的周期数
         self.possible_stop = False  # possible stop may occur next epoch
 
     def __call__(self, epoch, fitness):
-        """Check whether to stop training.
+        """检查是否应停止训练。
 
-        Args:
-            epoch (int): Current epoch of training.
-            fitness (float): Fitness value of current epoch.
+        参数：
+        epoch (int): 当前训练轮次。
+        fitness (float): 当前轮次的适应度值。
 
-        Returns:
-            (bool): True if training should stop, False otherwise.
+        返回：
+            (bool): 训练应停止时返回 True，否则返回 False。
         """
-        if fitness is None:  # check if fitness=None (happens when val=False)
+        if fitness is None:  # 检查 fitness 是否为 None（val=False 时会出现）
             return False
 
-        if fitness > self.best_fitness or self.best_fitness == 0:  # allow for early zero-fitness stage of training
+        if fitness > self.best_fitness or self.best_fitness == 0:  # 允许训练早期出现适应度为零的阶段
             self.best_epoch = epoch
             self.best_fitness = fitness
-        delta = epoch - self.best_epoch  # epochs without improvement
-        self.possible_stop = delta >= (self.patience - 1)  # possible stop may occur next epoch
-        stop = delta >= self.patience  # stop training if patience exceeded
+        delta = epoch - self.best_epoch  # 没有改善的训练轮数
+        self.possible_stop = delta >= (self.patience - 1)  # 下一轮可能停止
+        stop = delta >= self.patience  # 超过耐心值时停止训练
         if stop:
             prefix = colorstr("EarlyStopping: ")
             LOGGER.info(
@@ -1041,35 +1032,34 @@ def attempt_compile(
     warmup: bool = False,
     mode: bool | str = "default",
 ) -> torch.nn.Module:
-    """Compile a model with torch.compile and optionally warm up the graph to reduce first-iteration latency.
+    """使用 torch.compile 编译模型，并可选择预热计算图以降低首次迭代延迟。
 
-    This utility attempts to compile the provided model using the inductor backend. If compilation is unavailable or
-    fails, the original model is returned unchanged. An optional warmup performs a single forward pass on a dummy input
-    to prime the compiled graph and measure compile/warmup time.
+        此工具尝试使用 inductor 后端编译提供的模型。如果编译不可用或失败，则原样返回原始模型。
+        可选的预热会使用虚拟输入执行一次前向传播，以预热编译图并测量编译/预热时间。
 
-    Args:
-        model (torch.nn.Module): Model to compile.
-        device (torch.device): Inference device used for warmup and autocast decisions.
-        imgsz (int, optional): Square input size to create a dummy tensor with shape (1, 3, imgsz, imgsz) for warmup.
-        use_autocast (bool, optional): Whether to run warmup under autocast on CUDA or MPS devices.
-        warmup (bool, optional): Whether to execute a single dummy forward pass to warm up the compiled model.
-        mode (bool | str, optional): torch.compile mode. True → "default", False → no compile, or a string like
+    参数：
+        model (torch.nn.Module): 要编译的模型。
+        device (torch.device): 用于预热及 autocast 判断的推理设备。
+        imgsz (int, 可选): 用于创建形状为 (1, 3, imgsz, imgsz) 虚拟张量的正方形输入尺寸。
+        use_autocast (bool, 可选): 是否在 CUDA 或 MPS 设备上使用 autocast 执行预热。
+        warmup (bool, 可选): 是否执行一次虚拟前向传播以预热已编译模型。
+        mode (bool | str, 可选): torch.compile 模式。True 表示 "default"，False 表示不编译，也可以传入类似
             "default", "reduce-overhead", "max-autotune-no-cudagraphs".
 
-    Returns:
-        (torch.nn.Module): Compiled model if compilation succeeds, otherwise the original unmodified model.
+    返回：
+        (torch.nn.Module): 编译成功时返回已编译模型，否则返回未修改的原始模型。
 
-    Examples:
+    示例：
         >>> device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        >>> # Try to compile and warm up a model with a 640x640 input
+        >>> # 尝试使用 640x640 输入编译并预热模型
         >>> model = attempt_compile(model, device=device, imgsz=640, use_autocast=True, warmup=True)
 
-    Notes:
-        - If the current PyTorch build does not provide torch.compile, the function returns the input model immediately.
-        - Compilation is lazy and runs at the first forward pass, so the inductor CPU prerequisite of a host C++
-          compiler is verified up front and the original model is returned if none is available.
-        - Warmup runs under torch.inference_mode and may use torch.autocast for CUDA/MPS to align compute precision.
-        - CUDA devices are synchronized after warmup to account for asynchronous kernel execution.
+    注意：
+        - 如果当前 PyTorch 构建不提供 torch.compile，函数会立即返回输入模型。
+        - 编译采用延迟执行，在第一次前向传播时运行。因此会预先检查 inductor 在 CPU 上所需的主机 C++ 编译器，
+          如果不可用则返回原始模型。
+        - 预热过程在 torch.inference_mode 下运行，并可能对 CUDA/MPS 使用 torch.autocast，以保持计算精度一致。
+        - 预热后同步 CUDA 设备，以计入异步内核执行时间。
     """
     if not hasattr(torch, "compile") or not mode:
         return model
@@ -1078,12 +1068,12 @@ def attempt_compile(
         mode = "default"
     prefix = colorstr("compile:")
     if device.type == "cpu":
-        try:  # compilation is lazy, so verify the inductor CPU requirement of a host C++ compiler before compiling
+        try:  # 编译是惰性的，因此先验证 Inductor CPU 所需的主机 C++ 编译器
             from torch._inductor.cpp_builder import get_cpp_compiler
 
             get_cpp_compiler()
         except ImportError:
-            pass  # older torch without cpp_builder, defer to torch.compile
+            pass  # 旧版 torch 没有 cpp_builder，交由 torch.compile 处理
         except Exception as e:
             LOGGER.warning(f"{prefix} no C++ compiler found for the inductor backend, continuing uncompiled: {e}")
             return model
@@ -1098,7 +1088,7 @@ def attempt_compile(
 
     t_warm = 0.0
     if warmup:
-        # Use a single dummy tensor to build the graph shape state and reduce first-iteration latency
+        # 使用单个虚拟张量构建图的形状状态，降低首次迭代延迟。
         dummy = torch.zeros(1, 3, imgsz, imgsz, device=device)
         if use_autocast and device.type == "cuda":
             dummy = dummy.half()

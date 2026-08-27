@@ -14,55 +14,50 @@ from ultralytics.utils.metrics import OKS_SIGMA, PoseMetrics, kpt_iou
 
 
 class PoseValidator(DetectionValidator):
-    """A class extending the DetectionValidator class for validation based on a pose model.
+    """继承 DetectionValidator 的验证器，用于验证姿态模型。
 
-    This validator is specifically designed for pose estimation tasks, handling keypoints and implementing specialized
-    metrics for pose evaluation.
+    此验证器专门处理姿态估计任务，负责关键点处理并实现姿态评估所需的专用指标。
 
-    Attributes:
-        sigma (np.ndarray): Sigma values for OKS calculation, either OKS_SIGMA or ones divided by number of keypoints.
-        kpt_shape (list[int]): Shape of the keypoints, typically [17, 3] for COCO format.
-        args (dict): Arguments for the validator including task set to "pose".
-        metrics (PoseMetrics): Metrics object for pose evaluation.
+    属性：
+        sigma (np.ndarray): OKS 计算使用的 sigma 值，可以是 OKS_SIGMA 或 1/关键点数量。
+        kpt_shape (列表[int]): 关键点形状，COCO 格式通常为 [17, 3]。
+        args (dict): 验证器参数，其中 task 设置为 "pose"。
+        metrics (PoseMetrics): 用于姿态评估的指标对象。
 
-    Methods:
-        preprocess: Preprocess batch by converting keypoints data to float and moving it to the device.
-        get_desc: Return description of evaluation metrics in string format.
-        init_metrics: Initialize pose estimation metrics for YOLO model.
-        postprocess: Postprocess YOLO predictions to extract and reshape keypoints for pose estimation.
-        _prepare_batch: Prepare a batch for processing by converting keypoints to float and scaling to original
-            dimensions.
-        _process_batch: Return correct prediction matrix by computing Intersection over Union (IoU) between detections
-            and ground truth.
-        gather_stats: Gather stats from all GPUs.
-        scale_preds: Scale predictions to the original image size.
-        save_one_txt: Save YOLO pose detections to a text file in normalized coordinates.
-        pred_to_json: Convert YOLO predictions to COCO JSON format.
-        eval_json: Evaluate object detection model using COCO JSON format.
+    方法：
+        preprocess：将关键点数据转换为浮点数并移动到指定设备。
+        get_desc：以字符串格式返回评估指标描述。
+        init_metrics：初始化 YOLO 姿态估计指标。
+        postprocess：后处理 YOLO 预测结果，提取并重塑姿态关键点。
+        _prepare_batch：将关键点转换为浮点数并缩放到原始尺寸，准备处理批次。
+        _process_batch：计算检测结果与真实标注之间的 IoU，返回正确预测矩阵。
+        gather_stats：从所有 GPU 收集统计信息。
+        scale_preds：将预测结果缩放到原始图像尺寸。
+        save_one_txt：按归一化坐标将 YOLO 姿态检测结果保存到文本文件。
+        pred_to_json：将 YOLO 预测结果转换为 COCO JSON 格式。
+        eval_json：使用 COCO JSON 格式评估目标检测模型。
 
-    Examples:
+    示例：
         >>> from ultralytics.models.yolo.pose import PoseValidator
         >>> args = dict(model="yolo26n-pose.pt", data="coco8-pose.yaml")
         >>> validator = PoseValidator(args=args)
         >>> validator()
 
-    Notes:
-        This class extends DetectionValidator with pose-specific functionality. It initializes with sigma values
-        for OKS calculation and sets up PoseMetrics for evaluation. A warning is displayed when using Apple MPS
-        due to a known bug with pose models.
+    注意：
+        此类继承 DetectionValidator 并增加姿态专用功能，使用 sigma 值初始化 OKS 计算，并设置 PoseMetrics 进行评估。
+        由于姿态模型存在已知问题，使用 Apple MPS 时会显示警告。
     """
 
     def __init__(self, dataloader=None, save_dir=None, args=None, _callbacks: dict | None = None) -> None:
-        """Initialize a PoseValidator object for pose estimation validation.
+        """初始化用于姿态估计验证的 PoseValidator 对象。
 
-        This validator is specifically designed for pose estimation tasks, handling keypoints and implementing
-        specialized metrics for pose evaluation.
+        此验证器专门处理姿态估计任务，负责关键点处理并实现姿态评估所需的专用指标。
 
-        Args:
-            dataloader (torch.utils.data.DataLoader, optional): DataLoader to be used for validation.
-            save_dir (Path | str, optional): Directory to save results.
-            args (dict, optional): Arguments for the validator including task set to "pose".
-            _callbacks (dict, optional): Dictionary of callback functions to be executed during validation.
+        参数：
+            dataloader (torch.utils.data.DataLoader, 可选): 用于验证的数据加载器。
+            save_dir (Path | str, 可选): 结果保存目录。
+            args (dict, 可选): 验证器参数，其中 task 设置为 "pose"。
+            _callbacks (dict, 可选): 验证期间执行的回调函数字典。
         """
         super().__init__(dataloader, save_dir, args, _callbacks)
         self.sigma = None
@@ -71,13 +66,13 @@ class PoseValidator(DetectionValidator):
         self.metrics = PoseMetrics()
 
     def preprocess(self, batch: dict[str, Any]) -> dict[str, Any]:
-        """Preprocess batch by converting keypoints data to float and moving it to the device."""
+        """将关键点数据转换为浮点数并移动到指定设备。"""
         batch = super().preprocess(batch)
         batch["keypoints"] = batch["keypoints"].float()
         return batch
 
     def get_desc(self) -> str:
-        """Return description of evaluation metrics in string format."""
+        """以字符串格式返回评估指标描述。"""
         return ("%22s" + "%11s" * 10) % (
             "Class",
             "Images",
@@ -93,16 +88,16 @@ class PoseValidator(DetectionValidator):
         )
 
     def init_metrics(self, model: torch.nn.Module) -> None:
-        """Initialize evaluation metrics for YOLO pose validation.
+        """初始化 YOLO 姿态验证的评估指标。
 
-        Args:
-            model (torch.nn.Module): Model to validate.
+        参数：
+            model (torch.nn.Module): 待验证的模型。
         """
         super().init_metrics(model)
         self.kpt_shape = self.data["kpt_shape"]
         is_pose = self.kpt_shape == [17, 3]
         nkpt = self.kpt_shape[0]
-        if sigmas := self.data.get("kpt_oks_sigmas"):  # optional custom OKS sigmas from the dataset YAML
+        if sigmas := self.data.get("kpt_oks_sigmas"):  # 从数据集 YAML 读取可选的自定义 OKS sigma
             self.sigma = np.array(sigmas, dtype=np.float32).flatten()
             if len(self.sigma) != nkpt or not np.all(self.sigma > 0):
                 raise ValueError(f"'kpt_oks_sigmas' must be {nkpt} positive values, got {sigmas}")
@@ -110,45 +105,41 @@ class PoseValidator(DetectionValidator):
             self.sigma = OKS_SIGMA if is_pose else np.ones(nkpt) / nkpt
 
     def postprocess(self, preds: torch.Tensor) -> list[dict[str, torch.Tensor]]:
-        """Postprocess YOLO predictions to extract and reshape keypoints for pose estimation.
+        """后处理 YOLO 预测结果，提取并重塑姿态估计所需的关键点。
 
-        This method extends the parent class postprocessing by extracting keypoints from the 'extra' field of
-        predictions and reshaping them according to the keypoint shape configuration. The keypoints are reshaped from a
-        flattened format to the proper dimensional structure (typically [N, 17, 3] for COCO pose format).
+        此方法继承父类后处理流程，从预测结果的 'extra' 字段提取关键点，并根据关键点形状配置重塑它们。
+        关键点会从展平格式重塑为正确的维度结构（COCO 姿态格式通常为 [N, 17, 3]）。
 
-        Args:
-            preds (torch.Tensor): Raw prediction tensor from the YOLO pose model containing bounding boxes, confidence
-                scores, class predictions, and keypoint data.
+        参数：
+            preds (torch.Tensor): YOLO 姿态模型输出的原始预测张量，包含边界框、置信度分数、类别预测结果和关键点数据。
 
-        Returns:
-            (list[dict[str, torch.Tensor]]): List of processed prediction dictionaries, each containing:
-                - 'bboxes': Bounding box coordinates
-                - 'conf': Confidence scores
-                - 'cls': Class predictions
-                - 'keypoints': Reshaped keypoint coordinates with shape (-1, *self.kpt_shape)
+        返回：
+            (列表[dict[str, torch.Tensor]]): 后处理预测字典列表，每个字典包含：
+                - 'bboxes'：边界框坐标
+                - 'conf'：置信度分数
+                - 'cls'：类别预测结果
+                - 'keypoints'：形状为 (-1, *self.kpt_shape) 的重塑关键点坐标
 
-        Notes:
-            The keypoints are extracted from the 'extra' field which contains additional task-specific data beyond
-            basic detection.
+        注意：
+            关键点从 'extra' 字段提取，该字段包含基础检测之外的任务专用数据。
         """
         preds = super().postprocess(preds)
         for pred in preds:
-            pred["keypoints"] = pred.pop("extra").view(-1, *self.kpt_shape)  # remove extra if exists
+            pred["keypoints"] = pred.pop("extra").view(-1, *self.kpt_shape)  # 移除 extra 字段
         return preds
 
     def _prepare_batch(self, si: int, batch: dict[str, Any]) -> dict[str, Any]:
-        """Prepare a batch for processing by converting keypoints to float and scaling to original dimensions.
+        """将关键点转换为浮点数并缩放到原始尺寸，准备处理批次数据。
 
-        Args:
-            si (int): Sample index within the batch.
-            batch (dict[str, Any]): Dictionary containing batch data with keys like 'keypoints', 'batch_idx', etc.
+        参数：
+            si (int): 样本在批次中的索引。
+            batch (dict[str, Any]): 包含批次数据的字典，键包括 'keypoints'、'batch_idx' 等。
 
-        Returns:
-            (dict[str, Any]): Prepared batch with keypoints scaled to model input (letterboxed) image dimensions.
+        返回：
+            (dict[str, Any]): 包含已缩放关键点的批次数据，关键点对应模型输入（letterbox）图像尺寸。
 
-        Notes:
-            This method extends the parent class's _prepare_batch method by adding keypoint processing.
-            Keypoints are scaled from normalized coordinates to the model input (letterboxed) image dimensions.
+        注意：
+            此方法在父类 _prepare_batch 的基础上增加关键点处理，将关键点从归一化坐标缩放到模型输入（letterbox）图像尺寸。
         """
         pbatch = super()._prepare_batch(si, batch)
         kpts = batch["keypoints"][batch["batch_idx"] == si]
@@ -160,21 +151,17 @@ class PoseValidator(DetectionValidator):
         return pbatch
 
     def _process_batch(self, preds: dict[str, torch.Tensor], batch: dict[str, Any]) -> dict[str, np.ndarray]:
-        """Return correct prediction matrix by computing Intersection over Union (IoU) between detections and ground
-        truth.
+        """计算检测结果与真实标注之间的交并比（IoU），并返回正确预测矩阵。
 
-        Args:
-            preds (dict[str, torch.Tensor]): Dictionary containing prediction data with keys 'cls' for class predictions
-                and 'keypoints' for keypoint predictions.
-            batch (dict[str, Any]): Dictionary containing ground truth data with keys 'cls' for class labels, 'bboxes'
-                for bounding boxes, and 'keypoints' for keypoint annotations.
+        参数：
+            preds (dict[str, torch.Tensor]): 包含预测数据的字典，其中 'cls' 为类别预测，'keypoints' 为关键点预测。
+            batch (dict[str, Any]): 包含真实数据的字典，其中 'cls' 为类别标签，'bboxes' 为边界框，'keypoints' 为关键点标注。
 
-        Returns:
-            (dict[str, np.ndarray]): Dictionary containing the correct prediction matrix including 'tp_p' for pose true
-                positives across 10 IoU levels.
+        返回：
+            (dict[str, np.ndarray]): 包含正确预测矩阵的字典，其中 'tp_p' 表示 10 个 IoU 阈值下的姿态真正例。
 
-        Notes:
-            `0.53` scale factor used in area computation is referenced from
+        注意：
+            面积计算中使用的 `0.53` 缩放因子参考自
             https://github.com/jin-s13/xtcocoapi/blob/master/xtcocotools/cocoeval.py#L384.
         """
         tp = super()._process_batch(preds, batch)
@@ -182,30 +169,29 @@ class PoseValidator(DetectionValidator):
         if gt_cls.shape[0] == 0 or preds["cls"].shape[0] == 0:
             tp_p = np.zeros((preds["cls"].shape[0], self.niou), dtype=bool)
         else:
-            # `0.53` is from https://github.com/jin-s13/xtcocoapi/blob/master/xtcocotools/cocoeval.py#L384
+            # `0.53` 来自 https://github.com/jin-s13/xtcocoapi/blob/master/xtcocotools/cocoeval.py#L384
             area = ops.xyxy2xywh(batch["bboxes"])[:, 2:].prod(1) * 0.53
             iou = kpt_iou(batch["keypoints"], preds["keypoints"], sigma=self.sigma, area=area)
             tp_p = self.match_predictions(preds["cls"], gt_cls, iou).cpu().numpy()
-        tp.update({"tp_p": tp_p})  # update tp with kpts IoU
+        tp.update({"tp_p": tp_p})  # 使用关键点 IoU 更新 tp
         return tp
 
     def gather_stats(self) -> None:
-        """Gather stats from all GPUs."""
-        super().gather_stats()  # gather stats from DetectionValidator
+        """从所有 GPU 收集统计信息。"""
+        super().gather_stats()  # 收集 DetectionValidator 的统计信息
         self._gather_image_metrics(self.metrics.pose)
 
     def save_one_txt(self, predn: dict[str, torch.Tensor], save_conf: bool, shape: tuple[int, int], file: Path) -> None:
-        """Save YOLO pose detections to a text file in normalized coordinates.
+        """按归一化坐标将 YOLO 姿态检测结果保存到文本文件。
 
-        Args:
-            predn (dict[str, torch.Tensor]): Prediction dict with keys 'bboxes', 'conf', 'cls', and 'keypoints'.
-            save_conf (bool): Whether to save confidence scores.
-            shape (tuple[int, int]): Shape of the original image (height, width).
-            file (Path): Output file path to save detections.
+        参数：
+            predn (dict[str, torch.Tensor]): 包含 'bboxes'、'conf'、'cls' 和 'keypoints' 键的预测字典。
+            save_conf (bool): 是否保存置信度分数。
+            shape (tuple[int, int]): 原始图像尺寸 (高度, 宽度)。
+            file (Path): 保存检测结果的输出文件路径。
 
-        Notes:
-            The output format is: class_id x_center y_center width height confidence keypoints where keypoints are
-            normalized (x, y, visibility) values for each point.
+        注意：
+            输出格式为：class_id x_center y_center 宽度 高度 置信度 关键点，其中每个关键点为归一化的 (x, y, visibility) 值。
         """
         from ultralytics.engine.results import Results
 
@@ -218,28 +204,25 @@ class PoseValidator(DetectionValidator):
         ).save_txt(file, save_conf=save_conf)
 
     def pred_to_json(self, predn: dict[str, torch.Tensor], pbatch: dict[str, Any]) -> None:
-        """Convert YOLO predictions to COCO JSON format.
+        """将 YOLO 预测结果转换为 COCO JSON 格式。
 
-        This method takes prediction tensors and batch data, converts the bounding boxes from YOLO format to COCO
-        format, and appends the results with keypoints to the internal JSON dictionary (self.jdict).
+        此方法接收预测张量和批次数据，将边界框从 YOLO 格式转换为 COCO 格式，并将包含关键点的结果追加到内部 JSON 字典（self.jdict）。
 
-        Args:
-            predn (dict[str, torch.Tensor]): Prediction dictionary containing 'bboxes', 'conf', 'cls', and 'keypoints'
-                tensors.
-            pbatch (dict[str, Any]): Batch dictionary containing 'imgsz', 'ori_shape', 'ratio_pad', and 'im_file'.
+        参数：
+            predn (dict[str, torch.Tensor]): 包含 'bboxes'、'conf'、'cls' 和 'keypoints' 张量的预测字典。
+            pbatch (dict[str, Any]): 包含 'imgsz'、'ori_shape'、'ratio_pad' 和 'im_file' 的批次字典。
 
-        Notes:
-            The method extracts the image ID from the filename stem (either as an integer if numeric, or as a string),
-            converts bounding boxes from xyxy to xywh format, and adjusts coordinates from center to top-left corner
-            before saving to the JSON dictionary.
+        注意：
+            此方法从文件名主干提取图像 ID（数字文件名转为整数，否则保留字符串），将边界框从 xyxy 转换为 xywh 格式，
+            再将坐标从中心点调整为左上角，最后保存到 JSON 字典。
         """
         super().pred_to_json(predn, pbatch)
         kpts = predn["keypoints"]
         for i, k in enumerate(kpts.flatten(1, 2).tolist()):
-            self.jdict[-len(kpts) + i]["keypoints"] = k  # keypoints
+            self.jdict[-len(kpts) + i]["keypoints"] = k  # 关键点
 
     def scale_preds(self, predn: dict[str, torch.Tensor], pbatch: dict[str, Any]) -> dict[str, torch.Tensor]:
-        """Scales predictions to the original image size."""
+        """将预测结果缩放到原始图像尺寸。"""
         return {
             **super().scale_preds(predn, pbatch),
             "keypoints": ops.scale_coords(
@@ -251,7 +234,7 @@ class PoseValidator(DetectionValidator):
         }
 
     def eval_json(self, stats: dict[str, Any]) -> dict[str, Any]:
-        """Evaluate object detection model using COCO JSON format."""
-        anno_json = self.data["path"] / "annotations/person_keypoints_val2017.json"  # annotations
-        pred_json = self.save_dir / "predictions.json"  # predictions
+        """使用 COCO JSON 格式评估目标检测模型。"""
+        anno_json = self.data["path"] / "annotations/person_keypoints_val2017.json"  # 标注
+        pred_json = self.save_dir / "predictions.json"  # 预测结果
         return super().coco_evaluate(stats, pred_json, anno_json, ["bbox", "keypoints"], suffix=["Box", "Pose"])

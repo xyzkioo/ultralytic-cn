@@ -10,18 +10,18 @@ import torch.nn.functional as F
 
 
 def select_closest_cond_frames(frame_idx: int, cond_frame_outputs: dict[int, Any], max_cond_frame_num: int):
-    """Select the closest conditioning frames to a given frame index.
+    """选择距离给定帧索引最近的条件帧。
 
-    Args:
-        frame_idx (int): Current frame index.
-        cond_frame_outputs (dict[int, Any]): Dictionary of conditioning frame outputs keyed by frame indices.
-        max_cond_frame_num (int): Maximum number of conditioning frames to select.
+    参数：
+        frame_idx (int): 当前帧索引。
+        cond_frame_outputs (dict[int, Any]): 以帧索引为键的条件帧输出字典。
+        max_cond_frame_num (int): 要选择的条件帧最大数量。
 
-    Returns:
-        selected_outputs (dict[int, Any]): Selected items from cond_frame_outputs.
-        unselected_outputs (dict[int, Any]): Items not selected from cond_frame_outputs.
+    返回：
+        selected_outputs (dict[int, Any]): 从 cond_frame_outputs 中选出的项目。
+        unselected_outputs (dict[int, Any]): cond_frame_outputs 中未选出的项目。
 
-    Examples:
+    示例：
         >>> frame_idx = 5
         >>> cond_frame_outputs = {1: "a", 3: "b", 7: "c", 9: "d"}
         >>> max_cond_frame_num = 2
@@ -38,18 +38,18 @@ def select_closest_cond_frames(frame_idx: int, cond_frame_outputs: dict[int, Any
         assert max_cond_frame_num >= 2, "we should allow using 2+ conditioning frames"
         selected_outputs = {}
 
-        # The closest conditioning frame before `frame_idx` (if any)
+        # `frame_idx` 之前最近的条件帧（如果存在）
         idx_before = max((t for t in cond_frame_outputs if t < frame_idx), default=None)
         if idx_before is not None:
             selected_outputs[idx_before] = cond_frame_outputs[idx_before]
 
-        # The closest conditioning frame after `frame_idx` (if any)
+        # `frame_idx` 之后最近的条件帧（如果存在）
         idx_after = min((t for t in cond_frame_outputs if t >= frame_idx), default=None)
         if idx_after is not None:
             selected_outputs[idx_after] = cond_frame_outputs[idx_after]
 
-        # Add other temporally closest conditioning frames until reaching a total
-        # of `max_cond_frame_num` conditioning frames.
+        # 添加时间上其他最近的条件帧，直到达到总数
+        # `max_cond_frame_num` 个条件帧。
         num_remain = max_cond_frame_num - len(selected_outputs)
         inds_remain = sorted(
             (t for t in cond_frame_outputs if t not in selected_outputs),
@@ -62,17 +62,17 @@ def select_closest_cond_frames(frame_idx: int, cond_frame_outputs: dict[int, Any
 
 
 def get_1d_sine_pe(pos_inds: torch.Tensor, dim: int, temperature: float = 10000):
-    """Generate 1D sinusoidal positional embeddings for given positions and dimensions.
+    """为给定位置和维度生成一维正弦位置嵌入。
 
-    Args:
-        pos_inds (torch.Tensor): Position indices for which to generate embeddings.
-        dim (int): Dimension of the positional embeddings. Should be an even number.
-        temperature (float, optional): Scaling factor for the frequency of the sinusoidal functions.
+    参数：
+        pos_inds (torch.Tensor): 用于生成嵌入的位置索引。
+        dim (int): 位置嵌入的维度，必须为偶数。
+        temperature (float, 可选): 正弦函数频率的缩放因子。
 
-    Returns:
-        (torch.Tensor): Sinusoidal positional embeddings with shape (pos_inds.shape, dim).
+    返回：
+        (torch.Tensor): 正弦位置嵌入，形状为 (pos_inds.shape, dim)。
 
-    Examples:
+    示例：
         >>> pos = torch.tensor([0, 1, 2, 3])
         >>> embeddings = get_1d_sine_pe(pos, 128)
         >>> embeddings.shape
@@ -88,27 +88,26 @@ def get_1d_sine_pe(pos_inds: torch.Tensor, dim: int, temperature: float = 10000)
 
 
 def init_t_xy(end_x: int, end_y: int, scale: float = 1.0, offset: int = 0):
-    """Initialize 1D and 2D coordinate tensors for a grid of specified dimensions.
+    """为指定维度的网格初始化一维和二维坐标张量。
 
-    This function creates coordinate tensors for a grid with dimensions end_x × end_y. It generates a linear index
-    tensor and corresponding x and y coordinate tensors.
+    此函数为尺寸为 end_x × end_y 的网格创建坐标张量，生成线性索引张量以及对应的 x、y 坐标张量。
 
-    Args:
-        end_x (int): Width of the grid (number of columns).
-        end_y (int): Height of the grid (number of rows).
-        scale (float): Scaling factor to apply to the coordinates.
-        offset (int): Offset to add to the coordinates.
+    参数：
+        end_x (int): 网格宽度（列数）。
+        end_y (int): 网格高度（行数）。
+        scale (float): 应用于坐标的缩放因子。
+        offset (int): 添加到坐标上的偏移量。
 
-    Returns:
-        t_x (torch.Tensor): X-coordinates for each position, with shape (end_x * end_y).
-        t_y (torch.Tensor): Y-coordinates for each position, with shape (end_x * end_y).
+    返回：
+        t_x (torch.Tensor): 每个位置的 x 坐标，形状为 (end_x * end_y)。
+        t_y (torch.Tensor): 每个位置的 y 坐标，形状为 (end_x * end_y)。
 
-    Examples:
+    示例：
         >>> t_x, t_y = init_t_xy(3, 2)
         >>> print(t_x)
-        tensor([0., 1., 2., 0., 1., 2.])
+        张量([0., 1., 2., 0., 1., 2.])
         >>> print(t_y)
-        tensor([0., 0., 0., 1., 1., 1.])
+        张量([0., 0., 0., 1., 1., 1.])
     """
     t = torch.arange(end_x * end_y, dtype=torch.float32)
     t_x = (t % end_x).float()
@@ -117,22 +116,21 @@ def init_t_xy(end_x: int, end_y: int, scale: float = 1.0, offset: int = 0):
 
 
 def compute_axial_cis(dim: int, end_x: int, end_y: int, theta: float = 10000.0, scale_pos: float = 1.0):
-    """Compute axial complex exponential positional encodings for 2D spatial positions in a grid.
+    """为网格中的二维空间位置计算轴向复指数位置编码。
 
-    This function generates complex exponential positional encodings for a 2D grid of spatial positions, using separate
-    frequency components for the x and y dimensions.
+    此函数使用 x、y 维度各自的频率分量，为二维空间位置网格生成复指数位置编码。
 
-    Args:
-        dim (int): Dimension of the positional encoding.
-        end_x (int): Width of the 2D grid.
-        end_y (int): Height of the 2D grid.
-        theta (float, optional): Scaling factor for frequency computation.
-        scale_pos (float, optional): Scaling factor for position coordinates.
+    参数：
+        dim (int): 位置编码的维度。
+        end_x (int): 二维网格的宽度。
+        end_y (int): 二维网格的高度。
+        theta (float, 可选): 频率计算的缩放因子。
+        scale_pos (float, 可选): 位置坐标的缩放因子。
 
-    Returns:
-        (torch.Tensor): Complex exponential positional encodings with shape (end_x*end_y, dim//2).
+    返回：
+        (torch.Tensor): 复指数位置编码，形状为 (end_x*end_y, dim//2)。
 
-    Examples:
+    示例：
         >>> dim, end_x, end_y = 128, 8, 8
         >>> freqs_cis = compute_axial_cis(dim, end_x, end_y)
         >>> freqs_cis.shape
@@ -150,20 +148,19 @@ def compute_axial_cis(dim: int, end_x: int, end_y: int, theta: float = 10000.0, 
 
 
 def reshape_for_broadcast(freqs_cis: torch.Tensor, x: torch.Tensor):
-    """Reshape frequency tensor for broadcasting with input tensor.
+    """调整频率张量形状，使其可以与输入张量进行广播。
 
-    Reshapes a frequency tensor to ensure dimensional compatibility for broadcasting with an input tensor. This function
-    is typically used in positional encoding operations.
+    调整频率张量形状，确保其维度可与输入张量广播。此函数通常用于位置编码操作。
 
-    Args:
-        freqs_cis (torch.Tensor): Frequency tensor with shape matching the last two dimensions of x.
-        x (torch.Tensor): Input tensor to broadcast with.
+    参数：
+        freqs_cis (torch.Tensor): 频率张量，其形状与 x 的最后两个维度匹配。
+        x (torch.Tensor): 用于广播的输入张量。
 
-    Returns:
-        (torch.Tensor): Reshaped frequency tensor ready for broadcasting with the input tensor.
+    返回：
+        (torch.Tensor): 重塑后的频率张量，可与输入张量进行广播。
 
-    Raises:
-        AssertionError: If the shape of freqs_cis doesn't match the last two dimensions of x.
+    异常：
+        AssertionError: freqs_cis 的形状与 x 的最后两个维度不匹配时抛出。
     """
     ndim = x.ndim
     assert ndim >= 2
@@ -178,28 +175,25 @@ def apply_rotary_enc(
     freqs_cis: torch.Tensor,
     repeat_freqs_k: bool = False,
 ):
-    """Apply rotary positional encoding to query and key tensors.
+    """对查询和键张量应用旋转位置编码。
 
-    This function applies rotary positional encoding (RoPE) to query and key tensors using complex-valued frequency
-    components. RoPE is a technique that injects relative position information into self-attention mechanisms.
+    此函数使用复数频率分量对查询和键张量应用旋转位置编码（RoPE）。RoPE 是一种将相对位置信息注入自注意力机制的技术。
 
-    Args:
-        xq (torch.Tensor): Query tensor to encode with positional information.
-        xk (torch.Tensor): Key tensor to encode with positional information.
-        freqs_cis (torch.Tensor): Complex-valued frequency components for rotary encoding with shape matching the last
-            two dimensions of xq.
-        repeat_freqs_k (bool, optional): Whether to repeat frequency components along sequence length dimension to match
-            key sequence length.
+    参数：
+        xq (torch.Tensor): 要使用位置信息编码的查询张量。
+        xk (torch.Tensor): 要使用位置信息编码的键张量。
+        freqs_cis (torch.Tensor): 用于旋转编码的复数频率分量，形状与 xq 的最后两个维度匹配。
+        repeat_freqs_k (bool, 可选): 是否沿序列长度维重复频率分量，使其匹配键序列长度。
 
-    Returns:
-        xq_out (torch.Tensor): Query tensor with rotary positional encoding applied.
-        xk_out (torch.Tensor): Key tensor with rotary positional encoding applied, or original xk if xk is empty.
+    返回：
+        xq_out (torch.Tensor): Query 张量 with rotary positional encoding applied.
+        xk_out (torch.Tensor): Key 张量 with rotary positional encoding applied, or original xk if xk is empty.
 
-    Examples:
+    示例：
         >>> import torch
         >>> xq = torch.randn(2, 8, 16, 64)  # [batch, heads, seq_len, dim]
         >>> xk = torch.randn(2, 8, 16, 64)
-        >>> freqs_cis = compute_axial_cis(64, 4, 4)  # For a 4x4 spatial grid with dim=64
+        >>> freqs_cis = compute_axial_cis(64, 4, 4)  # 4x4 空间网格，维度为 64
         >>> q_encoded, k_encoded = apply_rotary_enc(xq, xk, freqs_cis)
     """
     xq_ = torch.view_as_complex(xq.float().reshape(*xq.shape[:-1], -1, 2))
@@ -207,11 +201,11 @@ def apply_rotary_enc(
     freqs_cis = reshape_for_broadcast(freqs_cis, xq_)
     xq_out = torch.view_as_real(xq_ * freqs_cis).flatten(3)
     if xk_ is None:
-        # No keys to rotate, due to dropout
+        # 由于 dropout，没有需要旋转的键
         return xq_out.type_as(xq).to(xq.device), xk
-    # Repeat freqs along seq_len dim to match k seq_len
+    # 沿 seq_len 维重复频率，以匹配 k 的序列长度
     if repeat_freqs_k and (r := xk_.shape[-2] // xq_.shape[-2]) > 1:
-        # MPS doesn't support repeat on complex tensors, decompose to real representation
+        # MPS 不支持对复数张量执行 repeat，因此分解为实数表示
         if freqs_cis.device.type == "mps":
             freqs_cis = torch.view_as_real(freqs_cis)
             freqs_cis = freqs_cis.repeat(*([1] * (freqs_cis.ndim - 3)), r, 1, 1)
@@ -223,17 +217,17 @@ def apply_rotary_enc(
 
 
 def window_partition(x: torch.Tensor, window_size: int):
-    """Partition input tensor into non-overlapping windows with padding if needed.
+    """将输入张量划分为不重叠窗口，并在需要时添加填充。
 
-    Args:
-        x (torch.Tensor): Input tensor with shape (B, H, W, C).
-        window_size (int): Size of each window.
+    参数：
+        x (torch.Tensor): 输入张量，形状为 (B, H, W, C)。
+        window_size (int): 每个窗口的尺寸。
 
-    Returns:
-        windows (torch.Tensor): Partitioned windows with shape (B * num_windows, window_size, window_size, C).
-        padded_h_w (tuple[int, int]): Padded height and width before partition.
+    返回：
+        windows (torch.Tensor): 划分后的窗口，形状为 (B * num_windows, window_size, window_size, C)。
+        padded_h_w (tuple[int, int]): 划分前填充后的高度和宽度。
 
-    Examples:
+    示例：
         >>> x = torch.randn(1, 16, 16, 3)
         >>> windows, (Hp, Wp) = window_partition(x, window_size=4)
         >>> print(windows.shape, Hp, Wp)
@@ -253,27 +247,24 @@ def window_partition(x: torch.Tensor, window_size: int):
 
 
 def window_unpartition(windows: torch.Tensor, window_size: int, pad_hw: tuple[int, int], hw: tuple[int, int]):
-    """Unpartition windowed sequences into original sequences and remove padding.
+    """将窗口序列还原为原始序列，并移除填充。
 
-    This function reverses the windowing process, reconstructing the original input from windowed segments and removing
-    any padding that was added during the windowing process.
+    此函数反转窗口划分过程，从窗口分段重建原始输入，并移除窗口划分过程中添加的所有填充。
 
-    Args:
-        windows (torch.Tensor): Input tensor of windowed sequences with shape (B * num_windows, window_size,
-            window_size, C), where B is the batch size, num_windows is the number of windows, window_size is the size of
-            each window, and C is the number of channels.
-        window_size (int): Size of each window.
-        pad_hw (tuple[int, int]): Padded height and width (Hp, Wp) of the input before windowing.
-        hw (tuple[int, int]): Original height and width (H, W) of the input before padding and windowing.
+    参数：
+        windows (torch.Tensor): 窗口序列的输入张量，形状为 (B * num_windows, window_size, window_size, C)，
+            其中 B 为批次大小，num_windows 为窗口数量，window_size 为每个窗口的尺寸，C 为通道数量。
+        window_size (int): 每个窗口的尺寸。
+        pad_hw (tuple[int, int]): 窗口划分前输入填充后的高度和宽度（Hp, Wp）。
+        hw (tuple[int, int]): 输入填充和窗口划分前的原始高度和宽度（H, W）。
 
-    Returns:
-        (torch.Tensor): Unpartitioned sequences with shape (B, H, W, C), where B is the batch size, H and W are the
-            original height and width, and C is the number of channels.
+    返回：
+        (torch.Tensor): 未划分窗口的序列，形状为 (B, H, W, C)，其中 B 为批次大小，H 和 W 为原始高度和宽度，C 为通道数量。
 
-    Examples:
-        >>> windows = torch.rand(32, 8, 8, 64)  # 32 windows of size 8x8 with 64 channels
-        >>> pad_hw = (16, 16)  # Padded height and width
-        >>> hw = (15, 14)  # Original height and width
+    示例：
+        >>> windows = torch.rand(32, 8, 8, 64)  # 32 个 8x8 窗口，包含 64 个通道
+        >>> pad_hw = (16, 16)  # 填充后的高度和宽度
+        >>> hw = (15, 14)  # 原始高度和宽度
         >>> x = window_unpartition(windows, window_size=8, pad_hw=pad_hw, hw=hw)
         >>> print(x.shape)
         torch.Size([8, 15, 14, 64])
@@ -290,18 +281,17 @@ def window_unpartition(windows: torch.Tensor, window_size: int, pad_hw: tuple[in
 
 
 def get_rel_pos(q_size: int, k_size: int, rel_pos: torch.Tensor) -> torch.Tensor:
-    """Extract relative positional embeddings based on query and key sizes.
+    """根据查询和键的尺寸提取相对位置嵌入。
 
-    Args:
-        q_size (int): Size of the query.
-        k_size (int): Size of the key.
-        rel_pos (torch.Tensor): Relative position embeddings with shape (L, C), where L is the maximum relative distance
-            and C is the embedding dimension.
+    参数：
+        q_size (int): 查询尺寸。
+        k_size (int): 键尺寸。
+        rel_pos (torch.Tensor): 相对位置嵌入，形状为 (L, C)，其中 L 是最大相对距离，C 是嵌入维度。
 
-    Returns:
-        (torch.Tensor): Extracted positional embeddings according to relative positions, with shape (q_size, k_size, C).
+    返回：
+        (torch.Tensor): 根据相对位置提取的位置嵌入，形状为 (q_size, k_size, C)。
 
-    Examples:
+    示例：
         >>> q_size, k_size = 8, 16
         >>> rel_pos = torch.randn(31, 64)  # 31 = 2 * max(8, 16) - 1
         >>> extracted_pos = get_rel_pos(q_size, k_size, rel_pos)
@@ -309,9 +299,9 @@ def get_rel_pos(q_size: int, k_size: int, rel_pos: torch.Tensor) -> torch.Tensor
         torch.Size([8, 16, 64])
     """
     max_rel_dist = int(2 * max(q_size, k_size) - 1)
-    # Interpolate rel pos if needed.
+    # 如有需要，插值相对位置。
     if rel_pos.shape[0] != max_rel_dist:
-        # Interpolate rel pos.
+        # 插值相对位置编码。
         rel_pos_resized = F.interpolate(
             rel_pos.reshape(1, rel_pos.shape[0], -1).permute(0, 2, 1),
             size=max_rel_dist,
@@ -321,7 +311,7 @@ def get_rel_pos(q_size: int, k_size: int, rel_pos: torch.Tensor) -> torch.Tensor
     else:
         rel_pos_resized = rel_pos
 
-    # Scale the coords with short length if shapes for q and k are different.
+    # 如果 q 和 k 的形状不同，则使用较短长度缩放坐标。
     q_coords = torch.arange(q_size)[:, None] * max(k_size / q_size, 1.0)
     k_coords = torch.arange(k_size)[None, :] * max(q_size / k_size, 1.0)
     relative_coords = (q_coords - k_coords) + (k_size - 1) * max(q_size / k_size, 1.0)
@@ -337,25 +327,23 @@ def add_decomposed_rel_pos(
     q_size: tuple[int, int],
     k_size: tuple[int, int],
 ) -> torch.Tensor:
-    """Add decomposed Relative Positional Embeddings to the attention map.
+    """将分解的相对位置嵌入添加到注意力图中。
 
-    This function calculates and applies decomposed Relative Positional Embeddings as described in the MVITv2
-    paper. It enhances the attention mechanism by incorporating spatial relationships between query and key
-    positions.
+    此函数按照 MVITv2 论文中的方法计算并应用分解的相对位置嵌入，通过加入查询位置与键位置之间的空间关系增强注意力机制。
 
-    Args:
-        attn (torch.Tensor): Attention map with shape (B, q_h * q_w, k_h * k_w).
-        q (torch.Tensor): Query tensor in the attention layer with shape (B, q_h * q_w, C).
-        rel_pos_h (torch.Tensor): Relative position embeddings for height axis with shape (Lh, C).
-        rel_pos_w (torch.Tensor): Relative position embeddings for width axis with shape (Lw, C).
-        q_size (tuple[int, int]): Spatial sequence size of query q as (q_h, q_w).
-        k_size (tuple[int, int]): Spatial sequence size of key k as (k_h, k_w).
+    参数：
+        attn (torch.Tensor): 注意力图，形状为 (B, q_h * q_w, k_h * k_w)。
+        q (torch.Tensor): 注意力层中的查询张量，形状为 (B, q_h * q_w, C)。
+        rel_pos_h (torch.Tensor): 高度轴的相对位置嵌入，形状为 (Lh, C)。
+        rel_pos_w (torch.Tensor): 宽度轴的相对位置嵌入，形状为 (Lw, C)。
+        q_size (tuple[int, int]): 查询 q 的空间序列尺寸 (q_h, q_w)。
+        k_size (tuple[int, int]): 键 k 的空间序列尺寸 (k_h, k_w)。
 
-    Returns:
+    返回：
         (torch.Tensor): Updated attention map with added relative positional embeddings, shape (B, q_h * q_w, k_h *
             k_w).
 
-    Examples:
+    示例：
         >>> B, C, q_h, q_w, k_h, k_w = 1, 64, 8, 8, 8, 8
         >>> attn = torch.rand(B, q_h * q_w, k_h * k_w)
         >>> q = torch.rand(B, q_h * q_w, C)
@@ -366,7 +354,7 @@ def add_decomposed_rel_pos(
         >>> print(updated_attn.shape)
         torch.Size([1, 64, 64])
 
-    References:
+    参考：
         https://github.com/facebookresearch/mvit/blob/main/mvit/models/attention.py
     """
     q_h, q_w = q_size
@@ -393,19 +381,18 @@ def get_abs_pos(
     retain_cls_token: bool = False,
     tiling: bool = False,
 ) -> torch.Tensor:
-    """Calculate absolute positional embeddings. If needed, resize embeddings and remove cls_token dimension for the
-    original embeddings.
+    """计算绝对位置嵌入；必要时调整嵌入尺寸，并移除 cls_token 维度以适配目标尺寸。
+    原始嵌入。
 
-    Args:
-        abs_pos (torch.Tensor): Absolute positional embeddings with shape (1, num_position, C).
-        has_cls_token (bool): If true, has 1 embedding in abs_pos for cls token.
-        hw (tuple[int, int]): Size of input image tokens.
-        retain_cls_token (bool): Whether to retain the cls_token.
-        tiling (bool): Whether to tile the embeddings, *instead* of interpolation (a la abs_win).
+    参数：
+        abs_pos (torch.Tensor): 绝对位置嵌入，形状为 (1, num_position, C)。
+        has_cls_token (bool): 为 True 时，abs_pos 中包含一个 cls token 嵌入。
+        hw (tuple[int, int]): 输入图像令牌的尺寸。
+        retain_cls_token (bool): 是否保留 cls_token。
+        tiling (bool): 是否平铺嵌入，而不是进行插值（类似 abs_win）。
 
-    Returns:
-        (torch.Tensor): Absolute positional embeddings after processing with shape (1, H, W, C) if retain_cls_token is
-            False, otherwise (1, 1+H*W, C).
+    返回：
+        (torch.Tensor): 处理后的绝对位置嵌入；retain_cls_token 为 False 时形状为 (1, H, W, C)，否则为 (1, 1+H*W, C)。
     """
     if retain_cls_token:
         assert has_cls_token
@@ -436,7 +423,7 @@ def get_abs_pos(
         if not retain_cls_token:
             return new_abs_pos.permute(0, 2, 3, 1)
         else:
-            # add cls_token back, flatten spatial dims
+            # 添加回 cls_token，并展平空间维度
             assert has_cls_token
             return torch.cat(
                 [cls_pos, new_abs_pos.permute(0, 2, 3, 1).reshape(1, h * w, -1)],
@@ -461,21 +448,21 @@ def concat_rel_pos(
     rescale: bool = False,
     relative_coords: torch.Tensor = None,
 ) -> tuple[torch.Tensor, torch.Tensor]:
-    """Concatenate rel pos coeffs to the q & k tensors, so that qk^T is now effectively including rel pos biases.
+    """将相对位置系数拼接到 q 和 k 张量，使 qk^T 有效包含相对位置偏置。
 
-    Args:
-        q (torch.Tensor): Query tensor with shape (B, L_q, C).
-        k (torch.Tensor): Key tensor with shape (B, L_k, C).
-        q_hw (tuple[int, int]): Spatial size of query tensors as (height, width).
-        k_hw (tuple[int, int]): Spatial size of key tensors as (height, width).
-        rel_pos_h (torch.Tensor): Relative positional embeddings for the height axis.
-        rel_pos_w (torch.Tensor): Relative positional embeddings for the width axis.
-        rescale (bool): Whether to rescale for use with SDPA, which would scale by the wrong factor due to the concat.
-        relative_coords (torch.Tensor | None): Precomputed relative coords index tensor.
+    参数：
+        q (torch.Tensor): 查询张量，形状为 (B, L_q, C)。
+        k (torch.Tensor): 键张量，形状为 (B, L_k, C)。
+        q_hw (tuple[int, int]): 查询张量的空间尺寸（高度、宽度）。
+        k_hw (tuple[int, int]): 键张量的空间尺寸（高度、宽度）。
+        rel_pos_h (torch.Tensor): 高度轴的相对位置嵌入。
+        rel_pos_w (torch.Tensor): 宽度轴的相对位置嵌入。
+        rescale (bool): 是否为 SDPA 使用重新缩放；由于拼接操作，SDPA 会使用错误的缩放因子。
+        relative_coords (torch.Tensor | None): 预先计算的相对坐标索引张量。
 
-    Returns:
-        q (torch.Tensor): Query tensor padded so that qk^T accounts for relative position biases.
-        k (torch.Tensor): Key tensor padded so that qk^T accounts for relative position biases.
+    返回：
+        q (torch.Tensor): Query 张量 padded so that qk^T accounts for relative position biases.
+        k (torch.Tensor): Key 张量 padded so that qk^T accounts for relative position biases.
     """
     q_h, q_w = q_hw
     k_h, k_w = k_hw
@@ -494,7 +481,7 @@ def concat_rel_pos(
 
     old_scale = dim**0.5
     new_scale = (dim + k_h + k_w) ** 0.5 if rescale else old_scale  # for sdpa
-    # attn will be divided by new_scale, but we want to divide q by old_scale
+    # attn 将除以 new_scale，但我们希望 q 除以 old_scale
     scale_ratio = new_scale / old_scale
 
     rel_h = torch.einsum("bhwc,hkc->bhwk", r_q, Rh) * new_scale  # (B, q_h, q_w, k_h)

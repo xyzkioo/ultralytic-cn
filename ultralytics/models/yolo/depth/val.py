@@ -1,5 +1,5 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
-"""Depth estimation validator for YOLO models."""
+"""YOLO 模型的深度估计验证器。"""
 
 from __future__ import annotations
 
@@ -17,9 +17,9 @@ from ultralytics.utils.plotting import plot_images
 
 
 class DepthValidator(DetectionValidator):
-    """Validator for YOLO depth estimation models.
+    """YOLO 深度估计模型的验证器。
 
-    Computes standard depth metrics: delta1, abs_rel, rmse, silog. Uses validation loss as the primary training signal.
+    计算标准深度指标：delta1、abs_rel、rmse 和 silog，并使用验证损失作为主要训练信号。
     """
 
     def __init__(
@@ -29,27 +29,27 @@ class DepthValidator(DetectionValidator):
         args=None,
         _callbacks: dict | None = None,
     ) -> None:
-        """Initialize DepthValidator."""
+        """初始化 DepthValidator."""
         super().__init__(dataloader, save_dir, args, _callbacks)
         self.args.task = "depth"
 
     def init_metrics(self, model: torch.nn.Module) -> None:
-        """Initialize the DepthMetrics accumulator with the dataset's depth range."""
+        """根据数据集深度范围初始化 DepthMetrics 累加器。"""
         self.metrics = DepthMetrics(max_depth=self.data.get("max_depth") or 100.0)
         self.metrics.clear_stats()
 
     def preprocess(self, batch: dict[str, Any]) -> dict[str, Any]:
-        """Preprocess batch — move to device, normalize images, and keep depth as float32."""
+        """预处理批次：将数据移动到设备、归一化图像，并将深度保持为 float32。"""
         batch = super().preprocess(batch)
         batch["depth"] = batch["depth"].float()
         return batch
 
     def postprocess(self, preds: torch.Tensor) -> torch.Tensor:
-        """No NMS needed for depth — return predictions as-is."""
+        """深度任务不需要 NMS，直接返回预测结果。"""
         return preds
 
     def update_metrics(self, preds: torch.Tensor, batch: dict[str, Any]) -> None:
-        """Accumulate depth metrics for a batch."""
+        """累加一个批次的深度指标。"""
         gt_depth = batch["depth"]
         if gt_depth.ndim == 3:
             gt_depth = gt_depth.unsqueeze(1)
@@ -60,22 +60,21 @@ class DepthValidator(DetectionValidator):
         self.metrics.update_stats(preds, gt_depth)
 
     def get_stats(self) -> dict[str, float]:
-        """Finalize and return the metrics dict.
+        """汇总并返回指标字典。
 
-        Cross-rank metric reduction is handled by gather_stats() (called before this on all ranks);
-        this runs on rank 0 with the already-summed accumulators.
+        不同进程间的指标归约由 gather_stats() 处理（所有 rank 会在此之前调用该方法）；
+        当前方法在 rank 0 上使用已经求和的累加器。
         """
         self.metrics.process()
         return self.metrics.results_dict
 
     def gather_stats(self) -> None:
-        """Sum depth metric accumulators across DDP ranks onto rank 0.
+        """将所有 DDP rank 的深度指标累加器求和到 rank 0。
 
-        Validation is sharded (ContiguousDistributedSampler gives each rank a distinct chunk of the
-        val set), so each rank holds only its shard's summed statistics. All-reduce the sums so
-        rank 0's get_stats() computes metrics over the full val set instead of a single shard.
-        Overrides DetectionValidator.gather_stats(), which reduces detection-specific stats/box
-        attributes that DepthMetrics does not have.
+        验证集会被分片（ContiguousDistributedSampler 为每个 rank 分配不同的数据块），
+        因此每个 rank 只保存自身分片的统计和。通过全归约汇总这些统计量，使 rank 0 的 get_stats()
+        能够根据完整验证集而不是单个分片计算指标。
+        此方法覆盖 DetectionValidator.gather_stats()，后者会归约 DepthMetrics 不具备的检测专用统计量和边界框属性。
         """
         if RANK == -1 or not dist.is_initialized():
             return
@@ -90,10 +89,10 @@ class DepthValidator(DetectionValidator):
         self.metrics._count = float(count.item())
 
     def print_results(self) -> None:
-        """Log the headline depth metrics in the detection-style aligned table format.
+        """以检测任务的对齐表格格式记录主要深度指标。
 
-        Columns line up with get_desc(): Class, Images, delta1, abs_rel, rmse, silog.
-        Uses "depth_val" as the row label (depth has no classes, where detection prints "all").
+        列与 get_desc() 对齐：Class、Images、delta1、abs_rel、rmse、silog。
+        使用 "depth_val" 作为行标签（深度任务没有类别，检测任务会在此处打印“所有”）。
         """
         r = self.metrics.results_dict
         n_images = len(self.dataloader.dataset) if self.dataloader is not None else (self.seen or 0)
@@ -111,19 +110,19 @@ class DepthValidator(DetectionValidator):
         )
 
     def finalize_metrics(self) -> None:
-        """Set final values for metrics speed."""
+        """设置指标的最终速度信息。"""
         self.metrics.speed = self.speed
         self.metrics.save_dir = self.save_dir
 
     def get_desc(self) -> str:
-        """Return description for progress bar."""
+        """返回进度条描述文本。"""
         return ("%22s" + "%11s" * 5) % ("Class", "Images", "delta1", "abs_rel", "rmse", "silog")
 
     def plot_predictions(self, batch: dict[str, Any], preds: torch.Tensor, ni: int) -> None:
-        """Save predicted depth overlays to val_batch{ni}_pred.jpg.
+        """将预测深度叠加图保存到 val_batch{ni}_pred.jpg。
 
-        Depth has no boxes/classes, so the detection-style plotter is replaced with a depth heatmap overlay
-        through the shared ``plot_images`` path, matching the semantic-segmentation visualization style.
+        深度任务没有边界框和类别，因此通过共享的 ``plot_images`` 路径使用深度热力图叠加，
+        取代检测任务的绘图器，并保持与语义分割可视化一致的风格。
         """
         plot_images(
             labels={"depth": preds},

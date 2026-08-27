@@ -38,7 +38,7 @@ from .model_misc import LayerScale
 
 
 class Attention(nn.Module):
-    """Multi-head Attention block with relative position embeddings and 2d-rope."""
+    """带相对位置嵌入和二维 RoPE 的多头注意力块。"""
 
     def __init__(
         self,
@@ -55,20 +55,19 @@ class Attention(nn.Module):
         rope_interp: bool = False,
     ):
         """
-        Args:
-            dim (int): Number of input channels.
-            num_heads (int): Number of attention heads.
-            qkv_bias (bool): If True, add a learnable bias to query, key, value.
-            use_rel_pos (bool): If True, add relative positional embeddings to the attention map.
-            rel_pos_zero_init (bool): If True, zero initialize relative positional parameters.
-            input_size (tuple[int, int] or None): Input resolution for calculating the relative positional parameter
-                size or rope size.
-            cls_token (bool): Whether a cls_token is present.
-            use_rope (bool): Whether to use rope 2d (independent of use_rel_pos, as it can be used together).
-            rope_theta (float): Control frequencies of rope.
-            rope_pt_size (tuple[int, int] or None): Size of rope in previous stage of training, needed for interpolation
+        参数：
+            dim (int): 输入通道数.
+            num_heads (int): 注意力头数量。
+            qkv_bias (bool): 为 True 时，为查询、键和值添加可学习偏置。
+            use_rel_pos (bool): 为 True 时，将相对位置嵌入添加到注意力图中。
+            rel_pos_zero_init (bool): 为 True 时，将相对位置参数初始化为零。
+            input_size (tuple[int, int] or None): 用于计算相对位置尺寸或 rope 尺寸的输入分辨率。
+            cls_token (bool): 是否存在 cls_token。
+            use_rope (bool): 是否使用二维 rope（与 use_rel_pos 独立，也可以同时使用）。
+            rope_theta (float): 控制 rope 的频率。
+            rope_pt_size (tuple[int, int] or None): Size of rope in previous stage of 训练, needed for interpolation
                 or tiling.
-            rope_interp (bool): Whether to interpolate (or extrapolate) rope to match input size.
+            rope_interp (bool): Whether to interpolate (or extrapolate) rope to match 输入 尺寸.
         """
         super().__init__()
         self.num_heads = num_heads
@@ -79,7 +78,7 @@ class Attention(nn.Module):
         self.qkv = nn.Linear(dim, dim * 3, bias=qkv_bias)
         self.proj = nn.Linear(dim, dim)
 
-        # rel_pos embeddings and rope
+        # 相对位置嵌入和 RoPE
         self.use_rel_pos = use_rel_pos
         self.input_size = input_size
 
@@ -88,12 +87,12 @@ class Attention(nn.Module):
         self.rope_pt_size = rope_pt_size
         self.rope_interp = rope_interp
 
-        # init rel_pos embeddings and rope
+        # 初始化相对位置嵌入和 RoPE
         self._setup_rel_pos(rel_pos_zero_init, input_size)
         self._setup_rope_freqs(input_size)
 
     def _setup_rel_pos(self, rel_pos_zero_init: bool = True, input_size: tuple[int, int] | None = None) -> None:
-        """Setup relative positional embeddings."""
+        """设置相对位置嵌入。"""
         if not self.use_rel_pos:
             self.rel_pos_h = None
             self.rel_pos_w = None
@@ -101,7 +100,7 @@ class Attention(nn.Module):
 
         assert input_size is not None
         assert self.cls_token is False, "not supported"
-        # initialize relative positional embeddings
+        # 初始化相对位置嵌入
         self.rel_pos_h = nn.Parameter(torch.zeros(2 * input_size[0] - 1, self.head_dim))
         self.rel_pos_w = nn.Parameter(torch.zeros(2 * input_size[1] - 1, self.head_dim))
 
@@ -109,7 +108,7 @@ class Attention(nn.Module):
             nn.init.trunc_normal_(self.rel_pos_h, std=0.02)
             nn.init.trunc_normal_(self.rel_pos_w, std=0.02)
 
-        # Precompute the relative coords
+        # 预先计算相对坐标
         H, W = input_size
         q_coords = torch.arange(H)[:, None]
         k_coords = torch.arange(W)[None, :]
@@ -117,28 +116,28 @@ class Attention(nn.Module):
         self.relative_coords = relative_coords.long()
 
     def _setup_rope_freqs(self, input_size: tuple[int, int] | None = None) -> None:
-        """Setup 2d-rope frequencies."""
+        """设置二维 RoPE 频率。"""
         if not self.use_rope:
             self.freqs_cis = None
             return
 
         assert input_size is not None
-        # determine rope input size
+        # 确定 RoPE 输入尺寸
         if self.rope_pt_size is None:
             self.rope_pt_size = input_size
 
-        # initialize 2d rope freqs
+        # 初始化二维 RoPE 频率
         self.compute_cis = partial(
             compute_axial_cis,
             dim=self.head_dim,
             theta=self.rope_theta,
         )
 
-        # interpolate rope
+        # 对 RoPE 进行插值
         scale_pos = 1.0
         if self.rope_interp:
             scale_pos = self.rope_pt_size[0] / input_size[0]
-        # get scaled freqs_cis
+        # 获取缩放后的 freqs_cis
         freqs_cis = self.compute_cis(
             end_x=input_size[0],
             end_y=input_size[1],
@@ -156,7 +155,7 @@ class Attention(nn.Module):
         self.freqs_cis = freqs_cis
 
     def _apply_rope(self, q, k) -> tuple[Tensor, Tensor]:
-        """Apply 2d-rope to q and k."""
+        """对 q 和 k 应用二维 RoPE。"""
         if not self.use_rope:
             return q, k
 
@@ -164,8 +163,8 @@ class Attention(nn.Module):
         return apply_rotary_enc(q, k, freqs_cis=self.freqs_cis.to(q.device))
 
     def forward(self, x: Tensor) -> Tensor:
-        """Forward pass of attention block."""
-        s = 1 if self.cls_token else 0  # used to exclude cls_token
+        """执行注意力块的前向传播。"""
+        s = 1 if self.cls_token else 0  # 用于排除 cls_token
         if x.ndim == 4:
             B, H, W, _ = x.shape
             assert s == 0  # no cls_token
@@ -177,12 +176,12 @@ class Attention(nn.Module):
             ndim = 3
             H = W = math.sqrt(L - s)
 
-        # qkv with shape (3, B, nHead, L, C)
+        # qkv 形状为 (3, B, nHead, L, C)
         qkv = self.qkv(x).reshape(B, L, 3, self.num_heads, -1)
-        # q, k, v with shape (B, nHead, L, C)
+        # q、k、v 形状为 (B, nHead, L, C)
         q, k, v = qkv.permute(2, 0, 3, 1, 4).unbind(0)
 
-        # handle rope and rel pos embeddings
+        # 处理 RoPE 和相对位置嵌入
         q, k = self._apply_rope(q, k)
         if self.use_rel_pos:
             q, k = concat_rel_pos(
@@ -196,7 +195,7 @@ class Attention(nn.Module):
                 relative_coords=self.relative_coords,
             )
 
-            # sdpa expects [B, nheads, H*W, C] so we transpose back
+        # SDPA 需要 [B, nheads, H*W, C]，因此转置回原顺序
             q = q.reshape(B, self.num_heads, H * W, -1)
             k = k.reshape(B, self.num_heads, H * W, -1)
 
@@ -213,7 +212,7 @@ class Attention(nn.Module):
 
 
 class Block(nn.Module):
-    """Transformer blocks with support of window attention."""
+    """支持窗口注意力的 Transformer 块。"""
 
     def __init__(
         self,
@@ -236,27 +235,24 @@ class Block(nn.Module):
         init_values: float | None = None,
     ):
         """
-        Args:
-            dim (int): Number of input channels.
-            num_heads (int): Number of attention heads in each ViT block.
+        参数：
+            dim (int): 输入通道数.
+            num_heads (int): 每个 ViT 块中的注意力头数量。
             mlp_ratio (float): Ratio of mlp hidden dim to embedding dim.
-            qkv_bias (bool): If True, add a learnable bias to query, key, value.
+            qkv_bias (bool): 为 True 时，为查询、键和值添加可学习偏置。
             drop_path (float): Stochastic depth rate.
-            norm_layer (Callable): Normalization layer constructor.
-            act_layer (Callable): Activation layer constructor.
-            use_rel_pos (bool): If True, add relative positional embeddings to the attention map.
-            rel_pos_zero_init (bool): If True, zero initialize relative positional parameters.
-            window_size (int): Window size for window attention blocks. If it equals 0, then not use window attention.
-            input_size (tuple[int, int] | None): Input resolution for calculating the relative positional parameter
-                size.
-            use_rope (bool): Whether to use rope 2d (independent of use_rel_pos, as it can be used together).
-            rope_pt_size (tuple[int, int] | None): Size of rope in previous stage of training, needed for interpolation
-                or tiling.
-            rope_interp (bool): Whether to interpolate (or extrapolate) rope to match target input size, expected to
-                specify source size as rope_pt_size.
-            cls_token (bool): Whether a cls_token is present.
-            dropout (float): Dropout rate.
-            init_values (float | None): Layer scale init, None for no layer scale.
+            norm_layer (Callable): Normalization 层 constructor.
+            act_layer (Callable): Activation 层 constructor.
+            use_rel_pos (bool): 为 True 时，将相对位置嵌入添加到注意力图中。
+            rel_pos_zero_init (bool): 为 True 时，将相对位置参数初始化为零。
+            window_size (int): 窗口注意力块的窗口尺寸。为 0 时不使用窗口注意力。
+            input_size (tuple[int, int] | None): 用于计算相对位置尺寸的输入分辨率。
+            use_rope (bool): 是否使用二维 rope（与 use_rel_pos 独立，也可以同时使用）。
+            rope_pt_size (tuple[int, int] | None): 训练前一阶段的 rope 尺寸，插值或平铺时需要。
+            rope_interp (bool): 是否插值（或外推）rope 以匹配目标输入尺寸；通常应将源尺寸指定为 rope_pt_size。
+            cls_token (bool): 是否存在 cls_token。
+            dropout (float): Dropout 比例。
+            init_values (float | None): 层缩放初始值；为 None 时不使用层缩放。
         """
         super().__init__()
 
@@ -291,16 +287,16 @@ class Block(nn.Module):
         self.window_size = window_size
 
     def forward(self, x: Tensor) -> Tensor:
-        """Forward pass of the transformer block."""
+        """执行 Transformer 块的前向传播。"""
         shortcut = x
         x = self.norm1(x)
-        # Window partition
+        # 窗口划分
         if self.window_size > 0:
             H, W = x.shape[1], x.shape[2]
             x, pad_hw = window_partition(x, self.window_size)
 
         x = self.ls1(self.attn(x))
-        # Reverse window partition
+        # 还原窗口划分
         if self.window_size > 0:
             x = window_unpartition(x, self.window_size, pad_hw, (H, W))
 
@@ -311,7 +307,7 @@ class Block(nn.Module):
 
 
 class ViT(nn.Module):
-    """This module implements Vision Transformer (ViT) backbone in :paper:`vitdet`. "Exploring Plain Vision Transformer
+    """此模块实现 :paper:`vitdet` 中的 Vision Transformer（ViT）骨干网络。“Exploring Plain Vision Transformer
     Backbones for Object Detection", https://arxiv.org/abs/2203.16527.
     """
 
@@ -342,7 +338,7 @@ class ViT(nn.Module):
         retain_cls_token: bool = True,
         dropout: float = 0.0,
         return_interm_layers: bool = False,
-        init_values: float | None = None,  # for layerscale
+        init_values: float | None = None,  # 用于 LayerScale
         ln_pre: bool = False,
         ln_post: bool = False,
         bias_patch_embed: bool = True,
@@ -350,40 +346,40 @@ class ViT(nn.Module):
         use_act_checkpoint: bool = True,
     ):
         """
-        Args:
-            img_size (int): Input image size. Only relevant for rel pos or rope.
-            patch_size (int): Patch size.
-            in_chans (int): Number of input image channels.
-            embed_dim (int): Patch embedding dimension.
+        参数：
+            img_size (int): 输入图像 尺寸. Only relevant for rel pos or rope.
+            patch_size (int): Patch 尺寸.
+            in_chans (int): 输入图像的通道数。
+            embed_dim (int): Patch embedding 维度.
             depth (int): Depth of ViT.
-            num_heads (int): Number of attention heads in each ViT block.
+            num_heads (int): 每个 ViT 块中的注意力头数量。
             mlp_ratio (float): Ratio of mlp hidden dim to embedding dim.
-            qkv_bias (bool): If True, add a learnable bias to query, key, value.
+            qkv_bias (bool): 为 True 时，为查询、键和值添加可学习偏置。
             drop_path_rate (float): Stochastic depth rate.
-            norm_layer (Callable or str): Normalization layer constructor or name.
-            act_layer (Callable): Activation layer constructor.
+            norm_layer (Callable or str): Normalization 层 constructor or 名称.
+            act_layer (Callable): Activation 层 constructor.
             use_abs_pos (bool): If True, use absolute positional embeddings.
             tile_abs_pos (bool): If True, tile absolute positional embeddings instead of interpolation.
             rel_pos_blocks (tuple[int, ...] | bool): Blocks which have rel pos embeddings.
-            rel_pos_zero_init (bool): If True, zero initialize relative positional parameters.
-            window_size (int): Window size for window attention blocks.
+            rel_pos_zero_init (bool): 为 True 时，将相对位置参数初始化为零。
+            window_size (int): Window 尺寸 for window attention blocks.
             global_att_blocks (tuple[int, ...]): Indexes for blocks using global attention (other blocks use window
                 attention).
             use_rope (bool): Whether to use rope 2d (independent of rel_pos_blocks, as it can be used together).
-            rope_pt_size (int | None): Size of rope in previous stage of training, needed for interpolation or tiling.
-            use_interp_rope (bool): Whether to interpolate (or extrapolate) rope to match target input size, expected to
-                specify source size as rope_pt_size.
-            pretrain_img_size (int): Input image size for pretraining models.
-            pretrain_use_cls_token (bool): If True, pretraining models use class token.
-            retain_cls_token (bool): Whether cls_token should be retained.
-            dropout (float): Dropout rate. Applied in residual blocks of attn, mlp and inside the mlp.
-            return_interm_layers (bool): Whether to return intermediate layers (all global attention blocks).
-            init_values (float | None): Layer scale init, None for no layer scale.
-            ln_pre (bool): If True, apply layer norm before transformer blocks.
-            ln_post (bool): If True, apply layer norm after transformer blocks.
-            bias_patch_embed (bool): If True, use bias in conv for patch embed.
-            compile_mode (str | None): Mode to compile the forward, or None to disable.
-            use_act_checkpoint (bool): If True, use activation checkpointing.
+            rope_pt_size (int | None): Size of rope in previous stage of 训练, needed for interpolation or tiling.
+            use_interp_rope (bool): Whether to interpolate (or extrapolate) rope to match 目标 输入 尺寸, expected to
+                specify source 尺寸 as rope_pt_size.
+            pretrain_img_size (int): 预训练模型使用的输入图像尺寸。
+            pretrain_use_cls_token (bool): 为 True 时，预训练模型使用类别令牌。
+            retain_cls_token (bool): 是否保留 cls_token。
+            dropout (float): Dropout 比例，应用于注意力、MLP 的残差块以及 MLP 内部。
+            return_interm_layers (bool): 是否返回中间层（所有全局注意力块）。
+            init_values (float | None): 层缩放初始值；为 None 时不使用层缩放。
+            ln_pre (bool): 为 True 时，在 Transformer 块前应用层归一化。
+            ln_post (bool): 为 True 时，在 Transformer 块后应用层归一化。
+            bias_patch_embed (bool): 为 True 时，在图像块嵌入卷积中使用偏置。
+            compile_mode (str | None): 前向计算的编译模式；为 None 时禁用编译。
+            use_act_checkpoint (bool): 为 True 时，使用激活检查点。
         """
         super().__init__()
         self.pretrain_use_cls_token = pretrain_use_cls_token
@@ -418,21 +414,21 @@ class ViT(nn.Module):
             bias=bias_patch_embed,
         )
 
-        # Handle absolute positional embedding
+        # 处理绝对位置嵌入
         self.tile_abs_pos = tile_abs_pos
         self.use_abs_pos = use_abs_pos
         if self.tile_abs_pos:
             assert self.use_abs_pos
 
         if self.use_abs_pos:
-            # Initialize absolute positional embedding with pretrain image size.
+            # 使用预训练图像尺寸初始化绝对位置嵌入。
             num_patches = (pretrain_img_size // patch_size) * (pretrain_img_size // patch_size)
             num_positions = (num_patches + 1) if pretrain_use_cls_token else num_patches
             self.pos_embed = nn.Parameter(torch.zeros(1, num_positions, embed_dim))
         else:
             self.pos_embed = None
 
-        # stochastic depth decay rule
+        # 随机深度衰减规则
         dpr = [x.item() for x in torch.linspace(0, drop_path_rate, depth)]
 
         self.patch_size = patch_size
@@ -485,7 +481,7 @@ class ViT(nn.Module):
 
     @staticmethod
     def _init_weights(m: nn.Module) -> None:
-        """Initialize the weights."""
+        """初始化权重。"""
         if isinstance(m, nn.Linear):
             nn.init.trunc_normal_(m.weight, std=0.02)
             if isinstance(m, nn.Linear) and m.bias is not None:
@@ -495,14 +491,14 @@ class ViT(nn.Module):
             nn.init.constant_(m.weight, 1.0)
 
     def forward(self, x: torch.Tensor) -> list[torch.Tensor]:
-        """Vit forward path and get feature maps."""
+        """执行 ViT 前向传播并获取特征图。"""
         x = self.patch_embed(x)
         h, w = x.shape[1], x.shape[2]
 
         s = 0
         if self.retain_cls_token:
-            # If cls_token is retained, we don't
-            # maintain spatial shape
+            # 如果保留 cls_token，则不执行此操作
+            # 保持空间形状
             x = torch.cat([self.class_embedding, x.flatten(1, 2)], dim=1)
             s = 1
 
@@ -540,7 +536,7 @@ class ViT(nn.Module):
         return outputs
 
     def set_imgsz(self, imgsz: list[int] | None = None):
-        """Setup rel pos embeddings and rope freqs for a new input image size."""
+        """为新的输入图像尺寸设置相对位置嵌入和 RoPE 频率。"""
         imgsz = imgsz if imgsz is not None else [1008, 1008]
         for block in self.blocks:
             if block.window_size != 0:

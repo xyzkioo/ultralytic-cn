@@ -13,21 +13,20 @@ from .base import BaseBackend
 
 
 class AscendBackend(BaseBackend):
-    """Huawei Ascend NPU inference backend for CANN offline models.
+    """用于 CANN 离线模型的华为 Ascend NPU 推理后端。
 
-    Loads a compiled .om offline model and runs inference on the Ascend AI Processor through the ais_bench runtime,
-    which wraps CANN's pyACL bindings.
+    加载编译后的 .om 离线模型，并通过封装 CANN pyACL 绑定的 ais_bench 运行时在 Ascend AI 处理器上执行推理。
     """
 
     def load_model(self, weight: str | Path) -> None:
-        """Load an Ascend model from a directory containing a .om file.
+        """从包含 .om 文件的目录加载 Ascend 模型。
 
-        Args:
-            weight (str | Path): Path to the Ascend model directory containing the .om offline model.
+        参数：
+            weight (str | Path): 包含 .om 离线模型的 Ascend 模型目录路径。
 
-        Raises:
-            ImportError: If the ``ais_bench`` Python package is not installed.
-            FileNotFoundError: If no .om file is found in the given directory.
+        异常：
+            ImportError: 未安装 ``ais_bench`` Python 软件包时抛出。
+            FileNotFoundError: 给定目录中找不到 .om 文件时抛出。
         """
         try:
             from ais_bench.infer.interface import InferSession
@@ -49,18 +48,18 @@ class AscendBackend(BaseBackend):
         self.apply_metadata(self.read_metadata(found))
 
     def __del__(self):
-        """Release the Ascend device-side resources held by the inference session."""
+        """释放推理会话持有的 Ascend 设备端资源。"""
         if model := getattr(self, "model", None):
             model.free_resource()
 
     def forward(self, im: torch.Tensor) -> np.ndarray | list[np.ndarray]:
-        """Run inference on the Ascend NPU.
+        """在 Ascend NPU 上执行推理。
 
-        Args:
-            im (torch.Tensor): Input image tensor in BCHW format, normalized to [0, 1].
+        参数：
+            im (torch.Tensor): 输入图像 张量 in BCHW format, normalized to [0, 1].
 
-        Returns:
-            (np.ndarray | list[np.ndarray]): Model predictions as a single array or list of arrays.
+        返回：
+            (np.ndarray | 列表[np.ndarray]): 单个数组或数组列表形式的模型预测结果。
         """
         y = self.model.infer([im.cpu().numpy()])
         return y[0] if len(y) == 1 else y

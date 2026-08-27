@@ -15,17 +15,17 @@ def onnx2mnn(
     metadata: dict | None = None,
     prefix: str = "",
 ) -> str:
-    """Convert an ONNX model to MNN format.
+    """将 ONNX 模型转换为 MNN 格式。
 
-    Args:
-        onnx_file (str): Path to the source ONNX file.
-        output_file (Path | str): Path to save the exported MNN model.
-        quantize (int | str | None): Precision scheme, e.g. 16 for FP16 or 8 for INT8 weights.
-        metadata (dict | None): Optional metadata embedded via ``--bizCode``.
-        prefix (str): Prefix for log messages.
+    参数：
+        onnx_file (str): 源 ONNX 文件路径。
+        output_file (Path | str): 保存导出 MNN 模型的路径。
+        quantize (int | str | None): 精度方案，例如 16 表示 FP16，8 表示 INT8 权重。
+        metadata (dict | None): 通过 ``--bizCode`` 嵌入的可选元数据。
+        prefix (str): 日志消息前缀。
 
-    Returns:
-        (str): Path to the exported ``.mnn`` file.
+    返回：
+        (str): 导出的 ``.mnn`` 文件路径。
     """
     from ultralytics.utils.checks import check_requirements
     from ultralytics.utils.torch_utils import TORCH_1_10
@@ -54,7 +54,7 @@ def onnx2mnn(
     if quantize == 16:
         mnn_args.append("--fp16")
     mnnconvert.convert(mnn_args)
-    # Remove scratch file created during model convert optimize
+    # 删除模型转换优化过程中生成的临时文件
     convert_scratch = Path(output_file).parent / ".__convert_external_data.bin"
     if convert_scratch.exists():
         convert_scratch.unlink()

@@ -81,7 +81,7 @@ class SAHIInference:
             slice_width (int, optional): Slice width for inference.
             slice_height (int, optional): Slice height for inference.
         """
-        # Video setup
+        # 设置视频
         cap = cv2.VideoCapture(source)
         if not cap.isOpened():
             raise FileNotFoundError(f"Unable to open video source: '{source}'")
@@ -91,7 +91,7 @@ class SAHIInference:
             save_dir = increment_path("runs/detect/predict", exist_ok)
             save_dir.mkdir(parents=True, exist_ok=True)
 
-        # Load model
+        # 加载模型
         self.load_model(weights, device)
         idx = 0  # Index for image frame writing
         while cap.isOpened():
@@ -99,7 +99,7 @@ class SAHIInference:
             if not success:
                 break
 
-            # Perform sliced prediction using SAHI
+            # 使用 SAHI 执行切片预测
             results = get_sliced_prediction(
                 frame[..., ::-1],  # Convert BGR to RGB
                 self.detection_model,
@@ -107,20 +107,20 @@ class SAHIInference:
                 slice_width=slice_width,
             )
 
-            # Display results if requested
+            # 如果请求则显示结果
             if view_img:
                 cv2.imshow("Ultralytics YOLO Inference", frame)
 
-            # Save results if requested
+            # 如果请求则保存结果
             if save_img and save_dir is not None:
                 idx += 1
                 results.export_visuals(export_dir=save_dir, file_name=f"img_{idx}", hide_conf=hide_conf)
 
-            # Break loop if 'q' is pressed
+            # 按下 'q' 时退出循环
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 break
 
-        # Clean up resources
+        # 清理资源
         cap.release()
         cv2.destroyAllWindows()
 
