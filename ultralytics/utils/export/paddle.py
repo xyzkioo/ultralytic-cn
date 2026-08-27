@@ -16,7 +16,7 @@ def torch2paddle(
     metadata: dict | None = None,
     prefix: str = "",
 ) -> str:
-    """使用 X2Paddle 将 PyTorch 模型导出为 PaddlePaddle 格式。
+    """使用 X2Paddle 将 PyTorch 模型导出为 PaddlePaddle 格式。.
 
     参数：
         model (torch.nn.Module): 要导出的 PyTorch 模型。

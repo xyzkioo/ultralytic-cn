@@ -18,10 +18,9 @@ from .val import NASValidator
 
 
 class NAS(Model):
-    """用于对象检测的 YOLO-NAS 模型。
+    """用于对象检测的 YOLO-NAS 模型。.
 
-    此类为 YOLO-NAS 模型提供接口，并继承 Ultralytics 引擎中的 `Model` 类，
-    用于使用预训练或自定义训练的 YOLO-NAS 模型执行对象检测。
+    此类为 YOLO-NAS 模型提供接口，并继承 Ultralytics 引擎中的 `Model` 类， 用于使用预训练或自定义训练的 YOLO-NAS 模型执行对象检测。
 
     属性：
         model (torch.nn.Module): 已加载的 YOLO-NAS 模型。
@@ -42,12 +41,12 @@ class NAS(Model):
     """
 
     def __init__(self, model: str = "yolo_nas_s.pt") -> None:
-        """使用提供的模型或默认模型初始化 NAS 模型。"""
+        """使用提供的模型或默认模型初始化 NAS 模型。."""
         assert Path(model).suffix not in {".yaml", ".yml"}, "YOLO-NAS models only support pre-trained models."
         super().__init__(model, task="detect")
 
     def _load(self, weights: str, task=None) -> None:
-        """加载已有 NAS 模型权重，或使用预训练权重创建新的 NAS 模型。
+        """加载已有 NAS 模型权重，或使用预训练权重创建新的 NAS 模型。.
 
         参数：
             weights (str): 模型权重文件路径或模型名称。
@@ -73,7 +72,7 @@ class NAS(Model):
         self.model.eval()
 
     def info(self, detailed: bool = False, verbose: bool = True) -> tuple:
-        """记录模型信息。
+        """记录模型信息。.
 
         参数：
             detailed (bool): 是否显示模型详细信息。
@@ -86,5 +85,5 @@ class NAS(Model):
 
     @property
     def task_map(self) -> dict[str, dict[str, Any]]:
-        """返回将任务映射到对应预测器和验证器类的字典。"""
+        """返回将任务映射到对应预测器和验证器类的字典。."""
         return {"detect": {"predictor": NASPredictor, "validator": NASValidator}}

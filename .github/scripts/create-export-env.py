@@ -1,5 +1,5 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
-"""根据导出器注册表构建并通过冒烟测试验证导出测试虚拟环境。"""
+"""根据导出器注册表构建并通过冒烟测试验证导出测试虚拟环境。."""
 
 from __future__ import annotations
 
@@ -17,14 +17,14 @@ from ultralytics.engine.exporter import EXPORT_ENVS  # noqa: E402, RUF100
 
 
 def isolated_env_ids():
-    """返回应在共享基础 CI 环境之外运行的导出环境。"""
+    """返回应在共享基础 CI 环境之外运行的导出环境。."""
     return sorted(
         (env for env, recipe in EXPORT_ENVS.items() if recipe["python"]), key=lambda env: env != "isolated-deepx"
     )
 
 
 def build_env(env_id, root):
-    """构建一个导出环境并运行其中的导出冒烟测试命令。"""
+    """构建一个导出环境并运行其中的导出冒烟测试命令。."""
     recipe = EXPORT_ENVS[env_id]
     venv = root / env_id
 
@@ -72,7 +72,7 @@ def build_env(env_id, root):
 
 
 def main():
-    """解析参数并构建请求的导出环境。"""
+    """解析参数并构建请求的导出环境。."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--env", action="append", choices=isolated_env_ids())
     parser.add_argument("--list", action="store_true", help="Print isolated export environment ids and exit.")

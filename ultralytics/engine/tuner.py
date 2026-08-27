@@ -1,6 +1,6 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 """
-本模块提供 Ultralytics YOLO 模型的超参数调优功能，适用于目标检测、实例分割、图像分类和姿态估计。
+本模块提供 Ultralytics YOLO 模型的超参数调优功能，适用于目标检测、实例分割、图像分类和姿态估计。.
 
 超参数调优是系统地搜索最佳超参数组合的过程，以获得最佳模型性能。
 这对于 YOLO 等深度学习模型尤其重要，因为超参数的微小变化可能会显著影响模型的准确率和效率。
@@ -35,10 +35,9 @@ from ultralytics.utils.plotting import plot_tune_results
 
 
 class Tuner:
-    """用于 YOLO 模型超参数调优的类。
+    """用于 YOLO 模型超参数调优的类。.
 
-    此类会在指定迭代次数内，根据搜索空间改变 YOLO 模型的超参数并重新训练模型，以评估模型性能。
-    同时支持本地 NDJSON 存储，以及使用 MongoDB Atlas 在多台机器之间协同进行分布式超参数优化。
+    此类会在指定迭代次数内，根据搜索空间改变 YOLO 模型的超参数并重新训练模型，以评估模型性能。 同时支持本地 NDJSON 存储，以及使用 MongoDB Atlas 在多台机器之间协同进行分布式超参数优化。
 
     属性：
         space (dict[str, tuple]): 超参数搜索空间，包含变异所需的上下界和缩放因子。
@@ -82,7 +81,7 @@ class Tuner:
     """
 
     def __init__(self, args=DEFAULT_CFG, _callbacks: dict | None = None):
-        """使用配置初始化 Tuner。
+        """使用配置初始化 Tuner。.
 
         参数：
             args (dict): 超参数演化的配置。
@@ -141,7 +140,7 @@ class Tuner:
         )
 
     def _connect(self, uri: str = "", max_retries: int = 3):
-        """创建 MongoDB 客户端，并在连接失败时使用指数退避进行重试。
+        """创建 MongoDB 客户端，并在连接失败时使用指数退避进行重试。.
 
         参数：
             uri (str): 包含凭据和集群信息的 MongoDB 连接字符串。
@@ -181,7 +180,7 @@ class Tuner:
                 time.sleep(wait_time)
 
     def _init_mongodb(self, mongodb_uri="", mongodb_db="", mongodb_collection=""):
-        """初始化用于分布式调优的 MongoDB 连接。
+        """初始化用于分布式调优的 MongoDB 连接。.
 
         连接 MongoDB Atlas，以便在多台机器之间进行分布式超参数优化。每个工作进程将结果保存到共享集合中，
         并读取所有工作进程产生的最新最佳超参数，用于后续演化。
@@ -202,7 +201,7 @@ class Tuner:
         LOGGER.info(f"{self.prefix}Using MongoDB Atlas for distributed tuning")
 
     def _get_mongodb_results(self, n: int = 5) -> list:
-        """从 MongoDB 获取按 fitness 排序的前 N 个结果。
+        """从 MongoDB 获取按 fitness 排序的前 N 个结果。.
 
         参数：
             n (int): 要获取的最佳结果数量。
@@ -217,7 +216,7 @@ class Tuner:
 
     @staticmethod
     def _json_default(x):
-        """将张量类值转换为可进行 JSON 序列化的值。"""
+        """将张量类值转换为可进行 JSON 序列化的值。."""
         return x.item() if hasattr(x, "item") else str(x)
 
     def _result_record(
@@ -228,7 +227,7 @@ class Tuner:
         datasets: dict[str, dict],
         save_dirs: dict[str, str] | None = None,
     ) -> dict:
-        """构建一条本地调优结果记录。"""
+        """构建一条本地调优结果记录。."""
         result = {
             "iteration": iteration,
             "fitness": round(fitness, 5),
@@ -247,7 +246,7 @@ class Tuner:
         datasets: dict[str, dict],
         iteration: int,
     ):
-        """转换类型后，将结果保存到 MongoDB。
+        """转换类型后，将结果保存到 MongoDB。.
 
         参数：
             fitness (float): 使用这些超参数得到的 fitness 分数。
@@ -271,7 +270,7 @@ class Tuner:
             LOGGER.warning(f"{self.prefix}MongoDB save failed: {e}")
 
     def _sync_mongodb_to_file(self):
-        """将 MongoDB 结果同步到本地 NDJSON 调优日志。
+        """将 MongoDB 结果同步到本地 NDJSON 调优日志。.
 
         从 MongoDB 下载所有结果，并按时间顺序写入本地 NDJSON 文件。
         使用分布式调优时，这可以让恢复训练、超参数变异和绘图共享同一个本地数据源。
@@ -301,14 +300,14 @@ class Tuner:
             LOGGER.warning(f"{self.prefix}MongoDB to NDJSON sync failed: {e}")
 
     def _load_local_results(self) -> list[dict]:
-        """从 NDJSON 日志加载本地调优结果。"""
+        """从 NDJSON 日志加载本地调优结果。."""
         if not self.tune_file.exists():
             return []
         with open(self.tune_file, encoding="utf-8") as f:
             return [json.loads(line) for line in f if line.strip()]
 
     def _local_results_to_array(self, results: list[dict], n: int | None = None) -> np.ndarray | None:
-        """将本地 NDJSON 记录转换为包含 fitness 和超参数的 NumPy 数组。"""
+        """将本地 NDJSON 记录转换为包含 fitness 和超参数的 NumPy 数组。."""
         if not results:
             return None
         x = np.array(
@@ -325,13 +324,13 @@ class Tuner:
         return x[order][:n]
 
     def _save_local_result(self, result: dict):
-        """将一条调优结果追加到本地 NDJSON 日志。"""
+        """将一条调优结果追加到本地 NDJSON 日志。."""
         with open(self.tune_file, "a", encoding="utf-8") as f:
             f.write(json.dumps(result, default=self._json_default) + "\n")
 
     @staticmethod
     def _best_metrics(result: dict) -> dict | None:
-        """汇总最佳结果的指标，用于记录日志。"""
+        """汇总最佳结果的指标，用于记录日志。."""
         datasets = result.get("datasets", {})
         if len(datasets) == 1:
             return next(iter(datasets.values()))
@@ -341,19 +340,19 @@ class Tuner:
 
     @staticmethod
     def _has_training_metrics(result: dict, require_all: bool = False) -> bool:
-        """返回调优结果是否包含训练指标。"""
+        """返回调优结果是否包含训练指标。."""
         datasets = result.get("datasets", {})
         return bool(datasets) and (all(datasets.values()) if require_all else any(datasets.values()))
 
     @classmethod
     def _best_result_index(cls, results: list[dict], fitness: np.ndarray) -> int:
-        """返回最佳结果的索引，并优先选择包含训练指标的记录。"""
+        """返回最佳结果的索引，并优先选择包含训练指标的记录。."""
         valid = [i for i, result in enumerate(results) if cls._has_training_metrics(result)]
         return valid[int(fitness[valid].argmax())] if valid else int(fitness.argmax())
 
     @staticmethod
     def _dataset_names(data: list) -> list[str]:
-        """创建稳定且唯一的数据集名称，用于记录日志和区分每次运行的目录。"""
+        """创建稳定且唯一的数据集名称，用于记录日志和区分每次运行的目录。."""
         stems = [Path(str(d)).stem for d in data]
         totals, seen = Counter(stems), Counter()
         names = []
@@ -364,7 +363,7 @@ class Tuner:
 
     @staticmethod
     def _crossover(x: np.ndarray, alpha: float = 0.2, k: int = 9) -> np.ndarray:
-        """对最多前 k 个父代执行 BLX-α 交叉（x[:,0]=fitness，其余列为基因）。"""
+        """对最多前 k 个父代执行 BLX-α 交叉（x[:,0]=fitness，其余列为基因）。."""
         k = min(k, len(x))
         # fitness 权重（平移到大于 0）；如果权重退化，则回退到均匀权重
         weights = x[:, 0] - x[:, 0].min() + 1e-6
@@ -384,7 +383,7 @@ class Tuner:
         mutation: float = 0.5,
         sigma: float = 0.2,
     ) -> dict[str, float]:
-        """根据 `self.space` 中指定的上下界和缩放因子改变超参数。
+        """根据 `self.space` 中指定的上下界和缩放因子改变超参数。.
 
         参数：
             n (int): 要考虑的最佳父代数量。
@@ -445,7 +444,7 @@ class Tuner:
         return hyp
 
     def __call__(self, iterations: int = 10, cleanup: bool = True):
-        """调用 Tuner 实例时执行超参数演化过程。
+        """调用 Tuner 实例时执行超参数演化过程。.
 
         此方法会执行指定次数的迭代，步骤如下：
         1. 将 MongoDB 结果同步到本地 NDJSON（使用分布式模式时）。
@@ -562,7 +561,7 @@ class Tuner:
                 best_save_dirs = current_best_save_dirs
             elif cleanup:
                 for s in save_dir:
-                            shutil.rmtree(s, ignore_errors=True)  # 删除迭代目录，以减少存储空间占用
+                    shutil.rmtree(s, ignore_errors=True)  # 删除迭代目录，以减少存储空间占用
                 best_save_dirs = current_best_save_dirs
 
             # 绘制调优结果

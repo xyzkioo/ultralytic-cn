@@ -8,7 +8,7 @@ from ultralytics.utils import IS_COLAB, LOGGER, YAML
 
 
 def _check_rknn_return(ret, name: str):
-    """RKNN API 调用失败时抛出 RuntimeError。"""
+    """RKNN API 调用失败时抛出 RuntimeError。."""
     if ret not in {0, None}:
         raise RuntimeError(f"RKNN {name} failed with return code {ret}.")
 
@@ -23,7 +23,7 @@ def onnx2rknn(
     prefix: str = "",
     batch: int = 1,
 ) -> str:
-    """将 ONNX 模型导出为 Rockchip NPU 使用的 RKNN 格式，并支持可选 INT8 量化。
+    """将 ONNX 模型导出为 Rockchip NPU 使用的 RKNN 格式，并支持可选 INT8 量化。.
 
     参数：
         onnx_file (str): 源 ONNX 文件路径（已导出，opset <=19）。

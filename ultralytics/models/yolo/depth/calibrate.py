@@ -1,5 +1,5 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
-"""单目深度模型的仅尺度校准。
+"""单目深度模型的仅尺度校准。.
 
 对数深度头预测场景的相对结构（形状）；绝对尺度由独立的双参数对数仿射变换
 ``d' = exp(a·log d + b)`` 表示，并存储在深度头的 ``cal_a``/``cal_b`` 缓冲区中。
@@ -24,7 +24,7 @@ from ultralytics.utils.torch_utils import smart_inference_mode
 
 
 def _depth_head(model: torch.nn.Module) -> torch.nn.Module | None:
-    """返回包含 ``cal_a``/``cal_b`` 缓冲区的 Depth 头模块；不存在时返回 None。"""
+    """返回包含 ``cal_a``/``cal_b`` 缓冲区的 Depth 头模块；不存在时返回 None。."""
     m = model.module if hasattr(model, "module") else model  # unwrap DDP
     seq = getattr(m, "model", None)
     if seq is not None and not isinstance(seq, torch.nn.Sequential):
@@ -34,12 +34,11 @@ def _depth_head(model: torch.nn.Module) -> torch.nn.Module | None:
 
 
 def _rewind(dataloader) -> None:
-    """在部分遍历前将有状态数据加载器回退到 epoch 开始位置。
+    """在部分遍历前将有状态数据加载器回退到 epoch 开始位置。.
 
-    训练器的 InfiniteDataLoader 会在多个 ``for`` 循环之间保留同一个迭代器，因此上一次提前结束的遍历
-    （例如拟合在达到 ``max_images`` 时停止）会将迭代器留在 epoch 中间，下一次循环会静默地从该位置继续。
-    所有需要获取“前 N 个”样本的遍历都必须先回退；尤其是绘图遍历必须看到与 BaseValidator 绘制的
-    ``val_batch{ni}.jpg`` 相同的开头批次。普通 DataLoader 和列表测试装置在每次 ``__iter__`` 时都会重启。
+    训练器的 InfiniteDataLoader 会在多个 ``for`` 循环之间保留同一个迭代器，因此上一次提前结束的遍历 （例如拟合在达到 ``max_images`` 时停止）会将迭代器留在 epoch
+    中间，下一次循环会静默地从该位置继续。 所有需要获取“前 N 个”样本的遍历都必须先回退；尤其是绘图遍历必须看到与 BaseValidator 绘制的 ``val_batch{ni}.jpg`` 相同的开头批次。普通
+    DataLoader 和列表测试装置在每次 ``__iter__`` 时都会重启。
     """
     reset = getattr(dataloader, "reset", None)
     if callable(reset):
@@ -47,11 +46,10 @@ def _rewind(dataloader) -> None:
 
 
 def _delta1_none(log_pred: np.ndarray, log_gt: np.ndarray, a: float, b: float) -> float:
-    """应用 ``d' = exp(a·log_pred + b)`` 后，在不进行逐图像对齐时计算 δ1。
+    """应用 ``d' = exp(a·log_pred + b)`` 后，在不进行逐图像对齐时计算 δ1。.
 
-    δ1 表示满足 ``max(d'/gt, gt/d') < 1.25`` 的像素比例；在对数空间中，该条件等价于
-    ``|a·log_pred + b − log_gt| < log(1.25)``。这是策略优化的部署指标（原始绝对尺度，``align="none"`` 协议）；
-    验证评分默认使用尺度不变的 ``align="median"``，无法反映校准效果。
+    δ1 表示满足 ``max(d'/gt, gt/d') < 1.25`` 的像素比例；在对数空间中，该条件等价于 ``|a·log_pred + b − log_gt| <
+    log(1.25)``。这是策略优化的部署指标（原始绝对尺度，``align="none"`` 协议）； 验证评分默认使用尺度不变的 ``align="median"``，无法反映校准效果。
     """
     ld = (a * np.asarray(log_pred, dtype=np.float64) + b) - np.asarray(log_gt, dtype=np.float64)
     return float(np.mean(np.abs(ld) < np.log(1.25)))
@@ -63,13 +61,12 @@ def select_calibration(
     lp_score: np.ndarray,
     lg_score: np.ndarray,
 ) -> dict[str, Any]:
-    """选择最能提升留出集原始尺度 δ1 的校准方案，即“只有有帮助时才校准”。
+    """选择最能提升留出集原始尺度 δ1 的校准方案，即“只有有帮助时才校准”。.
 
     在 ``*_fit`` 对数像素数组上拟合两个候选方案，并根据 :func:`_delta1_none` 在独立的 ``*_score`` 数组上评分：
     - ``identity``（a=1, b=0）：不校准；
     - ``scale-only``（a=1, b=mean(log_gt − log_pred)）：全局尺度校准。
-    选择留出集 δ1 最高的方案，并列时优先选择 identity，因此无法泛化的校准会被拒绝，不会损害自动校准。
-    （曾评估过对数斜率仿射候选方案，但其额外参数会在数据集内交叉验证中过拟合，损害跨分布泛化，因此已移除。）
+    选择留出集 δ1 最高的方案，并列时优先选择 identity，因此无法泛化的校准会被拒绝，不会损害自动校准。 （曾评估过对数斜率仿射候选方案，但其额外参数会在数据集内交叉验证中过拟合，损害跨分布泛化，因此已移除。）
 
     返回：
         包含获胜方案 ``a``、``b``（浮点数）、``name`` 和 ``scores``（各候选方案 δ1）的字典。
@@ -90,12 +87,11 @@ def select_calibration_cv(
     margin: float = 0.0,
     folds: int = 2,
 ) -> dict[str, Any]:
-    """交叉验证“只有有帮助时才校准”：根据 K 折留出集 δ1 选择候选方案。
+    """交叉验证“只有有帮助时才校准”：根据 K 折留出集 δ1 选择候选方案。.
 
-    ``pairs`` 是逐图像 ``(log_pred, log_gt)`` 数组列表。通过 :func:`select_calibration` 在每一折留出数据上评分各候选类型
-    （使用其余数据拟合），再对各类型的留出 δ1 跨折求平均。因此每张图像恰好参与一次评分，
-    只在某个噪声划分上获胜的候选方案不会被选中。获胜类型的平均留出 δ1 必须超过 identity 至少 ``margin``（并列时选择更简单的类型），
-    最终 ``(a, b)`` 再使用全部 pairs 重新拟合。
+    ``pairs`` 是逐图像 ``(log_pred, log_gt)`` 数组列表。通过 :func:`select_calibration` 在每一折留出数据上评分各候选类型 （使用其余数据拟合），再对各类型的留出 δ1
+    跨折求平均。因此每张图像恰好参与一次评分， 只在某个噪声划分上获胜的候选方案不会被选中。获胜类型的平均留出 δ1 必须超过 identity 至少 ``margin``（并列时选择更简单的类型）， 最终 ``(a, b)``
+    再使用全部 pairs 重新拟合。
 
     返回：
         包含 ``a``、``b``（浮点数）、``name`` 和 ``cv_scores``（各类型平均留出 δ1）的字典。
@@ -135,12 +131,10 @@ def select_calibration_cv(
 def _collect_logpairs(
     model: torch.nn.Module, dataloader, device: torch.device | str, max_images: int, max_depth: float = 100.0
 ) -> list[tuple[np.ndarray, np.ndarray]]:
-    """运行模型遍历数据加载器，并返回逐图像 ``(log_pred, log_gt)`` 数组列表。
+    """运行模型遍历数据加载器，并返回逐图像 ``(log_pred, log_gt)`` 数组列表。.
 
-    每张图像对应一项（每项最多采样 20,000 个有效像素），调用方可以将图像划分为独立的拟合集和评分集。
-    仅收集 ``(0.001, max_depth)`` 范围内的真实深度，这与 ``DepthMetrics`` 评估的样本范围（Eigen 协议）一致，
-    因此无效的远距离真实深度不会影响拟合尺度或选择策略依赖的留出集 δ1。
-    运行期间将校准缓冲区重置为单位变换，使拟合使用原始输出，完成后再恢复。
+    每张图像对应一项（每项最多采样 20,000 个有效像素），调用方可以将图像划分为独立的拟合集和评分集。 仅收集 ``(0.001, max_depth)`` 范围内的真实深度，这与 ``DepthMetrics``
+    评估的样本范围（Eigen 协议）一致， 因此无效的远距离真实深度不会影响拟合尺度或选择策略依赖的留出集 δ1。 运行期间将校准缓冲区重置为单位变换，使拟合使用原始输出，完成后再恢复。
     """
     head = _depth_head(model)
     a0, b0 = float(head.cal_a), float(head.cal_b)
@@ -190,10 +184,10 @@ def fit_calibration_selective(
     margin: float = 0.002,
     max_depth: float = 100.0,
 ) -> dict[str, Any] | None:
-    """通过“只有有帮助时才校准”策略选择并应用校准（参见 :func:`select_calibration_cv`）。
+    """通过“只有有帮助时才校准”策略选择并应用校准（参见 :func:`select_calibration_cv`）。.
 
-    遍历数据加载器收集逐图像 ``(log_pred, log_gt)``，将图像划分为独立的拟合折和评分折（避免数据泄漏），
-    依据交叉验证的原始尺度 δ1 选择 identity 或 scale-only，并将获胜方案写入深度头的 ``cal_a``/``cal_b``。
+    遍历数据加载器收集逐图像 ``(log_pred, log_gt)``，将图像划分为独立的拟合折和评分折（避免数据泄漏）， 依据交叉验证的原始尺度 δ1 选择 identity 或 scale-only，并将获胜方案写入深度头的
+    ``cal_a``/``cal_b``。
 
     返回：
         (dict | None): :func:`select_calibration_cv` 的结果字典；没有深度头或有效图像过少时返回 None。
@@ -230,13 +224,11 @@ def _plot_calibrated_batches(
     max_batches: int = 3,
     max_images: int = 4,
 ) -> None:
-    """将 ``val_batch{ni}_calibrated.jpg`` 面板（RGB | GT | 原始 | 校准后）写入 ``plot_dir``。
+    """将 ``val_batch{ni}_calibrated.jpg`` 面板（RGB | GT | 原始 | 校准后）写入 ``plot_dir``。.
 
-    将校准缓冲区设为单位变换运行模型以获取原始预测；校准列是对原始预测执行确定性仿射变换
-    ``exp(a·log(raw) + b)`` 的结果，不需要第二次前向传播。前 ``max_batches`` 个批次与 BaseValidator 绘制的
-    ``val_batch{ni}.jpg`` 相同（验证加载器未打乱），因此文件可以直接比较。
-    根据“只有有帮助时才校准”策略，选中的 ``name`` 可能是 ``identity``；此时仍会写入面板（raw == calibrated），
-    以记录校准未产生实际变化。完成后恢复缓冲区。
+    将校准缓冲区设为单位变换运行模型以获取原始预测；校准列是对原始预测执行确定性仿射变换 ``exp(a·log(raw) + b)`` 的结果，不需要第二次前向传播。前 ``max_batches`` 个批次与
+    BaseValidator 绘制的 ``val_batch{ni}.jpg`` 相同（验证加载器未打乱），因此文件可以直接比较。 根据“只有有帮助时才校准”策略，选中的 ``name`` 可能是
+    ``identity``；此时仍会写入面板（raw == calibrated）， 以记录校准未产生实际变化。完成后恢复缓冲区。
     """
     from ultralytics.utils.plotting import plot_depth_panels
 
@@ -279,11 +271,10 @@ def calibrate_checkpoint(
     validation_split: str | None = None,
     max_depth: float = 100.0,
 ) -> dict | None:
-    """原地为已保存的检查点拟合校准参数（用于自动后训练校准）。
+    """原地为已保存的检查点拟合校准参数（用于自动后训练校准）。.
 
-    加载检查点，在 ``device`` 上使用浮点副本和“只有有帮助时才校准”策略
-    （:func:`fit_calibration_selective`）从 ``dataloader`` 选择校准方案，将选中的缓冲区写入已保存模型并重新保存，
-    同时保留检查点的其余内容。
+    加载检查点，在 ``device`` 上使用浮点副本和“只有有帮助时才校准”策略 （:func:`fit_calibration_selective`）从 ``dataloader``
+    选择校准方案，将选中的缓冲区写入已保存模型并重新保存， 同时保留检查点的其余内容。
 
     参数：
         ckpt_path (str | Path): 要原地校准的 ``.pt`` 检查点文件路径。

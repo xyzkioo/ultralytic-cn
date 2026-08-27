@@ -13,7 +13,7 @@ from ultralytics.utils.checks import check_executorch_requirements
 
 
 def executorch_wrapper(model: torch.nn.Module) -> torch.nn.Module:
-    """应用 ExecuTorch 专用模型补丁，以保证导出和运行时兼容性。"""
+    """应用 ExecuTorch 专用模型补丁，以保证导出和运行时兼容性。."""
     import types
 
     for m in model.modules():
@@ -24,7 +24,7 @@ def executorch_wrapper(model: torch.nn.Module) -> torch.nn.Module:
 
 
 def _executorch_kpts_decode(self, kpts: torch.Tensor, is_pose26: bool = False) -> torch.Tensor:
-    """为 ExecuTorch 导出解码姿态关键点，并使用 XNNPACK 安全的广播方式。"""
+    """为 ExecuTorch 导出解码姿态关键点，并使用 XNNPACK 安全的广播方式。."""
     ndim = self.kpt_shape[1]
     bs = kpts.shape[0]
     y = kpts.view(bs, *self.kpt_shape, -1)
@@ -45,7 +45,7 @@ def torch2executorch(
     metadata: dict | None = None,
     prefix: str = "",
 ) -> str:
-    """将 PyTorch 模型导出为 ExecuTorch 格式。
+    """将 PyTorch 模型导出为 ExecuTorch 格式。.
 
     参数：
         model (torch.nn.Module): 要导出的 PyTorch 模型。

@@ -1,6 +1,6 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 """
-用于构建 Ultralytics 文档参考部分的辅助文件。
+用于构建 Ultralytics 文档参考部分的辅助文件。.
 
 此脚本递归遍历 ultralytics 目录，根据类和函数构建 *.md 文件组成的 MkDocs 参考部分，
 同时创建供 mkdocs.yaml 使用的导航菜单。
@@ -55,7 +55,7 @@ RETURNS_RE = re.compile(r"([^:]+):\s*(.*)")
 
 @dataclass
 class ParameterDoc:
-    """参数、属性和异常的结构化文档。"""
+    """参数、属性和异常的结构化文档。."""
 
     name: str
     type: str | None
@@ -65,7 +65,7 @@ class ParameterDoc:
 
 @dataclass
 class ReturnDoc:
-    """返回值和 yield 值的结构化文档。"""
+    """返回值和 yield 值的结构化文档。."""
 
     type: str | None
     description: str
@@ -73,7 +73,7 @@ class ReturnDoc:
 
 @dataclass
 class ParsedDocstring:
-    """Google 风格文档字符串的规范化表示。"""
+    """Google 风格文档字符串的规范化表示。."""
 
     summary: str = ""
     description: str = ""
@@ -89,7 +89,7 @@ class ParsedDocstring:
 
 @dataclass
 class DocItem:
-    """表示一个有文档说明的符号（类、函数、方法或属性）。"""
+    """表示一个有文档说明的符号（类、函数、方法或属性）。."""
 
     name: str
     qualname: str
@@ -107,7 +107,7 @@ class DocItem:
 
 @dataclass
 class DocumentedModule:
-    """Python 模块中所有文档项的容器。"""
+    """Python 模块中所有文档项的容器。."""
 
     path: Path
     module_path: str
@@ -121,7 +121,7 @@ class DocumentedModule:
 
 
 def extract_classes_and_functions(filepath: Path) -> tuple[list[str], list[str]]:
-    """从 Python 文件中提取顶层类和同步/异步函数名称。"""
+    """从 Python 文件中提取顶层类和同步/异步函数名称。."""
     content = filepath.read_text()
     classes = CLASS_DEF_RE.findall(content)
     functions = FUNC_DEF_RE.findall(content)
@@ -129,11 +129,10 @@ def extract_classes_and_functions(filepath: Path) -> tuple[list[str], list[str]]
 
 
 def _with_reference_title(header_content: str, module_path: str) -> str:
-    """向参考文档前置元数据中注入简洁且靠前的 `title:`（幂等操作）。
+    """向参考文档前置元数据中注入简洁且靠前的 `title:`（幂等操作）。.
 
-    H1 保留完整模块路径；`<title>` 使用 `{module} API Reference`（去掉多余的软件包前缀），
-    这样文档渲染器追加 ` | Ultralytics` 品牌后缀后仍能满足 60 字符的 SEO 目标；最深的少数模块路径
-    仍需依赖渲染器的截断保护。精选的 description/keywords 保持不变。
+    H1 保留完整模块路径；`<title>` 使用 `{module} API Reference`（去掉多余的软件包前缀）， 这样文档渲染器追加 ` | Ultralytics` 品牌后缀后仍能满足 60 字符的 SEO
+    目标；最深的少数模块路径 仍需依赖渲染器的截断保护。精选的 description/keywords 保持不变。
     """
     if re.search(r"(?m)^title\s*:", header_content):  # line-anchored: ignore `title:` inside a description
         return header_content
@@ -142,10 +141,9 @@ def _with_reference_title(header_content: str, module_path: str) -> str:
 
 
 def _existing_frontmatter(md_filepath: Path) -> str:
-    """返回页面开头的 YAML 前置元数据块；没有时返回空字符串。
+    """返回页面开头的 YAML 前置元数据块；没有时返回空字符串。.
 
-    匹配位置固定在文件开头：按每个 `---` 分割也会匹配 Markdown 表格分隔线，
-    当生成器处理自身输出而不是全新克隆的存根时，会把页面内容错误地并入头部。
+    匹配位置固定在文件开头：按每个 `---` 分割也会匹配 Markdown 表格分隔线， 当生成器处理自身输出而不是全新克隆的存根时，会把页面内容错误地并入头部。
     """
     if not md_filepath.exists():
         return ""
@@ -154,7 +152,7 @@ def _existing_frontmatter(md_filepath: Path) -> str:
 
 
 def create_placeholder_markdown(py_filepath: Path, module_path: str, classes: list[str], functions: list[str]) -> Path:
-    """创建最小 Markdown 参考存根。"""
+    """创建最小 Markdown 参考存根。."""
     md_filepath = REFERENCE_DIR / py_filepath.relative_to(PACKAGE_DIR).with_suffix(".md")
 
     header_content = _existing_frontmatter(md_filepath)
@@ -187,7 +185,7 @@ def create_placeholder_markdown(py_filepath: Path, module_path: str, classes: li
 
 
 def _get_source(src: str, node: ast.AST) -> str:
-    """返回 AST 节点的源代码片段，并提供安全的回退方案。"""
+    """返回 AST 节点的源代码片段，并提供安全的回退方案。."""
     segment = ast.get_source_segment(src, node)
     if segment:
         return segment
@@ -198,7 +196,7 @@ def _get_source(src: str, node: ast.AST) -> str:
 
 
 def _format_annotation(annotation: ast.AST | None, src: str) -> str | None:
-    """将类型注解格式化为紧凑字符串。"""
+    """将类型注解格式化为紧凑字符串。."""
     if annotation is None:
         return None
     text = _get_source(src, annotation).strip()
@@ -206,7 +204,7 @@ def _format_annotation(annotation: ast.AST | None, src: str) -> str | None:
 
 
 def _format_default(default: ast.AST | None, src: str) -> str | None:
-    """格式化默认值表达式以供显示。"""
+    """格式化默认值表达式以供显示。."""
     if default is None:
         return None
     text = _get_source(src, default).strip()
@@ -214,7 +212,7 @@ def _format_default(default: ast.AST | None, src: str) -> str | None:
 
 
 def _format_parameter(arg: ast.arg, default: ast.AST | None, src: str) -> str:
-    """渲染带有注解和默认值的单个参数。"""
+    """渲染带有注解和默认值的单个参数。."""
     annotation = _format_annotation(arg.annotation, src)
     rendered = arg.arg
     if annotation:
@@ -226,11 +224,11 @@ def _format_parameter(arg: ast.arg, default: ast.AST | None, src: str) -> str:
 
 
 def collect_signature_parameters(args: ast.arguments, src: str, *, skip_self: bool = True) -> list[ParameterDoc]:
-    """从 ast.arguments 对象中收集带类型和默认值的参数。"""
+    """从 ast.arguments 对象中收集带类型和默认值的参数。."""
     params: list[ParameterDoc] = []
 
     def add_param(arg: ast.arg, default_value: ast.AST | None = None):
-        """追加参数项，可选择跳过 self/cls。"""
+        """追加参数项，可选择跳过 self/cls。."""
         name = arg.arg
         if skip_self and name in {"self", "cls"}:
             return
@@ -275,7 +273,7 @@ def collect_signature_parameters(args: ast.arguments, src: str, *, skip_self: bo
 def format_signature(
     node: ast.AST, src: str, *, is_class: bool = False, is_async: bool = False, display_name: str | None = None
 ) -> str:
-    """为类、函数和方法构建可读的签名字符串。"""
+    """为类、函数和方法构建可读的签名字符串。."""
     if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
         return ""
 
@@ -347,7 +345,7 @@ def format_signature(
 
 
 def _split_section_entries(lines: list[str]) -> list[list[str]]:
-    """根据缩进将文档字符串章节拆分为多个条目。"""
+    """根据缩进将文档字符串章节拆分为多个条目。."""
     entries: list[list[str]] = []
     current: list[str] = []
     base_indent: int | None = None
@@ -371,7 +369,7 @@ def _split_section_entries(lines: list[str]) -> list[list[str]]:
 
 
 def _parse_named_entries(lines: list[str]) -> list[ParameterDoc]:
-    """解析 Args/Attributes/Raises 风格的章节。"""
+    """解析 Args/Attributes/Raises 风格的章节。."""
     entries = []
     for block in _split_section_entries(lines):
         text = textwrap.dedent("\n".join(block)).strip()
@@ -390,7 +388,7 @@ def _parse_named_entries(lines: list[str]) -> list[ParameterDoc]:
 
 
 def _parse_returns(lines: list[str]) -> list[ReturnDoc]:
-    """解析 Returns/Yields 章节。"""
+    """解析 Returns/Yields 章节。."""
     entries = []
     for block in _split_section_entries(lines):
         text = textwrap.dedent("\n".join(block)).strip()
@@ -436,7 +434,7 @@ SECTION_ALIASES = {
 
 
 def _normalize_text(text: str) -> str:
-    """规范化文本，同时保留表格、提示框和代码块等 Markdown 结构。"""
+    """规范化文本，同时保留表格、提示框和代码块等 Markdown 结构。."""
     if not text:
         return ""
     # 检查文本是否包含需要保留换行的 Markdown 结构。表格检查限定在行首：
@@ -463,7 +461,7 @@ def _normalize_text(text: str) -> str:
 
 
 def parse_google_docstring(docstring: str | None) -> ParsedDocstring:
-    """将 Google 风格文档字符串解析为结构化数据。"""
+    """将 Google 风格文档字符串解析为结构化数据。."""
     if not docstring:
         return ParsedDocstring()
 
@@ -505,7 +503,7 @@ def parse_google_docstring(docstring: str | None) -> ParsedDocstring:
 
 
 def merge_docstrings(base: ParsedDocstring, extra: ParsedDocstring, ignore_summary: bool = True) -> ParsedDocstring:
-    """将 init 文档字符串内容合并到类文档字符串中。"""
+    """将 init 文档字符串内容合并到类文档字符串中。."""
 
     # 保留现有类文档；只有在 init 文档引入新条目时才追加（类文档优先）。
     def _merge_unique(base_items, extra_items, key):
@@ -529,7 +527,7 @@ def merge_docstrings(base: ParsedDocstring, extra: ParsedDocstring, ignore_summa
 
 
 def _should_document(name: str, *, allow_private: bool = False) -> bool:
-    """根据符号名称决定是否包含该符号。"""
+    """根据符号名称决定是否包含该符号。."""
     if name in INCLUDE_SPECIAL_METHODS:
         return True
     if name.startswith("_"):
@@ -538,7 +536,7 @@ def _should_document(name: str, *, allow_private: bool = False) -> bool:
 
 
 def _collect_source_block(src: str, node: ast.AST, end_line: int | None = None) -> str:
-    """返回给定节点的去缩进源代码片段，可选择指定结束行。"""
+    """返回给定节点的去缩进源代码片段，可选择指定结束行。."""
     if not hasattr(node, "lineno") or not hasattr(node, "end_lineno"):
         return ""
     lines = src.splitlines()
@@ -552,7 +550,7 @@ def _collect_source_block(src: str, node: ast.AST, end_line: int | None = None) 
 
 
 def _get_definition_signature(node: ast.AST, src: str) -> str:
-    """如果源代码中存在，则返回原始的多行定义签名。"""
+    """如果源代码中存在，则返回原始的多行定义签名。."""
     if not hasattr(node, "lineno"):
         return ""
     lines = src.splitlines()[node.lineno - 1 :]
@@ -576,7 +574,7 @@ def parse_function(
     parent: str | None = None,
     allow_private: bool = False,
 ) -> DocItem | None:
-    """将函数或方法节点解析为 DocItem。"""
+    """将函数或方法节点解析为 DocItem。."""
     raw_docstring = ast.get_docstring(node)
     if not _should_document(node.name, allow_private=allow_private) and not raw_docstring:
         return None
@@ -608,17 +606,16 @@ def parse_function(
 
 
 def _class_init(node: ast.ClassDef) -> ast.FunctionDef | ast.AsyncFunctionDef | None:
-    """如果类声明了自己的 __init__，则返回它。"""
+    """如果类声明了自己的 __init__，则返回它。."""
     return next(
         (n for n in node.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)) and n.name == "__init__"), None
     )
 
 
 def _mro(node: ast.ClassDef, class_nodes: dict[str, ast.ClassDef], stack: tuple[str, ...] = ()) -> list[ast.ClassDef]:
-    """返回类相对于同一模块中定义的基类的 C3 线性化结果。
+    """返回类相对于同一模块中定义的基类的 C3 线性化结果。.
 
-    这里无法解析其他模块中的基类，因此会将其移除；在少数多重继承结构中，这会重新排列剩余的模块内类，
-    因为缺失的基类不再阻止兄弟类成为下一个候选头。解析这些基类需要导入信息，而不是 AST。
+    这里无法解析其他模块中的基类，因此会将其移除；在少数多重继承结构中，这会重新排列剩余的模块内类， 因为缺失的基类不再阻止兄弟类成为下一个候选头。解析这些基类需要导入信息，而不是 AST。
     遇到循环或不一致的继承层次时会提前停止，而不是陷入循环。
     """
     bases = [
@@ -641,12 +638,12 @@ def _mro(node: ast.ClassDef, class_nodes: dict[str, ast.ClassDef], stack: tuple[
 def _inherited_init(
     node: ast.ClassDef, class_nodes: dict[str, ast.ClassDef]
 ) -> ast.FunctionDef | ast.AsyncFunctionDef | None:
-    """对于未声明 __init__ 的类，按照方法解析顺序返回 Python 绑定的 __init__。"""
+    """对于未声明 __init__ 的类，按照方法解析顺序返回 Python 绑定的 __init__。."""
     return next((init for base in _mro(node, class_nodes)[1:] if (init := _class_init(base))), None)
 
 
 def parse_class(node: ast.ClassDef, module_path: str, src: str, class_nodes: dict[str, ast.ClassDef]) -> DocItem:
-    """解析类节点，合并 __init__ 文档并收集方法。"""
+    """解析类节点，合并 __init__ 文档并收集方法。."""
     class_doc = parse_google_docstring(ast.get_docstring(node))
 
     own_init = _class_init(node)
@@ -695,7 +692,7 @@ def parse_class(node: ast.ClassDef, module_path: str, src: str, class_nodes: dic
 
 
 def parse_module(py_filepath: Path) -> DocumentedModule | None:
-    """将 Python 模块解析为结构化文档对象。"""
+    """将 Python 模块解析为结构化文档对象。."""
     try:
         src = py_filepath.read_text(encoding="utf-8")
     except Exception:
@@ -724,7 +721,7 @@ def parse_module(py_filepath: Path) -> DocumentedModule | None:
 
 
 def _render_section(title: str, entries: Iterable[str], level: int) -> str:
-    """使用给定的标题级别渲染章节。"""
+    """使用给定的标题级别渲染章节。."""
     entries = list(entries)
     if not entries:
         return ""
@@ -734,12 +731,12 @@ def _render_section(title: str, entries: Iterable[str], level: int) -> str:
 
 
 def _render_table(headers: list[str], rows: list[list[str]], level: int, title: str | None = None) -> str:
-    """渲染带可选标题的 Markdown 表格。"""
+    """渲染带可选标题的 Markdown 表格。."""
     if not rows:
         return ""
 
     def _clean_cell(value: str | None) -> str:
-        """规范化 Markdown 输出的表格单元格值，并转义竖线以使联合类型保持在同一列。"""
+        """规范化 Markdown 输出的表格单元格值，并转义竖线以使联合类型保持在同一列。."""
         if value is None:
             return ""
         return str(value).replace("\n", "<br>").replace("|", r"\|").strip()
@@ -753,12 +750,12 @@ def _render_table(headers: list[str], rows: list[list[str]], level: int, title: 
 
 
 def _code_fence(source: str, lang: str = "python") -> str:
-    """返回带围栏的代码块，可选择用于高亮的语言。"""
+    """返回带围栏的代码块，可选择用于高亮的语言。."""
     return f"```{lang}\n{source}\n```"
 
 
 def _merge_params(doc_params: list[ParameterDoc], signature_params: list[ParameterDoc]) -> list[ParameterDoc]:
-    """合并文档字符串参数和签名参数，以包含默认值和类型。"""
+    """合并文档字符串参数和签名参数，以包含默认值和类型。."""
     sig_map = {p.name.lstrip("*"): p for p in signature_params}
     merged: list[ParameterDoc] = []
 
@@ -789,7 +786,7 @@ _missing_type_warnings: list[str] = []
 
 
 def contribution_admonition(pretty: str, url: str, *, kind: str = "note", title: str | None = None) -> str:
-    """返回标准化的贡献行动提示框。"""
+    """返回标准化的贡献行动提示框。."""
     label = f' "{title}"' if title else ""
     body = (
         f"This page is sourced from [{pretty}]({url}). Have an improvement or example to add? "
@@ -799,7 +796,7 @@ def contribution_admonition(pretty: str, url: str, *, kind: str = "note", title:
 
 
 def _relative_to_workspace(path: Path) -> Path:
-    """如果可行，返回相对于工作区根目录的路径。"""
+    """如果可行，返回相对于工作区根目录的路径。."""
     try:
         return path.relative_to(PACKAGE_DIR.parent)
     except ValueError:
@@ -807,7 +804,7 @@ def _relative_to_workspace(path: Path) -> Path:
 
 
 def render_source_panel(item: DocItem, module_url: str, module_path: str) -> str:
-    """渲染带 GitHub 链接的可折叠源代码面板。"""
+    """渲染带 GitHub 链接的可折叠源代码面板。."""
     if not item.source:
         return ""
     source_url = f"{module_url}#L{item.lineno}-L{item.end_lineno}"
@@ -828,7 +825,7 @@ def render_docstring(
     section_order: list[str] | None = None,
     extra_sections: dict[str, str] | None = None,
 ) -> str:
-    """将 ParsedDocstring 转换为 Markdown，并生成类似 mkdocstrings 的表格。"""
+    """将 ParsedDocstring 转换为 Markdown，并生成类似 mkdocstrings 的表格。."""
     parts: list[str] = []
     if doc.summary:
         parts.append(doc.summary)
@@ -931,17 +928,17 @@ def render_docstring(
 
 
 def item_anchor(item: DocItem) -> str:
-    """为文档项创建稳定的锚点。"""
+    """为文档项创建稳定的锚点。."""
     return item.qualname
 
 
 def display_qualname(item: DocItem) -> str:
-    """返回用于显示的清理后完全限定名称（去除 __init__ 噪声）。"""
+    """返回用于显示的清理后完全限定名称（去除 __init__ 噪声）。."""
     return item.qualname.replace(".__init__.", ".")
 
 
 def render_summary_tabs(module: DocumentedModule) -> str:
-    """渲染类、方法和函数的选项卡摘要，便于快速导航。"""
+    """渲染类、方法和函数的选项卡摘要，便于快速导航。."""
     tab_entries: list[tuple[str, list[str]]] = []
 
     if module.classes:
@@ -988,7 +985,7 @@ def render_summary_tabs(module: DocumentedModule) -> str:
 
 
 def render_item(item: DocItem, module_url: str, module_path: str, level: int = 2) -> str:
-    """将类、函数或方法渲染为 Markdown。"""
+    """将类、函数或方法渲染为 Markdown。."""
     anchor = item_anchor(item)
     title_prefix = item.kind.capitalize()
     anchor_id = anchor.replace("_", r"\_")  # 转义下划线，使 attr_list 将其保留在 ID 中
@@ -1059,7 +1056,7 @@ def render_item(item: DocItem, module_url: str, module_path: str, level: int = 2
 
 
 def render_module_markdown(module: DocumentedModule) -> str:
-    """渲染完整的模块参考内容。"""
+    """渲染完整的模块参考内容。."""
     module_path = module.module_path.replace(".", "/")
     module_url = f"https://github.com/{GITHUB_REPO}/blob/main/{module_path}.py"
     content: list[str] = ["<br>\n"]
@@ -1083,7 +1080,7 @@ def render_module_markdown(module: DocumentedModule) -> str:
 
 
 def create_markdown(module: DocumentedModule) -> Path:
-    """创建包含给定 Python 模块 API 参考的 Markdown 文件。"""
+    """创建包含给定 Python 模块 API 参考的 Markdown 文件。."""
     md_filepath = REFERENCE_DIR / module.path.relative_to(PACKAGE_DIR).with_suffix(".md")
     exists = md_filepath.exists()
 
@@ -1113,17 +1110,17 @@ def create_markdown(module: DocumentedModule) -> Path:
 
 
 def nested_dict():
-    """创建并返回嵌套的 defaultdict。"""
+    """创建并返回嵌套的 defaultdict。."""
     return defaultdict(nested_dict)
 
 
 def sort_nested_dict(d: dict) -> dict:
-    """递归排序嵌套字典。"""
+    """递归排序嵌套字典。."""
     return {k: sort_nested_dict(v) if isinstance(v, dict) else v for k, v in sorted(d.items())}
 
 
 def create_nav_menu_yaml(nav_items: list[str]) -> str:
-    """创建并返回导航菜单的 YAML 字符串。"""
+    """创建并返回导航菜单的 YAML 字符串。."""
     nav_tree = nested_dict()
 
     for item_str in nav_items:
@@ -1135,7 +1132,7 @@ def create_nav_menu_yaml(nav_items: list[str]) -> str:
         current_level[parts[-1].replace(".md", "")] = item
 
     def _dict_to_yaml(d, level=0):
-        """将嵌套字典转换为带缩进的 YAML 格式字符串。"""
+        """将嵌套字典转换为带缩进的 YAML 格式字符串。."""
         yaml_str = ""
         indent = "  " * level
         for k, v in sorted(d.items()):
@@ -1151,7 +1148,7 @@ def create_nav_menu_yaml(nav_items: list[str]) -> str:
 
 
 def extract_document_paths(yaml_section: str) -> list[str]:
-    """从 YAML 章节中提取文档路径，忽略格式和结构。"""
+    """从 YAML 章节中提取文档路径，忽略格式和结构。."""
     paths = []
     # 匹配 `key: path` 条目
     path_matches = re.findall(r":\s*([^\s][^:\n]*?)(?:\n|$)", yaml_section)
@@ -1165,7 +1162,7 @@ def extract_document_paths(yaml_section: str) -> list[str]:
 
 
 def update_mkdocs_file(reference_yaml: str) -> None:
-    """仅在检测到文档路径变化时，使用新的参考章节更新 mkdocs.yaml 文件。"""
+    """仅在检测到文档路径变化时，使用新的参考章节更新 mkdocs.yaml 文件。."""
     mkdocs_content = MKDOCS_YAML.read_text()
 
     # 查找顶层 Reference 章节
@@ -1225,7 +1222,7 @@ def update_mkdocs_file(reference_yaml: str) -> None:
 
 
 def _finalize_reference(nav_items: list[str], update_nav: bool, created: int, created_label: str) -> list[str]:
-    """可选地同步导航并打印创建摘要。"""
+    """可选地同步导航并打印创建摘要。."""
     if update_nav:
         update_mkdocs_file(create_nav_menu_yaml(nav_items))
     if created:
@@ -1234,12 +1231,12 @@ def _finalize_reference(nav_items: list[str], update_nav: bool, created: int, cr
 
 
 def build_reference(update_nav: bool = True) -> list[str]:
-    """为旧版存根流程创建参考占位文件。"""
+    """为旧版存根流程创建参考占位文件。."""
     return build_reference_placeholders(update_nav=update_nav)
 
 
 def build_reference_placeholders(update_nav: bool = True) -> list[str]:
-    """创建最小参考占位文件，并可选地更新导航。"""
+    """创建最小参考占位文件，并可选地更新导航。."""
     nav_items: list[str] = []
     created = 0
     orphans = set(REFERENCE_DIR.rglob("*.md"))
@@ -1269,7 +1266,7 @@ def build_reference_placeholders(update_nav: bool = True) -> list[str]:
 
 
 def build_reference_docs(update_nav: bool = False) -> list[str]:
-    """渲染完整的基于文档字符串的参考内容。"""
+    """渲染完整的基于文档字符串的参考内容。."""
     _missing_type_warnings.clear()
     nav_items: list[str] = []
     created = 0
@@ -1304,7 +1301,7 @@ def build_reference_docs(update_nav: bool = False) -> list[str]:
 def build_reference_for(
     package_dir: Path, reference_dir: Path, github_repo: str, update_nav: bool = False
 ) -> list[str]:
-    """临时切换软件包上下文，为另一个项目构建参考文档。"""
+    """临时切换软件包上下文，为另一个项目构建参考文档。."""
     global PACKAGE_DIR, REFERENCE_DIR, GITHUB_REPO
     prev = (PACKAGE_DIR, REFERENCE_DIR, GITHUB_REPO)
     try:
@@ -1315,7 +1312,7 @@ def build_reference_for(
 
 
 def main():
-    """CLI 入口。"""
+    """CLI 入口。."""
     build_reference(update_nav=True)
 
 

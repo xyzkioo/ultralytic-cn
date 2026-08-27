@@ -1,5 +1,5 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
-"""Transformer 模块。"""
+"""Transformer 模块。."""
 
 from __future__ import annotations
 
@@ -30,7 +30,7 @@ __all__ = (
 
 
 class TransformerEncoderLayer(nn.Module):
-    """Transformer 编码器中的单个层。
+    """Transformer 编码器中的单个层。.
 
     此类实现带多头注意力和前馈网络的标准 Transformer 编码器层，同时支持前归一化和后归一化配置。
 
@@ -56,7 +56,7 @@ class TransformerEncoderLayer(nn.Module):
         act: nn.Module | None = None,
         normalize_before: bool = False,
     ):
-        """使用指定参数初始化 TransformerEncoderLayer。
+        """使用指定参数初始化 TransformerEncoderLayer。.
 
         参数：
             c1 (int)：输入维度。
@@ -89,7 +89,7 @@ class TransformerEncoderLayer(nn.Module):
 
     @staticmethod
     def with_pos_embed(tensor: torch.Tensor, pos: torch.Tensor | None = None) -> torch.Tensor:
-        """如果提供位置嵌入，则将其添加到张量。"""
+        """如果提供位置嵌入，则将其添加到张量。."""
         return tensor if pos is None else tensor + pos
 
     def forward_post(
@@ -99,7 +99,7 @@ class TransformerEncoderLayer(nn.Module):
         src_key_padding_mask: torch.Tensor | None = None,
         pos: torch.Tensor | None = None,
     ) -> torch.Tensor:
-        """执行带后归一化的前向传播。
+        """执行带后归一化的前向传播。.
 
         参数：
             src (torch.Tensor)：输入张量。
@@ -125,7 +125,7 @@ class TransformerEncoderLayer(nn.Module):
         src_key_padding_mask: torch.Tensor | None = None,
         pos: torch.Tensor | None = None,
     ) -> torch.Tensor:
-        """执行带前归一化的前向传播。
+        """执行带前归一化的前向传播。.
 
         参数：
             src (torch.Tensor)：输入张量。
@@ -151,7 +151,7 @@ class TransformerEncoderLayer(nn.Module):
         src_key_padding_mask: torch.Tensor | None = None,
         pos: torch.Tensor | None = None,
     ) -> torch.Tensor:
-        """将输入向前传播通过编码器模块。
+        """将输入向前传播通过编码器模块。.
 
         参数：
             src (torch.Tensor)：输入张量。
@@ -168,7 +168,7 @@ class TransformerEncoderLayer(nn.Module):
 
 
 class AIFI(TransformerEncoderLayer):
-    """用于二维数据并带位置嵌入的 AIFI Transformer 层。
+    """用于二维数据并带位置嵌入的 AIFI Transformer 层。.
 
     此类继承 TransformerEncoderLayer，通过添加二维正弦-余弦位置嵌入并正确处理空间维度，使其能够处理二维特征图。
     """
@@ -182,7 +182,7 @@ class AIFI(TransformerEncoderLayer):
         act: nn.Module | None = None,
         normalize_before: bool = False,
     ):
-        """使用指定参数初始化 AIFI 实例。
+        """使用指定参数初始化 AIFI 实例。.
 
         参数：
             c1 (int)：输入维度。
@@ -195,7 +195,7 @@ class AIFI(TransformerEncoderLayer):
         super().__init__(c1, cm, num_heads, dropout, act, normalize_before)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """执行 AIFI Transformer 层的前向传播。
+        """执行 AIFI Transformer 层的前向传播。.
 
         参数：
             x (torch.Tensor)：输入张量，形状为 ``[B, C, H, W]``。
@@ -213,7 +213,7 @@ class AIFI(TransformerEncoderLayer):
     def build_2d_sincos_position_embedding(
         w: int, h: int, embed_dim: int = 256, temperature: float = 10000.0, device=None
     ) -> torch.Tensor:
-        """构建二维正弦-余弦位置嵌入。
+        """构建二维正弦-余弦位置嵌入。.
 
         参数：
             w (int)：特征图宽度。
@@ -243,10 +243,10 @@ class AIFI(TransformerEncoderLayer):
 
 
 class TransformerLayer(nn.Module):
-    """Transformer 层，参见 https://arxiv.org/abs/2010.11929（移除 LayerNorm 层以提升性能）。"""
+    """Transformer 层，参见 https://arxiv.org/abs/2010.11929（移除 LayerNorm 层以提升性能）。."""
 
     def __init__(self, c: int, num_heads: int):
-        """使用线性变换和多头注意力初始化自注意力机制。
+        """使用线性变换和多头注意力初始化自注意力机制。.
 
         参数：
             c (int)：输入和输出通道维度。
@@ -261,7 +261,7 @@ class TransformerLayer(nn.Module):
         self.fc2 = nn.Linear(c, c, bias=False)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """对输入 x 应用 Transformer 块并返回输出。
+        """对输入 x 应用 Transformer 块并返回输出。.
 
         参数：
             x (torch.Tensor)：输入张量。
@@ -274,7 +274,7 @@ class TransformerLayer(nn.Module):
 
 
 class TransformerBlock(nn.Module):
-    """基于 https://arxiv.org/abs/2010.11929 的视觉 Transformer 块。
+    """基于 https://arxiv.org/abs/2010.11929 的视觉 Transformer 块。.
 
     此类实现完整的 Transformer 块，支持使用可选卷积层调整通道数、使用可学习的位置嵌入，并堆叠多个 Transformer 层。
 
@@ -286,7 +286,7 @@ class TransformerBlock(nn.Module):
     """
 
     def __init__(self, c1: int, c2: int, num_heads: int, num_layers: int):
-        """使用位置嵌入以及指定数量的注意力头和层初始化 Transformer 模块。
+        """使用位置嵌入以及指定数量的注意力头和层初始化 Transformer 模块。.
 
         参数：
             c1 (int)：输入通道维度。
@@ -303,7 +303,7 @@ class TransformerBlock(nn.Module):
         self.c2 = c2
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """将输入向前传播通过 Transformer 块。
+        """将输入向前传播通过 Transformer 块。.
 
         参数：
             x (torch.Tensor)：输入张量，形状为 ``[b, c1, h, w]``。
@@ -319,10 +319,10 @@ class TransformerBlock(nn.Module):
 
 
 class MLPBlock(nn.Module):
-    """多层感知机中的单个模块。"""
+    """多层感知机中的单个模块。."""
 
     def __init__(self, embedding_dim: int, mlp_dim: int, act=nn.GELU):
-        """使用指定的嵌入维度、MLP 维度和激活函数初始化 MLPBlock。
+        """使用指定的嵌入维度、MLP 维度和激活函数初始化 MLPBlock。.
 
         参数：
             embedding_dim (int)：输入和输出维度。
@@ -335,7 +335,7 @@ class MLPBlock(nn.Module):
         self.act = act()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """执行 MLPBlock 的前向传播。
+        """执行 MLPBlock 的前向传播。.
 
         参数：
             x (torch.Tensor)：输入张量。
@@ -347,7 +347,7 @@ class MLPBlock(nn.Module):
 
 
 class MLP(nn.Module):
-    """简单的多层感知机（也称为 FFN）。
+    """简单的多层感知机（也称为 FFN）。.
 
     此类实现可配置的 MLP，包含多个线性层、激活函数以及可选的 Sigmoid 输出激活。
 
@@ -369,7 +369,7 @@ class MLP(nn.Module):
         residual: bool = False,
         out_norm: nn.Module = None,
     ):
-        """使用指定的输入、隐藏和输出维度以及层数初始化 MLP。
+        """使用指定的输入、隐藏和输出维度以及层数初始化 MLP。.
 
         参数：
             input_dim (int)：输入维度。
@@ -395,7 +395,7 @@ class MLP(nn.Module):
         self.out_norm = out_norm or nn.Identity()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """执行整个 MLP 的前向传播。
+        """执行整个 MLP 的前向传播。.
 
         参数：
             x (torch.Tensor)：输入张量。
@@ -413,7 +413,7 @@ class MLP(nn.Module):
 
 
 class LayerNorm2d(nn.Module):
-    """二维层归一化模块，参考 Detectron2 和 ConvNeXt 的实现。
+    """二维层归一化模块，参考 Detectron2 和 ConvNeXt 的实现。.
 
     此类对二维特征图执行层归一化：沿通道维度进行归一化，同时保留空间维度。
 
@@ -428,7 +428,7 @@ class LayerNorm2d(nn.Module):
     """
 
     def __init__(self, num_channels: int, eps: float = 1e-6):
-        """使用给定参数初始化 LayerNorm2d。
+        """使用给定参数初始化 LayerNorm2d。.
 
         参数：
             num_channels (int)：通道数量。
@@ -440,7 +440,7 @@ class LayerNorm2d(nn.Module):
         self.eps = eps
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """对二维特征图执行层归一化。
+        """对二维特征图执行层归一化。.
 
         参数：
             x (torch.Tensor)：输入张量。
@@ -455,7 +455,7 @@ class LayerNorm2d(nn.Module):
 
 
 class MSDeformAttn(nn.Module):
-    """多尺度可变形注意力模块，参考 Deformable-DETR 和 PaddleDetection 的实现。
+    """多尺度可变形注意力模块，参考 Deformable-DETR 和 PaddleDetection 的实现。.
 
     此模块实现多尺度可变形注意力，可以在多个尺度的特征上进行注意力计算，并学习采样位置和注意力权重。
 
@@ -475,7 +475,7 @@ class MSDeformAttn(nn.Module):
     """
 
     def __init__(self, d_model: int = 256, n_levels: int = 4, n_heads: int = 8, n_points: int = 4):
-        """使用给定参数初始化 MSDeformAttn。
+        """使用给定参数初始化 MSDeformAttn。.
 
         参数：
             d_model (int)：模型维度。
@@ -505,7 +505,7 @@ class MSDeformAttn(nn.Module):
         self._reset_parameters()
 
     def _reset_parameters(self):
-        """重置模块参数。"""
+        """重置模块参数。."""
         constant_(self.sampling_offsets.weight.data, 0.0)
         thetas = torch.arange(self.n_heads, dtype=torch.float32) * (2.0 * math.pi / self.n_heads)
         grid_init = torch.stack([thetas.cos(), thetas.sin()], -1)
@@ -533,7 +533,7 @@ class MSDeformAttn(nn.Module):
         value_shapes: list,
         value_mask: torch.Tensor | None = None,
     ) -> torch.Tensor:
-        """执行多尺度可变形注意力的前向传播。
+        """执行多尺度可变形注意力的前向传播。.
 
         参数：
             query (torch.Tensor)：查询张量，形状为 [bs, query_length, C]。
@@ -579,7 +579,7 @@ class MSDeformAttn(nn.Module):
 
 
 class DeformableTransformerDecoderLayer(nn.Module):
-    """可变形 Transformer 解码器层，参考 PaddleDetection 和 Deformable-DETR 的实现。
+    """可变形 Transformer 解码器层，参考 PaddleDetection 和 Deformable-DETR 的实现。.
 
     此类实现单个解码器层，包含自注意力、基于多尺度可变形注意力的交叉注意力以及前馈网络。
 
@@ -612,7 +612,7 @@ class DeformableTransformerDecoderLayer(nn.Module):
         n_levels: int = 4,
         n_points: int = 4,
     ):
-        """使用给定参数初始化 DeformableTransformerDecoderLayer。
+        """使用给定参数初始化 DeformableTransformerDecoderLayer。.
 
         参数：
             d_model (int)：模型维度。
@@ -645,11 +645,11 @@ class DeformableTransformerDecoderLayer(nn.Module):
 
     @staticmethod
     def with_pos_embed(tensor: torch.Tensor, pos: torch.Tensor | None) -> torch.Tensor:
-        """如果提供位置嵌入，则将其添加到输入张量。"""
+        """如果提供位置嵌入，则将其添加到输入张量。."""
         return tensor if pos is None else tensor + pos
 
     def forward_ffn(self, tgt: torch.Tensor) -> torch.Tensor:
-        """执行该层前馈网络部分的前向传播。
+        """执行该层前馈网络部分的前向传播。.
 
         参数：
             tgt (torch.Tensor)：输入张量。
@@ -671,7 +671,7 @@ class DeformableTransformerDecoderLayer(nn.Module):
         attn_mask: torch.Tensor | None = None,
         query_pos: torch.Tensor | None = None,
     ) -> torch.Tensor:
-        """执行整个解码器层的前向传播。
+        """执行整个解码器层的前向传播。.
 
         参数：
             embed (torch.Tensor)：输入嵌入。
@@ -705,7 +705,7 @@ class DeformableTransformerDecoderLayer(nn.Module):
 
 
 class DeformableTransformerDecoder(nn.Module):
-    """基于 PaddleDetection 实现的可变形 Transformer 解码器。
+    """基于 PaddleDetection 实现的可变形 Transformer 解码器。.
 
     此类实现完整的可变形 Transformer 解码器，包含多个解码器层，以及用于边界框回归和分类的预测头。
 
@@ -720,7 +720,7 @@ class DeformableTransformerDecoder(nn.Module):
     """
 
     def __init__(self, hidden_dim: int, decoder_layer: nn.Module, num_layers: int, eval_idx: int = -1):
-        """使用给定参数初始化 DeformableTransformerDecoder。
+        """使用给定参数初始化 DeformableTransformerDecoder。.
 
         参数：
             hidden_dim (int)：隐藏维度。
@@ -746,7 +746,7 @@ class DeformableTransformerDecoder(nn.Module):
         attn_mask: torch.Tensor | None = None,
         padding_mask: torch.Tensor | None = None,
     ):
-        """执行整个解码器的前向传播。
+        """执行整个解码器的前向传播。.
 
         参数：
             embed (torch.Tensor)：解码器嵌入。

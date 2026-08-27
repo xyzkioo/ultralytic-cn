@@ -15,7 +15,7 @@ def onnx2mnn(
     metadata: dict | None = None,
     prefix: str = "",
 ) -> str:
-    """将 ONNX 模型转换为 MNN 格式。
+    """将 ONNX 模型转换为 MNN 格式。.
 
     参数：
         onnx_file (str): 源 ONNX 文件路径。

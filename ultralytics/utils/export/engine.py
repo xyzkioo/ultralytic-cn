@@ -15,10 +15,10 @@ from ultralytics.utils.torch_utils import TORCH_2_4
 
 
 class _NormalizeCoords(torch.nn.Module):
-    """包装模型，为逐张量量化提供相对于输入的边界框和姿态坐标。"""
+    """包装模型，为逐张量量化提供相对于输入的边界框和姿态坐标。."""
 
     def __init__(self, model: torch.nn.Module, h: int, w: int, task: str, nc: int, kpt_shape: tuple | None):
-        """使用包装后的模型和预测元数据初始化。"""
+        """使用包装后的模型和预测元数据初始化。."""
         super().__init__()
         self.model = model
         self.h = h
@@ -28,7 +28,7 @@ class _NormalizeCoords(torch.nn.Module):
         self.kpt_shape = kpt_shape
 
     def forward(self, x: torch.Tensor):
-        """运行包装后的模型，并按输入尺寸归一化其坐标通道。"""
+        """运行包装后的模型，并按输入尺寸归一化其坐标通道。."""
         y = self.model(x)
         det = y[0] if isinstance(y, (tuple, list)) else y
         box_wh = torch.tensor([self.w, self.h, self.w, self.h], dtype=det.dtype, device=det.device).view(1, 4, 1)
@@ -49,7 +49,7 @@ class _NormalizeCoords(torch.nn.Module):
 
 
 def best_onnx_opset(onnx: types.ModuleType) -> int:
-    """返回当前 torch 版本支持的最大 ONNX opset；不支持时使用 ONNX 默认值。"""
+    """返回当前 torch 版本支持的最大 ONNX opset；不支持时使用 ONNX 默认值。."""
     if TORCH_2_4:  # _constants.ONNX_MAX_OPSET first defined in torch 1.13
         opset = torch.onnx.utils._constants.ONNX_MAX_OPSET - 1  # use second-latest version for safety
     else:
@@ -86,7 +86,7 @@ def torch2onnx(
     output_names: list[str] | None = None,
     dynamic: dict | None = None,
 ) -> str:
-    """将 PyTorch 模型导出为 ONNX 格式。
+    """将 PyTorch 模型导出为 ONNX 格式。.
 
     参数：
         model (torch.nn.Module): 要导出的 PyTorch 模型。
@@ -131,7 +131,7 @@ def modelopt_quantize_onnx(
     dynamic: bool = False,
     prefix: str = "",
 ) -> str:
-    """使用 NVIDIA ModelOpt 将低精度固化到 ONNX 模型中，供 TensorRT 11 强类型构建使用。
+    """使用 NVIDIA ModelOpt 将低精度固化到 ONNX 模型中，供 TensorRT 11 强类型构建使用。.
 
     TensorRT 11 is strongly-typed only: it removed the FP16/INT8 builder flags and the ``IInt8Calibrator`` interface, so
     reduced precision must be expressed in the ONNX graph itself before building. FP16 is applied via ModelOpt AutoCast
@@ -215,7 +215,7 @@ def onnx2engine(
     verbose: bool = False,
     prefix: str = "",
 ) -> str:
-    """将 YOLO 模型导出为 TensorRT engine 格式。
+    """将 YOLO 模型导出为 TensorRT engine 格式。.
 
     参数：
         onnx_file (str): 待转换的 ONNX 文件路径。
@@ -342,7 +342,7 @@ def onnx2engine(
         config.profiling_verbosity = trt.ProfilingVerbosity.DETAILED
 
         class EngineCalibrator(trt.IInt8Calibrator):
-            """用于 TensorRT engine 优化的自定义 INT8 校准器。
+            """用于 TensorRT engine 优化的自定义 INT8 校准器。.
 
             此校准器提供 TensorRT 使用数据集执行 INT8 量化校准所需的接口，并负责批次生成、缓存和校准算法选择。
 
@@ -366,7 +366,7 @@ def onnx2engine(
                 dataset,  # ultralytics.数据.build.InfiniteDataLoader
                 cache: str = "",
             ) -> None:
-                """使用数据集和缓存路径初始化 INT8 校准器。"""
+                """使用数据集和缓存路径初始化 INT8 校准器。."""
                 trt.IInt8Calibrator.__init__(self)
                 self.dataset = dataset
                 self.data_iter = iter(dataset)
@@ -379,30 +379,30 @@ def onnx2engine(
                 self.cache = Path(cache)
 
             def get_algorithm(self) -> trt.CalibrationAlgoType:
-                """获取要使用的校准算法。"""
+                """获取要使用的校准算法。."""
                 return self.algo
 
             def get_batch_size(self) -> int:
-                """获取校准使用的批次大小。"""
+                """获取校准使用的批次大小。."""
                 return self.batch or 1
 
             def get_batch(self, names) -> list[int] | None:
-                """获取校准使用的下一批数据，返回设备内存指针列表。"""
+                """获取校准使用的下一批数据，返回设备内存指针列表。."""
                 try:
                     im0s = next(self.data_iter)["img"] / 255.0
                     im0s = im0s.to("cuda") if im0s.device.type == "cpu" else im0s
                     return [int(im0s.data_ptr())]
                 except StopIteration:
-            # 返回 None，表示 TensorRT 已没有剩余的校准数据。
+                    # 返回 None，表示 TensorRT 已没有剩余的校准数据。
                     return None
 
             def read_calibration_cache(self) -> bytes | None:
-                """使用现有缓存，避免再次校准；否则隐式返回 None。"""
+                """使用现有缓存，避免再次校准；否则隐式返回 None。."""
                 if self.cache.exists() and self.cache.suffix == ".cache":
                     return self.cache.read_bytes()
 
             def write_calibration_cache(self, cache: bytes) -> None:
-                """将校准缓存写入磁盘。"""
+                """将校准缓存写入磁盘。."""
                 _ = self.cache.write_bytes(cache)
 
         # 使用构建器加载数据集（用于分批），并执行校准。

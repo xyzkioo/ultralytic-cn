@@ -9,10 +9,10 @@ from ultralytics.utils.checks import check_requirements
 
 
 def qnn_library_paths() -> tuple[str | None, str]:
-    """为已安装的 onnxruntime-qnn 构建解析 QNN 执行提供程序和 HTP 后端库路径。
+    """为已安装的 onnxruntime-qnn 构建解析 QNN 执行提供程序和 HTP 后端库路径。.
 
-    onnxruntime-qnn 有两种构建形式：插件构建提供 `onnxruntime_qnn` 辅助模块，单体构建则直接提供
-    `QNNExecutionProvider`，并将 QNN 后端库放在 `onnxruntime/capi` 中。
+    onnxruntime-qnn 有两种构建形式：插件构建提供 `onnxruntime_qnn` 辅助模块，单体构建则直接提供 `QNNExecutionProvider`，并将 QNN 后端库放在
+    `onnxruntime/capi` 中。
 
     返回：
         (tuple[str | None, str]): `(ep_library_path, htp_backend_path)`。当 QNN 已内置于 ONNX Runtime、
@@ -44,12 +44,11 @@ def onnx2qnn(
     batch: int = 0,
     prefix: str = "",
 ) -> str:
-    """使用 ONNX Runtime QNN 执行提供程序将 ONNX 模型转换为 Qualcomm QNN 上下文二进制文件。
+    """使用 ONNX Runtime QNN 执行提供程序将 ONNX 模型转换为 Qualcomm QNN 上下文二进制文件。.
 
-    转换过程完全在主机上执行，不需要 Qualcomm 账户，也不会上传到云端。模型使用 ONNX Runtime 的 QNN QDQ 流程
-    量化为 16 位激活值和 8 位权重（Hexagon NPU 推荐的精度与性能平衡方案），随后由包含 Qualcomm AI Runtime
-   （QAIRT）库的 `onnxruntime-qnn` 执行提供程序，将量化图编译为嵌入 `<stem>_qnn.onnx` 的 QNN 上下文二进制文件。
-    不执行推理。
+    转换过程完全在主机上执行，不需要 Qualcomm 账户，也不会上传到云端。模型使用 ONNX Runtime 的 QNN QDQ 流程 量化为 16 位激活值和 8 位权重（Hexagon NPU
+    推荐的精度与性能平衡方案），随后由包含 Qualcomm AI Runtime （QAIRT）库的 `onnxruntime-qnn` 执行提供程序，将量化图编译为嵌入 `<stem>_qnn.onnx` 的 QNN
+    上下文二进制文件。 不执行推理。
 
     参数：
         onnx_file (str | Path): 源 ONNX 文件路径（已导出）。
@@ -92,7 +91,7 @@ def onnx2qnn(
         nchw_transform = transform_fn
 
         def transform_fn(data_item):
-            """将校准数据从 NCHW 转换为 NHWC。"""
+            """将校准数据从 NCHW 转换为 NHWC。."""
             return nchw_transform(data_item).transpose(0, 2, 3, 1)
 
     try:

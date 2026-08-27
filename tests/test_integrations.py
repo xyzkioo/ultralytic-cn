@@ -15,7 +15,7 @@ from ultralytics.utils.checks import check_requirements
 
 @pytest.mark.slow
 def test_tensorboard():
-    """测试启用 TensorBoard 日志记录时的训练。"""
+    """测试启用 TensorBoard 日志记录时的训练。."""
     SETTINGS["tensorboard"] = True
     YOLO("yolo26n-cls.yaml").train(data="imagenet10", imgsz=32, epochs=3, plots=False, device="cpu")
     SETTINGS["tensorboard"] = False
@@ -23,7 +23,7 @@ def test_tensorboard():
 
 @pytest.mark.skipif(not check_requirements("ray", install=False), reason="ray[tune] not installed")
 def test_model_ray_tune():
-    """使用 Ray 调整 YOLO 模型，以优化超参数。"""
+    """使用 Ray 调整 YOLO 模型，以优化超参数。."""
     YOLO("yolo26n-cls.yaml").tune(
         use_ray=True, data="imagenet10", grace_period=1, iterations=1, imgsz=32, epochs=1, plots=False, device="cpu"
     )
@@ -31,7 +31,7 @@ def test_model_ray_tune():
 
 @pytest.mark.skipif(not check_requirements("mlflow", install=False), reason="mlflow not installed")
 def test_mlflow(tmp_path, monkeypatch):
-    """测试启用 MLflow 跟踪时的训练。"""
+    """测试启用 MLflow 跟踪时的训练。."""
     import mlflow
 
     monkeypatch.setenv("MLFLOW_TRACKING_URI", f"sqlite:///{(tmp_path / 'mlflow.db').as_posix()}")
@@ -46,7 +46,7 @@ def test_mlflow(tmp_path, monkeypatch):
 
 @pytest.mark.skipif(not check_requirements("mlflow", install=False), reason="mlflow not installed")
 def test_mlflow_keep_run_active(tmp_path, monkeypatch):
-    """确保 MLFLOW_KEEP_RUN_ACTIVE 能控制新的 MLflow 运行是否保持活动状态。"""
+    """确保 MLFLOW_KEEP_RUN_ACTIVE 能控制新的 MLflow 运行是否保持活动状态。."""
     import mlflow
 
     monkeypatch.setenv("MLFLOW_TRACKING_URI", f"sqlite:///{(tmp_path / 'mlflow.db').as_posix()}")
@@ -76,7 +76,7 @@ def test_mlflow_keep_run_active(tmp_path, monkeypatch):
 
 @pytest.mark.skipif(not check_requirements("tritonclient", install=False), reason="tritonclient[all] not installed")
 def test_triton(tmp_path, isolated_model):
-    """使用 YOLO 模型测试 NVIDIA Triton Server 功能。"""
+    """使用 YOLO 模型测试 NVIDIA Triton Server 功能。."""
     check_requirements("tritonclient[all]")
     from tritonclient.http import InferenceServerClient
 
@@ -128,7 +128,7 @@ def test_triton(tmp_path, isolated_model):
 
 @pytest.mark.skipif(not check_requirements("faster-coco-eval", install=False), reason="faster-coco-eval not installed")
 def test_faster_coco_eval():
-    """使用 faster-coco-eval 验证 YOLO 模型在 COCO 数据集上的预测。"""
+    """使用 faster-coco-eval 验证 YOLO 模型在 COCO 数据集上的预测。."""
     from ultralytics.models.yolo.detect import DetectionValidator
     from ultralytics.models.yolo.pose import PoseValidator
     from ultralytics.models.yolo.segment import SegmentationValidator

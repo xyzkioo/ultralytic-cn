@@ -10,15 +10,14 @@ from ultralytics.utils.torch_utils import select_device
 
 
 class WorldValidator(DetectionValidator):
-    """用于 YOLO-World 模型的验证器，在验证前设置数据集类别名称。
+    """用于 YOLO-World 模型的验证器，在验证前设置数据集类别名称。.
 
-    开放词汇 YOLO-World 模型默认使用 80 个 COCO 类别，因此在类别不同的数据集（例如 LVIS）上验证会失败或得到零指标。
-    此验证器为数据集类别名称生成文本嵌入，使独立调用 `model.val()` 能够正常工作。
+    开放词汇 YOLO-World 模型默认使用 80 个 COCO 类别，因此在类别不同的数据集（例如 LVIS）上验证会失败或得到零指标。 此验证器为数据集类别名称生成文本嵌入，使独立调用 `model.val()` 能够正常工作。
     训练期间则通过 `on_pretrain_routine_end` 回调设置类别。
     """
 
     def __call__(self, trainer=None, model=None):
-        """为独立验证设置数据集类别，然后运行验证。"""
+        """为独立验证设置数据集类别，然后运行验证。."""
         if trainer is None:  # 独立验证；训练通过 on_pretrain_routine_end 回调设置类别
             self.device = select_device(self.args.device, verbose=False)
             if not isinstance(model, torch.nn.Module):

@@ -19,7 +19,7 @@ from .val import RTDETRValidator
 
 
 class RTDETR(Model):
-    """百度 RT-DETR 模型接口，一种基于 Vision Transformer 的实时对象检测器。
+    """百度 RT-DETR 模型接口，一种基于 Vision Transformer 的实时对象检测器。.
 
     此模型在保持高精度的同时提供实时性能，支持高效混合编码、IoU 感知查询选择和可调节推理速度。
 
@@ -37,7 +37,7 @@ class RTDETR(Model):
     """
 
     def __init__(self, model: str = "rtdetr-l.pt") -> None:
-        """使用给定的预训练模型文件初始化 RT-DETR 模型。
+        """使用给定的预训练模型文件初始化 RT-DETR 模型。.
 
         参数：
             model (str): 预训练模型路径，支持 .pt、.yaml 和 .yml 格式。
@@ -47,7 +47,7 @@ class RTDETR(Model):
 
     @property
     def task_map(self) -> dict:
-        """返回 RT-DETR 任务到对应 Ultralytics 类的任务映射。
+        """返回 RT-DETR 任务到对应 Ultralytics 类的任务映射。.
 
         返回：
             (dict): 将任务名称映射到 RT-DETR 模型对应 Ultralytics 任务类的字典。

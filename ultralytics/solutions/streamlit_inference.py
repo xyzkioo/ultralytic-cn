@@ -16,7 +16,7 @@ torch.classes.__path__ = []  # Torch 模块 __path__._path 问题：https://gith
 
 
 class Inference:
-    """执行对象检测、图像分类、图像分割和姿态估计推理的类。
+    """执行对象检测、图像分类、图像分割和姿态估计推理的类。.
 
     此类提供加载模型、配置设置、上传视频文件以及使用 Streamlit 和 Ultralytics YOLO 模型执行实时推理的功能。
 
@@ -52,7 +52,7 @@ class Inference:
     """
 
     def __init__(self, **kwargs: Any) -> None:
-        """初始化 Inference 类，检查 Streamlit 依赖并设置模型路径。
+        """初始化 Inference 类，检查 Streamlit 依赖并设置模型路径。.
 
         参数：
             **kwargs (Any): 用于模型配置的其他关键字参数。
@@ -81,7 +81,7 @@ class Inference:
         LOGGER.info(f"Ultralytics Solutions: ✅ {self.temp_dict}")
 
     def web_ui(self) -> None:
-        """使用自定义 HTML 元素设置 Streamlit 网页界面。"""
+        """使用自定义 HTML 元素设置 Streamlit 网页界面。."""
         menu_style_cfg = """<style>MainMenu {visibility: hidden;}</style>"""  # 隐藏主菜单样式
 
         # Streamlit 应用主标题
@@ -100,7 +100,7 @@ class Inference:
         self.st.markdown(sub_title_cfg, unsafe_allow_html=True)
 
     def sidebar(self) -> None:
-        """配置 Streamlit 侧边栏中的模型和推理设置。"""
+        """配置 Streamlit 侧边栏中的模型和推理设置。."""
         with self.st.sidebar:  # 添加 Ultralytics 标志
             logo = "https://raw.githubusercontent.com/ultralytics/assets/main/logo/Ultralytics_Logotype_Original.svg"
             self.st.image(logo, width=250)
@@ -112,9 +112,7 @@ class Inference:
         )  # 添加输入源下拉菜单
         if self.source in ["webcam", "video"]:
             self.enable_trk = self.st.sidebar.radio("Enable Tracking", ("Yes", "No")) == "Yes"  # 启用对象跟踪
-        self.conf = float(
-            self.st.sidebar.slider("Confidence Threshold", 0.0, 1.0, self.conf, 0.01)
-        )  # 置信度滑块
+        self.conf = float(self.st.sidebar.slider("Confidence Threshold", 0.0, 1.0, self.conf, 0.01))  # 置信度滑块
         self.iou = float(self.st.sidebar.slider("IoU Threshold", 0.0, 1.0, self.iou, 0.01))  # NMS 阈值滑块
 
         if self.source != "image":  # 仅为视频或摄像头创建列
@@ -123,7 +121,7 @@ class Inference:
             self.ann_frame = col2.empty()  # 标注帧容器
 
     def source_upload(self) -> None:
-        """通过 Streamlit 界面处理视频文件上传。"""
+        """通过 Streamlit 界面处理视频文件上传。."""
         from ultralytics.data.utils import IMG_FORMATS, VID_FORMATS  # 使用局部导入
 
         self.vid_file_name = ""
@@ -148,7 +146,7 @@ class Inference:
                         self.img_file_names.append({"path": tf.name, "name": imgfile.name})
 
     def configure(self) -> None:
-        """配置模型并加载用于推理的选定类别。"""
+        """配置模型并加载用于推理的选定类别。."""
         # 添加模型选择下拉菜单，按标准尺寸和任务组合提供模型
         available_models = [
             f"{size}{task}".replace("yolo", "YOLO")
@@ -179,7 +177,7 @@ class Inference:
             self.selected_ind = list(self.selected_ind)
 
     def image_inference(self) -> None:
-        """对上传的图像执行推理。"""
+        """对上传的图像执行推理。."""
         for img_info in self.img_file_names:
             img_path = img_info["path"]
             image = cv2.imread(img_path)  # 加载并显示原始图像
@@ -200,7 +198,7 @@ class Inference:
                 self.st.error("Could not load the uploaded image.")
 
     def inference(self) -> None:
-        """在视频或摄像头输入上执行实时对象检测推理。"""
+        """在视频或摄像头输入上执行实时对象检测推理。."""
         self.web_ui()  # 初始化网页界面
         self.sidebar()  # 创建侧边栏
         self.source_upload()  # 上传视频源

@@ -18,7 +18,7 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"  # 避免部分系统中的 OpenMP �
 
 
 class VisualAISearch:
-    """利用 OpenAI CLIP 生成高质量图像和文本嵌入，并使用 NumPy 余弦相似度快速检索语义图像的搜索系统。
+    """利用 OpenAI CLIP 生成高质量图像和文本嵌入，并使用 NumPy 余弦相似度快速检索语义图像的搜索系统。.
 
     此类将图像和文本嵌入对齐到共享的语义空间，使用户能够通过自然语言查询快速且准确地搜索大量图像。
 
@@ -45,7 +45,7 @@ class VisualAISearch:
     """
 
     def __init__(self, **kwargs: Any) -> None:
-        """使用嵌入索引和 CLIP 模型初始化 VisualAISearch 类。"""
+        """使用嵌入索引和 CLIP 模型初始化 VisualAISearch 类。."""
         assert TORCH_2_4, f"VisualAISearch requires torch>=2.4 (found torch=={TORCH_VERSION})"
         from ultralytics.nn.text_model import build_text_model
 
@@ -71,16 +71,16 @@ class VisualAISearch:
         self.load_or_build_index()
 
     def extract_image_feature(self, path: Path) -> np.ndarray:
-        """从给定图像路径提取 CLIP 图像嵌入。"""
+        """从给定图像路径提取 CLIP 图像嵌入。."""
         return self.model.encode_image(Image.open(path)).detach().cpu().numpy()
 
     def extract_text_feature(self, text: str) -> np.ndarray:
-        """从给定文本查询中提取 CLIP 文本嵌入。"""
+        """从给定文本查询中提取 CLIP 文本嵌入。."""
         return self.model.encode_text(self.model.tokenize([text])).detach().cpu().numpy()
 
     @staticmethod
     def _normalize(x: np.ndarray) -> np.ndarray:
-        """对 `x` 的每一行执行 L2 归一化，使内积等于余弦相似度。
+        """对 `x` 的每一行执行 L2 归一化，使内积等于余弦相似度。.
 
         参数：
             x (np.ndarray): 形状为 (N, D) 的特征数组。
@@ -91,7 +91,7 @@ class VisualAISearch:
         return x / np.maximum(np.linalg.norm(x, axis=1, keepdims=True), 1e-12)
 
     def load_or_build_index(self) -> None:
-        """加载已有图像嵌入，或根据图像目录构建嵌入索引。
+        """加载已有图像嵌入，或根据图像目录构建嵌入索引。.
 
         检查磁盘上是否存在嵌入文件和图像路径文件。若存在则直接加载，否则从数据目录中的所有图像提取特征，
         执行 L2 归一化，并保存嵌入和图像路径供后续使用。
@@ -131,7 +131,7 @@ class VisualAISearch:
         LOGGER.info(f"Indexed {len(self.image_paths)} images.")
 
     def search(self, query: str, k: int = 30, similarity_thresh: float = 0.1) -> list[str]:
-        """返回与给定查询语义最相似的前 k 个图像。
+        """返回与给定查询语义最相似的前 k 个图像。.
 
         参数：
             query (str): 用于搜索的自然语言文本查询。
@@ -159,12 +159,12 @@ class VisualAISearch:
         return [r[0] for r in results]
 
     def __call__(self, query: str) -> list[str]:
-        """搜索函数的直接调用接口。"""
+        """搜索函数的直接调用接口。."""
         return self.search(query)
 
 
 class SearchApp:
-    """基于 Flask 的语义图像搜索网页界面，支持自然语言查询。
+    """基于 Flask 的语义图像搜索网页界面，支持自然语言查询。.
 
     此类提供简洁、响应迅速的前端，用户可以输入自然语言查询，并立即查看从索引数据库中检索到的最相关图像。
 
@@ -185,7 +185,7 @@ class SearchApp:
     """
 
     def __init__(self, data: str = "images", device: str | None = None) -> None:
-        """使用 VisualAISearch 后端初始化 SearchApp。
+        """使用 VisualAISearch 后端初始化 SearchApp。.
 
         参数：
             data (str, 可选): 用于建立索引和搜索的图像目录路径。
@@ -206,7 +206,7 @@ class SearchApp:
         self.app.add_url_rule("/", view_func=self.index, methods=["GET", "POST"])
 
     def index(self) -> str:
-        """处理用户查询，并在网页界面中显示搜索结果。"""
+        """处理用户查询，并在网页界面中显示搜索结果。."""
         results = []
         if self.request.method == "POST":
             query = self.request.form.get("query", "").strip()
@@ -214,5 +214,5 @@ class SearchApp:
         return self.render_template("similarity-search.html", results=results)
 
     def run(self, debug: bool = False) -> None:
-        """启动 Flask 网页应用服务器。"""
+        """启动 Flask 网页应用服务器。."""
         self.app.run(debug=debug)

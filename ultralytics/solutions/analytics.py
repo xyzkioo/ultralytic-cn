@@ -13,7 +13,7 @@ from ultralytics.utils import plt_settings
 
 
 class Analytics(BaseSolution):
-    """创建和更新多种图表以进行可视化分析的类。
+    """创建和更新多种图表以进行可视化分析的类。.
 
     此类扩展 BaseSolution，提供基于目标检测和跟踪数据生成折线图、柱状图、饼图和面积图的功能。
 
@@ -48,7 +48,7 @@ class Analytics(BaseSolution):
 
     @plt_settings()
     def __init__(self, **kwargs: Any) -> None:
-        """使用不同图表类型初始化 Analytics 类，以可视化表示数据。"""
+        """使用不同图表类型初始化 Analytics 类，以可视化表示数据。."""
         super().__init__(**kwargs)
 
         import matplotlib.pyplot as plt  # scope for faster 'import ultralytics'
@@ -92,7 +92,7 @@ class Analytics(BaseSolution):
                 self.ax.axis("equal")
 
     def process(self, im0: np.ndarray, frame_number: int) -> SolutionResults:
-        """处理图像数据并执行对象跟踪，以更新分析图表。
+        """处理图像数据并执行对象跟踪，以更新分析图表。.
 
         参数：
             im0 (np.ndarray): 要处理的输入图像。
@@ -137,7 +137,7 @@ class Analytics(BaseSolution):
     def update_graph(
         self, frame_number: int, count_dict: dict[str, int] | None = None, plot: str = "line"
     ) -> np.ndarray:
-        """使用单个或多个类别的新数据更新图表。
+        """使用单个或多个类别的新数据更新图表。.
 
         参数：
             frame_number (int): 当前帧编号。

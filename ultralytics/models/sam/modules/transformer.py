@@ -11,7 +11,7 @@ from ultralytics.nn.modules import MLPBlock
 
 
 class TwoWayTransformer(nn.Module):
-    """双向 Transformer 模块，用于同时关注图像和查询点。
+    """双向 Transformer 模块，用于同时关注图像和查询点。.
 
     该类实现一种专用 Transformer 解码器：使用带有位置嵌入的查询关注输入图像，适用于目标检测、图像分割和点云处理等任务。
 
@@ -45,7 +45,7 @@ class TwoWayTransformer(nn.Module):
         activation: type[nn.Module] = nn.ReLU,
         attention_downsample_rate: int = 2,
     ) -> None:
-        """初始化双向 Transformer，使其同时关注图像和查询点。
+        """初始化双向 Transformer，使其同时关注图像和查询点。.
 
         参数：
             depth (int): Transformer 的层数。
@@ -83,7 +83,7 @@ class TwoWayTransformer(nn.Module):
         image_pe: torch.Tensor,
         point_embedding: torch.Tensor,
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        """使用双向 Transformer 处理图像嵌入和点嵌入。
+        """使用双向 Transformer 处理图像嵌入和点嵌入。.
 
         参数：
             image_embedding (torch.Tensor): 用于注意力计算的图像，形状为 (B, embedding_dim, H, W)。
@@ -122,7 +122,7 @@ class TwoWayTransformer(nn.Module):
 
 
 class TwoWayAttentionBlock(nn.Module):
-    """双向注意力块，用于同时关注图像和查询点。
+    """双向注意力块，用于同时关注图像和查询点。.
 
     该类包含四个主要部分：稀疏输入上的自注意力、稀疏输入到密集输入的交叉注意力、稀疏输入上的 MLP，以及密集输入到稀疏输入的交叉注意力。
 
@@ -159,7 +159,7 @@ class TwoWayAttentionBlock(nn.Module):
         attention_downsample_rate: int = 2,
         skip_first_layer_pe: bool = False,
     ) -> None:
-        """初始化双向注意力块，使其同时关注图像和查询点。
+        """初始化双向注意力块，使其同时关注图像和查询点。.
 
         该模块依次执行稀疏输入自注意力、稀疏到密集交叉注意力、稀疏输入 MLP，以及密集到稀疏交叉注意力。
 
@@ -189,7 +189,7 @@ class TwoWayAttentionBlock(nn.Module):
     def forward(
         self, queries: torch.Tensor, keys: torch.Tensor, query_pe: torch.Tensor, key_pe: torch.Tensor
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        """在 Transformer 块中应用双向注意力，处理查询嵌入和键嵌入。
+        """在 Transformer 块中应用双向注意力，处理查询嵌入和键嵌入。.
 
         参数：
             queries (torch.Tensor): 查询嵌入，形状为 (B, N_queries, embedding_dim)。
@@ -233,7 +233,7 @@ class TwoWayAttentionBlock(nn.Module):
 
 
 class Attention(nn.Module):
-    """投影后支持降低嵌入维度的注意力层。
+    """投影后支持降低嵌入维度的注意力层。.
 
     该类实现多头注意力机制，并支持对查询、键和值的内部维度进行下采样。
 
@@ -268,7 +268,7 @@ class Attention(nn.Module):
         downsample_rate: int = 1,
         kv_in_dim: int | None = None,
     ) -> None:
-        """使用指定的维度和配置初始化注意力模块。
+        """使用指定的维度和配置初始化注意力模块。.
 
         参数：
             embedding_dim (int): 输入嵌入的维度。
@@ -293,20 +293,20 @@ class Attention(nn.Module):
 
     @staticmethod
     def _separate_heads(x: torch.Tensor, num_heads: int) -> torch.Tensor:
-        """将输入张量拆分为指定数量的注意力头。"""
+        """将输入张量拆分为指定数量的注意力头。."""
         b, n, c = x.shape
         x = x.reshape(b, n, num_heads, c // num_heads)
         return x.transpose(1, 2)  # B x N_heads x N_tokens x C_per_head
 
     @staticmethod
     def _recombine_heads(x: Tensor) -> Tensor:
-        """将拆分后的注意力头重新组合为单个张量。"""
+        """将拆分后的注意力头重新组合为单个张量。."""
         b, n_heads, n_tokens, c_per_head = x.shape
         x = x.transpose(1, 2)
         return x.reshape(b, n_tokens, n_heads * c_per_head)  # B x N_tokens x C
 
     def forward(self, q: torch.Tensor, k: torch.Tensor, v: torch.Tensor) -> torch.Tensor:
-        """对查询、键和值张量应用多头注意力，并支持可选的下采样。
+        """对查询、键和值张量应用多头注意力，并支持可选的下采样。.
 
         参数：
             q (torch.Tensor): 查询张量，形状为 (B, N_q, embedding_dim)。

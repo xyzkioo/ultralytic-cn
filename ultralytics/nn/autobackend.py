@@ -37,7 +37,7 @@ from .backends import (
 
 
 def check_class_names(names: list | dict) -> dict[int, str]:
-    """检查类别名称，并在需要时将其转换为字典格式。
+    """检查类别名称，并在需要时将其转换为字典格式。.
 
     参数：
         names (列表 | dict): 类别名称，可以是列表或字典格式。
@@ -70,7 +70,7 @@ def check_class_names(names: list | dict) -> dict[int, str]:
 
 
 def default_class_names(data: str | Path | None = None) -> dict[int, str]:
-    """从 YAML 文件加载类别名称；如果加载失败，则返回数字类别名称。
+    """从 YAML 文件加载类别名称；如果加载失败，则返回数字类别名称。.
 
     参数：
         data (str | Path, 可选): 包含类别名称的 YAML 文件路径。
@@ -90,7 +90,7 @@ def default_class_names(data: str | Path | None = None) -> dict[int, str]:
 
 
 class AutoBackend(nn.Module):
-    """动态选择后端，以运行 Ultralytics YOLO 模型推理。
+    """动态选择后端，以运行 Ultralytics YOLO 模型推理。.
 
     AutoBackend 类为各种推理引擎提供统一抽象层，支持多种格式，每种格式的命名约定如下：
 
@@ -180,7 +180,7 @@ class AutoBackend(nn.Module):
         fuse: bool = True,
         verbose: bool = True,
     ):
-        """初始化用于推理的 AutoBackend。
+        """初始化用于推理的 AutoBackend。.
 
         参数：
             model (str | torch.nn.Module): 模型权重文件路径或模块实例。
@@ -235,7 +235,7 @@ class AutoBackend(nn.Module):
         self.backend.names = check_class_names(self.backend.names)
 
     def __getattr__(self, name: str) -> Any:
-        """将属性访问委托给后端。
+        """将属性访问委托给后端。.
 
         这样 AutoBackend 可以透明地公开后端属性，而无需显式复制。
 
@@ -259,7 +259,7 @@ class AutoBackend(nn.Module):
         embed: list | None = None,
         **kwargs: Any,
     ) -> Any:
-        """在 AutoBackend 模型上运行推理。
+        """在 AutoBackend 模型上运行推理。.
 
         参数：
             im (torch.Tensor): 要执行推理的图像张量。
@@ -291,7 +291,7 @@ class AutoBackend(nn.Module):
             return self.from_numpy(y)
 
     def from_numpy(self, x: Any) -> Any:
-        """在可能的情况下，将后端输出归一化到模型所在设备。
+        """在可能的情况下，将后端输出归一化到模型所在设备。.
 
         参数：
             x (Any): 要归一化的后端输出。
@@ -303,7 +303,7 @@ class AutoBackend(nn.Module):
         return x.to(self.device) if isinstance(x, torch.Tensor) else x
 
     def warmup(self, imgsz: tuple[int, int, int, int] = (1, 3, 640, 640), im: torch.Tensor | None = None) -> None:
-        """通过执行一次或多次前向传播预热模型。
+        """通过执行一次或多次前向传播预热模型。.
 
         参数：
             imgsz (tuple[int, int, int, int]): 虚拟输入形状，格式为（批次、通道、高度、宽度）。
@@ -312,7 +312,7 @@ class AutoBackend(nn.Module):
         from ultralytics.utils.nms import non_max_suppression
 
         if not self.end2end:
-            import torchvision  # noqa（此处导入会触发 nms.py 使用 torchvision NMS）
+            pass  # noqa（此处导入会触发 nms.py 使用 torchvision NMS）
         if self.format in {"pt", "torchscript", "onnx", "engine", "saved_model", "pb", "triton"} and (
             self.device.type != "cpu" or self.format == "triton"
         ):
@@ -329,7 +329,7 @@ class AutoBackend(nn.Module):
 
     @staticmethod
     def _model_type(p: str = "path/to/model.pt", dnn: bool = False) -> str:
-        """接收模型文件路径，并返回模型格式字符串。
+        """接收模型文件路径，并返回模型格式字符串。.
 
         参数：
             p (str): 模型文件路径。
@@ -368,13 +368,13 @@ class AutoBackend(nn.Module):
         return format
 
     def eval(self) -> AutoBackend:
-        """如果后端支持，则将后端模型设置为评估模式。"""
+        """如果后端支持，则将后端模型设置为评估模式。."""
         if hasattr(self.backend, "model") and hasattr(self.backend.model, "eval"):
             self.backend.model.eval()
         return super().eval()
 
     def _apply(self, fn) -> AutoBackend:
-        """对后端模型的参数、缓冲区和张量应用函数。
+        """对后端模型的参数、缓冲区和张量应用函数。.
 
         此方法扩展父类的 _apply 方法，同时对后端模型应用函数并更新后端设备。
         它通常用于将模型移动到其他设备或修改模型精度等操作。

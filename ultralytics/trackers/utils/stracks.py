@@ -1,5 +1,5 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
-"""用于在不同跟踪器之间操作跟踪对象列表的通用辅助函数。
+"""用于在不同跟踪器之间操作跟踪对象列表的通用辅助函数。.
 
 这些函数保持通用性，只访问所有跟踪实现都会提供的属性（`track_id`、`frame_id`、`start_frame`、`xyxy`、
 `mean` 和 `covariance`）。
@@ -23,11 +23,10 @@ def merge_track_pools(
     removed: list,
     removed_buffer: int = 1000,
 ) -> None:
-    """在原地对跟踪器的持久化跟踪池执行标准的帧末整理。
+    """在原地对跟踪器的持久化跟踪池执行标准的帧末整理。.
 
-    将新激活和重新找回的跟踪对象合并到 `tracker.tracked_stracks`，将状态发生转移的对象移动到
-    `tracker.lost_stracks`，按 IoU 去重，将已移除对象追加到 `tracker.removed_stracks`，并将移除缓冲区裁剪为
-    `removed_buffer` 个条目。
+    将新激活和重新找回的跟踪对象合并到 `tracker.tracked_stracks`，将状态发生转移的对象移动到 `tracker.lost_stracks`，按 IoU 去重，将已移除对象追加到
+    `tracker.removed_stracks`，并将移除缓冲区裁剪为 `removed_buffer` 个条目。
 
     参数：
         tracker (Any): 提供 `tracked_stracks`、`lost_stracks` 和 `removed_stracks` 列表的对象。
@@ -57,7 +56,7 @@ def merge_track_pools(
 
 
 def parse_bboxes(results) -> np.ndarray:
-    """从类似 Results 的对象中返回追加了原始索引的检测边界框。
+    """从类似 Results 的对象中返回追加了原始索引的检测边界框。.
 
     参数：
         results (Any): 提供 ``xywh``（或 ``xywhr``）、``conf`` 和 ``cls`` 属性的对象。
@@ -71,7 +70,7 @@ def parse_bboxes(results) -> np.ndarray:
 
 
 def joint_stracks(atracks: list, btracks: list) -> list:
-    """合并两个跟踪对象列表，并按 `track_id` 去重。
+    """合并两个跟踪对象列表，并按 `track_id` 去重。.
 
     参数：
         atracks (列表[STrack]): 第一个跟踪对象列表；发生 `track_id` 冲突时保留其中的对象。
@@ -89,7 +88,7 @@ def joint_stracks(atracks: list, btracks: list) -> list:
 
 
 def sub_stracks(atracks: list, btracks: list) -> list:
-    """过滤掉 `atracks` 中 `track_id` 出现在 `btracks` 里的跟踪对象。
+    """过滤掉 `atracks` 中 `track_id` 出现在 `btracks` 里的跟踪对象。.
 
     参数：
         atracks (列表[STrack]): 待过滤的源跟踪对象列表。
@@ -107,10 +106,10 @@ def sub_stracks(atracks: list, btracks: list) -> list:
 
 
 def remove_duplicate_stracks(atracks: list, btracks: list, dup_thresh: float = 0.15) -> tuple[list, list]:
-    """根据交并比（IoU）距离移除两个列表中的重复跟踪对象。
+    """根据交并比（IoU）距离移除两个列表中的重复跟踪对象。.
 
-    当跟踪对象对的 IoU 距离小于 `dup_thresh`（即 IoU 大于 `1 - dup_thresh`）时，将其视为同一对象的重复跟踪。
-    生命周期较短的跟踪对象（`frame_id - start_frame` 较小）会被丢弃；若时长相同，则从 `atracks` 中丢弃。
+    当跟踪对象对的 IoU 距离小于 `dup_thresh`（即 IoU 大于 `1 - dup_thresh`）时，将其视为同一对象的重复跟踪。 生命周期较短的跟踪对象（`frame_id - start_frame`
+    较小）会被丢弃；若时长相同，则从 `atracks` 中丢弃。
 
     参数：
         atracks (列表[STrack]): 第一个跟踪对象列表；对象必须提供 `xyxy`、`frame_id` 和 `start_frame` 属性。
@@ -142,10 +141,9 @@ def remove_duplicate_stracks(atracks: list, btracks: list, dup_thresh: float = 0
 
 
 def multi_gmc(stracks: list, H: np.ndarray) -> None:
-    """使用 2x3 仿射单应矩阵更新多个跟踪对象的位置和协方差。
+    """使用 2x3 仿射单应矩阵更新多个跟踪对象的位置和协方差。.
 
-    假设卡尔曼状态布局为 `(*box, *box_velocity)`，边界框中心 `(x, y)` 位于前两个维度。
-    `R8x8` 以块对角形式旋转全部四个二维向量对，平移量 `t` 只应用于位置。
+    假设卡尔曼状态布局为 `(*box, *box_velocity)`，边界框中心 `(x, y)` 位于前两个维度。 `R8x8` 以块对角形式旋转全部四个二维向量对，平移量 `t` 只应用于位置。
     该布局假设状态包含四组空间位置/速度向量（例如 XYWH）；XYAH 跟踪器必须重写此方法。
 
     参数：

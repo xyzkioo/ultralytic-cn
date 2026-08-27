@@ -21,7 +21,7 @@ from ultralytics.utils.plotting import plot_images
 
 
 class SemanticSegmentationValidator(DetectionValidator):
-    """用于语义分割模型的验证器。
+    """用于语义分割模型的验证器。.
 
     此验证器使用 mIoU 和像素准确率指标评估语义分割模型。
 
@@ -53,7 +53,7 @@ class SemanticSegmentationValidator(DetectionValidator):
         self._semantic_target_shape = None
 
     def init_metrics(self, model):
-        """使用模型类别名称初始化指标。
+        """使用模型类别名称初始化指标。.
 
         参数：
             model (nn.Module): 待验证的模型。
@@ -78,7 +78,7 @@ class SemanticSegmentationValidator(DetectionValidator):
         self.confusion_matrix = ConfusionMatrix(names=cm_names, task="semantic")
 
     def preprocess(self, batch):
-        """预处理图像和掩码组成的批次。
+        """预处理图像和掩码组成的批次。.
 
         参数：
             batch (dict): 包含图像和掩码的批次数据。
@@ -92,7 +92,7 @@ class SemanticSegmentationValidator(DetectionValidator):
         return batch
 
     def postprocess(self, preds):
-        """将 logits 或固化的类别图转换为类别预测结果。
+        """将 logits 或固化的类别图转换为类别预测结果。.
 
         参数：
             preds (torch.Tensor): 模型原始输出 logits [B, nc, H, W] 或固化的类别图 [B, H, W]。
@@ -113,7 +113,7 @@ class SemanticSegmentationValidator(DetectionValidator):
         return preds.argmax(dim=1).to(torch.int32) if self.nc > 1 else preds.gt(0).squeeze(1).to(torch.int32)
 
     def update_metrics(self, preds, batch):
-        """使用预测结果和真实标注更新指标。
+        """使用预测结果和真实标注更新指标。.
 
         参数：
             preds (torch.Tensor): 预测类别 ID，形状为 [B, H, W]。
@@ -125,7 +125,7 @@ class SemanticSegmentationValidator(DetectionValidator):
         self.seen += preds.shape[0]
 
     def gather_stats(self):
-        """在 DDP 验证期间将语义混淆矩阵归约到 rank 0。"""
+        """在 DDP 验证期间将语义混淆矩阵归约到 rank 0。."""
         if RANK == -1 or not dist.is_available() or not dist.is_initialized():
             return
         if self.metrics.matrix is None:
@@ -141,7 +141,7 @@ class SemanticSegmentationValidator(DetectionValidator):
             dist.gather_object(self.metrics.nt_per_image, None, dst=0)
 
     def save_pred_masks(self, preds: torch.Tensor, batch: dict[str, Any]) -> None:
-        """将语义预测结果保存为单通道 PNG 掩码。"""
+        """将语义预测结果保存为单通道 PNG 掩码。."""
         if self.results_dir is None:
             return
         im_files = batch.get("im_file", [])
@@ -159,7 +159,7 @@ class SemanticSegmentationValidator(DetectionValidator):
             Image.fromarray(pred).save(save_path)
 
     def get_stats(self):
-        """返回验证统计信息。
+        """返回验证统计信息。.
 
         返回：
             (dict): 验证指标字典。
@@ -171,7 +171,7 @@ class SemanticSegmentationValidator(DetectionValidator):
         return self.metrics.results_dict
 
     def get_desc(self):
-        """返回评估指标的格式化描述字符串。
+        """返回评估指标的格式化描述字符串。.
 
         返回：
             (str): 包含指标名称的格式化字符串。
@@ -179,17 +179,17 @@ class SemanticSegmentationValidator(DetectionValidator):
         return ("%22s" + "%11s" * 4) % ("Class", "Images", "Pixels", "mIoU", "PixAcc")
 
     def print_results(self) -> None:
-        """打印训练集或验证集的逐类别指标。"""
+        """打印训练集或验证集的逐类别指标。."""
         super().print_results()
         if self.args.save_json and self.results_dir is not None:
             LOGGER.info(f"语义预测掩码已保存到 {self.results_dir}")
 
     def get_dataset(self):
-        """解析数据集 YAML，并在需要时为多边形标签添加背景元数据。"""
+        """解析数据集 YAML，并在需要时为多边形标签添加背景元数据。."""
         return add_polygon_background(super().get_dataset())
 
     def plot_predictions(self, batch, preds, ni):
-        """在输入图像上绘制预测语义掩码。"""
+        """在输入图像上绘制预测语义掩码。."""
         plot_images(
             images=batch["img"],
             labels={"semantic_mask": preds},

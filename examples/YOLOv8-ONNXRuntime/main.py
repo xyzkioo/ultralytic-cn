@@ -217,12 +217,12 @@ class YOLOv8:
 
         # 遍历非极大值抑制后选中的索引
         for i in np.array(indices).flatten():
-        # 获取索引对应的框、分数和类别 ID
+            # 获取索引对应的框、分数和类别 ID
             box = boxes[int(i)]
             score = scores[int(i)]
             class_id = class_ids[int(i)]
 
-        # 在输入图像上绘制检测结果
+            # 在输入图像上绘制检测结果
             self.draw_detections(input_image, box, score, class_id)
 
         # 返回修改后的输入图像

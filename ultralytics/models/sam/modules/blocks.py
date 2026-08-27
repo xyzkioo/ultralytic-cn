@@ -18,7 +18,7 @@ from .utils import add_decomposed_rel_pos, apply_rotary_enc, compute_axial_cis, 
 
 
 class DropPath(nn.Module):
-    """在训练期间为神经网络实现随机深度正则化。
+    """在训练期间为神经网络实现随机深度正则化。.
 
     属性：
         drop_prob (float): Probability of dropping a 路径 训练期间.
@@ -34,13 +34,13 @@ class DropPath(nn.Module):
     """
 
     def __init__(self, drop_prob: float = 0.0, scale_by_keep: bool = True):
-        """初始化训练期间使用的随机深度正则化 DropPath 模块。"""
+        """初始化训练期间使用的随机深度正则化 DropPath 模块。."""
         super().__init__()
         self.drop_prob = drop_prob
         self.scale_by_keep = scale_by_keep
 
     def forward(self, x: Tensor) -> Tensor:
-        """在训练期间对输入张量应用随机深度，并支持可选缩放。"""
+        """在训练期间对输入张量应用随机深度，并支持可选缩放。."""
         if self.drop_prob == 0.0 or not self.training:
             return x
         keep_prob = 1 - self.drop_prob
@@ -52,7 +52,7 @@ class DropPath(nn.Module):
 
 
 class MaskDownSampler(nn.Module):
-    """用于高效处理输入掩码的下采样和嵌入模块。
+    """用于高效处理输入掩码的下采样和嵌入模块。.
 
     此类通过卷积层、层归一化和激活函数逐步降低输入掩码的空间维度，同时扩展其通道维度。
 
@@ -80,7 +80,7 @@ class MaskDownSampler(nn.Module):
         activation: type[nn.Module] = nn.GELU,
         interpol_size: tuple[int, int] | None = None,
     ):
-        """初始化用于逐步下采样和通道扩展的掩码下采样模块。"""
+        """初始化用于逐步下采样和通道扩展的掩码下采样模块。."""
         super().__init__()
         num_layers = int(math.log2(total_stride) // math.log2(stride))
         assert stride**num_layers == total_stride
@@ -111,7 +111,7 @@ class MaskDownSampler(nn.Module):
             assert len(self.interpol_size) == 2
 
     def forward(self, x: Tensor) -> Tensor:
-        """使用卷积层和 LayerNorm2d 将输入掩码下采样并编码为 embed_dim 个通道。"""
+        """使用卷积层和 LayerNorm2d 将输入掩码下采样并编码为 embed_dim 个通道。."""
         if self.interpol_size is not None and self.interpol_size != list(x.shape[-2:]):
             x = F.interpolate(
                 x.float(),
@@ -124,7 +124,7 @@ class MaskDownSampler(nn.Module):
 
 
 class CXBlock(nn.Module):
-    """用于卷积神经网络高效特征提取的 ConvNeXt 块。
+    """用于卷积神经网络高效特征提取的 ConvNeXt 块。.
 
     此模块实现 ConvNeXt 架构的改进版本，可提升特征提取的性能和灵活性。
 
@@ -158,7 +158,7 @@ class CXBlock(nn.Module):
         layer_scale_init_value: float = 1e-6,
         use_dwconv: bool = True,
     ):
-        """初始化用于卷积神经网络高效特征提取的 ConvNeXt 块。
+        """初始化用于卷积神经网络高效特征提取的 ConvNeXt 块。.
 
         此块实现了 ConvNeXt 架构的改进版本，在特征提取方面提供更好的性能和灵活性。
 
@@ -190,7 +190,7 @@ class CXBlock(nn.Module):
         self.drop_path = DropPath(drop_path) if drop_path > 0.0 else nn.Identity()
 
     def forward(self, x: Tensor) -> Tensor:
-        """对输入张量应用 ConvNeXt 块操作，包括卷积和残差连接。"""
+        """对输入张量应用 ConvNeXt 块操作，包括卷积和残差连接。."""
         input = x
         x = self.dwconv(x)
         x = self.norm(x)
@@ -207,7 +207,7 @@ class CXBlock(nn.Module):
 
 
 class Fuser(nn.Module):
-    """通过神经网络多层结构融合特征的模块。
+    """通过神经网络多层结构融合特征的模块。.
 
     此类将一系列相同层依次应用于输入张量，也可以先对输入进行投影。
 
@@ -228,7 +228,7 @@ class Fuser(nn.Module):
     """
 
     def __init__(self, layer: nn.Module, num_layers: int, dim: int | None = None, input_projection: bool = False):
-        """初始化通过多层结构进行特征融合的 Fuser 模块。
+        """初始化通过多层结构进行特征融合的 Fuser 模块。.
 
         此模块创建一系列相同的层，并可选择先应用输入投影。
 
@@ -247,7 +247,7 @@ class Fuser(nn.Module):
             self.proj = nn.Conv2d(dim, dim, kernel_size=1)
 
     def forward(self, x: Tensor) -> Tensor:
-        """将一系列层应用于输入张量，并可选择先进行投影。"""
+        """将一系列层应用于输入张量，并可选择先进行投影。."""
         x = self.proj(x)
         for layer in self.layers:
             x = layer(x)
@@ -255,7 +255,7 @@ class Fuser(nn.Module):
 
 
 class SAM2TwoWayAttentionBlock(TwoWayAttentionBlock):
-    """在两个方向执行自注意力和交叉注意力的双向注意力块。
+    """在两个方向执行自注意力和交叉注意力的双向注意力块。.
 
     此模块扩展 TwoWayAttentionBlock，包含四个主要部分：稀疏输入自注意力、稀疏到密集交叉注意力、稀疏输入 MLP，以及密集到稀疏交叉注意力。
 
@@ -289,7 +289,7 @@ class SAM2TwoWayAttentionBlock(TwoWayAttentionBlock):
         attention_downsample_rate: int = 2,
         skip_first_layer_pe: bool = False,
     ) -> None:
-        """初始化在两个方向执行自注意力和交叉注意力的 SAM2TwoWayAttentionBlock。
+        """初始化在两个方向执行自注意力和交叉注意力的 SAM2TwoWayAttentionBlock。.
 
         此模块扩展 TwoWayAttentionBlock，包含稀疏输入自注意力、稀疏到密集交叉注意力、稀疏输入 MLP，以及密集到稀疏交叉注意力。
 
@@ -306,7 +306,7 @@ class SAM2TwoWayAttentionBlock(TwoWayAttentionBlock):
 
 
 class SAM2TwoWayTransformer(TwoWayTransformer):
-    """用于同时关注图像和查询点的双向 Transformer 模块。
+    """用于同时关注图像和查询点的双向 Transformer 模块。.
 
     此类扩展 TwoWayTransformer，实现一种使用带位置嵌入查询关注输入图像的专用 Transformer 解码器，适用于目标检测、图像分割和点云处理。
 
@@ -340,7 +340,7 @@ class SAM2TwoWayTransformer(TwoWayTransformer):
         activation: type[nn.Module] = nn.ReLU,
         attention_downsample_rate: int = 2,
     ) -> None:
-        """初始化 SAM2TwoWayTransformer 实例。
+        """初始化 SAM2TwoWayTransformer 实例。.
 
         此 Transformer 解码器使用带位置嵌入的查询关注输入图像，适用于目标检测、图像分割和点云处理等任务。
 
@@ -368,7 +368,7 @@ class SAM2TwoWayTransformer(TwoWayTransformer):
 
 
 class RoPEAttention(Attention):
-    """在 Transformer 架构的注意力机制中实现旋转位置编码。
+    """在 Transformer 架构的注意力机制中实现旋转位置编码。.
 
     此类在基础 Attention 类中加入旋转位置编码（RoPE），以增强注意力机制的位置感知能力。
 
@@ -398,7 +398,7 @@ class RoPEAttention(Attention):
         feat_sizes: tuple[int, int] = (32, 32),  # 512 分辨率下步长为 16 的特征尺寸 [w, h]
         **kwargs,
     ):
-        """初始化带旋转位置编码的 RoPEAttention，以增强位置感知能力。"""
+        """初始化带旋转位置编码的 RoPEAttention，以增强位置感知能力。."""
         super().__init__(*args, **kwargs)
 
         self.compute_cis = partial(compute_axial_cis, dim=self.internal_dim // self.num_heads, theta=rope_theta)
@@ -407,7 +407,7 @@ class RoPEAttention(Attention):
         self.rope_k_repeat = rope_k_repeat  # 重复 q rope 以匹配 k 长度，交叉注意力访问记忆时需要
 
     def forward(self, q: torch.Tensor, k: torch.Tensor, v: torch.Tensor, num_k_exclude_rope: int = 0) -> torch.Tensor:
-        """应用旋转位置编码，并计算查询、键和值张量之间的注意力。"""
+        """应用旋转位置编码，并计算查询、键和值张量之间的注意力。."""
         q = self.q_proj(q)
         k = self.k_proj(k)
         v = self.v_proj(v)
@@ -443,7 +443,7 @@ class RoPEAttention(Attention):
 
 
 def do_pool(x: torch.Tensor, pool: nn.Module, norm: nn.Module = None) -> torch.Tensor:
-    """对张量执行池化和可选归一化，并处理空间维度排列。"""
+    """对张量执行池化和可选归一化，并处理空间维度排列。."""
     if pool is None:
         return x
     # (B, H, W, C) -> (B, C, H, W)
@@ -458,7 +458,7 @@ def do_pool(x: torch.Tensor, pool: nn.Module, norm: nn.Module = None) -> torch.T
 
 
 class MultiScaleAttention(nn.Module):
-    """实现带可选查询池化的多尺度自注意力，以高效提取特征。
+    """实现带可选查询池化的多尺度自注意力，以高效提取特征。.
 
     此类提供灵活的多尺度注意力实现，可通过池化对查询特征进行可选下采样，旨在增强模型在视觉任务中捕获多尺度信息的能力。
 
@@ -491,7 +491,7 @@ class MultiScaleAttention(nn.Module):
         num_heads: int,
         q_pool: nn.Module = None,
     ):
-        """初始化带可选查询池化的多尺度注意力，以高效提取特征。"""
+        """初始化带可选查询池化的多尺度注意力，以高效提取特征。."""
         super().__init__()
 
         self.dim = dim
@@ -506,7 +506,7 @@ class MultiScaleAttention(nn.Module):
         self.proj = nn.Linear(dim_out, dim_out)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """应用带可选查询池化的多尺度注意力，提取多尺度特征。"""
+        """应用带可选查询池化的多尺度注意力，提取多尺度特征。."""
         B, H, W, _ = x.shape
         # qkv 形状为 (B, H * W, 3, nHead, C)
         qkv = self.qkv(x).reshape(B, H * W, 3, self.num_heads, -1)
@@ -535,7 +535,7 @@ class MultiScaleAttention(nn.Module):
 
 
 class MultiScaleBlock(nn.Module):
-    """带窗口划分和查询池化的多尺度注意力块，用于高效视觉 Transformer。
+    """带窗口划分和查询池化的多尺度注意力块，用于高效视觉 Transformer。.
 
     此类实现带可选窗口划分和下采样的多尺度注意力机制，适用于视觉 Transformer 架构。
 
@@ -575,7 +575,7 @@ class MultiScaleBlock(nn.Module):
         act_layer: type[nn.Module] = nn.GELU,
         window_size: int = 0,
     ):
-        """初始化带窗口划分和可选查询池化的多尺度注意力块。"""
+        """初始化带窗口划分和可选查询池化的多尺度注意力块。."""
         super().__init__()
 
         if isinstance(norm_layer, str):
@@ -612,7 +612,7 @@ class MultiScaleBlock(nn.Module):
             self.proj = nn.Linear(dim, dim_out)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """通过多尺度注意力和 MLP 处理输入，并支持可选窗口划分和下采样。"""
+        """通过多尺度注意力和 MLP 处理输入，并支持可选窗口划分和下采样。."""
         shortcut = x  # B, H, W, C
         x = self.norm1(x)
 
@@ -648,7 +648,7 @@ class MultiScaleBlock(nn.Module):
 
 
 class PositionEmbeddingSine(nn.Module):
-    """为图像等二维输入生成正弦位置嵌入的模块。
+    """为图像等二维输入生成正弦位置嵌入的模块。.
 
     此类为二维空间位置实现正弦位置编码，可用于计算机视觉任务中的 Transformer 模型。
 
@@ -680,7 +680,7 @@ class PositionEmbeddingSine(nn.Module):
         normalize: bool = True,
         scale: float | None = None,
     ):
-        """初始化二维图像输入的正弦位置嵌入。"""
+        """初始化二维图像输入的正弦位置嵌入。."""
         super().__init__()
         assert num_pos_feats % 2 == 0, "模型宽度必须为偶数"
         self.num_pos_feats = num_pos_feats // 2
@@ -695,7 +695,7 @@ class PositionEmbeddingSine(nn.Module):
         self.cache = {}
 
     def _encode_xy(self, x: torch.Tensor, y: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
-        """使用正弦/余弦函数将二维位置编码为 Transformer 位置嵌入。"""
+        """使用正弦/余弦函数将二维位置编码为 Transformer 位置嵌入。."""
         assert len(x) == len(y) and x.ndim == y.ndim == 1
         x_embed = x * self.scale
         y_embed = y * self.scale
@@ -711,7 +711,7 @@ class PositionEmbeddingSine(nn.Module):
 
     @torch.no_grad()
     def encode_boxes(self, x: torch.Tensor, y: torch.Tensor, w: torch.Tensor, h: torch.Tensor) -> torch.Tensor:
-        """将边界框坐标和尺寸编码为检测任务的位置嵌入。"""
+        """将边界框坐标和尺寸编码为检测任务的位置嵌入。."""
         pos_x, pos_y = self._encode_xy(x, y)
         return torch.cat((pos_y, pos_x, h[:, None], w[:, None]), dim=1)
 
@@ -719,7 +719,7 @@ class PositionEmbeddingSine(nn.Module):
 
     @torch.no_grad()
     def encode_points(self, x: torch.Tensor, y: torch.Tensor, labels: torch.Tensor) -> torch.Tensor:
-        """使用正弦嵌入编码二维点，并附加标签。"""
+        """使用正弦嵌入编码二维点，并附加标签。."""
         (bx, nx), (by, ny), (bl, nl) = x.shape, y.shape, labels.shape
         assert bx == by and nx == ny and bx == bl and nx == nl
         pos_x, pos_y = self._encode_xy(x.flatten(), y.flatten())
@@ -728,7 +728,7 @@ class PositionEmbeddingSine(nn.Module):
 
     @torch.no_grad()
     def forward(self, x: torch.Tensor) -> Tensor:
-        """为图像等二维输入生成正弦位置嵌入。"""
+        """为图像等二维输入生成正弦位置嵌入。."""
         cache_key = (x.shape[-2], x.shape[-1])
         if cache_key in self.cache:
             return self.cache[cache_key][None].repeat(x.shape[0], 1, 1, 1)
@@ -761,7 +761,7 @@ class PositionEmbeddingSine(nn.Module):
 
 
 class PositionEmbeddingRandom(nn.Module):
-    """使用随机空间频率的位置编码。
+    """使用随机空间频率的位置编码。.
 
     此类使用随机空间频率为输入坐标生成位置嵌入，尤其适用于需要位置信息的 Transformer 模型。
 
@@ -782,7 +782,7 @@ class PositionEmbeddingRandom(nn.Module):
     """
 
     def __init__(self, num_pos_feats: int = 64, scale: float | None = None) -> None:
-        """初始化供 Transformer 使用的随机空间频率位置嵌入。"""
+        """初始化供 Transformer 使用的随机空间频率位置嵌入。."""
         super().__init__()
         if scale is None or scale <= 0.0:
             scale = 1.0
@@ -793,7 +793,7 @@ class PositionEmbeddingRandom(nn.Module):
         torch.backends.cudnn.deterministic = False
 
     def _pe_encoding(self, coords: torch.Tensor) -> torch.Tensor:
-        """使用随机空间频率编码归一化到 [0,1] 的坐标。"""
+        """使用随机空间频率编码归一化到 [0,1] 的坐标。."""
         # 假设 coords 位于 [0, 1]^2 方形区域，形状为 d_1 x ... x d_n x 2
         coords = 2 * coords - 1
         coords = coords @ self.positional_encoding_gaussian_matrix
@@ -802,7 +802,7 @@ class PositionEmbeddingRandom(nn.Module):
         return torch.cat([torch.sin(coords), torch.cos(coords)], dim=-1)
 
     def forward(self, size: tuple[int, int]) -> torch.Tensor:
-        """使用随机空间频率为网格生成位置编码。"""
+        """使用随机空间频率为网格生成位置编码。."""
         h, w = size
         grid = torch.ones(
             (h, w),
@@ -818,7 +818,7 @@ class PositionEmbeddingRandom(nn.Module):
         return pe.permute(2, 0, 1)  # C x H x W
 
     def forward_with_coords(self, coords_input: torch.Tensor, image_size: tuple[int, int]) -> torch.Tensor:
-        """根据给定图像尺寸归一化输入坐标到 [0,1]，并进行位置编码。"""
+        """根据给定图像尺寸归一化输入坐标到 [0,1]，并进行位置编码。."""
         coords = coords_input.clone()
         coords[:, :, 0] = coords[:, :, 0] / image_size[1]
         coords[:, :, 1] = coords[:, :, 1] / image_size[0]
@@ -826,7 +826,7 @@ class PositionEmbeddingRandom(nn.Module):
 
 
 class Block(nn.Module):
-    """支持窗口注意力和残差传播的 Transformer 块。
+    """支持窗口注意力和残差传播的 Transformer 块。.
 
     此类实现一个 Transformer 块，可使用全局或窗口自注意力，随后连接前馈网络；同时支持相对位置嵌入，适用于视觉 Transformer 架构。
 
@@ -862,7 +862,7 @@ class Block(nn.Module):
         window_size: int = 0,
         input_size: tuple[int, int] | None = None,
     ) -> None:
-        """初始化带可选窗口注意力和相对位置嵌入的 Transformer 块。
+        """初始化带可选窗口注意力和相对位置嵌入的 Transformer 块。.
 
         此构造函数建立一个 Transformer 块，可使用全局或窗口自注意力，随后连接前馈网络；同时支持相对位置嵌入，适用于视觉 Transformer 架构。
 
@@ -895,7 +895,7 @@ class Block(nn.Module):
         self.window_size = window_size
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """通过 Transformer 块处理输入，并支持窗口自注意力和残差连接。"""
+        """通过 Transformer 块处理输入，并支持窗口自注意力和残差连接。."""
         shortcut = x
         x = self.norm1(x)
         # 窗口划分
@@ -913,7 +913,7 @@ class Block(nn.Module):
 
 
 class REAttention(nn.Module):
-    """用于 Transformer 架构高效自注意力的相对位置注意力模块。
+    """用于 Transformer 架构高效自注意力的相对位置注意力模块。.
 
     此类实现带相对位置嵌入的多头注意力机制，适用于视觉 Transformer 模型。
 
@@ -946,7 +946,7 @@ class REAttention(nn.Module):
         rel_pos_zero_init: bool = True,
         input_size: tuple[int, int] | None = None,
     ) -> None:
-        """初始化用于 Transformer 架构的相对位置注意力模块。
+        """初始化用于 Transformer 架构的相对位置注意力模块。.
 
         此模块实现带可选相对位置编码的多头注意力，专为 Transformer 模型中的视觉任务设计。
 
@@ -974,7 +974,7 @@ class REAttention(nn.Module):
             self.rel_pos_w = nn.Parameter(torch.zeros(2 * input_size[1] - 1, head_dim))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """对输入张量应用带可选相对位置编码的多头注意力。"""
+        """对输入张量应用带可选相对位置编码的多头注意力。."""
         B, H, W, _ = x.shape
         # qkv 形状为 (3, B, nHead, H * W, C)
         qkv = self.qkv(x).reshape(B, H * W, 3, self.num_heads, -1).permute(2, 0, 3, 1, 4)
@@ -992,7 +992,7 @@ class REAttention(nn.Module):
 
 
 class PatchEmbed(nn.Module):
-    """用于视觉 Transformer 架构的图像到图像块嵌入模块。
+    """用于视觉 Transformer 架构的图像到图像块嵌入模块。.
 
     此模块使用卷积层将输入图像转换为图像块嵌入序列，通常作为视觉 Transformer 的第一层，将图像数据转换为后续 Transformer 块所需的格式。
 
@@ -1019,7 +1019,7 @@ class PatchEmbed(nn.Module):
         embed_dim: int = 768,
         bias: bool = True,
     ) -> None:
-        """初始化将图像块转换为嵌入的 PatchEmbed 模块。
+        """初始化将图像块转换为嵌入的 PatchEmbed 模块。.
 
         此模块通常作为视觉 Transformer 架构的第一层，将图像数据转换为后续 Transformer 块所需的格式。
 
@@ -1036,5 +1036,5 @@ class PatchEmbed(nn.Module):
         self.proj = nn.Conv2d(in_chans, embed_dim, kernel_size=kernel_size, stride=stride, padding=padding, bias=bias)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """通过卷积并转置结果张量计算图像块嵌入。"""
+        """通过卷积并转置结果张量计算图像块嵌入。."""
         return self.proj(x).permute(0, 2, 3, 1)  # B C H W -> B H W C

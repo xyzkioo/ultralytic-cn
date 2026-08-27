@@ -2,7 +2,7 @@
 
 # Copyright (c) Meta Platforms, Inc. and affiliates. All Rights Reserved
 
-"""各种实用模型。"""
+"""各种实用模型。."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ from torch import Tensor, nn
 
 
 class DotProductScoring(torch.nn.Module):
-    """计算查询特征与池化提示嵌入之间点积得分的模块。"""
+    """计算查询特征与池化提示嵌入之间点积得分的模块。."""
 
     def __init__(
         self,
@@ -24,7 +24,7 @@ class DotProductScoring(torch.nn.Module):
         clamp_logits=True,
         clamp_max_val=12.0,
     ):
-        """初始化 DotProductScoring 模块。"""
+        """初始化 DotProductScoring 模块。."""
         super().__init__()
         self.d_proj = d_proj
         assert isinstance(prompt_mlp, torch.nn.Module) or prompt_mlp is None
@@ -38,7 +38,7 @@ class DotProductScoring(torch.nn.Module):
 
     @staticmethod
     def mean_pool_text(prompt, prompt_mask):
-        """仅对有效词元的提示嵌入执行平均池化。"""
+        """仅对有效词元的提示嵌入执行平均池化。."""
         # is_valid 的形状为 (seq, bs, 1)，其中 1 表示有效，0 表示填充
         is_valid = (~prompt_mask).to(prompt.dtype).permute(1, 0)[..., None]
         # num_valid 的形状为 (bs, 1)
@@ -48,7 +48,7 @@ class DotProductScoring(torch.nn.Module):
         return pooled_prompt
 
     def forward(self, hs, prompt, prompt_mask):
-        """计算 hs 与 prompt 之间的点积得分。"""
+        """计算 hs 与 prompt 之间的点积得分。."""
         # hs 的形状为 (num_layer, bs, num_query, d_model)
         # prompt 的形状为 (seq, bs, d_model)
         # prompt_mask 的形状为 (bs, seq)，其中 1 表示填充，0 表示有效
@@ -77,7 +77,7 @@ class DotProductScoring(torch.nn.Module):
 
 
 class LayerScale(nn.Module):
-    """对层输出执行逐通道缩放的 LayerScale 模块。"""
+    """对层输出执行逐通道缩放的 LayerScale 模块。."""
 
     def __init__(
         self,
@@ -85,18 +85,18 @@ class LayerScale(nn.Module):
         init_values: float | Tensor = 1e-5,
         inplace: bool = False,
     ) -> None:
-        """初始化 LayerScale 模块。"""
+        """初始化 LayerScale 模块。."""
         super().__init__()
         self.inplace = inplace
         self.gamma = nn.Parameter(init_values * torch.ones(dim))
 
     def forward(self, x: Tensor) -> Tensor:
-        """对输入张量应用 LayerScale。"""
+        """对输入张量应用 LayerScale。."""
         return x.mul_(self.gamma) if self.inplace else x * self.gamma
 
 
 class TransformerWrapper(nn.Module):
-    """由编码器和解码器组成的 Transformer 封装器。"""
+    """由编码器和解码器组成的 Transformer 封装器。."""
 
     def __init__(
         self,
@@ -106,7 +106,7 @@ class TransformerWrapper(nn.Module):
         two_stage_type="none",  # ["none"] only for now
         pos_enc_at_input_dec=True,
     ):
-        """初始化 TransformerWrapper。"""
+        """初始化 TransformerWrapper。."""
         super().__init__()
         self.encoder = encoder
         self.decoder = decoder
@@ -121,14 +121,14 @@ class TransformerWrapper(nn.Module):
         self.d_model = d_model
 
     def _reset_parameters(self):
-        """初始化模型参数。"""
+        """初始化模型参数。."""
         for n, p in self.named_parameters():
             if p.dim() > 1 and "box_embed" not in n and "query_embed" not in n and "reference_points" not in n:
                 nn.init.xavier_uniform_(p)
 
 
 def get_valid_ratio(mask):
-    """根据掩码计算有效高度和宽度的比例。"""
+    """根据掩码计算有效高度和宽度的比例。."""
     _, H, W = mask.shape
     valid_H = torch.sum(~mask[:, :, 0], 1)
     valid_W = torch.sum(~mask[:, 0, :], 1)
@@ -139,10 +139,9 @@ def get_valid_ratio(mask):
 
 
 def gen_sineembed_for_position(pos_tensor: torch.Tensor, num_feats: int = 256):
-    """为二维或四维坐标张量生成正弦位置嵌入。
+    """为二维或四维坐标张量生成正弦位置嵌入。.
 
-    此函数使用不同频率的正弦和余弦函数创建嵌入，形式类似于 Transformer 模型使用的位置编码。
-    它同时支持二维位置张量 (x, y) 和用于边界框坐标的四维张量 (x, y, w, h)。
+    此函数使用不同频率的正弦和余弦函数创建嵌入，形式类似于 Transformer 模型使用的位置编码。 它同时支持二维位置张量 (x, y) 和用于边界框坐标的四维张量 (x, y, w, h)。
 
     参数：
         pos_tensor (torch.Tensor): 输入位置张量；二维坐标形状为 (n_query, bs, 2)，四维边界框坐标形状为 (n_query, bs, 4)。

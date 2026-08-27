@@ -13,7 +13,7 @@ __all__ = "inverse_sigmoid", "multi_scale_deformable_attn_pytorch"
 
 
 def _get_clones(module, n):
-    """从给定模块创建包含多个副本的列表。
+    """从给定模块创建包含多个副本的列表。.
 
     参数：
         module (nn.Module)：要复制的模块。
@@ -33,10 +33,9 @@ def _get_clones(module, n):
 
 
 def bias_init_with_prob(prior_prob=0.01):
-    """根据给定的先验概率初始化卷积层或全连接层的偏置值。
+    """根据给定的先验概率初始化卷积层或全连接层的偏置值。.
 
-    此函数使用逆 Sigmoid（logit）函数，根据先验概率计算偏置初始值。它通常用于目标检测模型，为分类层设置
-    指定的正样本预测概率。
+    此函数使用逆 Sigmoid（logit）函数，根据先验概率计算偏置初始值。它通常用于目标检测模型，为分类层设置 指定的正样本预测概率。
 
     参数：
         prior_prob (float，可选)：用于初始化偏置的先验概率。
@@ -53,10 +52,9 @@ def bias_init_with_prob(prior_prob=0.01):
 
 
 def linear_init(module):
-    """初始化线性模块的权重和偏置。
+    """初始化线性模块的权重和偏置。.
 
-    此函数根据输出维度计算均匀分布的边界，并使用该分布初始化线性模块的权重。如果模块包含偏置，也会一并
-    初始化。
+    此函数根据输出维度计算均匀分布的边界，并使用该分布初始化线性模块的权重。如果模块包含偏置，也会一并 初始化。
 
     参数：
         module (nn.Module)：要初始化的线性模块。
@@ -73,7 +71,7 @@ def linear_init(module):
 
 
 def inverse_sigmoid(x, eps=1e-5):
-    """计算张量的逆 Sigmoid 函数。
+    """计算张量的逆 Sigmoid 函数。.
 
     此函数对张量应用 Sigmoid 函数的逆运算，可用于各种神经网络操作，尤其适用于注意力机制和坐标变换。
 
@@ -101,11 +99,10 @@ def multi_scale_deformable_attn_pytorch(
     sampling_locations: torch.Tensor,
     attention_weights: torch.Tensor,
 ) -> torch.Tensor:
-    """在 PyTorch 中实现多尺度可变形注意力。
+    """在 PyTorch 中实现多尺度可变形注意力。.
 
-    此实现将 ``(num_levels, num_points)`` 两个轴折叠为单个 ``num_total_points`` 轴，使跟踪得到的每个张量
-    的秩都不超过 5，这是 CoreML MIL 转换器支持的最大秩。在 CUDA 和 CPU 上，它在数值上等价于秩为 6 的参考
-    实现。
+    此实现将 ``(num_levels, num_points)`` 两个轴折叠为单个 ``num_total_points`` 轴，使跟踪得到的每个张量 的秩都不超过 5，这是 CoreML MIL 转换器支持的最大秩。在 CUDA
+    和 CPU 上，它在数值上等价于秩为 6 的参考 实现。
 
     参数：
         value (torch.Tensor)：值张量，形状为 ``(bs, num_keys, num_heads, embed_dims)``。

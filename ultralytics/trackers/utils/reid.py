@@ -1,5 +1,5 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
-"""BoT-SORT、Deep OC-SORT 和 TrackTrack 共享的 ReID 编码器。
+"""BoT-SORT、Deep OC-SORT 和 TrackTrack 共享的 ReID 编码器。.
 
 * `.pt` YOLO 检查点通过 `YOLO()` 加载；通过预测器的 `embed=[...]` 参数从倒数第二层提取嵌入
 （适用于分类和 ReID 主干网络）。
@@ -20,10 +20,10 @@ REID_ASSETS = frozenset(f"yolo26{k}-reid.onnx" for k in "nsmlx")
 
 
 class ReID:
-    """ReID 编码器。`.pt` 文件通过 YOLO 预测器处理，其他格式通过 `AutoBackend` 处理。"""
+    """ReID 编码器。`.pt` 文件通过 YOLO 预测器处理，其他格式通过 `AutoBackend` 处理。."""
 
     def __init__(self, model: str, imgsz: int = 224, device: str | torch.device | None = None, fp16: bool = False):
-        """初始化用于重识别的编码器。
+        """初始化用于重识别的编码器。.
 
         参数：
             model (str): ReID 模型路径。`.pt` 通过 YOLO 预测器提取嵌入，其他扩展名通过 `AutoBackend` 处理。
@@ -66,7 +66,7 @@ class ReID:
 
     @staticmethod
     def _crop_detections(img: np.ndarray, dets: np.ndarray) -> list[np.ndarray]:
-        """从图像中裁剪检测区域，并先将 xywh 转换为 xyxy。
+        """从图像中裁剪检测区域，并先将 xywh 转换为 xyxy。.
 
         参数：
             img (np.ndarray): BGR 图像。
@@ -78,7 +78,7 @@ class ReID:
         return [save_one_box(det, img, save=False) for det in xywh2xyxy(torch.from_numpy(dets[:, :4]))]
 
     def _crops_to_tensor(self, crops: list[np.ndarray]) -> torch.Tensor:
-        """将有效图像裁剪块列表堆叠为 self.imgsz 尺寸的归一化 BCHW 浮点张量。"""
+        """将有效图像裁剪块列表堆叠为 self.imgsz 尺寸的归一化 BCHW 浮点张量。."""
         batch = torch.empty(len(crops), 3, self.imgsz, self.imgsz, dtype=torch.float32)
         for i, c in enumerate(crops):
             t = torch.from_numpy(np.ascontiguousarray(c[..., ::-1])).permute(2, 0, 1).unsqueeze(0).float() / 255.0
@@ -90,7 +90,7 @@ class ReID:
 
     @torch.no_grad()
     def __call__(self, img: np.ndarray, dets: np.ndarray) -> list[np.ndarray | None]:
-        """提取检测对象的嵌入。"""
+        """提取检测对象的嵌入。."""
         crops = self._crop_detections(img, dets)
         valid = [bool(c.size) for c in crops]
         valid_crops = [crop for crop, keep in zip(crops, valid) if keep]
@@ -122,7 +122,7 @@ class ReID:
 
 
 def build_encoder(with_reid: bool, model: str | None, device: str | torch.device | None = None):
-    """返回 ReID 编码器、原生特征直通编码器或 None。
+    """返回 ReID 编码器、原生特征直通编码器或 None。.
 
     参数：
         with_reid (bool): 是否启用 ReID。
@@ -149,7 +149,7 @@ def build_encoder(with_reid: bool, model: str | None, device: str | torch.device
 def smooth_feature(
     feat: np.ndarray, smooth: np.ndarray | None, alpha: float
 ) -> tuple[np.ndarray | None, np.ndarray | None]:
-    """对 `feat` 执行 L2 归一化，并通过指数移动平均将其融合到 `smooth`。
+    """对 `feat` 执行 L2 归一化，并通过指数移动平均将其融合到 `smooth`。.
 
     参数：
         feat (np.ndarray): 新的未归一化外观特征。

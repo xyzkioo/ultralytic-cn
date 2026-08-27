@@ -16,7 +16,7 @@ from ultralytics.utils.plotting import colors, plt_settings
 
 
 class SemanticSegmentationTrainer(DetectionTrainer):
-    """用于训练 YOLO 语义分割模型的训练器。
+    """用于训练 YOLO 语义分割模型的训练器。.
 
     此训练器负责语义分割训练，包括数据集构建、模型初始化和验证设置。
 
@@ -28,7 +28,7 @@ class SemanticSegmentationTrainer(DetectionTrainer):
     """
 
     def __init__(self, cfg=DEFAULT_CFG, overrides: dict[str, Any] | None = None, _callbacks: dict | None = None):
-        """初始化 SemanticSegmentationTrainer。
+        """初始化 SemanticSegmentationTrainer。.
 
         参数：
             cfg (dict): 包含默认训练设置的配置字典。
@@ -41,11 +41,11 @@ class SemanticSegmentationTrainer(DetectionTrainer):
         super().__init__(cfg, overrides, _callbacks)
 
     def get_dataset(self):
-        """解析数据集 YAML，并在需要时为多边形标签添加背景元数据。"""
+        """解析数据集 YAML，并在需要时为多边形标签添加背景元数据。."""
         return add_polygon_background(super().get_dataset())
 
     def get_model(self, cfg: str | None = None, weights: str | None = None, verbose: bool = True):
-        """返回带有可选预训练主干网络的 SemanticSegmentationModel。
+        """返回带有可选预训练主干网络的 SemanticSegmentationModel。.
 
         参数：
             cfg (str, 可选): 模型配置文件路径。
@@ -64,18 +64,18 @@ class SemanticSegmentationTrainer(DetectionTrainer):
         return model
 
     def get_validator(self):
-        """返回用于模型评估的 SemanticSegmentationValidator。"""
+        """返回用于模型评估的 SemanticSegmentationValidator。."""
         return yolo.semantic.SemanticSegmentationValidator(
             self.test_loader, save_dir=self.save_dir, args=copy(self.args), _callbacks=self.callbacks
         )
 
     def set_class_weights(self):
-        """计算基于像素频率的类别权重；二分类任务跳过（nc==1 时损失使用未加权 BCE）。"""
+        """计算基于像素频率的类别权重；二分类任务跳过（nc==1 时损失使用未加权 BCE）。."""
         if self.data["nc"] > 1:
             super().set_class_weights()
 
     def get_class_counts(self, max_masks=None):
-        """返回训练掩码中的逐类别像素计数，可选地采样至 max_masks 个掩码。"""
+        """返回训练掩码中的逐类别像素计数，可选地采样至 max_masks 个掩码。."""
         nc = self.data["nc"]
         pixel_counts = np.zeros(nc, dtype=np.float32)
         dataset = self.train_loader.dataset
@@ -107,7 +107,7 @@ class SemanticSegmentationTrainer(DetectionTrainer):
 
     @plt_settings()
     def plot_training_labels(self):
-        """绘制语义分割训练标签的类别分布。
+        """绘制语义分割训练标签的类别分布。.
 
         从训练数据集中最多采样 1000 个掩码文件，累计逐类别像素计数，并绘制类别分布柱状图，保存为 'labels.jpg'。
         """

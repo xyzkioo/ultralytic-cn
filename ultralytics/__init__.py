@@ -37,7 +37,7 @@ if TYPE_CHECKING:
 
 
 def __getattr__(name: str):
-    """首次访问公共类时再延迟导入。"""
+    """首次访问公共类时再延迟导入。."""
     if name in MODELS:
         return getattr(importlib.import_module("ultralytics.models"), name)
     if name in PLATFORM_EXPORTS:
@@ -48,7 +48,7 @@ def __getattr__(name: str):
 
 
 def __dir__():
-    """扩展 dir() 结果，使其包含可延迟加载的公共名称，便于 IDE 自动补全。"""
+    """扩展 dir() 结果，使其包含可延迟加载的公共名称，便于 IDE 自动补全。."""
     return sorted(set(globals()) | set(MODELS) | set(PLATFORM_EXPORTS))
 
 

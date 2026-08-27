@@ -16,7 +16,7 @@ from ultralytics.utils.metrics import SegmentMetrics, mask_iou
 
 
 class SegmentationValidator(DetectionValidator):
-    """继承 DetectionValidator 的分割验证器，用于验证分割模型。
+    """继承 DetectionValidator 的分割验证器，用于验证分割模型。.
 
     此验证器同时处理边界框和掩码预测结果，并计算检测和分割任务的 mAP 等指标。
 
@@ -34,7 +34,7 @@ class SegmentationValidator(DetectionValidator):
     """
 
     def __init__(self, dataloader=None, save_dir=None, args=None, _callbacks: dict | None = None) -> None:
-        """初始化分割验证器，并将任务设置为 'segment'、指标设置为 SegmentMetrics。
+        """初始化分割验证器，并将任务设置为 'segment'、指标设置为 SegmentMetrics。.
 
         参数：
             dataloader (torch.utils.data.DataLoader, 可选): 用于验证的数据加载器。
@@ -48,7 +48,7 @@ class SegmentationValidator(DetectionValidator):
         self.metrics = SegmentMetrics()
 
     def preprocess(self, batch: dict[str, Any]) -> dict[str, Any]:
-        """预处理用于 YOLO 分割验证的图像批次。
+        """预处理用于 YOLO 分割验证的图像批次。.
 
         参数：
             batch (dict[str, Any]): 包含图像和标注的批次。
@@ -61,7 +61,7 @@ class SegmentationValidator(DetectionValidator):
         return batch
 
     def init_metrics(self, model: torch.nn.Module) -> None:
-        """初始化指标，并根据 save_json 标志选择掩码处理函数。
+        """初始化指标，并根据 save_json 标志选择掩码处理函数。.
 
         参数：
             model (torch.nn.Module): 待验证的模型。
@@ -73,7 +73,7 @@ class SegmentationValidator(DetectionValidator):
         self.process = ops.process_mask_native if self.args.save_json or self.args.save_txt else ops.process_mask
 
     def get_desc(self) -> str:
-        """返回评估指标的格式化描述字符串。"""
+        """返回评估指标的格式化描述字符串。."""
         return ("%22s" + "%11s" * 10) % (
             "Class",
             "Images",
@@ -89,7 +89,7 @@ class SegmentationValidator(DetectionValidator):
         )
 
     def postprocess(self, preds: list[torch.Tensor]) -> list[dict[str, torch.Tensor]]:
-        """后处理 YOLO 预测结果，并返回包含 proto 的检测结果。
+        """后处理 YOLO 预测结果，并返回包含 proto 的检测结果。.
 
         参数：
             preds (列表[torch.Tensor]): 模型输出的原始预测结果。
@@ -106,7 +106,7 @@ class SegmentationValidator(DetectionValidator):
         return preds
 
     def _prepare_batch(self, si: int, batch: dict[str, Any]) -> dict[str, Any]:
-        """处理图像和目标，准备验证所需的批次数据。
+        """处理图像和目标，准备验证所需的批次数据。.
 
         参数：
             si (int): 样本在批次中的索引。
@@ -132,12 +132,12 @@ class SegmentationValidator(DetectionValidator):
         return prepared_batch
 
     def gather_stats(self) -> None:
-        """从所有 GPU 收集统计信息。"""
+        """从所有 GPU 收集统计信息。."""
         super().gather_stats()  # 收集 DetectionValidator 的统计信息
         self._gather_image_metrics(self.metrics.seg)
 
     def _process_batch(self, preds: dict[str, torch.Tensor], batch: dict[str, Any]) -> dict[str, np.ndarray]:
-        """根据边界框和可选掩码计算一个批次的正确预测矩阵。
+        """根据边界框和可选掩码计算一个批次的正确预测矩阵。.
 
         参数：
             preds (dict[str, torch.Tensor]): 包含预测结果的字典，例如 'cls' 和 'masks'。
@@ -166,7 +166,7 @@ class SegmentationValidator(DetectionValidator):
         return tp
 
     def plot_predictions(self, batch: dict[str, Any], preds: list[dict[str, torch.Tensor]], ni: int) -> None:
-        """绘制包含掩码和边界框的批次预测结果。
+        """绘制包含掩码和边界框的批次预测结果。.
 
         参数：
             batch (dict[str, Any]): 包含图像和标注的批次数据。
@@ -181,7 +181,7 @@ class SegmentationValidator(DetectionValidator):
         super().plot_predictions(batch, preds, ni, max_det=self.args.max_det)  # 绘制边界框
 
     def save_one_txt(self, predn: dict[str, torch.Tensor], save_conf: bool, shape: tuple[int, int], file: Path) -> None:
-        """以指定格式将 YOLO 检测结果按归一化坐标保存到 txt 文件。
+        """以指定格式将 YOLO 检测结果按归一化坐标保存到 txt 文件。.
 
         参数：
             predn (dict[str, torch.Tensor]): 包含 'bboxes'、'conf'、'cls' 和 'masks' 键的预测字典。
@@ -200,7 +200,7 @@ class SegmentationValidator(DetectionValidator):
         ).save_txt(file, save_conf=save_conf)
 
     def pred_to_json(self, predn: dict[str, torch.Tensor], pbatch: dict[str, Any]) -> None:
-        """保存一条用于 COCO 评估的 JSON 结果。
+        """保存一条用于 COCO 评估的 JSON 结果。.
 
         参数：
             predn (dict[str, torch.Tensor]): 包含边界框、掩码、置信度分数和类别的预测结果。
@@ -208,7 +208,7 @@ class SegmentationValidator(DetectionValidator):
         """
 
         def to_string(counts: list[int]) -> str:
-            """将 RLE 对象转换为紧凑的字符串表示。每个计数先进行差分编码，再编码为变长字符串。
+            """将 RLE 对象转换为紧凑的字符串表示。每个计数先进行差分编码，再编码为变长字符串。.
 
             参数：
                 counts (列表[int]): RLE 计数列表。
@@ -239,7 +239,7 @@ class SegmentationValidator(DetectionValidator):
             return "".join(result)
 
         def multi_encode(pixels: torch.Tensor) -> list[int]:
-            """使用游程编码（RLE）转换多个二值掩码。
+            """使用游程编码（RLE）转换多个二值掩码。.
 
             参数：
                 pixels (torch.Tensor): 二维张量，每一行表示一个展平后的二值掩码，形状为 [N, H*W]。
@@ -287,7 +287,7 @@ class SegmentationValidator(DetectionValidator):
             self.jdict[-len(rles) + i]["segmentation"] = r  # segmentation
 
     def scale_preds(self, predn: dict[str, torch.Tensor], pbatch: dict[str, Any]) -> dict[str, torch.Tensor]:
-        """将预测结果缩放到原始图像尺寸。"""
+        """将预测结果缩放到原始图像尺寸。."""
         return {
             **super().scale_preds(predn, pbatch),
             "masks": ops.scale_masks(predn["masks"][None], pbatch["ori_shape"], ratio_pad=pbatch["ratio_pad"])[
@@ -296,7 +296,7 @@ class SegmentationValidator(DetectionValidator):
         }
 
     def eval_json(self, stats: dict[str, Any]) -> dict[str, Any]:
-        """返回 COCO 风格实例分割评估指标。"""
+        """返回 COCO 风格实例分割评估指标。."""
         pred_json = self.save_dir / "predictions.json"  # 预测结果
         anno_json = (
             self.data["path"]
