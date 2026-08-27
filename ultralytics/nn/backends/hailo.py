@@ -15,10 +15,10 @@ from .base import BaseBackend
 
 
 class HailoBackend(BaseBackend):
-    """用于 Ultralytics Hailo HEF 模型的 HailoRT 推理后端。"""
+    """用于 Ultralytics Hailo HEF 模型的 HailoRT 推理后端。."""
 
     def load_model(self, weight: str | Path) -> None:
-        """加载 Hailo 导出目录及其 Ultralytics 元数据。"""
+        """加载 Hailo 导出目录及其 Ultralytics 元数据。."""
         try:
             from hailo_platform import (
                 HEF,
@@ -70,12 +70,12 @@ class HailoBackend(BaseBackend):
         self.end2end = self.task not in {"segment", "pose", "obb"}
 
     def __del__(self):
-        """释放 Hailo 流程和设备。"""
+        """释放 Hailo 流程和设备。."""
         if stack := getattr(self, "_stack", None):
             stack.close()
 
     def forward(self, im: torch.Tensor) -> np.ndarray | list[torch.Tensor]:
-        """执行 Hailo 推理并返回解码后的检测结果，或返回用于分割的密集输出和原型。"""
+        """执行 Hailo 推理并返回解码后的检测结果，或返回用于分割的密集输出和原型。."""
         im = np.ascontiguousarray(np.clip(im.permute(0, 2, 3, 1).cpu().numpy() * 255, 0, 255).astype(np.uint8))
         results = self.model.infer({self.input_info.name: im})
         outputs = [results[x.name] for x in self.output_infos]
@@ -100,7 +100,7 @@ class HailoBackend(BaseBackend):
         return self._decode_raw(outputs) if not self.metadata.get("nms", False) else self._decode_nms(outputs[0])
 
     def _decode_nms(self, output: list) -> np.ndarray:
-        """将 Hailo 逐类别 NMS 输出从归一化的 ``yxyx`` 转换为像素 ``xyxy`` 坐标。"""
+        """将 Hailo 逐类别 NMS 输出从归一化的 ``yxyx`` 转换为像素 ``xyxy`` 坐标。."""
         height, width = self.input_info.shape[:2]
         scale = np.array([width, height, width, height], dtype=np.float32)
         frames = []
@@ -121,7 +121,7 @@ class HailoBackend(BaseBackend):
         return predictions
 
     def _decode_boxes(self, reg_maps: list[torch.Tensor], angle: torch.Tensor | None = None) -> torch.Tensor:
-        """对缓存的锚框执行 DFL 和边界框解码，返回 (B, A, 4) 的 xywh 边界框（提供 angle 时返回旋转框）。"""
+        """对缓存的锚框执行 DFL 和边界框解码，返回 (B, A, 4) 的 xywh 边界框（提供 angle 时返回旋转框）。."""
         from ultralytics.utils.tal import dist2bbox, dist2rbox, make_anchors
 
         if self._anchors is None:
@@ -134,7 +134,7 @@ class HailoBackend(BaseBackend):
         return dist2bbox(dist, anchors, xywh=True) * stride_tensor
 
     def _decode_segment(self, outputs: list[np.ndarray]) -> list[torch.Tensor]:
-        """解码原始分割张量（每个尺度包含 reg、cls、coeff 以及原型），供预测器的 NMS 使用。"""
+        """解码原始分割张量（每个尺度包含 reg、cls、coeff 以及原型），供预测器的 NMS 使用。."""
         proto = torch.from_numpy(outputs[-1]).permute(0, 3, 1, 2)
         k = len(outputs) - 1
         reg_maps = [torch.from_numpy(x).permute(0, 3, 1, 2) for x in outputs[0:k:3]]
@@ -146,7 +146,7 @@ class HailoBackend(BaseBackend):
         return [torch.cat((boxes, cls, cof), 2).transpose(1, 2), proto]
 
     def _decode_pose(self, outputs: list[np.ndarray]) -> torch.Tensor:
-        """将原始姿态张量（每个尺度包含 reg、cls、kpt）解码为预测器 NMS 所需的密集输出。"""
+        """将原始姿态张量（每个尺度包含 reg、cls、kpt）解码为预测器 NMS 所需的密集输出。."""
         maps = [torch.from_numpy(x).permute(0, 3, 1, 2) for x in outputs]
         reg_maps, cls_maps, kpt_maps = maps[0::3], maps[1::3], maps[2::3]
         boxes = self._decode_boxes(reg_maps)
@@ -162,7 +162,7 @@ class HailoBackend(BaseBackend):
         return torch.cat((boxes, cls, kpts.view(b, a, -1)), 2).transpose(1, 2)
 
     def _decode_obb(self, outputs: list[np.ndarray]) -> torch.Tensor:
-        """将原始 OBB 张量（每个尺度包含 reg、cls、angle）解码为旋转 NMS 所需的密集输出。"""
+        """将原始 OBB 张量（每个尺度包含 reg、cls、angle）解码为旋转 NMS 所需的密集输出。."""
         maps = [torch.from_numpy(x).permute(0, 3, 1, 2) for x in outputs]
         reg_maps, cls_maps, ang_maps = maps[0::3], maps[1::3], maps[2::3]
         angle = torch.cat([m.flatten(2) for m in ang_maps], 2).transpose(1, 2)  # (B, A, 1) raw
@@ -172,7 +172,7 @@ class HailoBackend(BaseBackend):
         return torch.cat((boxes, cls, angle), 2).transpose(1, 2)
 
     def _decode_raw(self, outputs: list[np.ndarray]) -> np.ndarray:
-        """解码分支优先排列的 YOLO26 回归和类别输出。"""
+        """解码分支优先排列的 YOLO26 回归和类别输出。."""
         from ultralytics.utils.tal import dist2bbox, make_anchors
 
         split = len(outputs) // 2
@@ -194,7 +194,7 @@ class HailoBackend(BaseBackend):
         return torch.cat((boxes, scores[..., None], (index % classes)[..., None].float()), 2).numpy()
 
     def _decode_depth(self, output: np.ndarray) -> torch.Tensor:
-        """将原始深度 logit 解码为度量深度图，并在主机端复现 ``Depth.forward`` 的处理。
+        """将原始深度 logit 解码为度量深度图，并在主机端复现 ``Depth.forward`` 的处理。.
 
         HEF 在检测头的最终 logit 卷积处截断，因此检测头后续的 clamp/exp 和学习得到的对数仿射校准在此处执行。
         深度图保持检测头分辨率（H/4, W/4）；``DepthPredictor.postprocess`` 使用 ``scale_masks`` 将其调整到图像尺寸，

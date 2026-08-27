@@ -13,13 +13,13 @@ from .base import BaseBackend
 
 
 class DeepXBackend(BaseBackend):
-    """用于 DEEPX 硬件加速器的 DEEPX NPU 推理后端。
+    """用于 DEEPX 硬件加速器的 DEEPX NPU 推理后端。.
 
     加载已编译的 DEEPX 模型（.dxnn 文件），并使用 DEEPX DX-Runtime 执行推理。
     """
 
     def load_model(self, weight: str | Path) -> None:
-        """从包含 .dxnn 文件的目录加载 DEEPX 模型。
+        """从包含 .dxnn 文件的目录加载 DEEPX 模型。.
 
         参数：
             weight (str | Path): 包含 .dxnn 二进制文件的 DEEPX 模型目录路径。
@@ -48,7 +48,7 @@ class DeepXBackend(BaseBackend):
         self.apply_metadata(self.read_metadata(found))
 
     def forward(self, im: torch.Tensor) -> np.ndarray | list[np.ndarray]:
-        """在 DEEPX NPU 上执行推理。
+        """在 DEEPX NPU 上执行推理。.
 
         根据 DEEPX 运行时约定，将每张图像从 BCHW 浮点格式 [0, 1] 转换为 HWC uint8 格式 [0, 255]，
         对每张图像运行引擎，然后沿批次维度堆叠输出。

@@ -24,7 +24,7 @@ from ultralytics.utils.files import increment_path
 
 
 def coco91_to_coco80_class() -> list[int]:
-    """将 91 索引的 COCO 类别 ID 转换为 80 索引的 COCO 类别 ID。
+    """将 91 索引的 COCO 类别 ID 转换为 80 索引的 COCO 类别 ID。.
 
     返回：
         (列表[int | None]): 长度为 91 的列表，索引表示 91 索引的类别 ID，值表示对应的 80 索引类别 ID；
@@ -126,7 +126,7 @@ def coco91_to_coco80_class() -> list[int]:
 
 
 def coco80_to_coco91_class() -> list[int]:
-    r"""将 80 索引（val2014）的类别 ID 转换为 91 索引（论文）的类别 ID。
+    r"""将 80 索引（val2014）的类别 ID 转换为 91 索引（论文）的类别 ID。.
 
     返回：
         (list[int]): 80 个类别 ID 组成的列表，每个值都是对应的 91 索引类别 ID。
@@ -237,7 +237,7 @@ def convert_coco(
     cls91to80: bool = True,
     lvis: bool = False,
 ):
-    """将 COCO 数据集标注转换为适用于训练 YOLO 模型的 YOLO 标注格式。
+    """将 COCO 数据集标注转换为适用于训练 YOLO 模型的 YOLO 标注格式。.
 
     参数：
         labels_dir (str, 可选): COCO 数据集标注文件所在目录的路径。
@@ -370,10 +370,9 @@ def convert_coco(
 
 
 def convert_segment_masks_to_yolo_seg(masks_dir: str, output_dir: str, classes: int):
-    """将分割掩码图像数据集转换为 YOLO 分割格式。
+    """将分割掩码图像数据集转换为 YOLO 分割格式。.
 
-    此函数读取包含二值掩码图像的目录，并将其转换为 YOLO 分割格式。
-    转换后的掩码会保存到指定的输出目录。
+    此函数读取包含二值掩码图像的目录，并将其转换为 YOLO 分割格式。 转换后的掩码会保存到指定的输出目录。
 
     参数：
         masks_dir (str): 保存所有掩码图像（png、jpg）的目录路径。
@@ -447,10 +446,9 @@ def convert_segment_masks_to_yolo_seg(masks_dir: str, output_dir: str, classes: 
 
 
 def convert_dota_to_yolo_obb(dota_root_path: str):
-    """将 DOTA 数据集标注转换为 YOLO OBB（定向边界框）格式。
+    """将 DOTA 数据集标注转换为 YOLO OBB（定向边界框）格式。.
 
-    此函数处理 DOTA 数据集 'train' 和 'val' 文件夹中的图像。对于每张图像，函数从原始标签目录读取对应标签，
-    再将新的 YOLO OBB 格式标签写入新目录。
+    此函数处理 DOTA 数据集 'train' 和 'val' 文件夹中的图像。对于每张图像，函数从原始标签目录读取对应标签， 再将新的 YOLO OBB 格式标签写入新目录。
 
     参数：
         dota_root_path (str): DOTA 数据集根目录的路径。
@@ -502,7 +500,7 @@ def convert_dota_to_yolo_obb(dota_root_path: str):
     }
 
     def convert_label(image_name: str, image_width: int, image_height: int, orig_label_dir: Path, save_dir: Path):
-        """将单张图像的 DOTA 标注转换为 YOLO OBB 格式，并保存到指定目录。"""
+        """将单张图像的 DOTA 标注转换为 YOLO OBB 格式，并保存到指定目录。."""
         orig_label_path = orig_label_dir / f"{image_name}.txt"
         save_path = save_dir / f"{image_name}.txt"
 
@@ -539,7 +537,7 @@ def convert_dota_to_yolo_obb(dota_root_path: str):
 
 
 def min_index(arr1: np.ndarray, arr2: np.ndarray):
-    """查找两个二维点数组之间距离最短的一对索引。
+    """查找两个二维点数组之间距离最短的一对索引。.
 
     参数：
         arr1 (np.ndarray): 形状为 (N, 2) 的 NumPy 数组，表示 N 个二维点。
@@ -554,7 +552,7 @@ def min_index(arr1: np.ndarray, arr2: np.ndarray):
 
 
 def merge_multi_segment(segments: list[list]):
-    """通过连接各分割段之间距离最短的坐标，将多个分割段合并为一个列表。
+    """通过连接各分割段之间距离最短的坐标，将多个分割段合并为一个列表。.
 
     此函数用细线连接这些坐标，将所有分割段合并为一个分割段。
 
@@ -604,7 +602,7 @@ def merge_multi_segment(segments: list[list]):
 
 
 def yolo_bbox2segment(im_dir: str | Path, save_dir: str | Path | None = None, sam_model: str = "sam_b.pt", device=None):
-    """将现有的目标检测数据集（边界框）转换为 YOLO 格式的分割数据集。
+    """将现有的目标检测数据集（边界框）转换为 YOLO 格式的分割数据集。.
 
     必要时使用 SAM 自动标注器生成分割数据。
 
@@ -668,10 +666,9 @@ def yolo_bbox2segment(im_dir: str | Path, save_dir: str | Path | None = None, sa
 
 
 def create_synthetic_coco_dataset():
-    """根据标签列表中的文件名创建包含随机图像的合成 COCO 数据集。
+    """根据标签列表中的文件名创建包含随机图像的合成 COCO 数据集。.
 
-    此函数下载 COCO 标签，读取标签列表文件中的图像文件名，为 train2017 和 val2017 子集创建合成图像，
-    并将其整理为 COCO 数据集结构。函数使用多线程高效生成图像。
+    此函数下载 COCO 标签，读取标签列表文件中的图像文件名，为 train2017 和 val2017 子集创建合成图像， 并将其整理为 COCO 数据集结构。函数使用多线程高效生成图像。
 
     示例：
         >>> from ultralytics.data.converter import create_synthetic_coco_dataset
@@ -685,7 +682,7 @@ def create_synthetic_coco_dataset():
     """
 
     def create_synthetic_image(image_file: Path):
-        """生成具有随机尺寸和颜色的合成图像，用于数据集增强或测试。"""
+        """生成具有随机尺寸和颜色的合成图像，用于数据集增强或测试。."""
         if not image_file.exists():
             size = (random.randint(480, 640), random.randint(480, 640))
             Image.new(
@@ -722,10 +719,9 @@ def create_synthetic_coco_dataset():
 
 
 def convert_to_multispectral(path: str | Path, n_channels: int = 10, replace: bool = False, zip: bool = False):
-    """通过在波长带之间进行插值，将 RGB 图像转换为多光谱图像。
+    """通过在波长带之间进行插值，将 RGB 图像转换为多光谱图像。.
 
-    此函数对 RGB 图像进行插值，生成具有指定通道数量的多光谱图像。
-    函数可以处理单张图像或图像目录。
+    此函数对 RGB 图像进行插值，生成具有指定通道数量的多光谱图像。 函数可以处理单张图像或图像目录。
 
     参数：
         path (str | Path): 待转换图像文件或包含待转换图像的目录路径。
@@ -775,13 +771,11 @@ def convert_to_multispectral(path: str | Path, n_channels: int = 10, replace: bo
 
 
 def _infer_ndjson_kpt_shape(image_records: list) -> list:
-    """根据 NDJSON 姿态标注推断 kpt_shape [关键点数量, 维度数]。
+    """根据 NDJSON 姿态标注推断 kpt_shape [关键点数量, 维度数]。.
 
-    扫描图像记录中最多 50 条姿态标注。标注格式为 [classId, cx, cy, w, h, kp1_x, kp1_y, kp1_vis, ...]，
-    因此关键点值从索引 5 开始。
+    扫描图像记录中最多 50 条姿态标注。标注格式为 [classId, cx, cy, w, h, kp1_x, kp1_y, kp1_vis, ...]， 因此关键点值从索引 5 开始。
 
-    函数首先尝试维度数为 3（x、y、可见性），并验证可见性取值是否为 {0, 1, 2}；
-    当值明确不能被 3 整除时，再回退到维度数为 2（仅 x、y）。
+    函数首先尝试维度数为 3（x、y、可见性），并验证可见性取值是否为 {0, 1, 2}； 当值明确不能被 3 整除时，再回退到维度数为 2（仅 x、y）。
     """
     kpt_lengths = []
     samples = []  # 用于检查可见性的原始关键点值片段
@@ -813,12 +807,10 @@ def _infer_ndjson_kpt_shape(image_records: list) -> list:
 
 
 async def convert_ndjson_to_yolo(ndjson_path: str | Path, output_path: str | Path | None = None) -> Path:
-    """将 NDJSON 数据集格式转换为 Ultralytics YOLO 数据集结构。
+    """将 NDJSON 数据集格式转换为 Ultralytics YOLO 数据集结构。.
 
-    此函数将以 NDJSON（按行分隔的 JSON）格式存储的数据集转换为标准 YOLO 格式。
-    对于检测、分割、姿态、OBB 任务，会分别创建图像目录和标签目录；深度数据集使用平行的 images/ 和 depth/
-    目录树，并保存经过缩放的 uint16 PNG 目标；分类任务使用 ImageNet 风格的 {split}/{class_name}/ 目录结构。
-    文件下载会并发执行。
+    此函数将以 NDJSON（按行分隔的 JSON）格式存储的数据集转换为标准 YOLO 格式。 对于检测、分割、姿态、OBB 任务，会分别创建图像目录和标签目录；深度数据集使用平行的 images/ 和 depth/
+    目录树，并保存经过缩放的 uint16 PNG 目标；分类任务使用 ImageNet 风格的 {split}/{class_name}/ 目录结构。 文件下载会并发执行。
 
     NDJSON 格式由以下内容组成：
     - 第一行：包含类别名称、任务类型和配置的数据集元数据。
@@ -874,7 +866,7 @@ async def convert_ndjson_to_yolo(ndjson_path: str | Path, output_path: str | Pat
 
 
 async def _convert_ndjson_to_yolo(ndjson_path: Path, output_path: Path, local: bool) -> Path:
-    """在持有转换锁时，将已解析的 NDJSON 源转换为 YOLO 数据集。"""
+    """在持有转换锁时，将已解析的 NDJSON 源转换为 YOLO 数据集。."""
     from ultralytics.utils.checks import check_requirements
 
     check_requirements("aiohttp")
@@ -1021,7 +1013,7 @@ async def _convert_ndjson_to_yolo(ndjson_path: Path, output_path: Path, local: b
             data_yaml[split] = f"images/{split}"
 
     async def ensure_file(session, path, url):
-        """文件在本地存在时返回 True，否则按照重试策略从 URL 下载文件。"""
+        """文件在本地存在时返回 True，否则按照重试策略从 URL 下载文件。."""
         if path.exists():
             return True
         if not url:
@@ -1058,7 +1050,7 @@ async def _convert_ndjson_to_yolo(ndjson_path: Path, output_path: Path, local: b
         return False
 
     async def process_record(session, semaphore, record):
-        """使用异步会话处理单条图像记录。"""
+        """使用异步会话处理单条图像记录。."""
         async with semaphore:
             split, original_name = record["split"], record["file"]
             annotations = record.get("annotations", {})

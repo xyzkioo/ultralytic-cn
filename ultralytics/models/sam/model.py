@@ -1,6 +1,6 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 """
-SAM 模型接口。
+SAM 模型接口。.
 
 此模块提供 Ultralytics Segment Anything Model（SAM）接口，用于实时图像分割。
 SAM 模型支持灵活的提示分割，已在 SA-1B 数据集上训练，并具备零样本能力，
@@ -24,10 +24,9 @@ from .predict import Predictor, SAM2Predictor, SAM3Predictor
 
 
 class SAM(Model):
-    """用于实时图像分割任务的 SAM（Segment Anything Model）接口类。
+    """用于实时图像分割任务的 SAM（Segment Anything Model）接口类。.
 
-    此类提供 Ultralytics Segment Anything Model（SAM）接口，支持基于提示的灵活图像分析。
-    它支持边界框、点和标签等多种提示，并具备零样本能力。
+    此类提供 Ultralytics Segment Anything Model（SAM）接口，支持基于提示的灵活图像分析。 它支持边界框、点和标签等多种提示，并具备零样本能力。
 
     属性：
         model (torch.nn.Module): 已加载的 SAM 模型。
@@ -46,7 +45,7 @@ class SAM(Model):
     """
 
     def __init__(self, model: str = "sam_b.pt") -> None:
-        """初始化 SAM（Segment Anything Model）实例。
+        """初始化 SAM（Segment Anything Model）实例。.
 
         参数：
             model (str): 预训练 SAM 模型文件路径，扩展名应为 .pt 或 .pth。
@@ -61,7 +60,7 @@ class SAM(Model):
         super().__init__(model=model, task="segment")
 
     def _load(self, weights: str, task=None):
-        """将指定权重加载到 SAM 模型中。
+        """将指定权重加载到 SAM 模型中。.
 
         参数：
             weights (str): 权重文件路径，应为包含模型参数的 .pt 或 .pth 文件。
@@ -81,7 +80,7 @@ class SAM(Model):
             self.model = build_sam(weights)
 
     def predict(self, source, stream: bool = False, bboxes=None, points=None, labels=None, **kwargs):
-        """对给定图像或视频源执行分割预测。
+        """对给定图像或视频源执行分割预测。.
 
         参数：
             source (str | PIL.Image | np.ndarray): 图像或视频文件路径、PIL.Image 对象或 np.ndarray 对象。
@@ -106,7 +105,7 @@ class SAM(Model):
         return super().predict(source, stream, prompts=prompts, **kwargs)
 
     def __call__(self, source=None, stream: bool = False, bboxes=None, points=None, labels=None, **kwargs):
-        """对给定图像或视频源执行分割预测。
+        """对给定图像或视频源执行分割预测。.
 
         此方法是 'predict' 方法的别名，为调用 SAM 模型执行分割任务提供便捷方式。
 
@@ -129,7 +128,7 @@ class SAM(Model):
         return self.predict(source, stream, bboxes, points, labels, **kwargs)
 
     def info(self, detailed: bool = False, verbose: bool = True):
-        """记录 SAM 模型信息。
+        """记录 SAM 模型信息。.
 
         参数：
             detailed (bool): 为 True 时显示模型层和操作的详细信息。
@@ -147,7 +146,7 @@ class SAM(Model):
 
     @property
     def task_map(self) -> dict[str, dict[str, type[Predictor]]]:
-        """提供从 'segment' 任务到对应 'Predictor' 的映射。
+        """提供从 'segment' 任务到对应 'Predictor' 的映射。.
 
         返回：
             (dict[str, dict[str, type[Predictor]]]): 将 'segment' 任务映射到对应 Predictor 类的字典。

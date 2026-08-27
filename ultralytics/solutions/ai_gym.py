@@ -7,7 +7,7 @@ from ultralytics.solutions.solutions import BaseSolution, SolutionAnnotator, Sol
 
 
 class AIGym(BaseSolution):
-    """根据人体姿态管理实时视频流中健身动作的类。
+    """根据人体姿态管理实时视频流中健身动作的类。.
 
     此类扩展 BaseSolution，使用 YOLO 姿态估计模型监控健身动作，并根据预设的上下姿态角度阈值跟踪和计数动作重复次数。
 
@@ -30,7 +30,7 @@ class AIGym(BaseSolution):
     """
 
     def __init__(self, **kwargs: Any) -> None:
-        """使用姿态估计和预设角度初始化 AIGym，以监控健身动作。
+        """使用姿态估计和预设角度初始化 AIGym，以监控健身动作。.
 
         参数：
             **kwargs (Any): 传递给父类构造函数的关键字参数，包括：
@@ -46,13 +46,13 @@ class AIGym(BaseSolution):
         self.kpts = self.CFG["kpts"]  # 用户选择的健身动作关键点
 
     def forget_tracks(self, track_ids):
-        """从健身状态中移除已结束的 ID，避免全天候视频流中的状态无限增长（参见 BaseSolution）。"""
+        """从健身状态中移除已结束的 ID，避免全天候视频流中的状态无限增长（参见 BaseSolution）。."""
         super().forget_tracks(track_ids)
         for track_id in track_ids:
             self.states.pop(track_id, None)
 
     def process(self, im0) -> SolutionResults:
-        """使用 Ultralytics YOLO 姿态模型监控健身动作。
+        """使用 Ultralytics YOLO 姿态模型监控健身动作。.
 
         此函数处理输入图像，跟踪并分析人体姿态以监控健身动作。它使用 YOLO 姿态模型检测关键点、估计角度，
         并根据预设角度阈值统计重复次数。
@@ -92,7 +92,7 @@ class AIGym(BaseSolution):
                 elif state["angle"] > self.up_angle:
                     state["stage"] = "up"
 
-        # 显示角度、计数和阶段文本
+                # 显示角度、计数和阶段文本
                 if self.show_labels:
                     annotator.plot_angle_and_count_and_stage(
                         angle_text=state["angle"],  # 要显示的角度文本

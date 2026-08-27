@@ -44,21 +44,21 @@ from ultralytics.utils.torch_utils import (
 
 
 def skip_rpi_semantic(task):
-    """由于内存限制，在 Raspberry Pi 上跳过语义分割导出测试。"""
+    """由于内存限制，在 Raspberry Pi 上跳过语义分割导出测试。."""
     if IS_RASPBERRYPI and task == "semantic":
         pytest.skip("Semantic segmentation export tests are skipped on Raspberry Pi due to memory constraints.")
 
 
 @pytest.mark.parametrize("end2end", [False, True])
 def test_export_torchscript(end2end, isolated_model):
-    """测试 YOLO 模型导出为 TorchScript 格式的兼容性和正确性。"""
+    """测试 YOLO 模型导出为 TorchScript 格式的兼容性和正确性。."""
     file = YOLO(isolated_model).export(format="torchscript", imgsz=32, end2end=end2end)
     YOLO(file)(SOURCE, imgsz=32)  # exported model inference
 
 
 @pytest.mark.parametrize("end2end", [False, True])
 def test_export_onnx(end2end, isolated_model):
-    """使用动态轴测试 YOLO 模型导出为 ONNX 格式。"""
+    """使用动态轴测试 YOLO 模型导出为 ONNX 格式。."""
     file = YOLO(isolated_model).export(format="onnx", dynamic=True, imgsz=32, end2end=end2end)
     YOLO(file)(SOURCE, imgsz=32)  # exported model inference
 
@@ -66,7 +66,7 @@ def test_export_onnx(end2end, isolated_model):
 @pytest.mark.slow
 @pytest.mark.parametrize("precision", [{"int8": True}, {"quantize": 8}])
 def test_export_onnx_int8(isolated_model, precision):
-    """通过旧版 int8 别名和统一的 quantize 参数测试 INT8 ONNX 导出。"""
+    """通过旧版 int8 别名和统一的 quantize 参数测试 INT8 ONNX 导出。."""
     file = YOLO(isolated_model).export(format="onnx", data=Path("coco8.yaml"), fraction=0.25, imgsz=32, **precision)
     assert Path(file).name.endswith("_int8.onnx")
     YOLO(file)(SOURCE, imgsz=32)  # exported model inference
@@ -74,7 +74,7 @@ def test_export_onnx_int8(isolated_model, precision):
 
 
 def test_onnx_int8_quantize_excludes_non_weighted_ops(monkeypatch):
-    """检查 ONNX INT8 只量化带权算子，同时保持字符串返回值约定。"""
+    """检查 ONNX INT8 只量化带权算子，同时保持字符串返回值约定。."""
     import onnx
     import onnxruntime.quantization as ort_quantization
 
@@ -97,7 +97,7 @@ def test_onnx_int8_quantize_excludes_non_weighted_ops(monkeypatch):
 
 
 def test_quantize_canonicalization():
-    """Quantize 接受 8/16/32（整数或字符串）及 w 表示法，并规范化为整数形式（未设置时保持 None）。"""
+    """Quantize 接受 8/16/32（整数或字符串）及 w 表示法，并规范化为整数形式（未设置时保持 None）。."""
     for value, expected in [
         (8, 8),
         (16, 16),
@@ -126,7 +126,7 @@ def test_quantize_canonicalization():
 
 
 def test_quantize_deprecation():
-    """旧版 half/int8 参数在所有模式下都会转发到统一的 quantize 参数；发生冲突时 int8 优先。"""
+    """旧版 half/int8 参数在所有模式下都会转发到统一的 quantize 参数；发生冲突时 int8 优先。."""
     assert _handle_deprecation({"int8": True})["quantize"] == 8
     assert _handle_deprecation({"half": True})["quantize"] == 16
     assert _handle_deprecation({"half": True, "int8": True})["quantize"] == 8  # int8 wins
@@ -136,7 +136,7 @@ def test_quantize_deprecation():
 
 
 def test_benchmark_forwards_legacy_precision(monkeypatch):
-    """model.benchmark(half=True) 必须以 quantize=16 传给基准测试调用，不能悄悄按 FP32 运行。"""
+    """model.benchmark(half=True) 必须以 quantize=16 传给基准测试调用，不能悄悄按 FP32 运行。."""
     import ultralytics.utils.benchmarks as bm
 
     captured = {}
@@ -146,7 +146,7 @@ def test_benchmark_forwards_legacy_precision(monkeypatch):
 
 
 def test_qnn_quantize_requires_w8a16():
-    """QNN 导出采用 W8A16；不支持显式的 INT8 激活量化。"""
+    """QNN 导出采用 W8A16；不支持显式的 INT8 激活量化。."""
     valid_args = ["batch", "data", "dynamic", "fraction", "keras", "nms"]
     validate_args("qnn", SimpleNamespace(quantize="w8a16"), valid_args)
     with pytest.raises(AssertionError, match=r"quantize=8 \(INT8\) is not supported"):
@@ -154,13 +154,13 @@ def test_qnn_quantize_requires_w8a16():
 
 
 def test_modelopt_quantize_onnx_requires_int8_dataset():
-    """检查缺少校准数据时 INT8 ModelOpt 量化会提前失败。"""
+    """检查缺少校准数据时 INT8 ModelOpt 量化会提前失败。."""
     with pytest.raises(ValueError, match="requires a calibration dataset"):
         modelopt_quantize_onnx("model.onnx", quantize=8)
 
 
 def test_int8_calibration_validates_split():
-    """检查 INT8 校准会拒绝不存在的数据集划分。"""
+    """检查 INT8 校准会拒绝不存在的数据集划分。."""
     exporter = object.__new__(Exporter)
     exporter.model = SimpleNamespace(task="obb")
     exporter.args = SimpleNamespace(data="coco8.yaml", split="trainval")
@@ -170,7 +170,7 @@ def test_int8_calibration_validates_split():
 
 
 def test_export_rknn_batch_expansion(monkeypatch, tmp_path):
-    """检查 RKNN 会先以批次 1 进行校准，再由 Toolkit 扩展到请求的批次大小。"""
+    """检查 RKNN 会先以批次 1 进行校准，再由 Toolkit 扩展到请求的批次大小。."""
     calls = {}
     monkeypatch.setattr(
         "ultralytics.utils.export.rknn.onnx2rknn", lambda **kwargs: calls.update(kwargs) or kwargs["output_dir"]
@@ -192,7 +192,7 @@ def test_export_rknn_batch_expansion(monkeypatch, tmp_path):
 
 
 def test_torch2onnx_serializes_concurrent_exports(monkeypatch, tmp_path):
-    """确保不同 worker 线程的 ONNX 导出不会相互重叠。"""
+    """确保不同 worker 线程的 ONNX 导出不会相互重叠。."""
     active = 0
     max_active = 0
     errors = []
@@ -228,7 +228,7 @@ def test_torch2onnx_serializes_concurrent_exports(monkeypatch, tmp_path):
 @pytest.mark.skipif(not TORCH_2_1, reason="OpenVINO requires torch>=2.1")
 @pytest.mark.parametrize("end2end", [False, True])
 def test_export_openvino(end2end, isolated_model):
-    """测试 YOLO 导出为 OpenVINO 格式时的模型推理兼容性。"""
+    """测试 YOLO 导出为 OpenVINO 格式时的模型推理兼容性。."""
     file = YOLO(isolated_model).export(format="openvino", imgsz=32, end2end=end2end)
     YOLO(file)(SOURCE, imgsz=32)  # exported model inference
 
@@ -247,7 +247,7 @@ def test_export_openvino(end2end, isolated_model):
 )
 # 暂时禁用 end2end=False 测试，因为 OpenVINO 测试期间 GitHub runner 会发生内存不足
 def test_export_openvino_matrix(task, dynamic, quantize, batch, nms, end2end):
-    """在各种配置矩阵条件下测试 YOLO 模型导出为 OpenVINO。"""
+    """在各种配置矩阵条件下测试 YOLO 模型导出为 OpenVINO。."""
     skip_rpi_semantic(task)
     file = YOLO(TASK2MODEL[task]).export(
         format="openvino",
@@ -275,7 +275,7 @@ def test_export_openvino_matrix(task, dynamic, quantize, batch, nms, end2end):
     ],
 )
 def test_export_onnx_matrix(task, dynamic, batch, simplify, nms, end2end):
-    """使用各种配置和参数测试 YOLO 导出为 ONNX 格式。"""
+    """使用各种配置和参数测试 YOLO 导出为 ONNX 格式。."""
     skip_rpi_semantic(task)
     file = YOLO(TASK2MODEL[task]).export(
         format="onnx",
@@ -294,7 +294,7 @@ def test_export_onnx_matrix(task, dynamic, batch, simplify, nms, end2end):
 
 
 def test_export_onnx_semantic_dnn():
-    """使用 OpenCV DNN 测试语义 ONNX 类别映射输出。"""
+    """使用 OpenCV DNN 测试语义 ONNX 类别映射输出。."""
     skip_rpi_semantic("semantic")
     file = YOLO(TASK2MODEL["semantic"]).export(format="onnx", imgsz=32)
     r = YOLO(file).predict(SOURCE, imgsz=32, dnn=True)
@@ -314,7 +314,7 @@ def test_export_onnx_semantic_dnn():
     ],
 )
 def test_export_torchscript_matrix(task, dynamic, batch, nms, end2end, tmp_path):
-    """在不同配置下测试 YOLO 模型导出为 TorchScript 格式。"""
+    """在不同配置下测试 YOLO 模型导出为 TorchScript 格式。."""
     skip_rpi_semantic(task)
     file = YOLO(isolated_model_path(tmp_path, WEIGHTS_DIR / TASK2MODEL[task])).export(
         format="torchscript", imgsz=32, dynamic=dynamic, batch=batch, nms=nms, end2end=end2end
@@ -343,7 +343,7 @@ def test_export_torchscript_matrix(task, dynamic, batch, nms, end2end, tmp_path)
     ],
 )
 def test_export_coreml_matrix(task, dynamic, quantize, nms, batch, end2end):
-    """使用各种参数配置测试 YOLO 导出为 CoreML 格式。"""
+    """使用各种参数配置测试 YOLO 导出为 CoreML 格式。."""
     skip_rpi_semantic(task)
     file = YOLO(TASK2MODEL[task]).export(
         format="coreml",
@@ -367,7 +367,7 @@ def test_export_coreml_matrix(task, dynamic, quantize, nms, batch, end2end):
 )
 @pytest.mark.parametrize("format", ["coreml", "mlmodel"])
 def test_export_coreml(isolated_model, format, monkeypatch, tmp_path):
-    """测试 YOLO 导出为 CoreML 格式并检查错误。"""
+    """测试 YOLO 导出为 CoreML 格式并检查错误。."""
     from ultralytics.utils.export import coreml
 
     quantize, torch2coreml = [], coreml.torch2coreml
@@ -412,7 +412,7 @@ def test_export_coreml(isolated_model, format, monkeypatch, tmp_path):
     reason="coremltools deadlocks after OpenVINO on macOS Python 3.13 (conflicting OpenMP runtimes)",
 )
 def test_export_coreml_rtdetr():
-    """测试 RT-DETR 导出为 CoreML 格式并检查错误。"""
+    """测试 RT-DETR 导出为 CoreML 格式并检查错误。."""
     stdout, stderr = io.StringIO(), io.StringIO()
     with redirect_stdout(stdout), redirect_stderr(stderr):
         file = YOLO(WEIGHTS_DIR / "rtdetr-l.pt").export(format="coreml", imgsz=160)
@@ -431,7 +431,7 @@ def test_export_coreml_rtdetr():
 @pytest.mark.skipif(True, reason="Test disabled")
 @pytest.mark.skipif(not LINUX, reason="TF suffers from install conflicts on Windows and macOS")
 def test_export_pb(isolated_model):
-    """测试 YOLO 导出为 TensorFlow 的 Protobuf（*.pb）格式。"""
+    """测试 YOLO 导出为 TensorFlow 的 Protobuf（*.pb）格式。."""
     model = YOLO(isolated_model)
     file = model.export(format="pb", imgsz=32)
     YOLO(file)(SOURCE, imgsz=32)
@@ -439,7 +439,7 @@ def test_export_pb(isolated_model):
 
 @pytest.mark.skipif(True, reason="Test disabled as Paddle protobuf and ONNX protobuf requirements conflict.")
 def test_export_paddle(isolated_model):
-    """测试 YOLO 导出为 Paddle 格式，并注明 protobuf 与 ONNX 存在冲突。"""
+    """测试 YOLO 导出为 Paddle 格式，并注明 protobuf 与 ONNX 存在冲突。."""
     YOLO(isolated_model).export(format="paddle", imgsz=32)
 
 
@@ -449,7 +449,7 @@ def test_export_paddle(isolated_model):
     reason="MNN ONNX-parser protobuf conflicts with TensorFlow protobuf>=6.31.1 loaded earlier in the shared Python 3.13 test process",
 )
 def test_export_mnn(isolated_model):
-    """测试 YOLO 导出为 MNN 格式（警告：MNN 测试必须先于 NCNN 测试，否则 Windows CI 会报错）。"""
+    """测试 YOLO 导出为 MNN 格式（警告：MNN 测试必须先于 NCNN 测试，否则 Windows CI 会报错）。."""
     file = YOLO(isolated_model).export(format="mnn", imgsz=32)
     YOLO(file)(SOURCE, imgsz=32)  # exported model inference
 
@@ -463,7 +463,7 @@ def test_export_mnn(isolated_model):
     ],
 )
 def test_export_mnn_rejects_unsupported_nms(model, kwargs, error):
-    """测试 MNN 会拒绝运行时失败或丢失任务输出的 NMS 组合。"""
+    """测试 MNN 会拒绝运行时失败或丢失任务输出的 NMS 组合。."""
     with pytest.raises(ValueError, match=error):
         YOLO(model).export(format="mnn", imgsz=32, **kwargs)
 
@@ -478,7 +478,7 @@ def test_export_mnn_rejects_unsupported_nms(model, kwargs, error):
     ],
 )
 def test_export_mnn_options(model, task, kwargs):
-    """通过推理测试 MNN 动态形状和支持的内嵌 NMS 任务。"""
+    """通过推理测试 MNN 动态形状和支持的内嵌 NMS 任务。."""
     batch = kwargs.get("batch", 1)
     file = YOLO(model).export(format="mnn", imgsz=32, **kwargs)
     assert len(YOLO(file, task=task)([SOURCE] * batch, imgsz=64 if kwargs.get("dynamic") else 32)) == batch
@@ -495,7 +495,7 @@ def test_export_mnn_options(model, task, kwargs):
     ],
 )
 def test_export_mnn_matrix(task, quantize, batch, end2end):
-    """考虑各种导出配置，测试 YOLO 导出为 MNN 格式。"""
+    """考虑各种导出配置，测试 YOLO 导出为 MNN 格式。."""
     skip_rpi_semantic(task)
     file = YOLO(TASK2MODEL[task]).export(format="mnn", imgsz=32, quantize=quantize, batch=batch, end2end=end2end)
     YOLO(file)([SOURCE] * batch, imgsz=32)  # exported model inference
@@ -504,7 +504,7 @@ def test_export_mnn_matrix(task, quantize, batch, end2end):
 
 @pytest.mark.skipif(not TORCH_2_0, reason="NCNN inference causes segfault on PyTorch<2.0")
 def test_export_ncnn(isolated_model):
-    """测试 YOLO 导出为 NCNN 格式。"""
+    """测试 YOLO 导出为 NCNN 格式。."""
     file = YOLO(isolated_model).export(format="ncnn", imgsz=32)
     YOLO(file)(SOURCE, imgsz=32)  # exported model inference
 
@@ -513,7 +513,7 @@ def test_export_ncnn(isolated_model):
 @pytest.mark.skipif(not TORCH_2_0, reason="NCNN inference causes segfault on PyTorch<2.0")
 @pytest.mark.parametrize("task, quantize, batch", list(product(sorted(TASKS), [16], [1])))
 def test_export_ncnn_matrix(task, quantize, batch):
-    """考虑各种导出配置，测试 YOLO 导出为 NCNN 格式。"""
+    """考虑各种导出配置，测试 YOLO 导出为 NCNN 格式。."""
     skip_rpi_semantic(task)
     file = YOLO(TASK2MODEL[task]).export(format="ncnn", imgsz=32, quantize=quantize, batch=batch)
     YOLO(file)([SOURCE] * batch, imgsz=32)  # exported model inference
@@ -527,7 +527,7 @@ def test_export_ncnn_matrix(task, quantize, batch):
     IS_RASPBERRYPI, reason="Test disabled as IMX export suffers from OOM (Out of Memory) on Raspberry Pi 5 16GB"
 )
 def test_export_imx():
-    """测试 YOLO 导出为 IMX 格式。"""
+    """测试 YOLO 导出为 IMX 格式。."""
     model = YOLO("yolo11n.pt")  # IMX 导出仅支持 YOLO11
     file = model.export(format="imx", imgsz=32, data="coco8.yaml")
     YOLO(file)(SOURCE, imgsz=32)
@@ -537,7 +537,7 @@ def test_export_imx():
 @pytest.mark.skipif(not LINUX or ARM64, reason="RKNN export only supported on non-aarch64 Linux")
 @pytest.mark.parametrize("quantize,batch", [(8, 8), (16, 1)])
 def test_export_rknn(isolated_model, quantize, batch):
-    """测试 YOLO 导出为 RKNN 格式。"""
+    """测试 YOLO 导出为 RKNN 格式。."""
     file = YOLO(isolated_model).export(format="rknn", imgsz=32, quantize=quantize, batch=batch, data="coco8.yaml")
     assert next(Path(file).rglob("*.rknn"), None), f"RKNN export failed, no RKNN model found in: {file}"
     shutil.rmtree(file, ignore_errors=True)
@@ -547,7 +547,7 @@ def test_export_rknn(isolated_model, quantize, batch):
 @pytest.mark.skipif(not checks.IS_PYTHON_MINIMUM_3_10 or not TORCH_2_9, reason="Requires Python>=3.10 and Torch>=2.9.0")
 @pytest.mark.skipif(WINDOWS, reason="Skipping test on Windows")
 def test_export_executorch(isolated_model):
-    """测试 YOLO 模型导出为 ExecuTorch 格式。"""
+    """测试 YOLO 模型导出为 ExecuTorch 格式。."""
     file = YOLO(isolated_model).export(format="executorch", imgsz=32)
     assert Path(file).exists(), f"ExecuTorch export failed, directory not found: {file}"
     # 检查导出目录中是否存在 .pte 文件
@@ -568,7 +568,7 @@ def test_export_executorch(isolated_model):
     [(task, quantize) for task in sorted(TASKS) for quantize in (None, 8, "w8a16", "w8a32")],
 )
 def test_export_litert_matrix(task, quantize):
-    """为各种任务测试 YOLO 导出为 LiteRT 格式（FP32、静态 INT8、静态 w8a16 和动态 w8a32）。"""
+    """为各种任务测试 YOLO 导出为 LiteRT 格式（FP32、静态 INT8、静态 w8a16 和动态 w8a32）。."""
     file = Path(YOLO(TASK2MODEL[task]).export(format="litert", imgsz=32, quantize=quantize))
     assert file.is_file() and file.suffix == ".tflite", f"LiteRT export is not a single .tflite for '{task}': {file}"
     # 约定：导出结果保持 float32 图输入输出（int8/int16 仅在内部使用），因此下游运行时读写浮点数，
@@ -591,7 +591,7 @@ def test_export_litert_matrix(task, quantize):
 @pytest.mark.skipif(WINDOWS, reason="Skipping test on Windows")
 @pytest.mark.parametrize("task", sorted(TASKS))
 def test_export_executorch_matrix(task):
-    """为各种任务类型测试 YOLO 导出为 ExecuTorch 格式。"""
+    """为各种任务类型测试 YOLO 导出为 ExecuTorch 格式。."""
     skip_rpi_semantic(task)
     file = YOLO(TASK2MODEL[task]).export(format="executorch", imgsz=32)
     assert Path(file).exists(), f"ExecuTorch export failed for task '{task}', directory not found: {file}"
@@ -610,7 +610,7 @@ def test_export_executorch_matrix(task):
     reason="onnxruntime-qnn ships prebuilt wheels only for Windows and Linux on Python>=3.11",
 )
 def test_export_qnn(isolated_model):
-    """通过 ONNX Runtime QNN 执行提供程序测试 YOLO 导出为 Qualcomm QNN 格式。"""
+    """通过 ONNX Runtime QNN 执行提供程序测试 YOLO 导出为 Qualcomm QNN 格式。."""
     import importlib.util
 
     # QNN EP 以 'onnxruntime_qnn' 插件模块或 onnxruntime/capi 中捆绑的 provider 库形式提供。
@@ -632,11 +632,11 @@ def test_export_qnn(isolated_model):
 
 @pytest.mark.parametrize("env", [k for k, v in EXPORT_ENVS.items() if k != "base" or v["smoke"]])
 def test_export_env_has_smoke(env):
-    """确保每个非基础导出环境都声明了构建时导出冒烟测试。"""
+    """确保每个非基础导出环境都声明了构建时导出冒烟测试。."""
     assert EXPORT_ENVS[env]["smoke"], f"export env '{env}' has no smoke command"
 
 
 def test_every_format_env_is_registered():
-    """确保每种导出格式都指向已注册的导出环境。"""
+    """确保每种导出格式都指向已注册的导出环境。."""
     for fmt, env in zip(export_formats()["Argument"], export_formats()["Env"]):
         assert env in EXPORT_ENVS, f"format '{fmt}' references unknown env '{env}'"

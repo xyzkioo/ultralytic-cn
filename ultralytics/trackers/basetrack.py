@@ -1,11 +1,11 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
-"""定义 YOLO 对象跟踪所需的基类和数据结构。"""
+"""定义 YOLO 对象跟踪所需的基类和数据结构。."""
 
 from typing import Any
 
 
 class TrackState:
-    """表示被跟踪对象可能状态的枚举类。
+    """表示被跟踪对象可能状态的枚举类。.
 
     属性：
         New (int): 对象刚被检测到时的状态。
@@ -26,7 +26,7 @@ class TrackState:
 
 
 class BaseTrack:
-    """对象跟踪的基类，提供基础属性和方法。
+    """对象跟踪的基类，提供基础属性和方法。.
 
     属性：
         _count (int): 用于生成唯一跟踪 ID 的类级计数器。
@@ -57,7 +57,7 @@ class BaseTrack:
     _count = 0
 
     def __init__(self):
-        """使用唯一 ID 和基础跟踪属性初始化新的跟踪对象。"""
+        """使用唯一 ID 和基础跟踪属性初始化新的跟踪对象。."""
         self.track_id = 0
         self.is_activated = False
         self.state = TrackState.New
@@ -67,36 +67,36 @@ class BaseTrack:
 
     @property
     def end_frame(self) -> int:
-        """返回对象最近一次被跟踪的帧编号。"""
+        """返回对象最近一次被跟踪的帧编号。."""
         return self.frame_id
 
     @staticmethod
     def next_id() -> int:
-        """递增并返回对象跟踪使用的下一个唯一全局跟踪 ID。"""
+        """递增并返回对象跟踪使用的下一个唯一全局跟踪 ID。."""
         BaseTrack._count += 1
         return BaseTrack._count
 
     def activate(self, *args: Any) -> None:
-        """使用提供的参数激活跟踪对象，并初始化跟踪所需属性。"""
+        """使用提供的参数激活跟踪对象，并初始化跟踪所需属性。."""
         raise NotImplementedError
 
     def predict(self) -> None:
-        """根据当前状态和跟踪模型预测跟踪对象的下一状态。"""
+        """根据当前状态和跟踪模型预测跟踪对象的下一状态。."""
         raise NotImplementedError
 
     def update(self, *args: Any, **kwargs: Any) -> None:
-        """使用新的观测和数据更新跟踪对象，并相应修改其状态和属性。"""
+        """使用新的观测和数据更新跟踪对象，并相应修改其状态和属性。."""
         raise NotImplementedError
 
     def mark_lost(self) -> None:
-        """将状态更新为 TrackState.Lost，把跟踪对象标记为丢失。"""
+        """将状态更新为 TrackState.Lost，把跟踪对象标记为丢失。."""
         self.state = TrackState.Lost
 
     def mark_removed(self) -> None:
-        """将状态设置为 TrackState.Removed，把跟踪对象标记为已移除。"""
+        """将状态设置为 TrackState.Removed，把跟踪对象标记为已移除。."""
         self.state = TrackState.Removed
 
     @staticmethod
     def reset_id() -> None:
-        """将全局跟踪 ID 计数器重置为初始值。"""
+        """将全局跟踪 ID 计数器重置为初始值。."""
         BaseTrack._count = 0

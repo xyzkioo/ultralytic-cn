@@ -9,10 +9,9 @@ __all__ = ["NASValidator"]
 
 
 class NASValidator(DetectionValidator):
-    """用于对象检测的 Ultralytics YOLO NAS 验证器。
+    """用于对象检测的 Ultralytics YOLO NAS 验证器。.
 
-    此类继承 Ultralytics 模型包中的 DetectionValidator，负责后处理 YOLO NAS 模型生成的原始预测结果。
-    它执行非极大值抑制以移除重叠和低置信度边界框，最终生成检测结果。
+    此类继承 Ultralytics 模型包中的 DetectionValidator，负责后处理 YOLO NAS 模型生成的原始预测结果。 它执行非极大值抑制以移除重叠和低置信度边界框，最终生成检测结果。
 
     属性：
         args (Namespace): 包含后处理配置的命名空间，例如置信度和 IoU 阈值。
@@ -30,7 +29,7 @@ class NASValidator(DetectionValidator):
     """
 
     def postprocess(self, preds_in):
-        """对预测输出应用非极大值抑制。"""
+        """对预测输出应用非极大值抑制。."""
         boxes = ops.xyxy2xywh(preds_in[0][0])  # 将边界框从 xyxy 格式转换为 xywh 格式
         preds = torch.cat((boxes, preds_in[0][1]), -1).permute(0, 2, 1)  # 拼接边界框和分数并调整维度顺序
         return super().postprocess(preds)

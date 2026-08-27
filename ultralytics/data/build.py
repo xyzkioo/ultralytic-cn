@@ -43,7 +43,7 @@ from ultralytics.utils.torch_utils import TORCH_1_13, TORCH_2_0, TORCH_2_7, get_
 
 
 class InfiniteDataLoader(dataloader.DataLoader):
-    """在无限迭代中复用工作进程的数据加载器。
+    """在无限迭代中复用工作进程的数据加载器。.
 
     此数据加载器扩展 PyTorch DataLoader，支持无限复用工作进程，从而提高需要多次遍历数据集且无需重复创建工作进程的训练循环效率。
 
@@ -67,7 +67,7 @@ class InfiniteDataLoader(dataloader.DataLoader):
     """
 
     def __init__(self, *args: Any, **kwargs: Any):
-        """使用与 DataLoader 相同的参数初始化 InfiniteDataLoader。"""
+        """使用与 DataLoader 相同的参数初始化 InfiniteDataLoader。."""
         if not TORCH_2_0:
             kwargs.pop("prefetch_factor", None)  # 早期版本不支持
         super().__init__(*args, **kwargs)
@@ -75,16 +75,16 @@ class InfiniteDataLoader(dataloader.DataLoader):
         self.iterator = super().__iter__()
 
     def __len__(self) -> int:
-        """返回批次采样器中采样器的长度。"""
+        """返回批次采样器中采样器的长度。."""
         return len(self.batch_sampler.sampler)
 
     def __iter__(self) -> Iterator:
-        """从持久化迭代器返回一个训练周期的批次。"""
+        """从持久化迭代器返回一个训练周期的批次。."""
         for _ in range(len(self)):
             yield next(self.iterator)
 
     def __del__(self):
-        """确保删除 DataLoader 时正确终止工作进程。"""
+        """确保删除 DataLoader 时正确终止工作进程。."""
         try:
             for w in getattr(self.iterator, "_workers", ()):  # 强制终止
                 if w.is_alive():
@@ -94,18 +94,18 @@ class InfiniteDataLoader(dataloader.DataLoader):
             pass
 
     def close(self):
-        """关闭持久化工作进程，并在解释器退出前将其从 torch 的 SIGCHLD 监视器中注销。"""
+        """关闭持久化工作进程，并在解释器退出前将其从 torch 的 SIGCHLD 监视器中注销。."""
         if hasattr(self.iterator, "_workers"):
             self.iterator._shutdown_workers()  # 等待工作进程结束，并调用 torch._C._remove_worker_pids
 
     def reset(self):
-        """重置迭代器，以便在训练期间修改数据集。"""
+        """重置迭代器，以便在训练期间修改数据集。."""
         self.close()  # 创建新迭代器前释放旧工作进程管道
         self.iterator = self._get_iterator()
 
 
 class _RepeatSampler:
-    """为无限迭代而无限重复的采样器。
+    """为无限迭代而无限重复的采样器。.
 
     此采样器包装另一个采样器并无限返回其内容，使数据集可以无限迭代而无需重新创建采样器。
 
@@ -114,21 +114,21 @@ class _RepeatSampler:
     """
 
     def __init__(self, sampler: Any):
-        """使用要无限重复的采样器初始化 _RepeatSampler。"""
+        """使用要无限重复的采样器初始化 _RepeatSampler。."""
         self.sampler = sampler
 
     def __iter__(self) -> Iterator:
-        """无限遍历采样器，并依次返回其中的内容。"""
+        """无限遍历采样器，并依次返回其中的内容。."""
         while True:
             yield from iter(self.sampler)
 
 
 class ContiguousDistributedSampler(torch.utils.data.Sampler):
-    """将连续且按批次对齐的数据集块分配给每个 GPU 的分布式采样器。
+    """将连续且按批次对齐的数据集块分配给每个 GPU 的分布式采样器。.
 
-    PyTorch 的 DistributedSampler 会以轮询方式分配样本（GPU 0 获取索引 [0,2,4,...]，GPU 1 获取 [1,3,5,...]），
-    而此采样器会为每个 GPU 分配连续的数据集批次（GPU 0 获取批次 [0,1,2,...]，GPU 1 获取 [k,k+1,...] 等）。
-    这样可以保留原始数据集中的顺序或分组；当样本按相似性组织时（例如按尺寸对图像排序，以便 rect=True 时高效地进行无填充批处理），这一点非常重要。
+    PyTorch 的 DistributedSampler 会以轮询方式分配样本（GPU 0 获取索引 [0,2,4,...]，GPU 1 获取 [1,3,5,...]）， 而此采样器会为每个 GPU 分配连续的数据集批次（GPU 0
+    获取批次 [0,1,2,...]，GPU 1 获取 [k,k+1,...] 等）。 这样可以保留原始数据集中的顺序或分组；当样本按相似性组织时（例如按尺寸对图像排序，以便 rect=True
+    时高效地进行无填充批处理），这一点非常重要。
 
     当批次数量无法被进程数整除时，此采样器会将余数批次分配给前几个 rank，确保所有样本在所有 GPU 上恰好覆盖一次。
 
@@ -160,7 +160,7 @@ class ContiguousDistributedSampler(torch.utils.data.Sampler):
         rank: int | None = None,
         shuffle: bool = False,
     ) -> None:
-        """使用数据集和分布式训练参数初始化采样器。"""
+        """使用数据集和分布式训练参数初始化采样器。."""
         if num_replicas is None:
             num_replicas = dist.get_world_size() if dist.is_initialized() else 1
         if rank is None:
@@ -178,7 +178,7 @@ class ContiguousDistributedSampler(torch.utils.data.Sampler):
         self.num_batches = math.ceil(self.total_size / self.batch_size)
 
     def _get_rank_indices(self) -> tuple[int, int]:
-        """计算当前 rank 负责的数据块起始和结束样本索引。"""
+        """计算当前 rank 负责的数据块起始和结束样本索引。."""
         # 计算当前 rank 负责的批次
         batches_per_rank_base = self.num_batches // self.num_replicas
         remainder = self.num_batches % self.num_replicas
@@ -197,7 +197,7 @@ class ContiguousDistributedSampler(torch.utils.data.Sampler):
         return start_idx, end_idx
 
     def __iter__(self) -> Iterator:
-        """生成当前 rank 负责的连续数据集块索引。"""
+        """生成当前 rank 负责的连续数据集块索引。."""
         start_idx, end_idx = self._get_rank_indices()
         indices = list(range(start_idx, end_idx))
 
@@ -209,12 +209,12 @@ class ContiguousDistributedSampler(torch.utils.data.Sampler):
         return iter(indices)
 
     def __len__(self) -> int:
-        """返回当前 rank 数据块中的样本数量。"""
+        """返回当前 rank 数据块中的样本数量。."""
         start_idx, end_idx = self._get_rank_indices()
         return end_idx - start_idx
 
     def set_epoch(self, epoch: int) -> None:
-        """设置采样器周期，以确保不同周期使用不同的打乱模式。
+        """设置采样器周期，以确保不同周期使用不同的打乱模式。.
 
         参数：
             epoch (int): 用作打乱随机种子的训练周期编号。
@@ -223,7 +223,7 @@ class ContiguousDistributedSampler(torch.utils.data.Sampler):
 
 
 def seed_worker(worker_id: int) -> None:
-    """设置数据加载器工作进程的随机种子，确保不同工作进程之间结果可复现。"""
+    """设置数据加载器工作进程的随机种子，确保不同工作进程之间结果可复现。."""
     worker_seed = torch.initial_seed() % 2**32
     np.random.seed(worker_seed)
     random.seed(worker_seed)
@@ -240,7 +240,7 @@ def build_yolo_dataset(
     multi_modal: bool = False,
     fraction: float | None = None,
 ) -> Dataset:
-    """根据配置参数构建并返回 YOLO 数据集。"""
+    """根据配置参数构建并返回 YOLO 数据集。."""
     pad = 0.0 if mode == "train" else 0.5
     rect = cfg.rect or rect
     if cfg.task == "depth":
@@ -289,7 +289,7 @@ def build_grounding(
     stride: int = 32,
     max_samples: int = 80,
 ) -> Dataset:
-    """根据配置参数构建并返回 GroundingDataset。"""
+    """根据配置参数构建并返回 GroundingDataset。."""
     return GroundingDataset(
         img_path=img_path,
         json_file=json_file,
@@ -320,7 +320,7 @@ def build_dataloader(
     pin_memory: bool = True,
     device: torch.device | str = "cuda",
 ) -> InfiniteDataLoader:
-    """创建并返回用于训练或验证的 InfiniteDataLoader。
+    """创建并返回用于训练或验证的 InfiniteDataLoader。.
 
     参数：
         dataset (Dataset): 要加载数据的数据集。
@@ -383,7 +383,7 @@ def build_dataloader(
 def check_source(
     source: str | int | Path | list | tuple | np.ndarray | Image.Image | torch.Tensor,
 ) -> tuple[Any, bool, bool, bool, bool, bool]:
-    """检查输入源类型，并返回对应的标志值。
+    """检查输入源类型，并返回对应的标志值。.
 
     参数：
         source (str | int | Path | list | tuple | np.ndarray | PIL.Image | torch.Tensor): 要检查的输入源。
@@ -437,7 +437,7 @@ def load_inference_source(
     buffer: bool = False,
     channels: int = 3,
 ):
-    """加载对象检测的推理源，并应用必要的变换。
+    """加载对象检测的推理源，并应用必要的变换。.
 
     参数：
         source (str | int | Path | list | tuple | np.ndarray | PIL.Image | torch.Tensor): 用于推理的输入源。

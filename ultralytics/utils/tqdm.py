@@ -15,15 +15,14 @@ from typing_extensions import Self
 
 @lru_cache(maxsize=1)
 def is_noninteractive_console() -> bool:
-    """检查已知的非交互式控制台环境。"""
+    """检查已知的非交互式控制台环境。."""
     return "GITHUB_ACTIONS" in os.environ
 
 
 class TQDM:
-    """Ultralytics 的轻量级零依赖进度条。
+    """Ultralytics 的轻量级零依赖进度条。.
 
-    适用于 Weights & Biases、控制台输出和其他日志系统等多种环境，提供简洁的 rich 风格进度条。
-    其特性包括零外部依赖、简洁的单行输出、Unicode 块字符进度条、上下文管理器支持、迭代器协议支持
+    适用于 Weights & Biases、控制台输出和其他日志系统等多种环境，提供简洁的 rich 风格进度条。 其特性包括零外部依赖、简洁的单行输出、Unicode 块字符进度条、上下文管理器支持、迭代器协议支持
     以及动态描述更新。
 
     属性：
@@ -96,7 +95,7 @@ class TQDM:
         initial: int = 0,
         **kwargs,
     ) -> None:
-        """使用指定配置选项初始化 TQDM 进度条。
+        """使用指定配置选项初始化 TQDM 进度条。.
 
         参数：
             iterable (Any, 可选): 要用进度条包装的可迭代对象。
@@ -157,7 +156,7 @@ class TQDM:
             self._display()
 
     def _format_rate(self, rate: float) -> str:
-        """格式化带单位的速率，在 it/s 和 s/it 之间切换以提高可读性。"""
+        """格式化带单位的速率，在 it/s 和 s/it 之间切换以提高可读性。."""
         if rate <= 0:
             return ""
 
@@ -172,7 +171,7 @@ class TQDM:
         return next((f"{rate / t:.1f}{u}" for t, u in self.scales if rate >= t), fallback)
 
     def _format_num(self, num: float) -> str:
-        """使用可选单位缩放格式化数量。"""
+        """使用可选单位缩放格式化数量。."""
         if not self.unit_scale or not self.is_bytes:
             return str(num)
 
@@ -184,7 +183,7 @@ class TQDM:
 
     @staticmethod
     def _format_time(seconds: float) -> str:
-        """格式化时间长度。"""
+        """格式化时间长度。."""
         if seconds < 60:
             return f"{seconds:.1f}s"
         elif seconds < 3600:
@@ -194,7 +193,7 @@ class TQDM:
             return f"{h}:{m:02d}:{seconds % 60:02.0f}"
 
     def _generate_bar(self, width: int = 12) -> str:
-        """生成进度条。"""
+        """生成进度条。."""
         if self.total is None:
             return "━" * width if self.closed else "─" * width
 
@@ -207,7 +206,7 @@ class TQDM:
 
     @staticmethod
     def _fit(text: str, width: int) -> str:
-        """将文本截断到指定显示单元格宽度，跳过零宽度 ANSI 代码，并将中日韩字符计为 2 个单元格。"""
+        """将文本截断到指定显示单元格宽度，跳过零宽度 ANSI 代码，并将中日韩字符计为 2 个单元格。."""
         cells = i = 0
         while i < len(text):
             if text[i] == "\033":  # ANSI 转义序列：宽度为零，持续到字母终止符
@@ -221,13 +220,13 @@ class TQDM:
         return text
 
     def _should_update(self, dt: float, dn: int) -> bool:
-        """检查是否应更新显示。"""
+        """检查是否应更新显示。."""
         if self.noninteractive:
             return False
         return (self.total is not None and self.n >= self.total) or (dt >= self.mininterval)
 
     def _display(self, final: bool = False) -> None:
-        """显示进度条。"""
+        """显示进度条。."""
         if self.disable or (self.closed and not final):
             return
 
@@ -307,26 +306,26 @@ class TQDM:
             pass
 
     def update(self, n: int = 1) -> None:
-        """将进度更新 n 步。"""
+        """将进度更新 n 步。."""
         if not self.disable and not self.closed:
             self.n += n
             self._display()
 
     def set_description(self, desc: str | None) -> None:
-        """设置描述。"""
+        """设置描述。."""
         self.desc = desc or ""
         if not self.disable:
             self._display()
 
     def set_postfix(self, **kwargs: Any) -> None:
-        """设置后缀（追加到描述后）。"""
+        """设置后缀（追加到描述后）。."""
         if kwargs:
             postfix = ", ".join(f"{k}={v}" for k, v in kwargs.items())
             base_desc = self.desc.split(" | ")[0] if " | " in self.desc else self.desc
             self.set_description(f"{base_desc} | {postfix}")
 
     def close(self) -> None:
-        """关闭进度条。"""
+        """关闭进度条。."""
         if self.closed:
             return
 
@@ -353,15 +352,15 @@ class TQDM:
                 pass
 
     def __enter__(self) -> Self:
-        """进入上下文管理器。"""
+        """进入上下文管理器。."""
         return self
 
     def __exit__(self, *args: object) -> None:
-        """退出上下文管理器并关闭进度条。"""
+        """退出上下文管理器并关闭进度条。."""
         self.close()
 
     def __iter__(self) -> Any:
-        """遍历被包装的可迭代对象，并更新进度。"""
+        """遍历被包装的可迭代对象，并更新进度。."""
         if self.iterable is None:
             raise TypeError("'NoneType' object is not iterable")
 
@@ -373,19 +372,19 @@ class TQDM:
             self.close()
 
     def __del__(self) -> None:
-        """析构对象并确保完成清理。"""
+        """析构对象并确保完成清理。."""
         try:
             self.close()
         except Exception:
             pass
 
     def refresh(self) -> None:
-        """刷新显示。"""
+        """刷新显示。."""
         if not self.disable:
             self._display()
 
     def clear(self) -> None:
-        """清除进度条。"""
+        """清除进度条。."""
         if not self.disable:
             try:
                 self.file.write("\r\033[K")
@@ -395,7 +394,7 @@ class TQDM:
 
     @staticmethod
     def write(s: str, file: IO[str] | None = None, end: str = "\n") -> None:
-        """静态写入方法，不破坏当前进度条。"""
+        """静态写入方法，不破坏当前进度条。."""
         file = file or sys.stdout
         try:
             file.write(s + end)
@@ -438,7 +437,7 @@ if __name__ == "__main__":
     print("\n5. Iterator with unknown length:")
 
     def data_stream():
-        """模拟长度未知的数据流。"""
+        """模拟长度未知的数据流。."""
         import random
 
         for i in range(random.randint(10, 20)):
@@ -450,7 +449,7 @@ if __name__ == "__main__":
     print("\n6. File processing simulation (unknown size):")
 
     def process_files():
-        """模拟处理数量未知的文件。"""
+        """模拟处理数量未知的文件。."""
         return [f"file_{i}.txt" for i in range(18)]
 
     pbar = TQDM(desc="Scanning files", unit="files")

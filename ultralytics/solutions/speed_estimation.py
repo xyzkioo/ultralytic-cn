@@ -9,10 +9,9 @@ from ultralytics.utils.plotting import colors
 
 
 class SpeedEstimator(BaseSolution):
-    """根据跟踪结果估计实时视频流中对象速度的类。
+    """根据跟踪结果估计实时视频流中对象速度的类。.
 
-    此类继承 BaseSolution，利用视频流中的跟踪数据估计对象速度。速度根据一段时间内的像素位移计算，
-    再通过可配置的米/像素比例转换为现实世界中的速度单位。
+    此类继承 BaseSolution，利用视频流中的跟踪数据估计对象速度。速度根据一段时间内的像素位移计算， 再通过可配置的米/像素比例转换为现实世界中的速度单位。
 
     属性：
         fps (float): 用于时间计算的视频帧率。
@@ -40,7 +39,7 @@ class SpeedEstimator(BaseSolution):
     """
 
     def __init__(self, **kwargs: Any) -> None:
-        """使用速度估计参数和数据结构初始化 SpeedEstimator 对象。
+        """使用速度估计参数和数据结构初始化 SpeedEstimator 对象。.
 
         参数：
             **kwargs (Any): 传递给父类的其他关键字参数。
@@ -58,7 +57,7 @@ class SpeedEstimator(BaseSolution):
         self.max_speed = self.CFG["max_speed"]  # 速度上限
 
     def forget_tracks(self, track_ids):
-        """从速度记录中清理已退出的 ID，避免全天候视频流运行时记录无限增长（参见 BaseSolution）。"""
+        """从速度记录中清理已退出的 ID，避免全天候视频流运行时记录无限增长（参见 BaseSolution）。."""
         super().forget_tracks(track_ids)
         for track_id in track_ids:
             self.trk_hist.pop(track_id, None)
@@ -67,7 +66,7 @@ class SpeedEstimator(BaseSolution):
             self.locked_ids.discard(track_id)
 
     def process(self, im0) -> SolutionResults:
-        """根据跟踪数据处理输入帧并估计对象速度。
+        """根据跟踪数据处理输入帧并估计对象速度。.
 
         参数：
             im0 (np.ndarray): 要处理的输入图像，形状为 (H, W, C)，格式为 OpenCV BGR。
@@ -104,9 +103,7 @@ class SpeedEstimator(BaseSolution):
                         dx, dy = p1[0] - p0[0], p1[1] - p0[1]  # 像素位移
                         pixel_distance = sqrt(dx * dx + dy * dy)  # 计算像素距离
                         meters = pixel_distance * self.meter_per_pixel  # 转换为米
-                        self.spd[track_id] = int(
-                            min((meters / dt) * 3.6, self.max_speed)
-                        )  # 转换为 km/h 并保存最终速度
+                        self.spd[track_id] = int(min((meters / dt) * 3.6, self.max_speed))  # 转换为 km/h 并保存最终速度
                         self.locked_ids.add(track_id)  # 防止后续更新
                         self.trk_hist.pop(track_id, None)  # 释放内存
                         self.trk_frame_ids.pop(track_id, None)  # 删除起始帧记录

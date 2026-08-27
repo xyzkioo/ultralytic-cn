@@ -7,10 +7,10 @@ from torch import optim
 
 
 def zeropower_via_newtonschulz5(G: torch.Tensor, eps: float = 1e-7) -> torch.Tensor:
-    """使用 Newton-Schulz 迭代计算矩阵 G 的零次幂或正交化结果。
+    """使用 Newton-Schulz 迭代计算矩阵 G 的零次幂或正交化结果。.
 
-    此函数实现五次 Newton-Schulz 迭代，以近似正交化输入矩阵 G。迭代系数经过优化，可最大化零点处的收敛斜率，
-    生成类似 SVD 中 UV^T 的结果（USV^T = G），同时放宽收敛保证，在优化任务中经过实验证明效果良好。
+    此函数实现五次 Newton-Schulz 迭代，以近似正交化输入矩阵 G。迭代系数经过优化，可最大化零点处的收敛斜率， 生成类似 SVD 中 UV^T 的结果（USV^T =
+    G），同时放宽收敛保证，在优化任务中经过实验证明效果良好。
 
     参数：
         G (torch.Tensor): 要进行正交化的二维矩阵或三维矩阵批次。
@@ -53,10 +53,9 @@ def muon_update(
     beta: float = 0.95,
     nesterov: bool = True,
 ) -> torch.Tensor | list[torch.Tensor]:
-    """使用动量和正交化计算 Muon 优化器更新量。
+    """使用动量和正交化计算 Muon 优化器更新量。.
 
-    此函数对梯度应用动量，可选使用 Nesterov 加速，然后通过 Newton-Schulz 迭代对更新量进行正交化。
-    行数相同的矩阵会进行零填充，并在一次批量调用中完成正交化；动量计算使用融合的 foreach 操作，
+    此函数对梯度应用动量，可选使用 Nesterov 加速，然后通过 Newton-Schulz 迭代对更新量进行正交化。 行数相同的矩阵会进行零填充，并在一次批量调用中完成正交化；动量计算使用融合的 foreach 操作，
     避免为每个参数启动内核的额外开销。高阶张量会在正交化前调整形状，每个更新量根据参数维度进行缩放。
 
     参数：
@@ -111,10 +110,9 @@ def muon_update(
 
 
 class MuSGD(optim.Optimizer):
-    """结合 Muon 和 SGD 更新的神经网络混合优化器。
+    """结合 Muon 和 SGD 更新的神经网络混合优化器。.
 
-    此优化器结合 Muon（通过 Newton-Schulz 迭代进行正交化的动量优化器）和带动量的标准 SGD。
-    不同参数组可以选择使用 Muon+SGD 混合方案或纯 SGD。
+    此优化器结合 Muon（通过 Newton-Schulz 迭代进行正交化的动量优化器）和带动量的标准 SGD。 不同参数组可以选择使用 Muon+SGD 混合方案或纯 SGD。
 
     参数：
         params (Iterable): 要优化的参数，或用于定义参数组的字典。
@@ -166,7 +164,7 @@ class MuSGD(optim.Optimizer):
         muon: float = 0.5,
         sgd: float = 0.5,
     ):
-        """初始化具备 Muon 和 SGD 混合能力的 MuSGD 优化器。
+        """初始化具备 Muon 和 SGD 混合能力的 MuSGD 优化器。.
 
         参数：
             params (Iterable): 要优化的参数，或定义参数组的字典。
@@ -191,7 +189,7 @@ class MuSGD(optim.Optimizer):
 
     @torch.no_grad()
     def step(self, closure=None):
-        """执行一次优化步骤。
+        """执行一次优化步骤。.
 
         根据每个参数组中的 'use_muon' 标志，执行 Muon+SGD 混合更新或纯 SGD 更新。
         对于启用 Muon 的参数组，参数会同时接收正交化的 Muon 更新和标准 SGD 动量更新。
@@ -246,10 +244,9 @@ class MuSGD(optim.Optimizer):
 
 
 class Muon(optim.Optimizer):
-    """用于非分布式环境的 Muon 优化器。
+    """用于非分布式环境的 Muon 优化器。.
 
-    此优化器实现 Muon 算法，通过 Newton-Schulz 迭代将基于动量的更新与正交化结合，
-    并对参数更新应用权重衰减和学习率缩放。
+    此优化器实现 Muon 算法，通过 Newton-Schulz 迭代将基于动量的更新与正交化结合， 并对参数更新应用权重衰减和学习率缩放。
 
     参数：
         params (iterable): 要优化的参数迭代器，或用于定义参数组的字典。
@@ -276,7 +273,7 @@ class Muon(optim.Optimizer):
     """
 
     def __init__(self, params, lr: float = 0.02, weight_decay: float = 0, momentum: float = 0.95):
-        """初始化使用正交化更新的 Muon 优化器。
+        """初始化使用正交化更新的 Muon 优化器。.
 
         参数：
             params (Iterable): 要优化的参数，或定义参数组的字典。
@@ -289,7 +286,7 @@ class Muon(optim.Optimizer):
 
     @torch.no_grad()
     def step(self, closure=None):
-        """执行一次优化步骤。
+        """执行一次优化步骤。.
 
         对所有参数应用包含动量和正交化的 Muon 更新，并在参数更新前以乘法方式应用权重衰减。
 

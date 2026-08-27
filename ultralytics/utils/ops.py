@@ -18,7 +18,7 @@ from ultralytics.utils.torch_utils import get_torch_device_backend
 
 
 class Profile(contextlib.ContextDecorator):
-    """用于测量代码执行时间的 Ultralytics Profile 类。
+    """用于测量代码执行时间的 Ultralytics Profile 类。.
 
     可作为 @Profile() 装饰器或 'with Profile():' 上下文管理器使用，并支持加速器同步以获得准确计时。
 
@@ -41,7 +41,7 @@ class Profile(contextlib.ContextDecorator):
     """
 
     def __init__(self, t: float = 0.0, device: torch.device | None = None):
-        """初始化 Profile 类。
+        """初始化 Profile 类。.
 
         参数：
             t (float): Initial accumulated time in seconds.
@@ -53,31 +53,30 @@ class Profile(contextlib.ContextDecorator):
         self.accelerator = get_torch_device_backend(device_type) if device_type in {"cuda", "npu", "xpu"} else None
 
     def __enter__(self):
-        """开始计时。"""
+        """开始计时。."""
         self.start = self.time()
         return self
 
     def __exit__(self, type, value, traceback):
-        """停止计时。"""
+        """停止计时。."""
         self.dt = self.time() - self.start  # 时间增量
         self.t += self.dt  # 累加时间增量
 
     def __str__(self):
-        """返回表示累计耗时的易读字符串。"""
+        """返回表示累计耗时的易读字符串。."""
         return f"Elapsed time is {self.t} s"
 
     def time(self):
-        """获取当前时间，并在适用时执行加速器同步。"""
+        """获取当前时间，并在适用时执行加速器同步。."""
         if self.accelerator is not None:
             self.accelerator.synchronize(self.device)
         return time.perf_counter()
 
 
 def segment2box(segment: np.ndarray, width: int = 640, height: int = 640) -> np.ndarray:
-    """将分割线坐标转换为边界框坐标。
+    """将分割线坐标转换为边界框坐标。.
 
-    通过查找裁剪到图像范围内的多边形 x、y 最小和最大坐标，将单个分割标签转换为边界框标签，
-    因此跨越图像边界的分割线仍保留可见范围。已经位于图像内部的分割线会直接返回，无需裁剪。
+    通过查找裁剪到图像范围内的多边形 x、y 最小和最大坐标，将单个分割标签转换为边界框标签， 因此跨越图像边界的分割线仍保留可见范围。已经位于图像内部的分割线会直接返回，无需裁剪。
 
     参数：
         segment (np.ndarray): 分割线坐标，形状为 (N, 2)，N 为点数。
@@ -125,10 +124,9 @@ def scale_boxes(
     padding: bool = True,
     xywh: bool = False,
 ) -> torch.Tensor | np.ndarray:
-    """将边界框从一种图像尺寸缩放到另一种图像尺寸。
+    """将边界框从一种图像尺寸缩放到另一种图像尺寸。.
 
-    将边界框从 img1_shape 缩放到 img0_shape，同时处理填充和宽高比变化。
-    同时支持 xyxy 和 xywh 边界框格式。
+    将边界框从 img1_shape 缩放到 img0_shape，同时处理填充和宽高比变化。 同时支持 xyxy 和 xywh 边界框格式。
 
     参数：
         img1_shape (tuple[int, int]): 源图像尺寸 (高度, 宽度)。
@@ -164,7 +162,7 @@ def scale_boxes(
 
 
 def make_divisible(x: int, divisor):
-    """返回大于等于 x 且可被给定除数整除的最小数值。
+    """返回大于等于 x 且可被给定除数整除的最小数值。.
 
     参数：
         x (int): 要调整为可整除的数值。
@@ -179,7 +177,7 @@ def make_divisible(x: int, divisor):
 
 
 def clip_boxes(boxes, shape):
-    """将边界框裁剪到图像边界内。
+    """将边界框裁剪到图像边界内。.
 
     参数：
         boxes (torch.Tensor | np.ndarray): 要裁剪的边界框。
@@ -207,7 +205,7 @@ def clip_boxes(boxes, shape):
 
 
 def clip_coords(coords, shape):
-    """将线段坐标裁剪到图像边界内。
+    """将线段坐标裁剪到图像边界内。.
 
     参数：
         coords (torch.Tensor | np.ndarray): 要裁剪的线段坐标。
@@ -231,7 +229,7 @@ def clip_coords(coords, shape):
 
 
 def xyxy2xywh(x):
-    """将边界框坐标从 (x1, y1, x2, y2) 格式转换为 (x, y, 宽度, 高度) 格式。
+    """将边界框坐标从 (x1, y1, x2, y2) 格式转换为 (x, y, 宽度, 高度) 格式。.
 
     其中 (x1, y1) 是左上角，(x2, y2) 是右下角。
 
@@ -252,7 +250,7 @@ def xyxy2xywh(x):
 
 
 def xywh2xyxy(x):
-    """将边界框坐标从 (x, y, 宽度, 高度) 格式转换为 (x1, y1, x2, y2) 格式。
+    """将边界框坐标从 (x, y, 宽度, 高度) 格式转换为 (x1, y1, x2, y2) 格式。.
 
     其中 (x1, y1) 是左上角，(x2, y2) 是右下角。注意：按两个通道一组执行运算比逐通道运算更快。
 
@@ -272,7 +270,7 @@ def xywh2xyxy(x):
 
 
 def xywhn2xyxy(x, w: int = 640, h: int = 640, padw: int = 0, padh: int = 0):
-    """将归一化边界框坐标转换为像素坐标。
+    """将归一化边界框坐标转换为像素坐标。.
 
     参数：
         x (np.ndarray | torch.Tensor): 归一化边界框坐标，格式为 (x, y, w, h)。
@@ -296,7 +294,7 @@ def xywhn2xyxy(x, w: int = 640, h: int = 640, padw: int = 0, padh: int = 0):
 
 
 def xyxy2xywhn(x, w: int = 640, h: int = 640, clip: bool = False, eps: float = 0.0):
-    """将边界框坐标从 (x1, y1, x2, y2) 格式转换为归一化的 (x, y, 宽度, 高度) 格式。
+    """将边界框坐标从 (x1, y1, x2, y2) 格式转换为归一化的 (x, y, 宽度, 高度) 格式。.
 
     x、y、宽度和高度均按照图像尺寸进行归一化。
 
@@ -323,7 +321,7 @@ def xyxy2xywhn(x, w: int = 640, h: int = 640, clip: bool = False, eps: float = 0
 
 
 def xywh2ltwh(x):
-    """将边界框格式从 [x, y, w, h] 转换为 [x1, y1, w, h]，其中 x1、y1 是左上角坐标。
+    """将边界框格式从 [x, y, w, h] 转换为 [x1, y1, w, h]，其中 x1、y1 是左上角坐标。.
 
     参数：
         x (np.ndarray | torch.Tensor): 输入的边界框坐标，格式为 xywh。
@@ -338,7 +336,7 @@ def xywh2ltwh(x):
 
 
 def xyxy2ltwh(x):
-    """将边界框从 [x1, y1, x2, y2] 格式转换为 [x1, y1, w, h] 格式。
+    """将边界框从 [x1, y1, x2, y2] 格式转换为 [x1, y1, w, h] 格式。.
 
     参数：
         x (np.ndarray | torch.Tensor): 输入的边界框坐标，格式为 xyxy。
@@ -353,7 +351,7 @@ def xyxy2ltwh(x):
 
 
 def ltwh2xywh(x):
-    """将边界框从 [x1, y1, w, h] 格式转换为 [x, y, w, h] 格式，其中 xy1 表示左上角，xy 表示中心点。
+    """将边界框从 [x1, y1, w, h] 格式转换为 [x, y, w, h] 格式，其中 xy1 表示左上角，xy 表示中心点。.
 
     参数：
         x (np.ndarray | torch.Tensor): 输入的边界框坐标。
@@ -368,7 +366,7 @@ def ltwh2xywh(x):
 
 
 def xyxyxyxy2xywhr(x):
-    """将批量旋转边界框（OBB）从 [xy1, xy2, xy3, xy4] 格式转换为 [xywh, rotation] 格式。
+    """将批量旋转边界框（OBB）从 [xy1, xy2, xy3, xy4] 格式转换为 [xywh, rotation] 格式。.
 
     参数：
         x (np.ndarray | torch.Tensor): 输入的边界框角点，形状为 (N, 8) 或 (N, 4, 2)，格式为 [xy1, xy2, xy3, xy4]。
@@ -401,7 +399,7 @@ def xyxyxyxy2xywhr(x):
 
 
 def xywhr2xyxyxyxy(x):
-    """将批量旋转边界框（OBB）从 [xywh, rotation] 格式转换为 [xy1, xy2, xy3, xy4] 格式。
+    """将批量旋转边界框（OBB）从 [xywh, rotation] 格式转换为 [xy1, xy2, xy3, xy4] 格式。.
 
     参数：
         x (np.ndarray | torch.Tensor): 输入边界框，格式为 [cx, cy, w, h, rotation]，形状为 (N, 5) 或 (B, N, 5)。
@@ -432,7 +430,7 @@ def xywhr2xyxyxyxy(x):
 
 
 def ltwh2xyxy(x):
-    """将边界框从 [x1, y1, w, h] 格式转换为 [x1, y1, x2, y2] 格式，其中 xy1 是左上角，xy2 是右下角。
+    """将边界框从 [x1, y1, w, h] 格式转换为 [x1, y1, x2, y2] 格式，其中 xy1 是左上角，xy2 是右下角。.
 
     参数：
         x (np.ndarray | torch.Tensor): 输入的边界框坐标。
@@ -447,7 +445,7 @@ def ltwh2xyxy(x):
 
 
 def segments2boxes(segments):
-    """将分割段坐标转换为 xywh 格式的边界框标签。
+    """将分割段坐标转换为 xywh 格式的边界框标签。.
 
     参数：
         segments (列表): 分割段列表，每个分割段由 [x, y] 坐标点组成。
@@ -463,7 +461,7 @@ def segments2boxes(segments):
 
 
 def resample_segments(segments, n: int = 1000):
-    """使用线性插值将每条分割线重采样为 n 个点。
+    """使用线性插值将每条分割线重采样为 n 个点。.
 
     参数：
         segments (列表): 形状为 (N, 2) 的数组列表，其中 N 是每个分割段的点数。
@@ -486,7 +484,7 @@ def resample_segments(segments, n: int = 1000):
 
 
 def crop_mask(masks: torch.Tensor, boxes: torch.Tensor) -> torch.Tensor:
-    """将掩码裁剪到边界框区域。
+    """将掩码裁剪到边界框区域。.
 
     参数：
         masks (torch.Tensor): 形状为 (N, H, W) 的掩码。
@@ -509,7 +507,7 @@ def crop_mask(masks: torch.Tensor, boxes: torch.Tensor) -> torch.Tensor:
 
 
 def process_mask(protos, masks_in, bboxes, shape, upsample: bool = False):
-    """使用掩码头输出将掩码应用到边界框。
+    """使用掩码头输出将掩码应用到边界框。.
 
     参数：
         protos (torch.Tensor): 掩码原型，形状为 (mask_dim, mask_h, mask_w)。
@@ -540,7 +538,7 @@ def process_mask(protos, masks_in, bboxes, shape, upsample: bool = False):
 
 
 def process_mask_native(protos, masks_in, bboxes, shape):
-    """使用掩码头输出和原生上采样将掩码应用到边界框。
+    """使用掩码头输出和原生上采样将掩码应用到边界框。.
 
     参数：
         protos (torch.Tensor): 掩码原型，形状为 (mask_dim, mask_h, mask_w)。
@@ -573,7 +571,7 @@ def scale_masks(
     padding: bool = True,
     mode: str = "bilinear",
 ) -> torch.Tensor:
-    """将分割掩码缩放到目标尺寸。
+    """将分割掩码缩放到目标尺寸。.
 
     参数：
         masks (torch.Tensor): 形状为 (N, C, H, W) 的掩码。
@@ -607,7 +605,7 @@ def scale_masks(
 
 
 def scale_coords(img1_shape, coords, img0_shape, ratio_pad=None, normalize: bool = False, padding: bool = True):
-    """将分割线坐标从 img1_shape 缩放到 img0_shape。
+    """将分割线坐标从 img1_shape 缩放到 img0_shape。.
 
     参数：
         img1_shape (tuple): 源图像尺寸，可为 HWC 或 HW 格式。
@@ -643,7 +641,7 @@ def scale_coords(img1_shape, coords, img0_shape, ratio_pad=None, normalize: bool
 
 
 def regularize_rboxes(rboxes):
-    """将旋转边界框的角度规范化到 [0, pi/2) 范围。
+    """将旋转边界框的角度规范化到 [0, pi/2) 范围。.
 
     参数：
         rboxes (torch.Tensor): 输入的旋转边界框，采用 xywhr 格式，形状为 (N, 5)。
@@ -661,7 +659,7 @@ def regularize_rboxes(rboxes):
 
 
 def masks2segments(masks: np.ndarray | torch.Tensor, strategy: str = "all") -> list[np.ndarray]:
-    """使用轮廓检测将掩码转换为分割段。
+    """使用轮廓检测将掩码转换为分割段。.
 
     参数：
         masks (np.ndarray | torch.Tensor): 形状为 (N, H, W) 的二值掩码。
@@ -692,7 +690,7 @@ def masks2segments(masks: np.ndarray | torch.Tensor, strategy: str = "all") -> l
 
 
 def convert_torch2numpy_batch(batch: torch.Tensor) -> np.ndarray:
-    """将 FP32 torch 张量批次转换为 NumPy uint8 数组，并将布局从 BCHW 改为 BHWC。
+    """将 FP32 torch 张量批次转换为 NumPy uint8 数组，并将布局从 BCHW 改为 BHWC。.
 
     参数：
         batch (torch.Tensor): 输入张量批次，形状为 (批次, 通道, 高度, 宽度)，数据类型为 torch.float32。
@@ -704,7 +702,7 @@ def convert_torch2numpy_batch(batch: torch.Tensor) -> np.ndarray:
 
 
 def clean_str(s):
-    """通过将特殊字符替换为 '_' 清理字符串。
+    """通过将特殊字符替换为 '_' 清理字符串。.
 
     参数：
         s (str): 需要替换特殊字符的字符串。
@@ -716,27 +714,24 @@ def clean_str(s):
 
 
 def empty_like(x):
-    """创建与输入具有相同形状和数据类型的空 torch.Tensor 或 np.ndarray。"""
+    """创建与输入具有相同形状和数据类型的空 torch.Tensor 或 np.ndarray。."""
     return torch.empty_like(x, dtype=x.dtype) if isinstance(x, torch.Tensor) else np.empty_like(x, dtype=x.dtype)
-
 
     _assignment_solver = None  # 首次调用时确定：优先使用已安装的 SciPy 求解器，否则使用 NumPy 回退实现
 
 
 def linear_sum_assignment(cost_matrix):
-    """求解矩形线性和分配问题（最小代价的一对一匹配）。
+    """求解矩形线性和分配问题（最小代价的一对一匹配）。.
 
-    安装 SciPy 时使用 `scipy.optimize.linear_sum_assignment`（更快的编译版 C++ 求解器），否则使用等价的纯 NumPy
-    实现。两者都采用改进的 Jonker-Volgenant 最短增广路径算法（Crouse 2016）。这样既不将 SciPy 加入 Ultralytics
-    的必需依赖，又能在其存在时保留更高速度。SciPy 采用延迟导入，因此不会拖慢 `import ultralytics`。
+    安装 SciPy 时使用 `scipy.optimize.linear_sum_assignment`（更快的编译版 C++ 求解器），否则使用等价的纯 NumPy 实现。两者都采用改进的 Jonker-Volgenant
+    最短增广路径算法（Crouse 2016）。这样既不将 SciPy 加入 Ultralytics 的必需依赖，又能在其存在时保留更高速度。SciPy 采用延迟导入，因此不会拖慢 `import ultralytics`。
     对于矩形矩阵，只匹配 min(行数, 列数) 个元素。
 
-    NumPy 回退实现支持使用 `+inf` 表示禁止分配；当不存在可行分配时会抛出 `ValueError("cost matrix is infeasible")`。
-    调用方必须先处理 `NaN` 和 `-inf`。两个后端在代价完全相同的并列情况下可能返回不同的分配结果，但总成本相同。
+    NumPy 回退实现支持使用 `+inf` 表示禁止分配；当不存在可行分配时会抛出 `ValueError("cost matrix is infeasible")`。 调用方必须先处理 `NaN` 和
+    `-inf`。两个后端在代价完全相同的并列情况下可能返回不同的分配结果，但总成本相同。
 
-    NumPy 回退实现已通过约 6,900 个随机测试用例与 SciPy 进行验证，最优成本完全一致（涵盖空矩阵、高矩阵、宽矩阵、
-    并列值、负值、IoU 和 RT-DETR 风格矩阵、通过取负实现的 `maximize` 以及 torch 张量输入），另有约 2,000 个独立的
-    暴力全局最优检查。SciPy 的编译内循环更快，但在调用点规模下（较小的维度等于目标数量），回退实现通常远低于 1 毫秒：
+    NumPy 回退实现已通过约 6,900 个随机测试用例与 SciPy 进行验证，最优成本完全一致（涵盖空矩阵、高矩阵、宽矩阵、 并列值、负值、IoU 和 RT-DETR 风格矩阵、通过取负实现的 `maximize` 以及
+    torch 张量输入），另有约 2,000 个独立的 暴力全局最优检查。SciPy 的编译内循环更快，但在调用点规模下（较小的维度等于目标数量），回退实现通常远低于 1 毫秒：
 
         成本矩阵       NumPy   SciPy
         300 x 20      0.2ms   0.02ms
@@ -768,7 +763,7 @@ def linear_sum_assignment(cost_matrix):
 
 
 def _linear_sum_assignment_numpy(a):
-    """使用 NumPy 求解矩形线性和分配问题（无 SciPy 的 Jonker-Volgenant 回退实现）。
+    """使用 NumPy 求解矩形线性和分配问题（无 SciPy 的 Jonker-Volgenant 回退实现）。.
 
     参数：
         a (np.ndarray): Float64 cost matrix of 形状 (N, M); `+inf` forbids assignments.

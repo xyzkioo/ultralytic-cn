@@ -14,7 +14,7 @@ from .utils.stracks import parse_bboxes
 
 
 class OCSortTrack(STrack):
-    """使用以观测为中心的状态管理方式表示 OC-SORT 跟踪对象。
+    """使用以观测为中心的状态管理方式表示 OC-SORT 跟踪对象。.
 
     在 STrack 基础上增加真实检测观测存储和速度计算，从而支持 OC-SORT 的三个组件：ORU、OCM 和 OCR。
 
@@ -26,7 +26,7 @@ class OCSortTrack(STrack):
     """
 
     def __init__(self, xywh: np.ndarray, score: float, cls: Any, delta_t: int = 3):
-        """初始化 OCSortTrack，并创建观测存储。
+        """初始化 OCSortTrack，并创建观测存储。.
 
         参数：
             xywh (np.ndarray): `(x, y, w, h, idx)` 或 `(x, y, w, h, angle, idx)` 格式的边界框。
@@ -43,7 +43,7 @@ class OCSortTrack(STrack):
         self._saved_covariance: np.ndarray | None = None
 
     def activate(self, kalman_filter, frame_id: int) -> None:
-        """激活新的轨迹，并初始化其观测历史。
+        """激活新的轨迹，并初始化其观测历史。.
 
         参数：
             kalman_filter (KalmanFilterXYAH): 共享的卡尔曼滤波器实例。
@@ -55,7 +55,7 @@ class OCSortTrack(STrack):
         self._saved_covariance = self.covariance.copy()
 
     def update(self, new_track: STrack, frame_id: int) -> None:
-        """使用匹配的检测结果更新轨迹，并记录此次观测。
+        """使用匹配的检测结果更新轨迹，并记录此次观测。.
 
         参数：
             new_track (STrack): 当前帧匹配到的检测结果。
@@ -68,7 +68,7 @@ class OCSortTrack(STrack):
         self.velocity = self._compute_velocity()
 
     def re_activate(self, new_track: STrack, frame_id: int, new_id: bool = False) -> None:
-        """使用新的检测结果重新激活此前丢失的轨迹。
+        """使用新的检测结果重新激活此前丢失的轨迹。.
 
         参数：
             new_track (STrack): 用于恢复此轨迹的检测结果。
@@ -83,11 +83,11 @@ class OCSortTrack(STrack):
 
     @staticmethod
     def _xyxy_center(xyxy: np.ndarray) -> np.ndarray:
-        """返回 xyxy 格式边界框的 `(cx, cy)` 中心坐标。"""
+        """返回 xyxy 格式边界框的 `(cx, cy)` 中心坐标。."""
         return np.array([(xyxy[0] + xyxy[2]) / 2, (xyxy[1] + xyxy[3]) / 2])
 
     def _record_observation(self, obs: np.ndarray, frame_id: int) -> None:
-        """保存 `frame_id` 对应的 `obs`，并丢弃超过 `delta_t + 2` 的历史以限制内存占用。
+        """保存 `frame_id` 对应的 `obs`，并丢弃超过 `delta_t + 2` 的历史以限制内存占用。.
 
         保留的窗口始终覆盖 `_compute_velocity` 需要回溯的帧，因为 `(frame_id - delta_t, frame_id]` 内最多包含 `delta_t`
         个不同帧。
@@ -100,7 +100,7 @@ class OCSortTrack(STrack):
                 del self.observations[frame]
 
     def _compute_velocity(self) -> np.ndarray | None:
-        """根据保存的观测计算以观测为中心的速度方向。
+        """根据保存的观测计算以观测为中心的速度方向。.
 
         返回：
             (np.ndarray | None): Normalized `(dx, dy)` direction vector, or None if there are fewer than two usable
@@ -133,7 +133,7 @@ class OCSortTrack(STrack):
         return (direction / norm).astype(np.float32)
 
     def apply_oru(self, new_observation_xyxy: np.ndarray, current_frame_id: int) -> None:
-        """通过在虚拟观测上重放预测和更新，修复遮挡间隔期间的卡尔曼状态。"""
+        """通过在虚拟观测上重放预测和更新，修复遮挡间隔期间的卡尔曼状态。."""
         if self._saved_mean is None or not self.observations:
             return
 
@@ -162,7 +162,7 @@ class OCSortTrack(STrack):
 
 
 class OCSORT(BYTETracker):
-    """采用以观测为中心匹配策略的 OC-SORT 多对象跟踪器。
+    """采用以观测为中心匹配策略的 OC-SORT 多对象跟踪器。.
 
     此类在 BYTETracker 基础上实现三个关键组件：
     - 以观测为中心的更新（ORU）：在遮挡后修复卡尔曼状态。
@@ -178,7 +178,7 @@ class OCSORT(BYTETracker):
     track_class = OCSortTrack
 
     def __init__(self, args: Any):
-        """初始化 OC-SORT 跟踪器。
+        """初始化 OC-SORT 跟踪器。.
 
         参数：
             args (Namespace | IterableSimpleNamespace): 解析后的跟踪器配置，除 BYTE 配置项外还提供 `delta_t`、
@@ -190,7 +190,7 @@ class OCSORT(BYTETracker):
         self.use_byte = getattr(args, "use_byte", False)
 
     def init_track(self, results, img: np.ndarray | None = None) -> list[OCSortTrack]:
-        """根据类似 `Results` 的对象构建 `OCSortTrack` 实例。"""
+        """根据类似 `Results` 的对象构建 `OCSortTrack` 实例。."""
         if len(results) == 0:
             return []
         bboxes = parse_bboxes(results)
@@ -203,11 +203,11 @@ class OCSORT(BYTETracker):
         detections: list[OCSortTrack],
         iou_dists: np.ndarray | None = None,
     ) -> np.ndarray:
-        """组合运动代价和外观代价的钩子。默认行为：直接透传（不使用 ReID）。"""
+        """组合运动代价和外观代价的钩子。默认行为：直接透传（不使用 ReID）。."""
         return dists
 
     def get_dists(self, tracks: list[OCSortTrack], detections: list[OCSortTrack]) -> np.ndarray:
-        """代价矩阵 = IoU（可融合分数）+ 惯性·OCM（可通过钩子加入外观代价）。"""
+        """代价矩阵 = IoU（可融合分数）+ 惯性·OCM（可通过钩子加入外观代价）。."""
         iou_dists = matching.iou_distance(tracks, detections)
         dists = matching.fuse_score(iou_dists, detections) if self.args.fuse_score else iou_dists.copy()
         dists = dists + self.inertia * self._velocity_direction_cost(tracks, detections)
@@ -220,7 +220,7 @@ class OCSORT(BYTETracker):
         activated: list[OCSortTrack],
         refind: list[OCSortTrack],
     ) -> tuple[list[int], list[int]]:
-        """执行一次 OCR（最后观测 IoU）匹配，并原地应用匹配结果。
+        """执行一次 OCR（最后观测 IoU）匹配，并原地应用匹配结果。.
 
         返回：
             (tuple[list[int], list[int]))：未匹配 ``tracks`` 和 ``dets`` 的局部索引。
@@ -251,7 +251,7 @@ class OCSORT(BYTETracker):
         activated: list[OCSortTrack],
         refind: list[OCSortTrack],
     ) -> tuple[list[int], list[int]]:
-        """在第一阶段匹配后执行以观测为中心的恢复（OCR）阶段。
+        """在第一阶段匹配后执行以观测为中心的恢复（OCR）阶段。.
 
         先对仍处于 Tracked 状态的未匹配轨迹执行 OCR，以保持活动轨迹的匹配优先级；
         再使用仍未匹配的检测结果处理 Lost 轨迹，避免最近丢失的轨迹抢占活动轨迹的匹配。
@@ -280,7 +280,7 @@ class OCSORT(BYTETracker):
         refind: list[OCSortTrack],
         lost: list[OCSortTrack],
     ) -> None:
-        """仅在启用 ``use_byte`` 时执行 ByteTrack 风格的第二阶段匹配。"""
+        """仅在启用 ``use_byte`` 时执行 ByteTrack 风格的第二阶段匹配。."""
         if not self.use_byte:
             for i in u_track:
                 track = strack_pool[i]
@@ -291,7 +291,7 @@ class OCSORT(BYTETracker):
         super()._second_association(strack_pool, u_track, detections_second, activated, refind, lost)
 
     def _velocity_direction_cost(self, tracks: list[OCSortTrack], detections: list[OCSortTrack]) -> np.ndarray:
-        """计算 OCM 速度方向一致性代价矩阵（向量化实现）。
+        """计算 OCM 速度方向一致性代价矩阵（向量化实现）。.
 
         对每个轨迹与检测结果配对，计算轨迹历史运动方向与指向候选检测结果方向之间的角度差。
 
@@ -325,7 +325,7 @@ class OCSORT(BYTETracker):
         return cost
 
     def _ocr_distance(self, tracks: list[OCSortTrack], detections: list[OCSortTrack]) -> np.ndarray:
-        """使用轨迹最后一次观测位置而非卡尔曼预测结果计算 IoU 距离。
+        """使用轨迹最后一次观测位置而非卡尔曼预测结果计算 IoU 距离。.
 
         参数：
             tracks (list[OCSortTrack]): 带有 last_observation 属性的轨迹列表。

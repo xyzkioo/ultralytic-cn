@@ -1,5 +1,5 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
-"""在数据集上训练模型。
+"""在数据集上训练模型。.
 
 用法：
     $ yolo mode=train model=yolo26n.pt data=coco8.yaml imgsz=640 epochs=100 batch=16
@@ -69,10 +69,9 @@ from ultralytics.utils.torch_utils import (
 
 
 class BaseTrainer:
-    """用于创建训练器的基类。
+    """用于创建训练器的基类。.
 
-    此类为训练 YOLO 模型提供基础功能，负责训练循环、验证、检查点保存以及各种训练工具，
-    同时支持单 GPU 和多 GPU 分布式训练。
+    此类为训练 YOLO 模型提供基础功能，负责训练循环、验证、检查点保存以及各种训练工具， 同时支持单 GPU 和多 GPU 分布式训练。
 
     属性：
         args (SimpleNamespace)：训练器配置。
@@ -119,7 +118,7 @@ class BaseTrainer:
     """
 
     def __init__(self, cfg=DEFAULT_CFG, overrides=None, _callbacks: dict | None = None):
-        """初始化 BaseTrainer。
+        """初始化 BaseTrainer。.
 
         参数：
             cfg (str | dict | SimpleNamespace，可选)：配置文件路径或配置对象。
@@ -201,20 +200,20 @@ class BaseTrainer:
         self.nan_recovery_attempts = 0
 
     def add_callback(self, event: str, callback):
-        """将给定回调添加到指定事件的回调列表中。"""
+        """将给定回调添加到指定事件的回调列表中。."""
         self.callbacks[event].append(callback)
 
     def set_callback(self, event: str, callback):
-        """使用给定回调覆盖指定事件的现有回调。"""
+        """使用给定回调覆盖指定事件的现有回调。."""
         self.callbacks[event] = [callback]
 
     def run_callbacks(self, event: str):
-        """运行与指定事件关联的所有现有回调。"""
+        """运行与指定事件关联的所有现有回调。."""
         for callback in self.callbacks.get(event, []):
             callback(self)
 
     def train(self):
-        """执行训练过程：多 GPU 时使用 DDP 子进程，单 GPU 时直接训练。"""
+        """执行训练过程：多 GPU 时使用 DDP 子进程，单 GPU 时直接训练。."""
         # DDP 训练时运行子进程，否则正常训练
         try:
             if self.ddp:
@@ -246,7 +245,7 @@ class BaseTrainer:
             self.run_callbacks("teardown")
 
     def _setup_scheduler(self):
-        """初始化训练学习率调度器。"""
+        """初始化训练学习率调度器。."""
         if self.args.cos_lr:
             self.lf = one_cycle(1, self.args.lrf, self.epochs)  # 余弦调度 1 -> hyp['lrf']
         else:
@@ -254,12 +253,12 @@ class BaseTrainer:
         self.scheduler = optim.lr_scheduler.LambdaLR(self.optimizer, lr_lambda=self.lf)
 
     def _get_warmup_iterations(self, num_batches):
-        """返回预热迭代次数，并至少为常规训练保留最后一个 epoch。"""
+        """返回预热迭代次数，并至少为常规训练保留最后一个 epoch。."""
         warmup_epochs = min(self.args.warmup_epochs, max(self.epochs - 1, 0))
         return round(warmup_epochs * num_batches) if warmup_epochs > 0 else 0
 
     def _setup_ddp(self):
-        """初始化并设置训练使用的 DistributedDataParallel 参数。"""
+        """初始化并设置训练使用的 DistributedDataParallel 参数。."""
         device_type = self.args.device.split(":", 1)[0]
         device_type = device_type if device_type in {"npu", "xpu"} else "cuda"
         devices = self.args.device.split(":", 1)[-1].split(",")
@@ -279,7 +278,7 @@ class BaseTrainer:
         )
 
     def _build_train_pipeline(self):
-        """为当前批次大小构建数据加载器、优化器和调度器。"""
+        """为当前批次大小构建数据加载器、优化器和调度器。."""
         batch_size = self.batch_size // max(self.world_size, 1)
         self.train_loader = self.get_dataloader(
             self.data["train"], batch_size=batch_size, rank=LOCAL_RANK, mode="train"
@@ -311,7 +310,7 @@ class BaseTrainer:
         self._setup_scheduler()
 
     def _setup_train(self):
-        """在训练循环开始前配置模型、优化器、数据加载器和训练工具。"""
+        """在训练循环开始前配置模型、优化器、数据加载器和训练工具。."""
         ckpt = self.setup_model()
         self.model = self.model.to(self.device)
         # channels_last（NHWC）仅支持 CUDA：在 CUDA 上不会损失精度且有利于 Tensor Core，
@@ -418,7 +417,7 @@ class BaseTrainer:
         self.run_callbacks("on_pretrain_routine_end")
 
     def _do_train(self):
-        """执行完整训练循环，包括初始化、epoch 迭代、验证和最终评估。"""
+        """执行完整训练循环，包括初始化、epoch 迭代、验证和最终评估。."""
         if self.world_size > 1:
             self._setup_ddp()
         self._setup_train()
@@ -652,7 +651,7 @@ class BaseTrainer:
                 loader.close()  # 关闭持久化数据加载器工作进程，避免其存活到解释器退出
 
     def auto_batch(self, max_num_obj=0, dataset_size=0):
-        """根据模型和设备内存限制计算最佳批次大小。"""
+        """根据模型和设备内存限制计算最佳批次大小。."""
         # 与真实多尺度最大尺寸对齐；金字塔检测头要求输入尺寸是步长的整数倍
         max_imgsz = math.ceil(self.args.imgsz * (1 + self.args.multi_scale) / self.stride) * self.stride
         return check_train_batch_size(
@@ -665,7 +664,7 @@ class BaseTrainer:
         )  # 返回批次大小
 
     def _get_memory(self, fraction=False):
-        """获取加速器内存使用量（GB）或占总内存的比例。"""
+        """获取加速器内存使用量（GB）或占总内存的比例。."""
         memory, total = 0, 0
         if self.device.type == "mps":
             memory = torch.mps.driver_allocated_memory()
@@ -678,7 +677,7 @@ class BaseTrainer:
         return ((memory / total) if total > 0 else 0) if fraction else (memory / 2**30)
 
     def _clear_memory(self, threshold: float | None = None):
-        """调用垃圾回收器并清空缓存，以释放加速器内存。"""
+        """调用垃圾回收器并清空缓存，以释放加速器内存。."""
         if threshold:
             assert 0 <= threshold <= 1, "threshold 必须介于 0 和 1 之间。"
             if self._get_memory(fraction=True) <= threshold:
@@ -692,7 +691,7 @@ class BaseTrainer:
             self.accelerator.empty_cache()
 
     def read_results_csv(self):
-        """使用 polars 将 results.csv 读取为字典。"""
+        """使用 polars 将 results.csv 读取为字典。."""
         import polars as pl  # 局部导入，以加快 `import ultralytics`
 
         try:
@@ -701,7 +700,7 @@ class BaseTrainer:
             return {}
 
     def _model_train(self):
-        """将模型设置为训练模式。"""
+        """将模型设置为训练模式。."""
         self.model.train()
         # 冻结 BN 统计量
         for n, m in self.model.named_modules():
@@ -709,7 +708,7 @@ class BaseTrainer:
                 m.eval()
 
     def save_model(self):
-        """保存模型训练检查点及附加元数据。"""
+        """保存模型训练检查点及附加元数据。."""
         import io
 
         # 瞬时 NaN/Inf 会永久污染 EMA 运行平均值（ema = decay*ema + (1-decay)*model），否则 save_model 会跳过每个
@@ -771,7 +770,7 @@ class BaseTrainer:
         return True
 
     def get_dataset(self):
-        """从数据配置中获取训练集和验证集。
+        """从数据配置中获取训练集和验证集。.
 
         返回：
             (dict)：包含训练集、验证集、测试集和类别名称的字典。
@@ -802,7 +801,7 @@ class BaseTrainer:
         return data
 
     def setup_model(self):
-        """为任意任务加载、创建或下载模型。
+        """为任意任务加载、创建或下载模型。.
 
         返回：
             (dict | None)：用于恢复训练的检查点；如果未加载检查点则返回 None。
@@ -838,7 +837,7 @@ class BaseTrainer:
         return ckpt
 
     def optimizer_step(self):
-        """执行一次训练优化器更新，包括梯度裁剪和 EMA 更新。"""
+        """执行一次训练优化器更新，包括梯度裁剪和 EMA 更新。."""
         self.scaler.unscale_(self.optimizer)  # 取消梯度缩放
         if self.device.type == "npu" and TORCH_2_0:
             torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=10.0, foreach=False)
@@ -851,11 +850,11 @@ class BaseTrainer:
             self.ema.update(self.model)
 
     def preprocess_batch(self, batch):
-        """允许根据任务类型自定义模型输入和真实标注的预处理。"""
+        """允许根据任务类型自定义模型输入和真实标注的预处理。."""
         return batch
 
     def validate(self):
-        """使用 self.validator 在验证集上执行验证。
+        """使用 self.validator 在验证集上执行验证。.
 
         返回：
             (tuple): A tuple containing:
@@ -875,50 +874,50 @@ class BaseTrainer:
         return metrics, fitness
 
     def get_model(self, cfg=None, weights=None, verbose=True):
-        """获取模型；加载配置文件时抛出 NotImplementedError。"""
+        """获取模型；加载配置文件时抛出 NotImplementedError。."""
         raise NotImplementedError("This task trainer doesn't support loading cfg files")
 
     def get_validator(self):
-        """抛出 NotImplementedError（必须由子类实现）。"""
+        """抛出 NotImplementedError（必须由子类实现）。."""
         raise NotImplementedError("get_validator function not implemented in trainer")
 
     def get_dataloader(self, dataset_path, batch_size=16, rank=0, mode="train"):
-        """抛出 NotImplementedError（子类必须返回 `torch.utils.data.DataLoader`）。"""
+        """抛出 NotImplementedError（子类必须返回 `torch.utils.data.DataLoader`）。."""
         raise NotImplementedError("get_dataloader function not implemented in trainer")
 
     def build_dataset(self, img_path, mode="train", batch=None):
-        """构建数据集。"""
+        """构建数据集。."""
         raise NotImplementedError("build_dataset function not implemented in trainer")
 
     def label_loss_items(self, loss_items=None, prefix="train"):
-        """返回带标签的训练损失字典；如果 loss_items 为 None，则返回损失名称列表。"""
+        """返回带标签的训练损失字典；如果 loss_items 为 None，则返回损失名称列表。."""
         if loss_items is None:
             return [f"{prefix}/{x}" for x in self.loss_names]
         return {f"{prefix}/{k}": round(float(v), 5) for k, v in loss_items.items()}
 
     def set_model_attributes(self):
-        """在训练前设置或更新模型参数。"""
+        """在训练前设置或更新模型参数。."""
         self.model.names = self.data["names"]
 
     def set_class_weights(self):
-        """计算并设置类别权重，以处理类别不平衡。子类可覆盖此方法。"""
+        """计算并设置类别权重，以处理类别不平衡。子类可覆盖此方法。."""
 
     def build_targets(self, preds, targets):
-        """构建 YOLO 模型训练所需的目标张量。"""
+        """构建 YOLO 模型训练所需的目标张量。."""
 
     def progress_string(self):
-        """返回描述训练进度的字符串。"""
+        """返回描述训练进度的字符串。."""
         return ""
 
     # TODO：后续可能需要将以下函数移入回调。
     def plot_training_samples(self, batch, ni):
-        """在 YOLO 训练期间绘制训练样本。"""
+        """在 YOLO 训练期间绘制训练样本。."""
 
     def plot_training_labels(self):
-        """绘制 YOLO 模型的训练标签。"""
+        """绘制 YOLO 模型的训练标签。."""
 
     def save_metrics(self, metrics):
-        """将训练指标保存到 CSV 文件。"""
+        """将训练指标保存到 CSV 文件。."""
         keys, vals = list(metrics.keys()), list(metrics.values())
         n = len(metrics) + 2  # 列数
         t = time.time() - self.train_time_start
@@ -928,16 +927,16 @@ class BaseTrainer:
             f.write(s + ("%.6g," * n % (self.epoch + 1, t, *vals)).rstrip(",") + "\n")
 
     def plot_metrics(self):
-        """根据 CSV 文件绘制指标。"""
+        """根据 CSV 文件绘制指标。."""
         plot_results(file=self.csv, on_plot=self.on_plot)  # 保存 results.png
 
     def on_plot(self, name, data=None):
-        """注册图表（例如供回调使用）。"""
+        """注册图表（例如供回调使用）。."""
         path = Path(name)
         self.plots[path] = {"data": data, "timestamp": time.time()}
 
     def final_eval(self):
-        """对 YOLO 模型执行最终评估和验证。"""
+        """对 YOLO 模型执行最终评估和验证。."""
         model = self.best if self.best.exists() else None
         with torch_distributed_zero_first(LOCAL_RANK):  # 仅在 GPU 0 上清理，其他 GPU 等待
             if RANK in {-1, 0}:
@@ -956,7 +955,7 @@ class BaseTrainer:
             self.epoch -= 1  # 恢复 epoch
 
     def check_resume(self, overrides):
-        """检查恢复训练的检查点是否存在，并相应更新参数。"""
+        """检查恢复训练的检查点是否存在，并相应更新参数。."""
         resume = self.args.resume
         if resume:
             try:
@@ -997,7 +996,7 @@ class BaseTrainer:
         self.resume = resume
 
     def _load_checkpoint_state(self, ckpt):
-        """从检查点加载优化器、scaler、EMA 和 best_fitness。"""
+        """从检查点加载优化器、scaler、EMA 和 best_fitness。."""
         if ckpt.get("optimizer") is not None:
             self.optimizer.load_state_dict(ckpt["optimizer"])
         if ckpt.get("scaler") is not None:
@@ -1009,7 +1008,7 @@ class BaseTrainer:
         self.best_fitness = ckpt.get("best_fitness")
 
     def _handle_nan_recovery(self, epoch):
-        """检测 NaN/Inf 损失，并通过加载最新检查点进行恢复。"""
+        """检测 NaN/Inf 损失，并通过加载最新检查点进行恢复。."""
         loss_nan = self.loss is not None and not self.loss.isfinite()
         fitness_nan = self.fitness is not None and not np.isfinite(self.fitness)
         corrupted = RANK in {-1, 0} and (loss_nan or fitness_nan)
@@ -1049,7 +1048,7 @@ class BaseTrainer:
         return True
 
     def resume_training(self, ckpt):
-        """从给定检查点恢复 YOLO 训练。"""
+        """从给定检查点恢复 YOLO 训练。."""
         if ckpt is None or not self.resume:
             return
         start_epoch = ckpt.get("epoch", -1) + 1
@@ -1070,7 +1069,7 @@ class BaseTrainer:
             self.train_loader.reset()
 
     def _close_dataloader_mosaic(self):
-        """更新数据加载器，停止使用 mosaic 增强。"""
+        """更新数据加载器，停止使用 mosaic 增强。."""
         if hasattr(self.train_loader.dataset, "mosaic"):
             self.train_loader.dataset.mosaic = False
         if hasattr(self.train_loader.dataset, "close_mosaic"):
@@ -1078,7 +1077,7 @@ class BaseTrainer:
             self.train_loader.dataset.close_mosaic(hyp=copy(self.args))
 
     def build_optimizer(self, model, name="auto", lr=0.001, momentum=0.9, decay=1e-5, iterations=1e5):
-        """为给定模型构建优化器。
+        """为给定模型构建优化器。.
 
         参数：
             model (torch.nn.Module)：要构建优化器的模型。
@@ -1165,13 +1164,11 @@ class BaseTrainer:
 
 
 class MultiTrainer:
-    """在多个数据集上微调同一个基础模型，并汇总每个数据集的结果。
+    """在多个数据集上微调同一个基础模型，并汇总每个数据集的结果。.
 
-    当 `data` 是列表或元组时，Model.train() 会自动使用此类，使一个基础模型能够在一次调用中基准测试多个数据集
-    （例如 RF100 集合）。数据集会依次进行微调，每次运行都使用相同的基础权重副本，因此每次运行都从完全相同的模型开始。
-    所有输出都归入一个统一的 sweep 目录（例如 runs/detect/multitrain）：每个数据集拥有独立的运行子目录，
-    每个数据集的指标和平均指标会写入 multitrain_results.json，并与 multitrain_results.png 柱状图一起保存。
-    基础模型对象保持不变；每个数据集微调后的权重保存在各自的运行目录中。
+    当 `data` 是列表或元组时，Model.train() 会自动使用此类，使一个基础模型能够在一次调用中基准测试多个数据集 （例如 RF100
+    集合）。数据集会依次进行微调，每次运行都使用相同的基础权重副本，因此每次运行都从完全相同的模型开始。 所有输出都归入一个统一的 sweep 目录（例如 runs/detect/multitrain）：每个数据集拥有独立的运行子目录，
+    每个数据集的指标和平均指标会写入 multitrain_results.json，并与 multitrain_results.png 柱状图一起保存。 基础模型对象保持不变；每个数据集微调后的权重保存在各自的运行目录中。
 
     属性：
         trainer (type[BaseTrainer] | None): Task trainer 类别 for Python runs, or None for CLI subprocess runs.
@@ -1191,7 +1188,7 @@ class MultiTrainer:
     """
 
     def __init__(self, trainer, args, model, _callbacks: dict | None = None):
-        """使用任务训练器类型、共享训练参数和基础模型初始化 MultiTrainer。
+        """使用任务训练器类型、共享训练参数和基础模型初始化 MultiTrainer。.
 
         参数：
             trainer (type[BaseTrainer] | None)：每个数据集运行一次的任务训练器类型；为 None 时使用 CLI 子进程。
@@ -1208,7 +1205,7 @@ class MultiTrainer:
         self.save_dir = None
 
     def train(self):
-        """依次在每个数据集上微调基础模型，并返回 {dataset: 指标} 映射。"""
+        """依次在每个数据集上微调基础模型，并返回 {dataset: 指标} 映射。."""
         from types import SimpleNamespace
 
         from ultralytics.utils.patches import torch_load, torch_save
@@ -1293,7 +1290,7 @@ class MultiTrainer:
         return self.metrics
 
     def save_results(self):
-        """将每个数据集的指标和平均指标写入 multitrain_results.json，供程序后处理。"""
+        """将每个数据集的指标和平均指标写入 multitrain_results.json，供程序后处理。."""
         import json
 
         results = {run: ({k: float(v) for k, v in m.items()} if m else None) for run, m in self.metrics.items()}
@@ -1307,7 +1304,7 @@ class MultiTrainer:
         return file
 
     def plot_results(self):
-        """保存跨数据集柱状图，其中包含每个数据集的指标和所有数据集的平均值。"""
+        """保存跨数据集柱状图，其中包含每个数据集的指标和所有数据集的平均值。."""
         from ultralytics.cfg import TASK2METRIC
         from ultralytics.utils.plotting import plot_multitrain_results
 

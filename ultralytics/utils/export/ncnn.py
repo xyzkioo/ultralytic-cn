@@ -18,7 +18,7 @@ def torch2ncnn(
     device: torch.device | None = None,
     prefix: str = "",
 ) -> str:
-    """使用 PNNX 将 PyTorch 模型导出为 NCNN 格式。
+    """使用 PNNX 将 PyTorch 模型导出为 NCNN 格式。.
 
     参数：
         model (torch.nn.Module): 要导出的 PyTorch 模型。

@@ -13,10 +13,9 @@ from .model_misc import get_valid_ratio
 
 
 class TransformerEncoderLayer(nn.Module):
-    """先执行自注意力、再执行交叉注意力的 Transformer 编码器层。
+    """先执行自注意力、再执行交叉注意力的 Transformer 编码器层。.
 
-    此层以前称为 TransformerDecoderLayer，后来更名以准确反映其在架构中的作用。
-    它先通过自注意力处理输入序列，再与另一个输入（通常是图像特征）执行交叉注意力。
+    此层以前称为 TransformerDecoderLayer，后来更名以准确反映其在架构中的作用。 它先通过自注意力处理输入序列，再与另一个输入（通常是图像特征）执行交叉注意力。
 
     此层支持 pre-norm 和 post-norm 配置，并支持在注意力机制的不同阶段加入位置编码。
     """
@@ -33,7 +32,7 @@ class TransformerEncoderLayer(nn.Module):
         self_attention: nn.Module = None,
         cross_attention: nn.Module = None,
     ):
-        """初始化 Transformer 编码器层。
+        """初始化 Transformer 编码器层。.
 
         参数：
             d_model: 模型维度或隐藏尺寸。
@@ -86,7 +85,7 @@ class TransformerEncoderLayer(nn.Module):
         query_pos: torch.Tensor = None,
         **kwargs,
     ) -> torch.Tensor:
-        """执行后归一化架构的前向传播。
+        """执行后归一化架构的前向传播。.
 
         在后归一化架构中，归一化操作在注意力和前馈操作之后执行。
 
@@ -143,7 +142,7 @@ class TransformerEncoderLayer(nn.Module):
         pos: torch.Tensor = None,
         query_pos: torch.Tensor = None,
     ) -> torch.Tensor:
-        """执行前归一化架构的前向传播。
+        """执行前归一化架构的前向传播。.
 
         在前归一化架构中，归一化操作在注意力和前馈操作之前执行。
 
@@ -200,7 +199,7 @@ class TransformerEncoderLayer(nn.Module):
         pos: torch.Tensor = None,
         query_pos: torch.Tensor = None,
     ) -> torch.Tensor:
-        """执行 Transformer 编码器层的前向传播。
+        """执行 Transformer 编码器层的前向传播。.
 
         参数：
             tgt: 要处理的输入张量。
@@ -233,10 +232,9 @@ class TransformerEncoderLayer(nn.Module):
 
 
 class TransformerEncoder(nn.Module):
-    """处理多层级特征的 Transformer 编码器。
+    """处理多层级特征的 Transformer 编码器。.
 
-    此编码器接收多层级特征（例如来自骨干网络的特征），并通过一组 Transformer 编码器层进行处理。
-    它支持来自不同层级（例如不同分辨率）的特征，并可在训练期间使用激活检查点来节省内存。
+    此编码器接收多层级特征（例如来自骨干网络的特征），并通过一组 Transformer 编码器层进行处理。 它支持来自不同层级（例如不同分辨率）的特征，并可在训练期间使用激活检查点来节省内存。
 
     参数：
         layer: 要重复堆叠的编码器层。
@@ -256,7 +254,7 @@ class TransformerEncoder(nn.Module):
         frozen: bool = False,
         use_act_checkpoint: bool = False,
     ):
-        """初始化 Transformer 编码器。"""
+        """初始化 Transformer 编码器。."""
         super().__init__()
         self.layers = _get_clones(layer, num_layers)
         self.num_layers = num_layers
@@ -278,7 +276,7 @@ class TransformerEncoder(nn.Module):
             encoder_layer.layer_idx = layer_idx
 
     def _prepare_multilevel_features(self, srcs, masks, pos_embeds):
-        """为 Transformer 编码器准备多层级特征。"""
+        """为 Transformer 编码器准备多层级特征。."""
         assert len(srcs) == self.num_feature_levels, "mismatch between expected and received # of feature levels"
 
         src_flatten = []
@@ -340,7 +338,7 @@ class TransformerEncoder(nn.Module):
         prompt_key_padding_mask: torch.Tensor = None,
         encoder_extra_kwargs: dict | None = None,
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
-        """通过 Transformer 编码器处理多层特征。
+        """通过 Transformer 编码器处理多层特征。.
 
         参数：
             src: 多层特征列表，每个元素形状为 (batch_size, 通道, 高度, 宽度)。
@@ -402,10 +400,9 @@ class TransformerEncoder(nn.Module):
 
 
 class TransformerEncoderFusion(TransformerEncoder):
-    """融合文本和图像特征的 Transformer 编码器。
+    """融合文本和图像特征的 Transformer 编码器。.
 
-    此编码器扩展 TransformerEncoder 以同时处理文本和图像特征，并能够将池化文本特征添加到图像特征中，
-    从而实现更好的跨模态融合。它支持使用 torch.compile 进行性能优化。
+    此编码器扩展 TransformerEncoder 以同时处理文本和图像特征，并能够将池化文本特征添加到图像特征中， 从而实现更好的跨模态融合。它支持使用 torch.compile 进行性能优化。
 
     参数：
         layer (nn.Module): 要重复堆叠的编码器层。
@@ -429,7 +426,7 @@ class TransformerEncoderFusion(TransformerEncoder):
         compile_mode: str | None = None,
         **kwargs,
     ):
-        """初始化带有文本-图像融合功能的 Transformer 编码器。"""
+        """初始化带有文本-图像融合功能的 Transformer 编码器。."""
         super().__init__(
             layer,
             num_layers,
@@ -454,7 +451,7 @@ class TransformerEncoderFusion(TransformerEncoder):
         feat_sizes: list[int] | None = None,
         encoder_extra_kwargs: dict | None = None,
     ):
-        """执行带有文本-图像融合功能的 Transformer 编码器前向传播。"""
+        """执行带有文本-图像融合功能的 Transformer 编码器前向传播。."""
         # 恢复视觉特征的空间形状
         bs = src[0].shape[1]  # seq first
         if feat_sizes is not None:
@@ -506,7 +503,7 @@ class TransformerEncoderFusion(TransformerEncoder):
 
 
 def pool_text_feat(prompt, prompt_mask, pool_with_mask):
-    """仅对有效词元的提示嵌入执行平均池化。"""
+    """仅对有效词元的提示嵌入执行平均池化。."""
     # prompt 的形状为 (seq, bs, dim)
     if not pool_with_mask:
         return prompt.mean(dim=0)

@@ -22,7 +22,7 @@ except (ImportError, AssertionError, TypeError, AttributeError):
 
 
 def _log_scalars(scalars: dict, step: int = 0) -> None:
-    """将标量值记录到 TensorBoard。
+    """将标量值记录到 TensorBoard。.
 
     参数：
         scalars (dict): 要记录到 TensorBoard 的标量值字典。键为标量名称，值为对应的标量值。
@@ -40,10 +40,9 @@ def _log_scalars(scalars: dict, step: int = 0) -> None:
 
 @smart_inference_mode()
 def _log_tensorboard_graph(trainer) -> None:
-    """将模型计算图记录到 TensorBoard。
+    """将模型计算图记录到 TensorBoard。.
 
-    此函数通过使用虚拟输入张量跟踪模型，在 TensorBoard 中可视化模型结构。
-    它首先尝试适用于 YOLO 模型的简单方法；如果失败，则回退到适用于 RTDETR 等需要特殊处理模型的复杂方法。
+    此函数通过使用虚拟输入张量跟踪模型，在 TensorBoard 中可视化模型结构。 它首先尝试适用于 YOLO 模型的简单方法；如果失败，则回退到适用于 RTDETR 等需要特殊处理模型的复杂方法。
 
     参数：
         trainer (ultralytics.engine.trainer.BaseTrainer): 包含待可视化模型的训练器对象，必须具有 model 属性以及包含 imgsz 的 args 属性。
@@ -83,7 +82,7 @@ def _log_tensorboard_graph(trainer) -> None:
 
 
 def on_pretrain_routine_start(trainer) -> None:
-    """使用 SummaryWriter 初始化 TensorBoard 日志记录。"""
+    """使用 SummaryWriter 初始化 TensorBoard 日志记录。."""
     if SummaryWriter:
         try:
             global WRITER
@@ -94,19 +93,19 @@ def on_pretrain_routine_start(trainer) -> None:
 
 
 def on_train_start(trainer) -> None:
-    """记录 TensorBoard 计算图。"""
+    """记录 TensorBoard 计算图。."""
     if WRITER:
         _log_tensorboard_graph(trainer)
 
 
 def on_train_epoch_end(trainer) -> None:
-    """在训练周期结束时记录标量统计信息。"""
+    """在训练周期结束时记录标量统计信息。."""
     _log_scalars(trainer.label_loss_items(trainer.tloss, prefix="train"), trainer.epoch + 1)
     _log_scalars(trainer.lr, trainer.epoch + 1)
 
 
 def on_fit_epoch_end(trainer) -> None:
-    """在训练周期结束时记录周期指标。"""
+    """在训练周期结束时记录周期指标。."""
     _log_scalars(trainer.metrics, trainer.epoch + 1)
 
 

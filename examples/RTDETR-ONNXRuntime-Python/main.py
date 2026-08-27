@@ -97,7 +97,7 @@ class RTDETR:
         self.iou_thres = iou_thres
         self.classes = class_names
 
-    # 使用可用执行提供程序设置 ONNX Runtime 会话
+        # 使用可用执行提供程序设置 ONNX Runtime 会话
         available = ort.get_available_providers()
         providers = [p for p in ("CUDAExecutionProvider", "CPUExecutionProvider") if p in available]
         self.session = ort.InferenceSession(model_path, providers=providers or available)
@@ -107,7 +107,7 @@ class RTDETR:
         self.input_height = self.model_input[0].shape[3]
 
         if self.classes is None:
-        # 从 COCO 数据集 YAML 文件加载类别名称
+            # 从 COCO 数据集 YAML 文件加载类别名称
             self.classes = download_file(
                 "https://raw.githubusercontent.com/ultralytics/ultralytics/main/ultralytics/cfg/datasets/coco8.yaml",
                 "coco8.yaml",

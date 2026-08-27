@@ -17,7 +17,7 @@ def onnx2deepx(
     optimize: bool = False,
     prefix: str = "",
 ) -> Path:
-    """使用 DEEPX DX-Compiler 将 ONNX 模型转换为 DEEPX 格式。
+    """使用 DEEPX DX-Compiler 将 ONNX 模型转换为 DEEPX 格式。.
 
     参数：
         onnx_file (str | Path): 输入 ONNX 模型路径。

@@ -13,7 +13,7 @@ from ultralytics.solutions.solutions import SolutionAnnotator, SolutionResults
 
 
 class Heatmap(ObjectCounter):
-    """根据对象跟踪结果在实时视频流中绘制热力图的类。
+    """根据对象跟踪结果在实时视频流中绘制热力图的类。.
 
     此类扩展 ObjectCounter，生成并可视化视频流中的对象运动热力图，利用跟踪对象的位置随时间累积热力图效果。
 
@@ -35,7 +35,7 @@ class Heatmap(ObjectCounter):
     """
 
     def __init__(self, **kwargs: Any) -> None:
-        """根据对象跟踪结果初始化 Heatmap 类，用于实时视频流热力图生成。
+        """根据对象跟踪结果初始化 Heatmap 类，用于实时视频流热力图生成。.
 
         参数：
             **kwargs (Any): 传递给父类 ObjectCounter 的关键字参数。
@@ -51,7 +51,7 @@ class Heatmap(ObjectCounter):
         self.heatmap = None
 
     def heatmap_effect(self, box: torch.Tensor) -> None:
-        """高效计算热力图区域和效果位置，以应用颜色映射。
+        """高效计算热力图区域和效果位置，以应用颜色映射。.
 
         参数：
             box (torch.Tensor): 边界框坐标 `[x0, y0, x1, y1]`，或形状为 `(4, 2)` 的 OBB 角点。
@@ -74,7 +74,7 @@ class Heatmap(ObjectCounter):
         self.heatmap[y0:y1, x0:x1][within_radius] += 2
 
     def process(self, im0: np.ndarray) -> SolutionResults:
-        """使用 Ultralytics 跟踪功能为每个视频帧生成热力图。
+        """使用 Ultralytics 跟踪功能为每个视频帧生成热力图。.
 
         参数：
             im0 (np.ndarray): 要处理的输入图像数组。

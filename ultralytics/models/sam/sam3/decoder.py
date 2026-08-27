@@ -3,7 +3,7 @@
 # Copyright (c) Meta Platforms, Inc. and affiliates. All Rights Reserved
 """
 Transformer 解码器。
-参考 PyTorch 版本，并增加预归一化变体。
+参考 PyTorch 版本，并增加预归一化变体。.
 """
 
 from __future__ import annotations
@@ -20,7 +20,7 @@ from .model_misc import gen_sineembed_for_position
 
 
 class TransformerDecoderLayer(nn.Module):
-    """由自注意力、交叉注意力和前馈网络（FFN）组成的 Transformer 解码器层。"""
+    """由自注意力、交叉注意力和前馈网络（FFN）组成的 Transformer 解码器层。."""
 
     def __init__(
         self,
@@ -31,7 +31,7 @@ class TransformerDecoderLayer(nn.Module):
         n_heads: int,
         use_text_cross_attention: bool = False,
     ):
-        """初始化 TransformerDecoderLayer。"""
+        """初始化 TransformerDecoderLayer。."""
         super().__init__()
         # 交叉注意力
         self.cross_attn = cross_attention
@@ -60,11 +60,11 @@ class TransformerDecoderLayer(nn.Module):
 
     @staticmethod
     def with_pos_embed(tensor, pos):
-        """将位置嵌入添加到张量。"""
+        """将位置嵌入添加到张量。."""
         return tensor if pos is None else tensor + pos
 
     def forward_ffn(self, tgt):
-        """执行前馈网络的前向传播。"""
+        """执行前馈网络的前向传播。."""
         tgt2 = self.linear2(self.dropout3(self.activation(self.linear1(tgt))))
         tgt = tgt + self.dropout4(tgt2)
         tgt = self.norm3(tgt)
@@ -91,7 +91,7 @@ class TransformerDecoderLayer(nn.Module):
         # 跳过可变形注意力内部处理
         **kwargs,  # additional kwargs for compatibility
     ):
-        """执行 TransformerDecoderLayer 的前向传播。"""
+        """执行 TransformerDecoderLayer 的前向传播。."""
         # 自注意力
         tgt, tgt_query_pos = self._apply_self_attention(
             tgt, tgt_query_pos, dac, dac_use_selfatt_ln, presence_token, self_attn_mask
@@ -135,7 +135,7 @@ class TransformerDecoderLayer(nn.Module):
         return tgt, presence_token_out
 
     def _apply_self_attention(self, tgt, tgt_query_pos, dac, dac_use_selfatt_ln, presence_token, self_attn_mask):
-        """应用自注意力，并可选择使用 DAC 拆分。"""
+        """应用自注意力，并可选择使用 DAC 拆分。."""
         if self.self_attn is None:
             return tgt
 
@@ -178,7 +178,7 @@ class TransformerDecoderLayer(nn.Module):
 
 
 class TransformerDecoder(nn.Module):
-    """由多个层组成的 Transformer 解码器。"""
+    """由多个层组成的 Transformer 解码器。."""
 
     def __init__(
         self,
@@ -207,7 +207,7 @@ class TransformerDecoder(nn.Module):
         separate_box_head_instance: bool = False,
         separate_norm_instance: bool = False,
     ):
-        """初始化 TransformerDecoder。"""
+        """初始化 TransformerDecoder。."""
         super().__init__()
         self.d_model = d_model
         self.layers = _get_clones(layer, num_layers)
@@ -306,13 +306,13 @@ class TransformerDecoder(nn.Module):
 
     @staticmethod
     def _get_coords(H, W, device, dtype):
-        """获取高度和宽度方向的归一化坐标。"""
+        """获取高度和宽度方向的归一化坐标。."""
         coords_h = torch.arange(0, H, dtype=dtype, device=device) / H
         coords_w = torch.arange(0, W, dtype=dtype, device=device) / W
         return coords_h, coords_w
 
     def _get_rpb_matrix(self, reference_boxes, feat_size):
-        """获取边界框相对位置偏置使用的相对位置偏置（RPB）矩阵。"""
+        """获取边界框相对位置偏置使用的相对位置偏置（RPB）矩阵。."""
         H, W = feat_size
         boxes_xyxy = xywh2xyxy(reference_boxes).transpose(0, 1)
         bs, num_queries, _ = boxes_xyxy.shape
@@ -397,7 +397,7 @@ class TransformerDecoder(nn.Module):
         obj_roi_memory_mask=None,
         box_head_trk=None,
     ):
-        """执行 TransformerDecoder 的前向传播。"""
+        """执行 TransformerDecoder 的前向传播。."""
         if memory_mask is not None:
             assert self.boxRPB == "none", (
                 "inputting a memory_mask in the presence of boxRPB is unexpected/not implemented"

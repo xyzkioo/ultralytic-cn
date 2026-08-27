@@ -1,5 +1,5 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
-"""YOLO 模型的深度估计预测器。"""
+"""YOLO 模型的深度估计预测器。."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ from ultralytics.utils import DEFAULT_CFG, ops
 
 
 class DepthPredictor(BasePredictor):
-    """YOLO 深度估计模型的预测器。
+    """YOLO 深度估计模型的预测器。.
 
     根据 RGB 图像生成逐像素深度图。
 
@@ -34,7 +34,7 @@ class DepthPredictor(BasePredictor):
     def postprocess(
         self, preds: torch.Tensor | tuple | list, img: torch.Tensor, orig_imgs: list[np.ndarray] | torch.Tensor
     ) -> list[Results]:
-        """将深度预测结果后处理为 Results 对象。"""
+        """将深度预测结果后处理为 Results 对象。."""
         depth_maps = preds[0] if isinstance(preds, (tuple, list)) else preds  # (B, 1, H, W)
         if depth_maps.ndim == 3:
             depth_maps = depth_maps.unsqueeze(1)  # (B, H, W) → (B, 1, H, W)

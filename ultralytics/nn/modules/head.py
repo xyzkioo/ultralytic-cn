@@ -1,5 +1,5 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
-"""模型检测头模块。"""
+"""模型检测头模块。."""
 
 from __future__ import annotations
 
@@ -35,7 +35,7 @@ __all__ = (
 
 
 class Detect(nn.Module):
-    """用于目标检测模型的 YOLO Detect 检测头。
+    """用于目标检测模型的 YOLO Detect 检测头。.
 
     此类实现 YOLO 模型使用的检测头，用于预测边界框和类别概率。同时支持训练和推理模式，并可选用端到端检测。
 
@@ -87,7 +87,7 @@ class Detect(nn.Module):
 
     @staticmethod
     def _grouped_topk(x: torch.Tensor, k: int, groups: int = 8) -> tuple[torch.Tensor, torch.Tensor]:
-        """通过较小的分组选择精确选取 top-k 值。"""
+        """通过较小的分组选择精确选取 top-k 值。."""
         n = x.shape[1]
         while groups > 1 and (n % groups or n // groups < k):
             groups //= 2
@@ -99,11 +99,11 @@ class Detect(nn.Module):
         return values, winners // k * size + index.flatten(1).gather(1, winners)
 
     def _gather(self, x: torch.Tensor, index: torch.Tensor) -> torch.Tensor:
-        """沿维度 1，从 x（形状为 batch、n、通道）中选择索引（batch、k）对应的行。"""
+        """沿维度 1，从 x（形状为 batch、n、通道）中选择索引（batch、k）对应的行。."""
         return x.gather(1, index if x.ndim == 2 else index[..., None].expand(-1, -1, x.shape[-1]))
 
     def __init__(self, nc: int = 80, reg_max=16, end2end=False, ch: tuple = ()):
-        """使用指定的类别数量和通道数初始化 YOLO 检测层。
+        """使用指定的类别数量和通道数初始化 YOLO 检测层。.
 
         参数：
             nc (int)：类别数量。
@@ -141,28 +141,28 @@ class Detect(nn.Module):
 
     @property
     def one2many(self):
-        """返回一对多检测头组件，用于兼容 v3/v5/v8/v9/v11。"""
+        """返回一对多检测头组件，用于兼容 v3/v5/v8/v9/v11。."""
         return {"box_head": self.cv2, "cls_head": self.cv3}
 
     @property
     def one2one(self):
-        """返回一对一检测头组件。"""
+        """返回一对一检测头组件。."""
         return {"box_head": self.one2one_cv2, "cls_head": self.one2one_cv3}
 
     @property
     def end2end(self):
-        """检查模型是否包含 one2one 检测头，用于兼容 v3/v5/v8/v9/v11。"""
+        """检查模型是否包含 one2one 检测头，用于兼容 v3/v5/v8/v9/v11。."""
         return getattr(self, "_end2end", True) and hasattr(self, "one2one")
 
     @end2end.setter
     def end2end(self, value):
-        """覆盖端到端检测模式。"""
+        """覆盖端到端检测模式。."""
         self._end2end = value
 
     def forward_head(
         self, x: list[torch.Tensor], box_head: torch.nn.Module = None, cls_head: torch.nn.Module = None
     ) -> dict[str, torch.Tensor]:
-        """拼接并返回预测的边界框和类别概率。"""
+        """拼接并返回预测的边界框和类别概率。."""
         if box_head is None or cls_head is None:  # 融合后的推理不需要检测头
             return {}
         bs = x[0].shape[0]  # 批次大小
@@ -173,7 +173,7 @@ class Detect(nn.Module):
     def forward(
         self, x: list[torch.Tensor]
     ) -> dict[str, torch.Tensor] | torch.Tensor | tuple[torch.Tensor, dict[str, torch.Tensor]]:
-        """拼接并返回预测的边界框和类别概率。"""
+        """拼接并返回预测的边界框和类别概率。."""
         preds = self.forward_head(x, **self.one2many)
         if self.end2end:
             x_detach = [xi.detach() for xi in x] if self.training else x  # 分离张量，避免一对一分支影响主干网络
@@ -187,7 +187,7 @@ class Detect(nn.Module):
         return y if self.export else (y, preds)
 
     def _inference(self, x: dict[str, torch.Tensor]) -> torch.Tensor:
-        """根据多层特征图解码预测的边界框和类别概率。
+        """根据多层特征图解码预测的边界框和类别概率。.
 
         参数：
             x (dict[str, torch.Tensor])：检测层输出的预测结果字典。
@@ -200,7 +200,7 @@ class Detect(nn.Module):
         return torch.cat((dbox, x["scores"].sigmoid()), 1)
 
     def _get_decode_boxes(self, x: dict[str, torch.Tensor]) -> torch.Tensor:
-        """根据锚点和步长获取解码后的边界框。"""
+        """根据锚点和步长获取解码后的边界框。."""
         shape = x["feats"][0].shape  # BCHW
         if self.dynamic or self.shape != shape:
             self.anchors, self.strides = (a.transpose(0, 1) for a in make_anchors(x["feats"], self.stride, 0.5))
@@ -210,7 +210,7 @@ class Detect(nn.Module):
         return dbox
 
     def bias_init(self):
-        """初始化 Detect() 的偏置。注意：必须先计算步长。"""
+        """初始化 Detect() 的偏置。注意：必须先计算步长。."""
         for i, (a, b) in enumerate(zip(self.one2many["box_head"], self.one2many["cls_head"])):
             a[-1].bias.data[:] = 2.0  # 边界框
             b[-1].bias.data[: self.nc] = math.log(
@@ -224,7 +224,7 @@ class Detect(nn.Module):
                 )  # cls (.01 对象, 80 类别, 640 img)
 
     def decode_bboxes(self, bboxes: torch.Tensor, anchors: torch.Tensor, xywh: bool = True) -> torch.Tensor:
-        """根据预测结果解码边界框。"""
+        """根据预测结果解码边界框。."""
         return dist2bbox(
             bboxes,
             anchors,
@@ -233,7 +233,7 @@ class Detect(nn.Module):
         )
 
     def postprocess(self, preds: torch.Tensor) -> torch.Tensor:
-        """对 YOLO 模型的预测结果执行后处理。
+        """对 YOLO 模型的预测结果执行后处理。.
 
         参数：
             preds (torch.Tensor)：原始预测结果，形状为 (batch_size, num_anchors, 4 + nc + extra)，最后一维的格式为
@@ -250,7 +250,7 @@ class Detect(nn.Module):
         return torch.cat([self._gather(boxes, idx), scores, conf, *(self._gather(e, idx) for e in extra)], dim=-1)
 
     def get_topk_index(self, scores: torch.Tensor, max_det: int) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        """从分数中获取 top-k 索引。
+        """从分数中获取 top-k 索引。.
 
         参数：
             scores (torch.Tensor)：分数张量，形状为 (batch_size, num_anchors, num_classes)。
@@ -272,12 +272,12 @@ class Detect(nn.Module):
         return scores[..., None], (index % nc)[..., None].float(), self._gather(ori_index, index // nc)
 
     def fuse(self) -> None:
-        """移除一对多检测头，以优化推理过程。"""
+        """移除一对多检测头，以优化推理过程。."""
         self.cv2 = self.cv3 = None
 
 
 class Segment(Detect):
-    """用于分割模型的 YOLO Segment 检测头。
+    """用于分割模型的 YOLO Segment 检测头。.
 
     此类扩展 Detect 检测头，增加实例分割任务所需的掩码预测能力。
 
@@ -298,7 +298,7 @@ class Segment(Detect):
     """
 
     def __init__(self, nc: int = 80, nm: int = 32, npr: int = 256, reg_max=16, end2end=False, ch: tuple = ()):
-        """初始化 YOLO 分割检测头，包括掩码数量、原型数量和卷积层。
+        """初始化 YOLO 分割检测头，包括掩码数量、原型数量和卷积层。.
 
         参数：
             nc (int)：类别数量。
@@ -320,16 +320,16 @@ class Segment(Detect):
 
     @property
     def one2many(self):
-        """返回一对多检测头组件，用于保持向后兼容。"""
+        """返回一对多检测头组件，用于保持向后兼容。."""
         return {"box_head": self.cv2, "cls_head": self.cv3, "mask_head": self.cv4}
 
     @property
     def one2one(self):
-        """返回一对一检测头组件。"""
+        """返回一对一检测头组件。."""
         return {"box_head": self.one2one_cv2, "cls_head": self.one2one_cv3, "mask_head": self.one2one_cv4}
 
     def forward(self, x: list[torch.Tensor]) -> tuple | list[torch.Tensor] | dict[str, torch.Tensor]:
-        """在训练时返回模型输出和掩码系数；在推理时同样返回模型输出和掩码系数。"""
+        """在训练时返回模型输出和掩码系数；在推理时同样返回模型输出和掩码系数。."""
         outputs = super().forward(x)
         preds = outputs[1] if isinstance(outputs, tuple) else outputs
         proto = self.proto(x[0])  # 掩码原型
@@ -344,14 +344,14 @@ class Segment(Detect):
         return (outputs, proto) if self.export else ((outputs[0], proto), preds)
 
     def _inference(self, x: dict[str, torch.Tensor]) -> torch.Tensor:
-        """解码预测的边界框和类别概率，并与掩码系数拼接。"""
+        """解码预测的边界框和类别概率，并与掩码系数拼接。."""
         preds = super()._inference(x)
         return torch.cat([preds, x["mask_coefficient"]], dim=1)
 
     def forward_head(
         self, x: list[torch.Tensor], box_head: torch.nn.Module, cls_head: torch.nn.Module, mask_head: torch.nn.Module
     ) -> dict[str, torch.Tensor]:
-        """拼接并返回预测的边界框、类别概率和掩码系数。"""
+        """拼接并返回预测的边界框、类别概率和掩码系数。."""
         preds = super().forward_head(x, box_head, cls_head)
         if mask_head is not None:
             bs = x[0].shape[0]  # 批次大小
@@ -359,12 +359,12 @@ class Segment(Detect):
         return preds
 
     def fuse(self) -> None:
-        """移除一对多检测头，以优化推理过程。"""
+        """移除一对多检测头，以优化推理过程。."""
         self.cv2 = self.cv3 = self.cv4 = None
 
 
 class Segment26(Segment):
-    """用于分割模型的 YOLO26 Segment 检测头。
+    """用于分割模型的 YOLO26 Segment 检测头。.
 
     此类扩展 Segment 检测头，使用 Proto26 为实例分割任务生成掩码预测。
 
@@ -385,7 +385,7 @@ class Segment26(Segment):
     """
 
     def __init__(self, nc: int = 80, nm: int = 32, npr: int = 256, reg_max=16, end2end=False, ch: tuple = ()):
-        """初始化 YOLO26 分割检测头，包括掩码数量、原型数量和卷积层。
+        """初始化 YOLO26 分割检测头，包括掩码数量、原型数量和卷积层。.
 
         参数：
             nc (int)：类别数量。
@@ -399,7 +399,7 @@ class Segment26(Segment):
         self.proto = Proto26(ch, self.npr, self.nm, nc)  # 原型生成模块
 
     def forward(self, x: list[torch.Tensor]) -> tuple | list[torch.Tensor] | dict[str, torch.Tensor]:
-        """在训练时返回模型输出和掩码系数；在推理时同样返回模型输出和掩码系数。"""
+        """在训练时返回模型输出和掩码系数；在推理时同样返回模型输出和掩码系数。."""
         outputs = Detect.forward(self, x)
         preds = outputs[1] if isinstance(outputs, tuple) else outputs
         proto = self.proto(x)  # 掩码原型
@@ -416,14 +416,14 @@ class Segment26(Segment):
         return (outputs, proto) if self.export else ((outputs[0], proto), preds)
 
     def fuse(self) -> None:
-        """移除一对多检测头和原型模块的额外部分，以优化推理过程。"""
+        """移除一对多检测头和原型模块的额外部分，以优化推理过程。."""
         super().fuse()
         if hasattr(self.proto, "fuse"):
             self.proto.fuse()
 
 
 class OBB(Detect):
-    """用于旋转目标检测模型的 YOLO OBB 检测头。
+    """用于旋转目标检测模型的 YOLO OBB 检测头。.
 
     此类扩展 Detect 检测头，增加带旋转角度的有向边界框预测能力。
 
@@ -444,7 +444,7 @@ class OBB(Detect):
     """
 
     def __init__(self, nc: int = 80, ne: int = 1, reg_max=16, end2end=False, ch: tuple = ()):
-        """使用类别数量 `nc` 和各层通道数 `ch` 初始化 OBB 检测头。
+        """使用类别数量 `nc` 和各层通道数 `ch` 初始化 OBB 检测头。.
 
         参数：
             nc (int)：类别数量。
@@ -463,16 +463,16 @@ class OBB(Detect):
 
     @property
     def one2many(self):
-        """返回一对多检测头组件，用于保持向后兼容。"""
+        """返回一对多检测头组件，用于保持向后兼容。."""
         return {"box_head": self.cv2, "cls_head": self.cv3, "angle_head": self.cv4}
 
     @property
     def one2one(self):
-        """返回一对一检测头组件。"""
+        """返回一对一检测头组件。."""
         return {"box_head": self.one2one_cv2, "cls_head": self.one2one_cv3, "angle_head": self.one2one_cv4}
 
     def _inference(self, x: dict[str, torch.Tensor]) -> torch.Tensor:
-        """解码预测的边界框和类别概率，并与旋转角度拼接。"""
+        """解码预测的边界框和类别概率，并与旋转角度拼接。."""
         # 方便 decode_bboxes 使用
         self.angle = x["angle"]
         preds = super()._inference(x)
@@ -481,28 +481,26 @@ class OBB(Detect):
     def forward_head(
         self, x: list[torch.Tensor], box_head: torch.nn.Module, cls_head: torch.nn.Module, angle_head: torch.nn.Module
     ) -> dict[str, torch.Tensor]:
-        """拼接并返回预测的边界框、类别概率和角度。"""
+        """拼接并返回预测的边界框、类别概率和角度。."""
         preds = super().forward_head(x, box_head, cls_head)
         if angle_head is not None:
             bs = x[0].shape[0]  # 批次大小
-            angle = torch.cat(
-                [angle_head[i](x[i]).view(bs, self.ne, -1) for i in range(self.nl)], 2
-            )  # OBB 角度 logits
+            angle = torch.cat([angle_head[i](x[i]).view(bs, self.ne, -1) for i in range(self.nl)], 2)  # OBB 角度 logits
             angle = (angle.sigmoid() - 0.25) * math.pi  # 角度范围为 [-pi/4, 3pi/4]
             preds["angle"] = angle
         return preds
 
     def decode_bboxes(self, bboxes: torch.Tensor, anchors: torch.Tensor) -> torch.Tensor:
-        """解码旋转边界框。"""
+        """解码旋转边界框。."""
         return dist2rbox(bboxes, self.angle, anchors, dim=1)
 
     def fuse(self) -> None:
-        """移除一对多检测头，以优化推理过程。"""
+        """移除一对多检测头，以优化推理过程。."""
         self.cv2 = self.cv3 = self.cv4 = None
 
 
 class OBB26(OBB):
-    """用于旋转目标检测模型的 YOLO26 OBB 检测头。
+    """用于旋转目标检测模型的 YOLO26 OBB 检测头。.
 
     此类扩展 OBB 检测头，修改角度处理方式，直接输出未经 sigmoid 变换的原始角度预测结果。
 
@@ -524,7 +522,7 @@ class OBB26(OBB):
     def forward_head(
         self, x: list[torch.Tensor], box_head: torch.nn.Module, cls_head: torch.nn.Module, angle_head: torch.nn.Module
     ) -> dict[str, torch.Tensor]:
-        """拼接并返回预测的边界框、类别概率和原始角度。"""
+        """拼接并返回预测的边界框、类别概率和原始角度。."""
         preds = Detect.forward_head(self, x, box_head, cls_head)
         if angle_head is not None:
             bs = x[0].shape[0]  # 批次大小
@@ -536,7 +534,7 @@ class OBB26(OBB):
 
 
 class Pose(Detect):
-    """用于关键点模型的 YOLO Pose 检测头。
+    """用于关键点模型的 YOLO Pose 检测头。.
 
     此类扩展 Detect 检测头，增加姿态估计任务所需的关键点预测能力。
 
@@ -557,7 +555,7 @@ class Pose(Detect):
     """
 
     def __init__(self, nc: int = 80, kpt_shape: tuple = (17, 3), reg_max=16, end2end=False, ch: tuple = ()):
-        """使用默认参数和卷积层初始化 YOLO 姿态检测头。
+        """使用默认参数和卷积层初始化 YOLO 姿态检测头。.
 
         参数：
             nc (int)：类别数量。
@@ -577,23 +575,23 @@ class Pose(Detect):
 
     @property
     def one2many(self):
-        """返回一对多检测头组件，用于保持向后兼容。"""
+        """返回一对多检测头组件，用于保持向后兼容。."""
         return {"box_head": self.cv2, "cls_head": self.cv3, "pose_head": self.cv4}
 
     @property
     def one2one(self):
-        """返回一对一检测头组件。"""
+        """返回一对一检测头组件。."""
         return {"box_head": self.one2one_cv2, "cls_head": self.one2one_cv3, "pose_head": self.one2one_cv4}
 
     def _inference(self, x: dict[str, torch.Tensor]) -> torch.Tensor:
-        """解码预测的边界框和类别概率，并与关键点拼接。"""
+        """解码预测的边界框和类别概率，并与关键点拼接。."""
         preds = super()._inference(x)
         return torch.cat([preds, self.kpts_decode(x["kpts"])], dim=1)
 
     def forward_head(
         self, x: list[torch.Tensor], box_head: torch.nn.Module, cls_head: torch.nn.Module, pose_head: torch.nn.Module
     ) -> dict[str, torch.Tensor]:
-        """拼接并返回预测的边界框、类别概率和关键点。"""
+        """拼接并返回预测的边界框、类别概率和关键点。."""
         preds = super().forward_head(x, box_head, cls_head)
         if pose_head is not None:
             bs = x[0].shape[0]  # 批次大小
@@ -601,11 +599,11 @@ class Pose(Detect):
         return preds
 
     def fuse(self) -> None:
-        """移除一对多检测头，以优化推理过程。"""
+        """移除一对多检测头，以优化推理过程。."""
         self.cv2 = self.cv3 = self.cv4 = None
 
     def kpts_decode(self, kpts: torch.Tensor) -> torch.Tensor:
-        """根据预测结果解码关键点。"""
+        """根据预测结果解码关键点。."""
         ndim = self.kpt_shape[1]
         bs = kpts.shape[0]
         if self.export:
@@ -624,7 +622,7 @@ class Pose(Detect):
 
 
 class Pose26(Pose):
-    """用于关键点模型的 YOLO26 Pose 检测头。
+    """用于关键点模型的 YOLO26 Pose 检测头。.
 
     此类扩展 Pose 检测头，使用归一化流完成姿态估计任务中的关键点预测。
 
@@ -645,7 +643,7 @@ class Pose26(Pose):
     """
 
     def __init__(self, nc: int = 80, kpt_shape: tuple = (17, 3), reg_max=16, end2end=False, ch: tuple = ()):
-        """使用默认参数和卷积层初始化 YOLO26 姿态检测头。
+        """使用默认参数和卷积层初始化 YOLO26 姿态检测头。.
 
         参数：
             nc (int)：类别数量。
@@ -671,7 +669,7 @@ class Pose26(Pose):
 
     @property
     def one2many(self):
-        """返回一对多检测头组件，用于保持向后兼容。"""
+        """返回一对多检测头组件，用于保持向后兼容。."""
         return {
             "box_head": self.cv2,
             "cls_head": self.cv3,
@@ -682,7 +680,7 @@ class Pose26(Pose):
 
     @property
     def one2one(self):
-        """返回一对一检测头组件。"""
+        """返回一对一检测头组件。."""
         return {
             "box_head": self.one2one_cv2,
             "cls_head": self.one2one_cv3,
@@ -700,7 +698,7 @@ class Pose26(Pose):
         kpts_head: torch.nn.Module,
         kpts_sigma_head: torch.nn.Module,
     ) -> dict[str, torch.Tensor]:
-        """拼接并返回预测的边界框、类别概率和关键点。"""
+        """拼接并返回预测的边界框、类别概率和关键点。."""
         preds = Detect.forward_head(self, x, box_head, cls_head)
         if pose_head is not None:
             bs = x[0].shape[0]  # 批次大小
@@ -713,12 +711,12 @@ class Pose26(Pose):
         return preds
 
     def fuse(self) -> None:
-        """移除一对多检测头，以优化推理过程。"""
+        """移除一对多检测头，以优化推理过程。."""
         super().fuse()
         self.cv4_kpts = self.cv4_sigma = self.flow_model = self.one2one_cv4_sigma = None
 
     def kpts_decode(self, kpts: torch.Tensor) -> torch.Tensor:
-        """根据预测结果解码关键点。"""
+        """根据预测结果解码关键点。."""
         ndim = self.kpt_shape[1]
         bs = kpts.shape[0]
         if self.export:
@@ -738,7 +736,7 @@ class Pose26(Pose):
 
 
 class Depth(nn.Module):
-    """用于单目深度估计的 YOLO Depth 检测头。
+    """用于单目深度估计的 YOLO Depth 检测头。.
 
     这是一个稠密预测头，接收主干网络的多尺度特征，通过逐级上采样和融合生成单通道深度图。
 
@@ -756,7 +754,7 @@ class Depth(nn.Module):
     export = False  # 导出模式
 
     def __init__(self, c_mid: int = 256, ch: tuple = ()):
-        """初始化 Depth 检测头。
+        """初始化 Depth 检测头。.
 
         参数：
             c_mid (int)：融合解码器的中间通道数。
@@ -785,7 +783,7 @@ class Depth(nn.Module):
         self.register_buffer("cal_b", torch.zeros(1))
 
     def forward(self, x: list[torch.Tensor]) -> dict[str, torch.Tensor] | torch.Tensor:
-        """融合多尺度特征并预测深度。
+        """融合多尺度特征并预测深度。.
 
         参数：
             x：来自主干网络或颈部网络的特征张量列表 [P3, P4, P5]。
@@ -819,7 +817,7 @@ class Depth(nn.Module):
 
 
 class Classify(nn.Module):
-    """YOLO 分类检测头，将 x(b,c1,20,20) 转换为 x(b,c2)。
+    """YOLO 分类检测头，将 x(b,c1,20,20) 转换为 x(b,c2)。.
 
     此类将特征图转换为类别预测结果。
 
@@ -843,7 +841,7 @@ class Classify(nn.Module):
     export = False  # 导出模式
 
     def __init__(self, c1: int, c2: int, k: int = 1, s: int = 1, p: int | None = None, g: int = 1):
-        """初始化 YOLO 分类检测头，将输入张量从 (b,c1,20,20) 转换为 (b,c2)。
+        """初始化 YOLO 分类检测头，将输入张量从 (b,c1,20,20) 转换为 (b,c2)。.
 
         参数：
             c1 (int)：输入通道数。
@@ -861,7 +859,7 @@ class Classify(nn.Module):
         self.linear = nn.Linear(c_, c2)  # 输出形状为 x(b,c2)
 
     def forward(self, x: list[torch.Tensor] | torch.Tensor) -> torch.Tensor | tuple:
-        """对输入特征图执行前向传播。"""
+        """对输入特征图执行前向传播。."""
         if isinstance(x, list):
             x = torch.cat(x, 1)
         x = self.linear(self.drop(self.pool(self.conv(x)).flatten(1)))
@@ -872,7 +870,7 @@ class Classify(nn.Module):
 
 
 class WorldDetect(Detect):
-    """将 YOLO 检测模型与文本嵌入的语义理解能力结合的检测头。
+    """将 YOLO 检测模型与文本嵌入的语义理解能力结合的检测头。.
 
     此类扩展标准 Detect 检测头，引入文本嵌入，以增强目标检测任务中的语义理解能力。
 
@@ -901,7 +899,7 @@ class WorldDetect(Detect):
         end2end: bool = False,
         ch: tuple = (),
     ):
-        """使用 nc 个类别和通道数 ch 初始化 YOLO 检测层。
+        """使用 nc 个类别和通道数 ch 初始化 YOLO 检测层。.
 
         参数：
             nc (int)：类别数量。
@@ -917,7 +915,7 @@ class WorldDetect(Detect):
         self.cv4 = nn.ModuleList(BNContrastiveHead(embed) if with_bn else ContrastiveHead() for _ in ch)
 
     def forward(self, x: list[torch.Tensor], text: torch.Tensor) -> dict[str, torch.Tensor] | tuple:
-        """拼接并返回预测的边界框和类别概率。"""
+        """拼接并返回预测的边界框和类别概率。."""
         feats = list(x)  # 保存特征图引用，用于生成锚点；下面的循环会重新赋值 x[i]，不会修改原始列表
         for i in range(self.nl):
             x[i] = torch.cat((self.cv2[i](x[i]), self.cv4[i](self.cv3[i](x[i]), text)), 1)
@@ -932,7 +930,7 @@ class WorldDetect(Detect):
         return y if self.export else (y, preds)
 
     def bias_init(self):
-        """初始化 Detect() 的偏置。注意：必须先计算步长。"""
+        """初始化 Detect() 的偏置。注意：必须先计算步长。."""
         m = self  # self.模型[-1]  # Detect() 模块
         # cf = torch.bincount(torch.tensor(np.concatenate(dataset.labels, 0)[:, 0]).long(), minlength=nc) + 1
         # ncf = math.log(0.6 / (m.nc - 0.999999)) if cf is None else torch.log(cf / cf.sum())  # 名义类别频率
@@ -942,7 +940,7 @@ class WorldDetect(Detect):
 
 
 class LRPCHead(nn.Module):
-    """用于高效目标检测的轻量级区域提议与分类检测头。
+    """用于高效目标检测的轻量级区域提议与分类检测头。.
 
     此检测头将区域提议筛选与分类结合，从而支持使用动态词汇表进行高效检测。
 
@@ -965,7 +963,7 @@ class LRPCHead(nn.Module):
     """
 
     def __init__(self, vocab: nn.Module, pf: nn.Module, loc: nn.Module, enabled: bool = True):
-        """使用词汇表、提议筛选器和定位组件初始化 LRPCHead。
+        """使用词汇表、提议筛选器和定位组件初始化 LRPCHead。.
 
         参数：
             vocab (nn.Module)：词汇表或分类模块。
@@ -981,7 +979,7 @@ class LRPCHead(nn.Module):
 
     @staticmethod
     def conv2linear(conv: nn.Conv2d) -> nn.Linear:
-        """将 1x1 卷积层转换为线性层。"""
+        """将 1x1 卷积层转换为线性层。."""
         assert isinstance(conv, nn.Conv2d) and conv.kernel_size == (1, 1)
         linear = nn.Linear(conv.in_channels, conv.out_channels).requires_grad_(conv.weight.requires_grad)
         linear.weight.data = conv.weight.view(conv.out_channels, -1).data
@@ -989,7 +987,7 @@ class LRPCHead(nn.Module):
         return linear
 
     def forward(self, cls_feat: torch.Tensor, loc_feat: torch.Tensor, conf: float) -> tuple[tuple, torch.Tensor]:
-        """处理分类特征和定位特征，生成检测提议。"""
+        """处理分类特征和定位特征，生成检测提议。."""
         if self.enabled:
             if not conf:  # 静态导出时，所有锚点都通过提议筛选器
                 cls_feat = self.vocab(cls_feat.flatten(2).transpose(-1, -2))
@@ -1010,7 +1008,7 @@ class LRPCHead(nn.Module):
 
 
 class YOLOEDetect(Detect):
-    """将 YOLO 检测模型与文本嵌入的语义理解能力结合的检测头。
+    """将 YOLO 检测模型与文本嵌入的语义理解能力结合的检测头。.
 
     此类扩展标准 Detect 检测头，通过文本嵌入和视觉提示嵌入支持文本引导的目标检测，并增强语义理解能力。
 
@@ -1043,7 +1041,7 @@ class YOLOEDetect(Detect):
     def __init__(
         self, nc: int = 80, embed: int = 512, with_bn: bool = False, reg_max=16, end2end=False, ch: tuple = ()
     ):
-        """使用 nc 个类别和通道数 ch 初始化 YOLO 检测层。
+        """使用 nc 个类别和通道数 ch 初始化 YOLO 检测层。.
 
         参数：
             nc (int)：类别数量。
@@ -1080,7 +1078,7 @@ class YOLOEDetect(Detect):
 
     @smart_inference_mode(False)  # 融合层仍保留在模型中，因此不能将其转换为推理张量
     def fuse(self, txt_feats: torch.Tensor = None):
-        """将文本特征与模型权重融合，以提高推理效率。"""
+        """将文本特征与模型权重融合，以提高推理效率。."""
         if txt_feats is None:  # 表示移除一对多分支
             self.cv2 = self.cv3 = self.cv4 = None
             return
@@ -1098,7 +1096,7 @@ class YOLOEDetect(Detect):
         self.is_fused = True
 
     def _fuse_tp(self, txt_feats: torch.Tensor, cls_head: torch.nn.Module, bn_head: torch.nn.Module) -> None:
-        """将文本提示嵌入与模型权重融合，以提高推理效率。"""
+        """将文本提示嵌入与模型权重融合，以提高推理效率。."""
         for cls_h, bn_h in zip(cls_head, bn_head):
             assert isinstance(cls_h, nn.Sequential)
             assert isinstance(bn_h, BNContrastiveHead)
@@ -1135,11 +1133,11 @@ class YOLOEDetect(Detect):
             bn_h.fuse()
 
     def get_tpe(self, tpe: torch.Tensor | None) -> torch.Tensor | None:
-        """获取归一化后的文本提示嵌入。"""
+        """获取归一化后的文本提示嵌入。."""
         return None if tpe is None else F.normalize(self.reprta(tpe), dim=-1, p=2)
 
     def get_vpe(self, x: list[torch.Tensor], vpe: torch.Tensor) -> torch.Tensor:
-        """获取具有空间感知能力的视觉提示嵌入。"""
+        """获取具有空间感知能力的视觉提示嵌入。."""
         if vpe.shape[1] == 0:  # 没有视觉提示嵌入
             return torch.zeros(x[0].shape[0], 0, self.embed, device=x[0].device)
         if vpe.ndim == 4:  # (B, N, H, W)
@@ -1148,13 +1146,13 @@ class YOLOEDetect(Detect):
         return vpe
 
     def forward(self, x: list[torch.Tensor]) -> torch.Tensor | tuple:
-        """使用类别提示嵌入处理特征并生成检测结果。"""
+        """使用类别提示嵌入处理特征并生成检测结果。."""
         if hasattr(self, "lrpc"):  # 用于无提示推理
             return self.forward_lrpc(x[:3])
         return super().forward(x)
 
     def forward_lrpc(self, x: list[torch.Tensor]) -> torch.Tensor | tuple:
-        """使用融合后的文本嵌入处理特征，为无提示模型生成检测结果。"""
+        """使用融合后的文本嵌入处理特征，为无提示模型生成检测结果。."""
         boxes, scores, index = [], [], []
         bs = x[0].shape[0]
         # 无提示融合会移除一对多检测头。
@@ -1181,7 +1179,7 @@ class YOLOEDetect(Detect):
         return y if self.export else (y, preds)
 
     def _get_decode_boxes(self, x):
-        """解码用于推理的预测边界框。"""
+        """解码用于推理的预测边界框。."""
         dbox = super()._get_decode_boxes(x)
         if hasattr(self, "lrpc"):
             dbox = dbox if x["index"] is None else dbox[..., x["index"]]
@@ -1189,16 +1187,16 @@ class YOLOEDetect(Detect):
 
     @property
     def one2many(self):
-        """返回一对多检测头组件，用于兼容 v3/v5/v8/v9/v11。"""
+        """返回一对多检测头组件，用于兼容 v3/v5/v8/v9/v11。."""
         return {"box_head": self.cv2, "cls_head": self.cv3, "contrastive_head": self.cv4}
 
     @property
     def one2one(self):
-        """返回一对一检测头组件。"""
+        """返回一对一检测头组件。."""
         return {"box_head": self.one2one_cv2, "cls_head": self.one2one_cv3, "contrastive_head": self.one2one_cv4}
 
     def forward_head(self, x, box_head, cls_head, contrastive_head):
-        """拼接并返回预测的边界框、类别概率和对比学习分数。"""
+        """拼接并返回预测的边界框、类别概率和对比学习分数。."""
         assert len(x) == 4, f"Expected 4 features including 3 feature maps and 1 text embeddings, but got {len(x)}."
         if box_head is None or cls_head is None:  # 用于融合后的推理
             return {}
@@ -1212,7 +1210,7 @@ class YOLOEDetect(Detect):
         return {"boxes": boxes, "scores": scores, "feats": x[:3]}
 
     def bias_init(self):
-        """初始化 Detect() 的偏置。注意：必须先计算步长。"""
+        """初始化 Detect() 的偏置。注意：必须先计算步长。."""
         for i, (a, b, c) in enumerate(
             zip(self.one2many["box_head"], self.one2many["cls_head"], self.one2many["contrastive_head"])
         ):
@@ -1229,7 +1227,7 @@ class YOLOEDetect(Detect):
 
 
 class YOLOESegment(YOLOEDetect):
-    """带文本嵌入能力的 YOLO 分割检测头。
+    """带文本嵌入能力的 YOLO 分割检测头。.
 
     此类扩展 YOLOEDetect，为具有文本引导语义理解能力的实例分割任务增加掩码预测功能。
 
@@ -1261,7 +1259,7 @@ class YOLOESegment(YOLOEDetect):
         end2end=False,
         ch: tuple = (),
     ):
-        """使用类别数量、掩码参数和嵌入维度初始化 YOLOESegment。
+        """使用类别数量、掩码参数和嵌入维度初始化 YOLOESegment。.
 
         参数：
             nc (int)：类别数量。
@@ -1285,12 +1283,12 @@ class YOLOESegment(YOLOEDetect):
 
     @property
     def one2many(self):
-        """返回一对多检测头组件，用于兼容 v3/v5/v8/v9/v11。"""
+        """返回一对多检测头组件，用于兼容 v3/v5/v8/v9/v11。."""
         return {"box_head": self.cv2, "cls_head": self.cv3, "mask_head": self.cv5, "contrastive_head": self.cv4}
 
     @property
     def one2one(self):
-        """返回一对一检测头组件。"""
+        """返回一对一检测头组件。."""
         return {
             "box_head": self.one2one_cv2,
             "cls_head": self.one2one_cv3,
@@ -1299,7 +1297,7 @@ class YOLOESegment(YOLOEDetect):
         }
 
     def forward_lrpc(self, x: list[torch.Tensor]) -> torch.Tensor | tuple:
-        """使用融合后的文本嵌入处理特征，为无提示模型生成检测结果。"""
+        """使用融合后的文本嵌入处理特征，为无提示模型生成检测结果。."""
         boxes, scores, index = [], [], []
         bs = x[0].shape[0]
         cv2 = self.one2one_cv2 if self.end2end or self.cv2 is None else self.cv2
@@ -1329,7 +1327,7 @@ class YOLOESegment(YOLOEDetect):
         return y if self.export else (y, preds)
 
     def forward(self, x: list[torch.Tensor]) -> tuple | list[torch.Tensor] | dict[str, torch.Tensor]:
-        """在训练时返回模型输出和掩码系数；在推理时同样返回模型输出和掩码系数。"""
+        """在训练时返回模型输出和掩码系数；在推理时同样返回模型输出和掩码系数。."""
         outputs = super().forward(x)
         preds = outputs[1] if isinstance(outputs, tuple) else outputs
         proto = self.proto(x[0])  # 掩码原型
@@ -1344,7 +1342,7 @@ class YOLOESegment(YOLOEDetect):
         return (outputs, proto) if self.export else ((outputs[0], proto), preds)
 
     def _inference(self, x: dict[str, torch.Tensor]) -> torch.Tensor:
-        """解码预测的边界框和类别概率，并与掩码系数拼接。"""
+        """解码预测的边界框和类别概率，并与掩码系数拼接。."""
         preds = super()._inference(x)
         return torch.cat([preds, x["mask_coefficient"]], dim=1)
 
@@ -1356,7 +1354,7 @@ class YOLOESegment(YOLOEDetect):
         mask_head: torch.nn.Module,
         contrastive_head: torch.nn.Module,
     ) -> dict[str, torch.Tensor]:
-        """拼接并返回预测的边界框、类别概率和掩码系数。"""
+        """拼接并返回预测的边界框、类别概率和掩码系数。."""
         preds = super().forward_head(x, box_head, cls_head, contrastive_head)
         if mask_head is not None:
             bs = x[0].shape[0]  # 批次大小
@@ -1364,7 +1362,7 @@ class YOLOESegment(YOLOEDetect):
         return preds
 
     def fuse(self, txt_feats: torch.Tensor = None):
-        """将文本特征与模型权重融合，以提高推理效率。"""
+        """将文本特征与模型权重融合，以提高推理效率。."""
         super().fuse(txt_feats)
         if txt_feats is None:  # 表示移除一对多分支
             self.cv5 = None
@@ -1374,7 +1372,7 @@ class YOLOESegment(YOLOEDetect):
 
 
 class YOLOESegment26(YOLOESegment):
-    """使用 Proto26 生成掩码的 YOLOE 风格分割检测头模块。
+    """使用 Proto26 生成掩码的 YOLOE 风格分割检测头模块。.
 
     此类扩展 YOLOESegment 的功能，通过集成 Proto26 原型生成模块和卷积层，为分割任务预测掩码系数。
 
@@ -1407,7 +1405,7 @@ class YOLOESegment26(YOLOESegment):
         end2end=False,
         ch: tuple = (),
     ):
-        """使用类别数量、掩码参数和嵌入维度初始化 YOLOESegment26。"""
+        """使用类别数量、掩码参数和嵌入维度初始化 YOLOESegment26。."""
         YOLOEDetect.__init__(self, nc, embed, with_bn, reg_max, end2end, ch)
         self.nm = nm
         self.npr = npr
@@ -1419,7 +1417,7 @@ class YOLOESegment26(YOLOESegment):
             self.one2one_cv5 = copy.deepcopy(self.cv5)
 
     def forward(self, x: list[torch.Tensor]) -> tuple | list[torch.Tensor] | dict[str, torch.Tensor]:
-        """在训练时返回模型输出和掩码系数；在推理时同样返回模型输出和掩码系数。"""
+        """在训练时返回模型输出和掩码系数；在推理时同样返回模型输出和掩码系数。."""
         outputs = YOLOEDetect.forward(self, x)
         preds = outputs[1] if isinstance(outputs, tuple) else outputs
         proto = self.proto([xi.detach() for xi in x], return_semantic=False)  # 掩码原型
@@ -1436,10 +1434,9 @@ class YOLOESegment26(YOLOESegment):
 
 
 class RTDETRDecoder(nn.Module):
-    """用于目标检测的实时可变形 Transformer 解码器（RTDETRDecoder）模块。
+    """用于目标检测的实时可变形 Transformer 解码器（RTDETRDecoder）模块。.
 
-    此解码器模块结合 Transformer 架构和可变形卷积，预测图像中目标的边界框和类别标签。它融合多个层级的特征，
-    并依次通过多个 Transformer 解码器层，输出最终预测结果。
+    此解码器模块结合 Transformer 架构和可变形卷积，预测图像中目标的边界框和类别标签。它融合多个层级的特征， 并依次通过多个 Transformer 解码器层，输出最终预测结果。
 
     属性：
         export (bool)：导出模式标志。
@@ -1500,7 +1497,7 @@ class RTDETRDecoder(nn.Module):
         box_noise_scale: float = 1.0,
         learnt_init_query: bool = False,
     ):
-        """使用给定参数初始化 RTDETRDecoder 模块。
+        """使用给定参数初始化 RTDETRDecoder 模块。.
 
         参数：
             nc (int)：类别数量。
@@ -1561,7 +1558,7 @@ class RTDETRDecoder(nn.Module):
         self._reset_parameters()
 
     def forward(self, x: list[torch.Tensor], batch: dict | None = None) -> tuple | torch.Tensor:
-        """执行模块的前向传播，为输入返回边界框和分类分数。
+        """执行模块的前向传播，为输入返回边界框和分类分数。.
 
         参数：
             x (list[torch.Tensor])：来自主干网络的特征图列表。
@@ -1612,7 +1609,7 @@ class RTDETRDecoder(nn.Module):
         return y if self.export else (y, x)
 
     def postprocess(self, boxes: torch.Tensor, scores: torch.Tensor) -> torch.Tensor:
-        """对预测结果执行后处理并选择 top-k 个检测结果。
+        """对预测结果执行后处理并选择 top-k 个检测结果。.
 
         参数：
             boxes (torch.Tensor)：预测的边界框，形状为 (batch_size, num_queries, 4)，格式为 xywh。
@@ -1639,7 +1636,7 @@ class RTDETRDecoder(nn.Module):
         device: str = "cpu",
         eps: float = 1e-2,
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        """根据给定形状和网格尺寸生成锚框，并验证其有效性。
+        """根据给定形状和网格尺寸生成锚框，并验证其有效性。.
 
         参数：
             shapes (list)：特征图尺寸列表。
@@ -1671,7 +1668,7 @@ class RTDETRDecoder(nn.Module):
         return anchors, valid_mask
 
     def _get_encoder_input(self, x: list[torch.Tensor]) -> tuple[torch.Tensor, list[list[int]]]:
-        """获取输入的投影特征并将其拼接，以生成编码器输入。
+        """获取输入的投影特征并将其拼接，以生成编码器输入。.
 
         参数：
             x (list[torch.Tensor])：来自主干网络的特征图列表。
@@ -1703,7 +1700,7 @@ class RTDETRDecoder(nn.Module):
         dn_embed: torch.Tensor | None = None,
         dn_bbox: torch.Tensor | None = None,
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
-        """根据提供的特征和尺寸生成并准备解码器所需的输入。
+        """根据提供的特征和尺寸生成并准备解码器所需的输入。.
 
         参数：
             feats (torch.Tensor)：编码器处理后的特征。
@@ -1757,7 +1754,7 @@ class RTDETRDecoder(nn.Module):
         return embeddings, refer_bbox, enc_bboxes, enc_scores
 
     def _reset_parameters(self):
-        """使用预定义的权重和偏置初始化或重置模型的各个组件。"""
+        """使用预定义的权重和偏置初始化或重置模型的各个组件。."""
         # 初始化类别和边界框检测头
         bias_cls = bias_init_with_prob(0.01) / 80 * self.nc
         # 注意：使用 `linear_init` 初始化权重时，在自定义数据集上训练可能产生 NaN。
@@ -1782,7 +1779,7 @@ class RTDETRDecoder(nn.Module):
 
 
 class v10Detect(Detect):
-    """来自 https://arxiv.org/pdf/2405.14458 的 v10 检测头。
+    """来自 https://arxiv.org/pdf/2405.14458 的 v10 检测头。.
 
     此类实现 YOLOv10 检测头，采用双重分配训练和一致的双分支预测，以提升效率和性能。
 
@@ -1808,7 +1805,7 @@ class v10Detect(Detect):
     end2end = True
 
     def __init__(self, nc: int = 80, ch: tuple = ()):
-        """使用指定的类别数量和输入通道初始化 v10Detect 对象。
+        """使用指定的类别数量和输入通道初始化 v10Detect 对象。.
 
         参数：
             nc (int)：类别数量。
@@ -1828,12 +1825,12 @@ class v10Detect(Detect):
         self.one2one_cv3 = copy.deepcopy(self.cv3)
 
     def fuse(self):
-        """移除一对多检测头，以优化推理过程。"""
+        """移除一对多检测头，以优化推理过程。."""
         self.cv2 = self.cv3 = None
 
 
 class SemanticSegment(nn.Module):
-    """用于逐像素分类的 YOLO 语义分割检测头。
+    """用于逐像素分类的 YOLO 语义分割检测头。.
 
     此检测头生成稠密的逐像素类别预测结果。与实例分割不同，它不会生成边界框或实例掩码。
 
@@ -1852,7 +1849,7 @@ class SemanticSegment(nn.Module):
     bake_argmax = False  # 导出：输出 [B, H, W] 类别图（TensorRT>=10 和多类别 Hailo-10/15）
 
     def __init__(self, nc=19, ch=()):
-        """初始化语义分割检测头。
+        """初始化语义分割检测头。.
 
         参数：
             nc (int)：语义类别数量。
@@ -1870,7 +1867,7 @@ class SemanticSegment(nn.Module):
         self.aux_head = nn.Sequential(Conv(ch[1], c_mid, 3), nn.Conv2d(c_mid, nc, 1)) if len(ch) > 1 else None
 
     def forward(self, x):
-        """前向传播：融合多尺度特征并预测逐像素类别。
+        """前向传播：融合多尺度特征并预测逐像素类别。.
 
         参数：
             x (list[torch.Tensor])：特征图列表 [P3, P4]。

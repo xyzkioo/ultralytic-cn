@@ -7,7 +7,7 @@ from ultralytics.utils import DEFAULT_CFG, ops
 
 
 class PosePredictor(DetectionPredictor):
-    """继承 DetectionPredictor、用于根据姿态模型生成预测结果的类。
+    """继承 DetectionPredictor、用于根据姿态模型生成预测结果的类。.
 
     此类专用于姿态估计，在继承 DetectionPredictor 标准对象检测能力的同时处理关键点检测。
 
@@ -27,7 +27,7 @@ class PosePredictor(DetectionPredictor):
     """
 
     def __init__(self, cfg=DEFAULT_CFG, overrides=None, _callbacks: dict | None = None):
-        """初始化用于姿态估计任务的 PosePredictor。
+        """初始化用于姿态估计任务的 PosePredictor。.
 
         设置 PosePredictor 实例，将其配置为姿态检测任务，并处理 Apple MPS 的设备特定警告。
 
@@ -40,7 +40,7 @@ class PosePredictor(DetectionPredictor):
         self.args.task = "pose"
 
     def construct_result(self, pred, img, orig_img, img_path):
-        """根据预测结果构建包含关键点的结果对象。
+        """根据预测结果构建包含关键点的结果对象。.
 
         此方法扩展父类实现，从预测结果中提取关键点数据并添加到结果对象。
 
