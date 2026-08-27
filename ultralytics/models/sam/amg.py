@@ -14,7 +14,7 @@ import torch
 def is_box_near_crop_edge(
     boxes: torch.Tensor, crop_box: list[int], orig_box: list[int], atol: float = 20.0
 ) -> torch.Tensor:
-    """根据指定容差判断边界框是否靠近裁剪图像区域的边缘。
+    """根据指定容差判断边界框是否靠近裁剪图像区域的边缘。.
 
     参数：
         boxes (torch.Tensor): XYXY 格式的边界框。
@@ -41,10 +41,9 @@ def is_box_near_crop_edge(
 
 
 def batch_iterator(batch_size: int, *args) -> Generator[list[Any]]:
-    """以指定批次大小从输入参数中生成数据批次，以提高处理效率。
+    """以指定批次大小从输入参数中生成数据批次，以提高处理效率。.
 
-    此函数接收批次大小和任意数量的可迭代对象，然后从这些可迭代对象中生成元素批次。
-    所有输入可迭代对象的长度必须相同。
+    此函数接收批次大小和任意数量的可迭代对象，然后从这些可迭代对象中生成元素批次。 所有输入可迭代对象的长度必须相同。
 
     参数：
         batch_size (int): 要生成的每个批次大小。
@@ -53,14 +52,11 @@ def batch_iterator(batch_size: int, *args) -> Generator[list[Any]]:
     Yields:
         (列表[Any]): 从每个输入可迭代对象中生成的分批元素列表。
 
-    示例：
+            示例：
         >>> data = [1, 2, 3, 4, 5]
         >>> labels = ["a", "b", "c", "d", "e"]
-        >>> for batch in batch_iterator(2, data, labels):
-        ...     print(batch)
-        [[1, 2], ['a', 'b']]
-        [[3, 4], ['c', 'd']]
-        [[5], ['e']]
+        >>> for batch in batch_iterator(2, data, labels): ... print(batch) [[1, 2], ['a', 'b']] [[3, 4], ['c', 'd']]
+            [[5], ['e']]
     """
     assert args and all(len(a) == len(args[0]) for a in args), "Batched iteration must have same-size inputs."
     n_batches = len(args[0]) // batch_size + int(len(args[0]) % batch_size != 0)
@@ -69,7 +65,7 @@ def batch_iterator(batch_size: int, *args) -> Generator[list[Any]]:
 
 
 def calculate_stability_score(masks: torch.Tensor, mask_threshold: float, threshold_offset: float) -> torch.Tensor:
-    """计算一个掩码批次的稳定性分数。
+    """计算一个掩码批次的稳定性分数。.
 
     稳定性分数是二值掩码之间的 IoU，这些二值掩码分别由高阈值和低阈值对预测掩码 logits 进行阈值化得到。
 
@@ -97,7 +93,7 @@ def calculate_stability_score(masks: torch.Tensor, mask_threshold: float, thresh
 
 
 def build_point_grid(n_per_side: int) -> np.ndarray:
-    """为图像分割任务生成 [0,1]x[0,1] 范围内均匀分布的二维点网格。"""
+    """为图像分割任务生成 [0,1]x[0,1] 范围内均匀分布的二维点网格。."""
     offset = 1 / (2 * n_per_side)
     points_one_side = np.linspace(offset, 1 - offset, n_per_side)
     points_x = np.tile(points_one_side[None, :], (n_per_side, 1))
@@ -106,14 +102,14 @@ def build_point_grid(n_per_side: int) -> np.ndarray:
 
 
 def build_all_layer_point_grids(n_per_side: int, n_layers: int, scale_per_layer: int) -> list[np.ndarray]:
-    """为多个裁剪层生成具有不同尺度和密度的点网格。"""
+    """为多个裁剪层生成具有不同尺度和密度的点网格。."""
     return [build_point_grid(int(n_per_side / (scale_per_layer**i))) for i in range(n_layers + 1)]
 
 
 def generate_crop_boxes(
     im_size: tuple[int, ...], n_layers: int, overlap_ratio: float
 ) -> tuple[list[list[int]], list[int]]:
-    """为多尺度图像处理生成不同大小的裁剪边界框，并设置分层重叠区域。
+    """为多尺度图像处理生成不同大小的裁剪边界框，并设置分层重叠区域。.
 
     参数：
         im_size (tuple[int, ...]): 输入图像的高度和宽度。
@@ -139,7 +135,7 @@ def generate_crop_boxes(
     layer_idxs.append(0)
 
     def crop_len(orig_len, n_crops, overlap):
-        """根据原始长度、裁剪数量和重叠比例计算每个裁剪区域的长度。"""
+        """根据原始长度、裁剪数量和重叠比例计算每个裁剪区域的长度。."""
         return math.ceil((overlap * (n_crops - 1) + orig_len) / n_crops)
 
     for i_layer in range(n_layers):
@@ -162,7 +158,7 @@ def generate_crop_boxes(
 
 
 def uncrop_boxes_xyxy(boxes: torch.Tensor, crop_box: list[int]) -> torch.Tensor:
-    """将裁剪边界框偏移量加回坐标，从而恢复边界框在原图中的位置。"""
+    """将裁剪边界框偏移量加回坐标，从而恢复边界框在原图中的位置。."""
     x0, y0, _, _ = crop_box
     offset = torch.tensor([[x0, y0, x0, y0]], device=boxes.device)
     # 检查边界框是否包含通道维度
@@ -172,7 +168,7 @@ def uncrop_boxes_xyxy(boxes: torch.Tensor, crop_box: list[int]) -> torch.Tensor:
 
 
 def uncrop_points(points: torch.Tensor, crop_box: list[int]) -> torch.Tensor:
-    """将裁剪边界框偏移量加回点坐标，从而恢复点在原图中的位置。"""
+    """将裁剪边界框偏移量加回点坐标，从而恢复点在原图中的位置。."""
     x0, y0, _, _ = crop_box
     offset = torch.tensor([[x0, y0]], device=points.device)
     # 检查点是否包含通道维度
@@ -182,7 +178,7 @@ def uncrop_points(points: torch.Tensor, crop_box: list[int]) -> torch.Tensor:
 
 
 def uncrop_masks(masks: torch.Tensor, crop_box: list[int], orig_h: int, orig_w: int) -> torch.Tensor:
-    """通过填充掩码恢复到原始图像尺寸，并处理坐标变换。"""
+    """通过填充掩码恢复到原始图像尺寸，并处理坐标变换。."""
     x0, y0, x1, y1 = crop_box
     if x0 == 0 and y0 == 0 and x1 == orig_w and y1 == orig_h:
         return masks
@@ -193,7 +189,7 @@ def uncrop_masks(masks: torch.Tensor, crop_box: list[int], orig_h: int, orig_w: 
 
 
 def remove_small_regions(mask: np.ndarray, area_thresh: float, mode: str) -> tuple[np.ndarray, bool]:
-    """根据面积阈值和模式移除掩码中的小型断开区域或孔洞。
+    """根据面积阈值和模式移除掩码中的小型断开区域或孔洞。.
 
     参数：
         mask (np.ndarray): 要处理的二值掩码。
@@ -229,7 +225,7 @@ def remove_small_regions(mask: np.ndarray, area_thresh: float, mode: str) -> tup
 
 
 def batched_mask_to_box(masks: torch.Tensor) -> torch.Tensor:
-    """计算包围二值掩码的 XYXY 格式边界框。
+    """计算包围二值掩码的 XYXY 格式边界框。.
 
     参数：
         masks (torch.Tensor): 形状为 (B, H, W) 或 (B, C, H, W) 的二值掩码。

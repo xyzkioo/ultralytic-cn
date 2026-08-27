@@ -21,10 +21,9 @@ from ultralytics.utils.torch_utils import select_device, smart_inference_mode
 
 
 class YOLOEDetectValidator(DetectionValidator):
-    """处理文本和视觉提示嵌入的 YOLOE 检测验证器。
+    """处理文本和视觉提示嵌入的 YOLOE 检测验证器。.
 
-    此类扩展 DetectionValidator，为 YOLOE 模型提供专用验证功能。
-    它支持使用文本提示或从训练样本中提取的视觉提示嵌入进行验证，从而为基于提示的目标检测提供灵活的评估策略。
+    此类扩展 DetectionValidator，为 YOLOE 模型提供专用验证功能。 它支持使用文本提示或从训练样本中提取的视觉提示嵌入进行验证，从而为基于提示的目标检测提供灵活的评估策略。
 
     属性：
         device (torch.device): 执行验证的设备。
@@ -48,7 +47,7 @@ class YOLOEDetectValidator(DetectionValidator):
 
     @smart_inference_mode()
     def get_visual_pe(self, dataloader: torch.utils.data.DataLoader, model: YOLOEModel) -> torch.Tensor:
-        """从训练样本中提取视觉提示嵌入。
+        """从训练样本中提取视觉提示嵌入。.
 
         此方法使用 YOLOE 模型处理数据加载器，为每个类别计算视觉提示嵌入。
         它会归一化嵌入，并将没有样本的类别嵌入设为零。
@@ -95,7 +94,7 @@ class YOLOEDetectValidator(DetectionValidator):
         return visual_pe.unsqueeze(0)
 
     def get_vpe_dataloader(self, data: dict[str, Any]) -> torch.utils.data.DataLoader:
-        """为 LVIS 训练视觉提示样本创建数据加载器。
+        """为 LVIS 训练视觉提示样本创建数据加载器。.
 
         此方法使用指定数据集准备视觉提示嵌入（VPE）数据加载器，并为验证应用包括 LoadVisualPrompt 在内的必要变换和配置。
 
@@ -135,7 +134,7 @@ class YOLOEDetectValidator(DetectionValidator):
         refer_data: str | None = None,
         load_vp: bool = False,
     ) -> dict[str, Any]:
-        """使用文本或视觉提示嵌入对模型运行验证。
+        """使用文本或视觉提示嵌入对模型运行验证。.
 
         此方法根据 load_vp 标志使用文本提示或视觉提示验证模型。
         它支持训练期间验证（使用 trainer 对象）或使用给定模型独立验证。
@@ -206,4 +205,4 @@ class YOLOEDetectValidator(DetectionValidator):
 
 
 class YOLOESegValidator(YOLOEDetectValidator, SegmentationValidator):
-    """支持文本和视觉提示嵌入的 YOLOE 分割验证器。"""
+    """支持文本和视觉提示嵌入的 YOLOE 分割验证器。."""

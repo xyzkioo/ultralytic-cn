@@ -6,7 +6,7 @@ from ultralytics.utils import nms, ops
 
 
 class DetectionPredictor(BasePredictor):
-    """继承 BasePredictor、用于根据检测模型生成预测结果的类。
+    """继承 BasePredictor、用于根据检测模型生成预测结果的类。.
 
     此预测器专用于对象检测任务，将模型输出处理为包含边界框和类别预测结果的检测结果。
 
@@ -30,7 +30,7 @@ class DetectionPredictor(BasePredictor):
     """
 
     def postprocess(self, preds, img, orig_imgs, **kwargs):
-        """后处理预测结果，并返回 Results 对象列表。
+        """后处理预测结果，并返回 Results 对象列表。.
 
         此方法对模型原始预测结果应用非极大值抑制，并为可视化和进一步分析准备数据。
 
@@ -79,7 +79,7 @@ class DetectionPredictor(BasePredictor):
 
     @staticmethod
     def get_obj_feats(feat_maps, idxs):
-        """从特征图中提取对象特征。"""
+        """从特征图中提取对象特征。."""
         import torch
 
         s = min(x.shape[1] for x in feat_maps)  # 查找最短向量长度
@@ -89,7 +89,7 @@ class DetectionPredictor(BasePredictor):
         return [feats[idx] if idx.shape[0] else [] for feats, idx in zip(obj_feats, idxs)]  # 处理批次中的每张图像
 
     def construct_results(self, preds, img, orig_imgs):
-        """根据模型预测结果构建 Results 对象列表。
+        """根据模型预测结果构建 Results 对象列表。.
 
         参数：
             preds (列表[torch.Tensor]): 每张图像的预测边界框和分数列表。
@@ -105,7 +105,7 @@ class DetectionPredictor(BasePredictor):
         ]
 
     def construct_result(self, pred, img, orig_img, img_path):
-        """根据一张图像的预测结果构建单个 Results 对象。
+        """根据一张图像的预测结果构建单个 Results 对象。.
 
         参数：
             pred (torch.Tensor): 预测边界框和分数，形状为 (N, 6)，其中 N 是检测数量。

@@ -46,7 +46,7 @@ from ultralytics.utils.torch_utils import TORCH_1_11, TORCH_1_13
 
 
 def test_dataloader_caps_workers_to_batches():
-    """测试极小数据集不会创建超出有效批次数量的持久 worker。"""
+    """测试极小数据集不会创建超出有效批次数量的持久 worker。."""
     single_batch = build_dataloader(range(4), batch=4, workers=8)
     drop_last_single_batch = build_dataloader(range(5), batch=4, workers=8, drop_last=True)
     two_batches = build_dataloader(range(8), batch=4, workers=8)
@@ -61,7 +61,7 @@ def test_dataloader_caps_workers_to_batches():
 
 
 def test_dataloader_cap_preserves_distributed_drop_last(monkeypatch):
-    """测试 worker 上限会遵循分布式采样器大小，同时不改变全局 drop_last 行为。"""
+    """测试 worker 上限会遵循分布式采样器大小，同时不改变全局 drop_last 行为。."""
     sampler_cls = data_build.distributed.DistributedSampler
 
     def distributed_sampler(dataset, shuffle, seed):
@@ -80,7 +80,7 @@ def test_dataloader_cap_preserves_distributed_drop_last(monkeypatch):
 
 
 def test_dataloader_seed_varies_sampling_order():
-    """测试运行种子会传递给加载器随机数生成器，而不是让每次运行都重复固定顺序。"""
+    """测试运行种子会传递给加载器随机数生成器，而不是让每次运行都重复固定顺序。."""
     with torch.random.fork_rng():
         loaders = []
         for seed in (0, 0, 1):
@@ -96,13 +96,13 @@ def test_dataloader_seed_varies_sampling_order():
 
 
 def test_dataloader_empty_dataset_uses_dataloader_validation():
-    """测试空数据集会通过 DataLoader 验证失败，而不是在 worker 上限计算处失败。"""
+    """测试空数据集会通过 DataLoader 验证失败，而不是在 worker 上限计算处失败。."""
     with pytest.raises(ValueError, match="positive integer"):
         build_dataloader([], batch=4, workers=2)
 
 
 def test_build_yolo_dataset_hyp_isolated():
-    """测试构建数据集不会修改其所基于的共享 cfg 中的超参数。"""
+    """测试构建数据集不会修改其所基于的共享 cfg 中的超参数。."""
     data = check_det_dataset("coco8.yaml")
     cfg = get_cfg(overrides={"data": "coco8.yaml", "imgsz": 32, "rect": True})  # rect 会将当前超参数中的 mosaic 置零
     data_build.build_yolo_dataset(cfg, data["train"], batch=2, data=data, mode="train")
@@ -110,7 +110,7 @@ def test_build_yolo_dataset_hyp_isolated():
 
 
 def test_cfg_rejects_fuzzed_values():
-    """测试无效覆盖参数会在配置验证阶段失败。"""
+    """测试无效覆盖参数会在配置验证阶段失败。."""
     with pytest.raises(TypeError, match="degrees"):
         get_cfg(overrides={"degrees": None})
     with pytest.raises(ValueError, match="cls_pw"):
@@ -130,13 +130,13 @@ def test_cfg_rejects_fuzzed_values():
 
 
 def skip_rpi_semantic():
-    """由于内存限制，在 Raspberry Pi 上跳过语义分割测试。"""
+    """由于内存限制，在 Raspberry Pi 上跳过语义分割测试。."""
     if IS_RASPBERRYPI:
         pytest.skip("Semantic segmentation tests are skipped on Raspberry Pi due to memory constraints.")
 
 
 def test_select_device(monkeypatch):
-    """同一个设备字符串每次调用都必须解析到同一块 GPU，且不能修改环境变量。"""
+    """同一个设备字符串每次调用都必须解析到同一块 GPU，且不能修改环境变量。."""
     from ultralytics.utils import torch_utils
 
     set_calls = []
@@ -198,7 +198,7 @@ def test_select_device(monkeypatch):
 
 
 def test_restricted_load_threaded():
-    """并发受限加载会共享进程级允许列表，且不能删除彼此添加的条目。"""
+    """并发受限加载会共享进程级允许列表，且不能删除彼此添加的条目。."""
     from concurrent.futures import ThreadPoolExecutor
 
     from ultralytics.nn.tasks import torch_safe_load
@@ -208,13 +208,13 @@ def test_restricted_load_threaded():
 
 
 def test_model_forward():
-    """测试 YOLO 模型的前向传播。"""
+    """测试 YOLO 模型的前向传播。."""
     model = YOLO(CFG)
     model(source=None, imgsz=32, augment=True)  # 同时测试无输入源和增强
 
 
 def test_model_methods():
-    """测试 YOLO 模型的各种方法和属性，确保功能正确。"""
+    """测试 YOLO 模型的各种方法和属性，确保功能正确。."""
     model = YOLO(MODEL)
 
     # 模型方法
@@ -234,7 +234,7 @@ def test_model_methods():
 
 
 def test_model_load_remaps_cls_head_by_names():
-    """测试类别名称重映射仅限于封闭集合类别 logits 检测头。"""
+    """测试类别名称重映射仅限于封闭集合类别 logits 检测头。."""
     from types import SimpleNamespace
 
     from ultralytics.models.yolo.detect.train import DetectionTrainer
@@ -270,7 +270,7 @@ def test_model_load_remaps_cls_head_by_names():
 
 
 def test_model_profile():
-    """使用 `profile=True` 分析 YOLO 模型，以评估性能和资源使用情况。"""
+    """使用 `profile=True` 分析 YOLO 模型，以评估性能和资源使用情况。."""
     from ultralytics.nn.tasks import DetectionModel
 
     model = DetectionModel()  # 构建模型
@@ -279,7 +279,7 @@ def test_model_profile():
 
 
 def test_predict_txt(tmp_path):
-    """测试 YOLO 使用文本文件中列出的文件、目录和模式源进行预测。"""
+    """测试 YOLO 使用文本文件中列出的文件、目录和模式源进行预测。."""
     file = tmp_path / "sources_multi_row.txt"
     with open(file, "w") as f:
         f.writelines(f"{src}\n" for src in SOURCES_LIST)
@@ -289,7 +289,7 @@ def test_predict_txt(tmp_path):
 
 @pytest.mark.skipif(True, reason="disabled for testing")
 def test_predict_csv_multi_row(tmp_path):
-    """测试 YOLO 使用 CSV 文件多行中列出的源进行预测。"""
+    """测试 YOLO 使用 CSV 文件多行中列出的源进行预测。."""
     file = tmp_path / "sources_multi_row.csv"
     with open(file, "w", newline="") as f:
         writer = csv.writer(f)
@@ -301,7 +301,7 @@ def test_predict_csv_multi_row(tmp_path):
 
 @pytest.mark.skipif(True, reason="disabled for testing")
 def test_predict_csv_single_row(tmp_path):
-    """测试 YOLO 使用 CSV 文件单行中列出的源进行预测。"""
+    """测试 YOLO 使用 CSV 文件单行中列出的源进行预测。."""
     file = tmp_path / "sources_single_row.csv"
     with open(file, "w", newline="") as f:
         writer = csv.writer(f)
@@ -312,7 +312,7 @@ def test_predict_csv_single_row(tmp_path):
 
 @pytest.mark.parametrize("model_name", MODELS)
 def test_predict_img(model_name):
-    """测试 YOLO 模型对各种图像输入类型的预测。"""
+    """测试 YOLO 模型对各种图像输入类型的预测。."""
     if IS_RASPBERRYPI and model_name == "yolo26n-sem.pt":
         skip_rpi_semantic()
     channels = 1 if model_name == "yolo11n-grayscale.pt" else 3
@@ -336,7 +336,7 @@ def test_predict_img(model_name):
 
 @pytest.mark.parametrize("model_name", ["yolo26n.pt", "yolo11n.pt"])  # 端到端模型和基于 NMS 的模型
 def test_predict_classes_with_max_det(model_name):
-    """测试 end2end 模型和基于 NMS 的模型中的 classes-before-max_det 及重复调用过滤器重置。"""
+    """测试 end2end 模型和基于 NMS 的模型中的 classes-before-max_det 及重复调用过滤器重置。."""
     boxes = YOLO(WEIGHTS_DIR / model_name)(SOURCE, classes=[0], max_det=300, verbose=False)[0].boxes
     assert len(boxes) > 1  # bus.jpg 包含多个人
     top1_model = YOLO(WEIGHTS_DIR / model_name)
@@ -350,14 +350,14 @@ def test_predict_classes_with_max_det(model_name):
 
 @pytest.mark.parametrize("model", MODELS)
 def test_predict_visualize(model):
-    """使用 visualize=True 测试模型预测方法生成预测可视化结果。"""
+    """使用 visualize=True 测试模型预测方法生成预测可视化结果。."""
     if IS_RASPBERRYPI and model == "yolo26n-sem.pt":
         skip_rpi_semantic()
     YOLO(WEIGHTS_DIR / model)(SOURCE, imgsz=32, visualize=True)
 
 
 def test_load_tensor_uint8():
-    """测试张量归一化支持 uint8，同时保持浮点 epsilon 容差。"""
+    """测试张量归一化支持 uint8，同时保持浮点 epsilon 容差。."""
     from ultralytics.data.loaders import LoadTensor
 
     loaded = LoadTensor(torch.full((1, 3, 32, 32), 255, dtype=torch.uint8)).im0
@@ -368,7 +368,7 @@ def test_load_tensor_uint8():
 
 
 def test_predict_gray_and_4ch(tmp_path):
-    """测试 YOLO 对转换为灰度图和四通道图像的 SOURCE 进行预测，并覆盖各种文件名。"""
+    """测试 YOLO 对转换为灰度图和四通道图像的 SOURCE 进行预测，并覆盖各种文件名。."""
     im = Image.open(SOURCE)
 
     source_grayscale = tmp_path / "grayscale.jpg"
@@ -391,7 +391,7 @@ def test_predict_gray_and_4ch(tmp_path):
 
 
 def test_predict_ndarray_channels():
-    """测试灰度模型和彩色模型的 NumPy 通道归一化。"""
+    """测试灰度模型和彩色模型的 NumPy 通道归一化。."""
     from ultralytics.data.loaders import LoadPilAndNumpy
 
     model = YOLO(MODEL)  # default 3-channel model
@@ -407,8 +407,7 @@ def test_predict_ndarray_channels():
 @pytest.mark.slow
 @pytest.mark.skipif(not ONLINE, reason="environment is offline")
 def test_predict_all_image_formats():
-    """在 COCO12-Formats 的 12 种图像格式扩展名上进行预测（AVIF、BMP、DNG、HEIC、JP2、JPEG、JPG、MPO、PNG、TIF、
-    TIFF、WebP）。
+    """在 COCO12-Formats 的 12 种图像格式扩展名上进行预测（AVIF、BMP、DNG、HEIC、JP2、JPEG、JPG、MPO、PNG、TIF、 TIFF、WebP）。.
     """
     # 如有需要则下载数据集
     data = check_det_dataset("coco12-formats.yaml")
@@ -434,7 +433,7 @@ def test_predict_all_image_formats():
 @pytest.mark.skipif(not ONLINE, reason="environment is offline")
 @pytest.mark.skipif(is_github_action_running(), reason="No auth https://github.com/JuanBindez/pytubefix/issues/166")
 def test_youtube():
-    """在 YouTube 视频流上测试 YOLO 模型，并处理潜在的网络错误。"""
+    """在 YouTube 视频流上测试 YOLO 模型，并处理潜在的网络错误。."""
     model = YOLO(MODEL)
     try:
         model.predict("https://youtu.be/G17sBkb38XQ", imgsz=32, save=True)
@@ -444,7 +443,7 @@ def test_youtube():
 
 
 def test_track_second_association_indices():
-    """在第二次关联中匹配的低置信度检测仍保留其在完整检测集合中的索引。"""
+    """在第二次关联中匹配的低置信度检测仍保留其在完整检测集合中的索引。."""
     from ultralytics.engine.results import Boxes
     from ultralytics.trackers.byte_tracker import BYTETracker
     from ultralytics.utils import ROOT, YAML, IterableSimpleNamespace
@@ -460,8 +459,7 @@ def test_track_second_association_indices():
 
 
 def test_track_split_detections_degenerate_boxes():
-    """`_split_detections` 必须从两个置信度分区中删除宽高为零或负值的框，同时保留每个有效检测在完整
-    检测集合空间中的索引（稍后赋给 `track.idx`）。
+    """`_split_detections` 必须从两个置信度分区中删除宽高为零或负值的框，同时保留每个有效检测在完整 检测集合空间中的索引（稍后赋给 `track.idx`）。.
     """
     from ultralytics.engine.results import Boxes
     from ultralytics.trackers.byte_tracker import BYTETracker
@@ -484,7 +482,7 @@ def test_track_split_detections_degenerate_boxes():
 
 @pytest.mark.parametrize("tracker_type", ["bytetrack", "fasttrack"])
 def test_track_second_association_low_conf_keeps_id(tracker_type):
-    """在默认 fuse_score=True 下，低置信度检测会通过第二次关联得到恢复。"""
+    """在默认 fuse_score=True 下，低置信度检测会通过第二次关联得到恢复。."""
     from ultralytics.engine.results import Boxes
     from ultralytics.trackers.track import TRACKER_MAP
     from ultralytics.utils import ROOT, YAML, IterableSimpleNamespace
@@ -503,7 +501,7 @@ def test_track_second_association_low_conf_keeps_id(tracker_type):
 
 
 def test_tracktrack_new_lifecycle():
-    """TrackTrack 会预测新轨迹，并在轨迹历史达到 min_track_len 后确认轨迹。"""
+    """TrackTrack 会预测新轨迹，并在轨迹历史达到 min_track_len 后确认轨迹。."""
     from ultralytics.engine.results import Boxes
     from ultralytics.trackers.track import TRACKER_MAP
     from ultralytics.utils import ROOT, YAML, IterableSimpleNamespace
@@ -536,7 +534,7 @@ def test_tracktrack_new_lifecycle():
 
 @pytest.mark.parametrize("tracker_type", ["botsort", "deepocsort", "tracktrack"])
 def test_track_reid_auto_user_detections(tracker_type):
-    """原生 ReID（model='auto'）在用户提供检测结果时必须降级为仅运动模式，不能对原始帧编码。"""
+    """原生 ReID（model='auto'）在用户提供检测结果时必须降级为仅运动模式，不能对原始帧编码。."""
     from ultralytics.engine.results import Boxes
     from ultralytics.trackers.track import TRACKER_MAP
     from ultralytics.utils import ROOT, YAML, IterableSimpleNamespace
@@ -552,7 +550,7 @@ def test_track_reid_auto_user_detections(tracker_type):
 
 @pytest.mark.parametrize("fuse_score", [True, False])
 def test_deepocsort_ocr_proximity_gate(fuse_score):
-    """无论 fuse_score 如何设置，DeepOCSORT OCR 都必须拒绝 IoU 为零的匹配对，即使外观特征相同。"""
+    """无论 fuse_score 如何设置，DeepOCSORT OCR 都必须拒绝 IoU 为零的匹配对，即使外观特征相同。."""
     from types import SimpleNamespace
 
     from ultralytics.trackers.basetrack import TrackState
@@ -576,7 +574,7 @@ def test_deepocsort_ocr_proximity_gate(fuse_score):
 
 
 def test_reid_invalid_crops():
-    """测试 ReID 会跳过越界的检测裁剪，同时保持特征对齐。"""
+    """测试 ReID 会跳过越界的检测裁剪，同时保持特征对齐。."""
     from types import SimpleNamespace
 
     from ultralytics.trackers.utils.reid import ReID
@@ -592,7 +590,7 @@ def test_reid_invalid_crops():
 @pytest.mark.skipif(not ONLINE, reason="environment is offline")
 @pytest.mark.parametrize("model", MODELS)
 def test_track_stream(model, tmp_path, solution_assets):
-    """使用所有内置跟踪器和各种 GMC/ReID 配置，在短视频上测试流式跟踪。
+    """使用所有内置跟踪器和各种 GMC/ReID 配置，在短视频上测试流式跟踪。.
 
     注意：为获得更高置信度和更好的匹配，跟踪需要 imgsz=160。
     """
@@ -629,7 +627,7 @@ def test_track_stream(model, tmp_path, solution_assets):
 
 @pytest.mark.parametrize("task,weight,data", TASK_MODEL_DATA)
 def test_val(task: str, weight: str, data: str) -> None:
-    """测试 YOLO 模型的验证模式。"""
+    """测试 YOLO 模型的验证模式。."""
     if IS_RASPBERRYPI and task == "semantic":
         skip_rpi_semantic()
     model = YOLO(weight)
@@ -649,7 +647,7 @@ def test_val(task: str, weight: str, data: str) -> None:
 
 
 def test_val_save_txt_pose(tmp_path):
-    """测试 val(save_txt=True) 和 val(save_json=True) 保存的姿态关键点位于原始图像空间。"""
+    """测试 val(save_txt=True) 和 val(save_json=True) 保存的姿态关键点位于原始图像空间。."""
     model = YOLO(WEIGHTS_DIR / "yolo26n-pose.pt")
     # imgsz=640（不是其他位置使用的 imgsz=32）：coco8-pose 图像不是正方形，因此 letterbox 偏移只有在完整分辨率下
     # 才足以将缩放错误的关键点推到 [0, 1] 外；较小 imgsz 会使其留在范围内并隐藏回归问题。
@@ -675,7 +673,7 @@ def test_val_save_txt_pose(tmp_path):
 
 
 def test_pose_metrics_curves():
-    """测试姿态曲线标签包含四条唯一的框和姿态序列。"""
+    """测试姿态曲线标签包含四条唯一的框和姿态序列。."""
     from ultralytics.utils.metrics import PoseMetrics
 
     curves = PoseMetrics().curves
@@ -685,7 +683,7 @@ def test_pose_metrics_curves():
 @pytest.mark.skipif(not ONLINE, reason="environment is offline")
 @pytest.mark.skipif(IS_JETSON or IS_RASPBERRYPI, reason="Edge devices not intended for training")
 def test_train_multi():
-    """测试在数据集集合上微调基础模型，此过程会针对 list/tuple 数据触发 MultiTrainer。"""
+    """测试在数据集集合上微调基础模型，此过程会针对 list/tuple 数据触发 MultiTrainer。."""
     model = YOLO(MODEL)
     results = model.train(data=["coco8.yaml", "coco8.yaml"], epochs=1, imgsz=32)
     assert isinstance(results, dict) and len(results) == 2  # 每次运行一个条目（coco8、coco8-2），不合并重复项
@@ -698,7 +696,7 @@ def test_train_multi():
 
 
 def test_normalize_platform_uri():
-    """测试 Platform 网页 URL 会重写为 ul:// URI，使数据集和模型可以直接从粘贴的 URL 加载。"""
+    """测试 Platform 网页 URL 会重写为 ul:// URI，使数据集和模型可以直接从粘贴的 URL 加载。."""
     from ultralytics.utils.checks import normalize_platform_uri
 
     base = "https://platform.ultralytics.com/glenn-jocher"
@@ -708,7 +706,7 @@ def test_normalize_platform_uri():
 
 
 def test_convert_signed_ndjson(monkeypatch):
-    """测试带签名的 NDJSON URL 会在数据集 YAML 验证前完成转换。"""
+    """测试带签名的 NDJSON URL 会在数据集 YAML 验证前完成转换。."""
     from ultralytics.data import converter, utils
 
     captured = []
@@ -725,7 +723,7 @@ def test_convert_signed_ndjson(monkeypatch):
 
 @pytest.mark.parametrize("task", ["detect", "classify"])
 def test_ndjson_conversion_concurrency_and_resume(monkeypatch, tmp_path, task):
-    """测试并发转换会共享工作内容，且中断的转换会在发布完成状态前恢复。"""
+    """测试并发转换会共享工作内容，且中断的转换会在发布完成状态前恢复。."""
     import asyncio
     import json
     import threading
@@ -857,7 +855,7 @@ def test_ndjson_conversion_concurrency_and_resume(monkeypatch, tmp_path, task):
 
 
 def test_platform_job_transport(monkeypatch, tmp_path):
-    """使用已有本地检查点测试可配置的 Platform 传输。"""
+    """使用已有本地检查点测试可配置的 Platform 传输。."""
     from types import SimpleNamespace
 
     from ultralytics import SETTINGS, cfg
@@ -897,7 +895,7 @@ def test_platform_job_transport(monkeypatch, tmp_path):
 @pytest.mark.skipif(not ONLINE, reason="environment is offline")
 @pytest.mark.skipif(IS_JETSON or IS_RASPBERRYPI, reason="Edge devices not intended for training")
 def test_train_scratch():
-    """测试 YOLO 模型在 COCO12-Formats 数据集的 12 种不同图像类型上从头训练。"""
+    """测试 YOLO 模型在 COCO12-Formats 数据集的 12 种不同图像类型上从头训练。."""
     model = YOLO(CFG)
     model.train(data="coco12-formats.yaml", epochs=2, imgsz=32, cache="disk", batch=-1, close_mosaic=1, name="model")
     model(SOURCE)
@@ -906,7 +904,7 @@ def test_train_scratch():
 @pytest.mark.skipif(not ONLINE, reason="environment is offline")
 @pytest.mark.skipif(IS_RASPBERRYPI, reason="Edge devices not intended for training")
 def test_train_ndjson():
-    """测试使用 NDJSON 格式数据集训练 YOLO 模型。"""
+    """测试使用 NDJSON 格式数据集训练 YOLO 模型。."""
     model = YOLO(WEIGHTS_DIR / "yolo26n.pt")
     model.train(data=f"{ASSETS_URL}/coco8-ndjson.ndjson", epochs=1, imgsz=32)
 
@@ -914,7 +912,7 @@ def test_train_ndjson():
 @pytest.mark.parametrize("scls", [False, True])
 @pytest.mark.skipif(IS_RASPBERRYPI, reason="Edge devices not intended for training")
 def test_train_pretrained(scls):
-    """测试从预训练检查点开始训练 YOLO 模型。"""
+    """测试从预训练检查点开始训练 YOLO 模型。."""
     model = YOLO(WEIGHTS_DIR / "yolo26n-seg.pt")
     model.train(
         data="coco8-seg.yaml", epochs=1, imgsz=32, cache="ram", copy_paste=0.5, mixup=0.5, name=0, single_cls=scls
@@ -923,7 +921,7 @@ def test_train_pretrained(scls):
 
 
 def test_all_model_yamls():
-    """测试根据 `cfg/models` 目录中所有可用 YAML 配置创建 YOLO 模型。"""
+    """测试根据 `cfg/models` 目录中所有可用 YAML 配置创建 YOLO 模型。."""
     for m in (ROOT / "cfg" / "models").rglob("*.yaml"):
         if "rtdetr" in m.name:
             if TORCH_1_11:
@@ -934,7 +932,7 @@ def test_all_model_yamls():
 
 @pytest.mark.skipif(WINDOWS, reason="Windows slow CI export bug https://github.com/ultralytics/ultralytics/pull/16003")
 def test_workflow(isolated_model):
-    """测试包含训练、验证、预测和导出的完整工作流。"""
+    """测试包含训练、验证、预测和导出的完整工作流。."""
     model = YOLO(isolated_model)
     model.train(data="coco8.yaml", epochs=1, imgsz=32, optimizer="SGD")
     model.val(imgsz=32)
@@ -943,10 +941,10 @@ def test_workflow(isolated_model):
 
 
 def test_predict_callback_and_setup():
-    """测试 YOLO 预测设置和执行期间的回调功能。"""
+    """测试 YOLO 预测设置和执行期间的回调功能。."""
 
     def on_predict_batch_end(predictor):
-        """在预测批次结束时处理相关操作的回调函数。"""
+        """在预测批次结束时处理相关操作的回调函数。."""
         path, im0s, _ = predictor.batch
         im0s = im0s if isinstance(im0s, list) else [im0s]
         bs = [predictor.dataset.bs for _ in range(len(path))]
@@ -967,7 +965,7 @@ def test_predict_callback_and_setup():
 
 @pytest.mark.parametrize("model", MODELS)
 def test_results(model: str, tmp_path, solution_assets):
-    """测试 YOLO 模型结果处理以及各种格式的输出。"""
+    """测试 YOLO 模型结果处理以及各种格式的输出。."""
     if IS_RASPBERRYPI and model == "yolo26n-sem.pt":
         skip_rpi_semantic()
     im = solution_assets("boats") if model == "yolo26n-obb.pt" else SOURCE
@@ -995,7 +993,7 @@ def test_results(model: str, tmp_path, solution_assets):
 
 
 def test_results_plot_without_boxes():
-    """测试绘制仅包含掩码的 Results（boxes=None）不会抛出 AttributeError。"""
+    """测试绘制仅包含掩码的 Results（boxes=None）不会抛出 AttributeError。."""
     from ultralytics.engine.results import Results
 
     orig_img = np.zeros((640, 640, 3), dtype=np.uint8)
@@ -1007,7 +1005,7 @@ def test_results_plot_without_boxes():
 
 
 def test_results_depth_field():
-    """深度数组会转换为 DepthMap，并能顺利经过 .cpu().numpy() 调用链。"""
+    """深度数组会转换为 DepthMap，并能顺利经过 .cpu().numpy() 调用链。."""
     from ultralytics.engine.results import DepthMap, Results
 
     img = np.zeros((20, 24, 3), dtype=np.uint8)
@@ -1021,7 +1019,7 @@ def test_results_depth_field():
 
 
 def test_results_depth_none_summary_len_and_update():
-    """仅深度 Results：None 可直接传递，摘要为空，__len__ 会计算深度图，update() 会包装数组。"""
+    """仅深度 Results：None 可直接传递，摘要为空，__len__ 会计算深度图，update() 会包装数组。."""
     from ultralytics.engine.results import DepthMap, Results
 
     img = np.zeros((8, 8, 3), dtype=np.uint8)
@@ -1035,7 +1033,7 @@ def test_results_depth_none_summary_len_and_update():
 
 
 def test_results_plot_with_depth():
-    """带深度图的 Results.plot() 会将着色后的深度热图叠加到图像上。"""
+    """带深度图的 Results.plot() 会将着色后的深度热图叠加到图像上。."""
     from ultralytics.engine.results import Results
 
     img = np.zeros((24, 24, 3), dtype=np.uint8)
@@ -1046,7 +1044,7 @@ def test_results_plot_with_depth():
 
 
 def test_annotator_depth_map():
-    """Annotator.depth_map 会为深度数组着色，同时覆盖全零（没有有效像素）的情况。"""
+    """Annotator.depth_map 会为深度数组着色，同时覆盖全零（没有有效像素）的情况。."""
     from ultralytics.utils.plotting import Annotator
 
     ann = Annotator(np.zeros((32, 32, 3), dtype=np.uint8))
@@ -1058,7 +1056,7 @@ def test_annotator_depth_map():
 
 
 def test_dense_result_tensor_indexing():
-    """有效索引会在 SemanticMask/DepthMap 上保留完整图；越界索引会抛出异常；空选择的长度为零。"""
+    """有效索引会在 SemanticMask/DepthMap 上保留完整图；越界索引会抛出异常；空选择的长度为零。."""
     from ultralytics.engine.results import DepthMap, SemanticMask
 
     data = torch.arange(20, dtype=torch.float32).reshape(4, 5)
@@ -1078,7 +1076,7 @@ def test_dense_result_tensor_indexing():
 
 
 def test_results_plot_empty_dense_selection():
-    """对单结果密集型（语义/深度）Results 调用 result[1:].plot() 时返回原图，不叠加图层。"""
+    """对单结果密集型（语义/深度）Results 调用 result[1:].plot() 时返回原图，不叠加图层。."""
     from ultralytics.engine.results import Results
 
     img = np.zeros((16, 16, 3), dtype=np.uint8)
@@ -1093,7 +1091,7 @@ def test_results_plot_empty_dense_selection():
 
 
 def test_annotator_tensor_image():
-    """Annotator 接受张量图像，并与 Results.plot 的合成像素保持一致。"""
+    """Annotator 接受张量图像，并与 Results.plot 的合成像素保持一致。."""
     from ultralytics.engine.results import Results
     from ultralytics.utils.plotting import Annotator
 
@@ -1108,7 +1106,7 @@ def test_annotator_tensor_image():
 
 
 def test_results_update_probs():
-    """测试 Results.update(probs=...) 会像其他同级属性一样，将张量包装为 Probs。"""
+    """测试 Results.update(probs=...) 会像其他同级属性一样，将张量包装为 Probs。."""
     from ultralytics.engine.results import Probs, Results
 
     orig_img = np.zeros((32, 32, 3), dtype=np.uint8)
@@ -1119,7 +1117,7 @@ def test_results_update_probs():
 
 
 def test_labels_and_crops(tmp_path):
-    """测试预测参数输出，用于保存 YOLO 检测标签和裁剪图。"""
+    """测试预测参数输出，用于保存 YOLO 检测标签和裁剪图。."""
     imgs = [SOURCE, ASSETS / "zidane.jpg"]
     model = YOLO(WEIGHTS_DIR / "yolo26n.pt")
     results = model(imgs, imgsz=160, save_txt=True, save_crop=True)
@@ -1152,7 +1150,7 @@ def test_labels_and_crops(tmp_path):
 
 
 def test_data_utils(tmp_path):
-    """测试数据工具函数，包括自动划分和 ZIP 归档。"""
+    """测试数据工具函数，包括自动划分和 ZIP 归档。."""
     from ultralytics.data.split import autosplit
     from ultralytics.utils.downloads import zip_directory
 
@@ -1195,7 +1193,7 @@ def test_data_utils(tmp_path):
 
 
 def test_safe_download_unzips_local_path_archive(tmp_path):
-    """测试 safe_download() 会解压本地归档路径，而不会将其当作远程 URL。"""
+    """测试 safe_download() 会解压本地归档路径，而不会将其当作远程 URL。."""
     dataset_dir = tmp_path / "coco8 local"
     archive = tmp_path / "coco8 local.zip"
     (dataset_dir / "images" / "train").mkdir(parents=True)
@@ -1216,7 +1214,7 @@ def test_safe_download_unzips_local_path_archive(tmp_path):
 
 
 def test_safe_download_skips_unsafe_archive_members(tmp_path):
-    """测试 safe_download() 会跳过将解压到目标目录之外的归档成员。"""
+    """测试 safe_download() 会跳过将解压到目标目录之外的归档成员。."""
     archive = tmp_path / "unsafe.zip"
     with zipfile.ZipFile(archive, "w") as zf:
         zf.writestr("../unsafe.txt", "bad")
@@ -1229,7 +1227,7 @@ def test_safe_download_skips_unsafe_archive_members(tmp_path):
 
 
 def test_safe_download_skips_unsafe_tar_members(tmp_path):
-    """测试 safe_download() 会跳过将解压到目标目录之外的 tar 成员。"""
+    """测试 safe_download() 会跳过将解压到目标目录之外的 tar 成员。."""
     source = tmp_path / "safe.txt"
     source.write_text("ok")
     archive = tmp_path / "unsafe.tar"
@@ -1245,7 +1243,7 @@ def test_safe_download_skips_unsafe_tar_members(tmp_path):
 
 @pytest.mark.skipif(not ONLINE, reason="environment is offline")
 def test_data_converter(tmp_path):
-    """测试从 COCO 到 YOLO 格式的数据集转换函数和类别映射。"""
+    """测试从 COCO 到 YOLO 格式的数据集转换函数和类别映射。."""
     from ultralytics.data.converter import coco80_to_coco91_class, convert_coco
 
     cached_file = DATASETS_DIR / "annotations" / "instances_val2017.json"
@@ -1260,7 +1258,7 @@ def test_data_converter(tmp_path):
 
 
 def test_data_annotator(tmp_path):
-    """测试使用检测模型和分割模型自动标注数据。"""
+    """测试使用检测模型和分割模型自动标注数据。."""
     from ultralytics.data.annotator import auto_annotate
 
     auto_annotate(
@@ -1272,7 +1270,7 @@ def test_data_annotator(tmp_path):
 
 
 def test_events():
-    """测试事件发送功能。"""
+    """测试事件发送功能。."""
     from ultralytics.utils.events import Events
 
     events = Events()
@@ -1283,7 +1281,7 @@ def test_events():
 
 
 def test_cfg_init():
-    """测试 'ultralytics.cfg' 模块中的配置初始化工具。"""
+    """测试 'ultralytics.cfg' 模块中的配置初始化工具。."""
     from ultralytics.cfg import check_dict_alignment, copy_default_cfg, smart_value
 
     with contextlib.suppress(SyntaxError):
@@ -1336,7 +1334,7 @@ def test_cfg_init():
 
 
 def test_depth_calibration_checkpoint_provenance(tmp_path):
-    """深度校准会将所选变换和样本数量与检查点一起持久化。"""
+    """深度校准会将所选变换和样本数量与检查点一起持久化。."""
     from copy import deepcopy
 
     from ultralytics.models.yolo.depth.calibrate import _depth_head, calibrate_checkpoint
@@ -1372,7 +1370,7 @@ def test_depth_calibration_checkpoint_provenance(tmp_path):
 
 @pytest.mark.parametrize("external", [False, True])
 def test_depth_trainer_records_portable_calibration_split(tmp_path, monkeypatch, external):
-    """校准来源记录本地数据划分，同时不会拒绝外部验证路径。"""
+    """校准来源记录本地数据划分，同时不会拒绝外部验证路径。."""
     from types import SimpleNamespace
 
     from ultralytics.models.yolo import detect
@@ -1408,7 +1406,7 @@ def test_depth_trainer_records_portable_calibration_split(tmp_path, monkeypatch,
 
 
 def test_depth_dataset_ignores_unreadable_targets(tmp_path):
-    """丢弃不可读取的深度图，并接受类别标签为空的单类别模式。"""
+    """丢弃不可读取的深度图，并接受类别标签为空的单类别模式。."""
     from ultralytics.data.dataset import DepthDataset
     from ultralytics.data.utils import save_depth_png
 
@@ -1438,7 +1436,7 @@ def test_depth_dataset_ignores_unreadable_targets(tmp_path):
 
 
 def test_utils_init():
-    """测试 Ultralytics 库中的初始化工具。"""
+    """测试 Ultralytics 库中的初始化工具。."""
     from ultralytics.utils import get_ubuntu_version, is_github_action_running
 
     get_ubuntu_version()
@@ -1446,7 +1444,7 @@ def test_utils_init():
 
 
 def test_utils_checks(monkeypatch):
-    """测试文件名、依赖、图像尺寸、显示能力和版本等各种工具检查。"""
+    """测试文件名、依赖、图像尺寸、显示能力和版本等各种工具检查。."""
 
     def package_version(name):
         if name == "v2":
@@ -1493,14 +1491,14 @@ def test_utils_checks(monkeypatch):
 
 @pytest.mark.skipif(WINDOWS, reason="Windows profiling is extremely slow (cause unknown)")
 def test_utils_benchmarks():
-    """使用 'ultralytics.utils.benchmarks' 中的 'ProfileModels' 测试模型性能。"""
+    """使用 'ultralytics.utils.benchmarks' 中的 'ProfileModels' 测试模型性能。."""
     from ultralytics.utils.benchmarks import ProfileModels
 
     ProfileModels(["yolo26n.yaml"], imgsz=32, min_time=1, num_timed_runs=3, num_warmup_runs=1).run()
 
 
 def test_utils_torchutils():
-    """测试 Torch 工具函数，包括性能分析和 FLOP 计算。"""
+    """测试 Torch 工具函数，包括性能分析和 FLOP 计算。."""
     from ultralytics.nn.modules.conv import Conv
     from ultralytics.utils.torch_utils import profile_ops, time_sync
 
@@ -1512,7 +1510,7 @@ def test_utils_torchutils():
 
 
 def test_rtdetr_remap_cls_by_names():
-    """测试 RT-DETR 解码器 cls-head 重映射（直接名称匹配、未匹配和去噪部分迁移）。"""
+    """测试 RT-DETR 解码器 cls-head 重映射（直接名称匹配、未匹配和去噪部分迁移）。."""
     from types import SimpleNamespace
 
     from ultralytics.nn.tasks import RTDETRDetectionModel
@@ -1543,7 +1541,7 @@ def test_rtdetr_remap_cls_by_names():
 
 @pytest.mark.parametrize("nc", [1, 3])
 def test_semantic_loss_all_ignore(nc):
-    """整个批次均为 ignore（255）时，SemanticSegmentationLoss 必须保持有限值，例如未标注或无效帧。"""
+    """整个批次均为 ignore（255）时，SemanticSegmentationLoss 必须保持有限值，例如未标注或无效帧。."""
     from ultralytics.cfg import get_cfg
     from ultralytics.nn.tasks import SemanticSegmentationModel
     from ultralytics.utils.loss import SemanticSegmentationLoss
@@ -1560,7 +1558,7 @@ def test_semantic_loss_all_ignore(nc):
 
 
 class _DepthLossModel(torch.nn.Module):
-    """模拟 DepthLoss26 所读取模型接口的简易桩：使用 .parameters() 获取设备，使用 .args 获取超参数。"""
+    """模拟 DepthLoss26 所读取模型接口的简易桩：使用 .parameters() 获取设备，使用 .args 获取超参数。."""
 
     def __init__(self, **over):
         super().__init__()
@@ -1573,7 +1571,7 @@ class _DepthLossModel(torch.nn.Module):
 
 
 def _depth_loss_for_scaled_pred(lam, scale):
-    """返回结构完美但全局尺度错误的预测结果的纯 SILog 深度损失。"""
+    """返回结构完美但全局尺度错误的预测结果的纯 SILog 深度损失。."""
     from ultralytics.utils.loss import DepthLoss26
 
     crit = DepthLoss26(_DepthLossModel(dlam=lam, dgrad=0.0))  # 仅使用 SILog
@@ -1584,8 +1582,7 @@ def _depth_loss_for_scaled_pred(lam, scale):
 
 
 def test_v26_depth_loss_lower_lambda_penalizes_scale_error_more():
-    """在尺度不变的 SILog（dlam=1）下，全局缩放平移后的预测结果损失近似为零；但随着 dlam 降低，
-    必须对其进行强烈惩罚（损失变为依赖尺度）。
+    """在尺度不变的 SILog（dlam=1）下，全局缩放平移后的预测结果损失近似为零；但随着 dlam 降低， 必须对其进行强烈惩罚（损失变为依赖尺度）。.
     """
     loss_invariant = _depth_loss_for_scaled_pred(lam=1.0, scale=2.0)
     loss_anchored = _depth_loss_for_scaled_pred(lam=0.15, scale=2.0)
@@ -1594,7 +1591,7 @@ def test_v26_depth_loss_lower_lambda_penalizes_scale_error_more():
 
 
 def test_utils_ops():
-    """测试坐标变换和归一化相关的工具操作。"""
+    """测试坐标变换和归一化相关的工具操作。."""
     from ultralytics.utils.ops import (
         ltwh2xywh,
         ltwh2xyxy,
@@ -1643,7 +1640,7 @@ def test_utils_ops():
 
 
 def test_scale_coords_nonuniform_letterbox():
-    """坐标缩放必须抵消拉伸预处理带来的独立高度和宽度增益。"""
+    """坐标缩放必须抵消拉伸预处理带来的独立高度和宽度增益。."""
     from ultralytics.data.augment import LetterBox
     from ultralytics.utils import ops
 
@@ -1662,7 +1659,7 @@ def test_scale_coords_nonuniform_letterbox():
 
 
 def test_nms_end2end_classes_before_max_det():
-    """端到端 NMS 分支必须像基于 NMS 的分支一样，在截断到 max_det 前先过滤类别。"""
+    """端到端 NMS 分支必须像基于 NMS 的分支一样，在截断到 max_det 前先过滤类别。."""
     from ultralytics.utils.nms import non_max_suppression
 
     # （2、4、6）个端到端预测结果按置信度降序排列：[x1, y1, x2, y2, conf, cls]
@@ -1683,7 +1680,7 @@ def test_nms_end2end_classes_before_max_det():
 
 
 def test_process_mask_empty():
-    """Process_mask/process_mask_native/scale_masks 必须在检测数量为 0 时正常处理而不崩溃。"""
+    """Process_mask/process_mask_native/scale_masks 必须在检测数量为 0 时正常处理而不崩溃。."""
     from ultralytics.utils import ops
 
     protos, coeffs, bboxes = torch.rand(32, 160, 160), torch.zeros(0, 32), torch.zeros(0, 4)
@@ -1694,7 +1691,7 @@ def test_process_mask_empty():
 
 
 def test_utils_files(tmp_path):
-    """测试文件处理工具，包括文件年龄、日期以及包含空格的路径。"""
+    """测试文件处理工具，包括文件年龄、日期以及包含空格的路径。."""
     from ultralytics.utils.files import file_age, file_date, get_latest_run, increment_path, spaces_in_path
 
     file_age(SOURCE)
@@ -1717,7 +1714,7 @@ def test_utils_files(tmp_path):
 
 @pytest.mark.slow
 def test_utils_patches_torch_save(tmp_path):
-    """测试 _torch_save 抛出 RuntimeError 时 torch_save 的退避处理。"""
+    """测试 _torch_save 抛出 RuntimeError 时 torch_save 的退避处理。."""
     from unittest.mock import MagicMock, patch
 
     from ultralytics.utils.patches import torch_save
@@ -1731,7 +1728,7 @@ def test_utils_patches_torch_save(tmp_path):
 
 
 def test_nn_modules_conv():
-    """测试卷积神经网络模块，包括 CBAM、Conv2 和 ConvTranspose。"""
+    """测试卷积神经网络模块，包括 CBAM、Conv2 和 ConvTranspose。."""
     from ultralytics.nn.modules.conv import CBAM, Conv2, ConvTranspose, DWConvTranspose2d, Focus
 
     c1, c2 = 8, 16  # input and output channels
@@ -1750,7 +1747,7 @@ def test_nn_modules_conv():
 
 
 def test_nn_modules_block():
-    """测试各种神经网络块模块。"""
+    """测试各种神经网络块模块。."""
     from ultralytics.nn.modules.block import C1, C3TR, BottleneckCSP, C3Ghost, C3x
 
     c1, c2 = 8, 16  # input and output channels
@@ -1765,7 +1762,7 @@ def test_nn_modules_block():
 
 
 def test_nn_detect_head_export_clamps_max_det():
-    """检测导出后处理请求的候选数量不应超过可用锚点数量。"""
+    """检测导出后处理请求的候选数量不应超过可用锚点数量。."""
     from ultralytics.nn.modules.head import Detect
 
     head = Detect(nc=2, ch=(16,))
@@ -1776,12 +1773,12 @@ def test_nn_detect_head_export_clamps_max_det():
 
 
 def _depth_head_feats():
-    """返回一个与 Depth 检测头构造参数匹配的小型 P3/P4/P5 特征金字塔。"""
+    """返回一个与 Depth 检测头构造参数匹配的小型 P3/P4/P5 特征金字塔。."""
     return [torch.randn(1, 32, 32, 32), torch.randn(1, 64, 16, 16), torch.randn(1, 128, 8, 8)]
 
 
 def test_nn_depth_head_export_upsamples_to_input():
-    """深度导出会将结果上采样 4 倍至输入分辨率；推理返回检测头原生分辨率。"""
+    """深度导出会将结果上采样 4 倍至输入分辨率；推理返回检测头原生分辨率。."""
     from ultralytics.nn.modules.head import Depth
 
     head = Depth(c_mid=32, ch=(32, 64, 128)).eval()
@@ -1793,7 +1790,7 @@ def test_nn_depth_head_export_upsamples_to_input():
 
 
 def test_nn_depth_head_no_dead_parameters():
-    """每个检测头参数都能获得梯度，因此 DDP 不需要 find_unused_parameters。"""
+    """每个检测头参数都能获得梯度，因此 DDP 不需要 find_unused_parameters。."""
     from ultralytics.nn.modules.head import Depth
 
     head = Depth(c_mid=32, ch=(32, 64, 128)).train()
@@ -1804,7 +1801,7 @@ def test_nn_depth_head_no_dead_parameters():
 
 @pytest.fixture
 def image():
-    """从预定义源加载并返回图像（OpenCV BGR 格式）。"""
+    """从预定义源加载并返回图像（OpenCV BGR 格式）。."""
     return cv2.imread(str(SOURCE))
 
 
@@ -1818,7 +1815,7 @@ def image():
     ],
 )
 def test_classify_transforms_train(image, auto_augment, erasing, force_color_jitter):
-    """在训练期间使用各种增强测试分类变换。"""
+    """在训练期间使用各种增强测试分类变换。."""
     from ultralytics.data.augment import classify_augmentations
 
     transform = classify_augmentations(
@@ -1848,7 +1845,7 @@ def test_classify_transforms_train(image, auto_augment, erasing, force_color_jit
 @pytest.mark.skipif(IS_RASPBERRYPI or IS_JETSON, reason="Edge devices not intended for tuning")
 @pytest.mark.skipif(not ONLINE, reason="environment is offline")
 def test_model_tune():
-    """调整 YOLO 模型以提升性能。"""
+    """调整 YOLO 模型以提升性能。."""
     YOLO("yolo26n.pt").tune(
         data=["coco8.yaml", "coco8-grayscale.yaml"], plots=False, imgsz=32, epochs=1, iterations=2, device="cpu"
     )
@@ -1861,7 +1858,7 @@ def test_model_tune():
 @pytest.mark.skipif(not ONLINE or not checks.IS_PYTHON_MINIMUM_3_10, reason="environment is offline")
 @pytest.mark.skipif(not checks.check_requirements("ray", install=False), reason="ray[tune] not installed")
 def test_model_tune_ray():
-    """调整 YOLO 模型以提升性能。"""
+    """调整 YOLO 模型以提升性能。."""
     YOLO("yolo26n-cls.pt").tune(
         data="imagenet10",
         use_ray=True,
@@ -1875,7 +1872,7 @@ def test_model_tune_ray():
 
 
 def test_model_embeddings():
-    """测试 YOLO 模型提取嵌入向量的功能。"""
+    """测试 YOLO 模型提取嵌入向量的功能。."""
     model_detect = YOLO(MODEL)
     model_segment = YOLO(WEIGHTS_DIR / "yolo26n-seg.pt")
 
@@ -1892,7 +1889,7 @@ def test_model_embeddings():
 
 
 def test_process_mask_native_chunked():
-    """分块原生上采样与一次性上采样所有掩码的结果相同。"""
+    """分块原生上采样与一次性上采样所有掩码的结果相同。."""
     from ultralytics.utils import ops
 
     torch.manual_seed(0)
@@ -1911,7 +1908,7 @@ def test_process_mask_native_chunked():
     reason="YOLOWorld with CLIP is not supported in Python 3.8 and aarch64 Linux",
 )
 def test_yolo_world():
-    """测试支持 CLIP 的 YOLO World 模型。"""
+    """测试支持 CLIP 的 YOLO World 模型。."""
     model = YOLO(WEIGHTS_DIR / "yolov8s-world.pt")  # no YOLO11n-world model yet
     model.set_classes(["tree", "window"])
     model(SOURCE, conf=0.01)
@@ -1948,7 +1945,7 @@ def test_yolo_world():
     reason="YOLOE with CLIP is not supported in Python 3.8 and aarch64 Linux",
 )
 def test_yoloe(tmp_path):
-    """测试支持 MobileCLIP 的 YOLOE 模型。"""
+    """测试支持 MobileCLIP 的 YOLOE 模型。."""
     # 预测
     # 文本提示
     model = YOLO(WEIGHTS_DIR / "yoloe-11s-seg.pt")
@@ -2028,7 +2025,7 @@ def test_yoloe(tmp_path):
 
 
 def test_yoloe_visual_prompt_verbose_false(capfd):
-    """验证 YOLOE 视觉提示遵守 verbose=False 设置。"""
+    """验证 YOLOE 视觉提示遵守 verbose=False 设置。."""
     model = YOLO(WEIGHTS_DIR / "yoloe-11s-seg.pt")
 
     from ultralytics.models.yolo.yoloe import YOLOEVPSegPredictor
@@ -2056,7 +2053,7 @@ def test_yoloe_visual_prompt_verbose_false(capfd):
 
 
 def test_yolov10():
-    """测试 YOLOv10 模型的训练、验证和预测功能。"""
+    """测试 YOLOv10 模型的训练、验证和预测功能。."""
     model = YOLO("yolov10n.yaml")
     # train/val/predict
     model.train(data="coco8.yaml", epochs=1, imgsz=32, close_mosaic=1, cache="disk")
@@ -2066,7 +2063,7 @@ def test_yolov10():
 
 
 def test_multichannel():
-    """测试 YOLO 模型的多通道训练、验证和预测功能。"""
+    """测试 YOLO 模型的多通道训练、验证和预测功能。."""
     model = YOLO("yolo26n.pt")
     model.train(data="coco8-multispectral.yaml", epochs=1, imgsz=32, close_mosaic=1, cache="disk")
     model.val(data="coco8-multispectral.yaml")
@@ -2077,7 +2074,7 @@ def test_multichannel():
 
 @pytest.mark.parametrize("task,model,data", TASK_MODEL_DATA)
 def test_grayscale(task: str, model: str, data: str, tmp_path) -> None:
-    """测试 YOLO 模型的灰度训练、验证和预测功能。"""
+    """测试 YOLO 模型的灰度训练、验证和预测功能。."""
     if IS_RASPBERRYPI and task == "semantic":
         skip_rpi_semantic()
     if task in {"classify", "depth"}:  # 分类或深度任务不支持灰度图
@@ -2103,7 +2100,7 @@ def test_grayscale(task: str, model: str, data: str, tmp_path) -> None:
 
 
 def test_semantic_polygon_data():
-    """使用多边形数据测试 YOLO 语义分割模型。"""
+    """使用多边形数据测试 YOLO 语义分割模型。."""
     skip_rpi_semantic()
     model = YOLO("yolo26n-sem.pt")
     model.train(data="coco8-seg.yaml", epochs=1, imgsz=32, close_mosaic=1)

@@ -10,10 +10,9 @@ from pathlib import Path
 
 
 class CPUInfo:
-    """提供跨平台的 CPU 品牌和型号信息。
+    """提供跨平台的 CPU 品牌和型号信息。.
 
-    查询各平台专用的信息源，获取便于阅读的 CPU 描述，并将其规范化，确保在 macOS、Linux 和 Windows
-    上保持一致的显示格式。如果平台专用查询失败，则使用通用平台标识，确保始终返回稳定的字符串。
+    查询各平台专用的信息源，获取便于阅读的 CPU 描述，并将其规范化，确保在 macOS、Linux 和 Windows 上保持一致的显示格式。如果平台专用查询失败，则使用通用平台标识，确保始终返回稳定的字符串。
 
     方法：
         name: 使用平台专用信息源和可靠的回退机制返回规范化的 CPU 名称。
@@ -28,7 +27,7 @@ class CPUInfo:
 
     @staticmethod
     def _sysctl(key: str) -> str:
-        """通过 libc 读取 macOS 的 sysctl 字符串，因为启动 `sysctl` 进程会产生毫秒级开销。"""
+        """通过 libc 读取 macOS 的 sysctl 字符串，因为启动 `sysctl` 进程会产生毫秒级开销。."""
         libc = ctypes.CDLL(None)
         libc.sysctlbyname.restype = ctypes.c_int
         libc.sysctlbyname.argtypes = [
@@ -48,7 +47,7 @@ class CPUInfo:
 
     @staticmethod
     def name() -> str:
-        """从平台专用信息源返回规范化的 CPU 型号字符串。"""
+        """从平台专用信息源返回规范化的 CPU 型号字符串。."""
         try:
             if sys.platform == "darwin":
                 # 查询 macOS sysctl 获取 CPU 品牌字符串
@@ -85,7 +84,7 @@ class CPUInfo:
 
     @staticmethod
     def _clean(s: str) -> str:
-        """规范化并美化原始 CPU 描述字符串。"""
+        """规范化并美化原始 CPU 描述字符串。."""
         s = re.sub(r"\s+", " ", s.strip())
         s = s.replace("(TM)", "").replace("(tm)", "").replace("(R)", "").replace("(r)", "").strip()
         if m := re.search(r"(Intel.*?i\d[\w-]*) CPU @ ([\d.]+GHz)", s, re.IGNORECASE):
@@ -95,7 +94,7 @@ class CPUInfo:
         return s
 
     def __str__(self) -> str:
-        """返回规范化的 CPU 名称。"""
+        """返回规范化的 CPU 名称。."""
         return self.name()
 
 

@@ -9,7 +9,7 @@ from ultralytics.models.yolo.segment import SegmentationPredictor
 
 
 class YOLOEVPDetectPredictor(DetectionPredictor):
-    """继承 DetectionPredictor 的 YOLO-EVP（增强视觉提示）预测器。
+    """继承 DetectionPredictor 的 YOLO-EVP（增强视觉提示）预测器。.
 
     此类为使用视觉提示的 YOLO 模型提供通用功能，包括模型设置、提示处理和预处理变换。
 
@@ -29,7 +29,7 @@ class YOLOEVPDetectPredictor(DetectionPredictor):
     """
 
     def setup_model(self, model, verbose: bool = True):
-        """为预测设置模型。
+        """为预测设置模型。.
 
         参数：
             model (torch.nn.Module): 要加载或使用的模型。
@@ -39,7 +39,7 @@ class YOLOEVPDetectPredictor(DetectionPredictor):
         self.done_warmup = True
 
     def set_prompts(self, prompts):
-        """为模型设置视觉提示。
+        """为模型设置视觉提示。.
 
         参数：
             prompts (dict): 包含类别索引以及边界框或掩码的字典，必须包含带有类别索引的 'cls' 键。
@@ -48,14 +48,14 @@ class YOLOEVPDetectPredictor(DetectionPredictor):
 
     @staticmethod
     def is_per_image(prompts: dict) -> bool:
-        """如果 'bboxes' 和 'cls' 为每张图像分别提供数组，则返回 True；否则表示所有图像共用一组提示。"""
+        """如果 'bboxes' 和 'cls' 为每张图像分别提供数组，则返回 True；否则表示所有图像共用一组提示。."""
         return all(
             isinstance(prompts.get(k), list) and all(isinstance(x, np.ndarray) for x in prompts[k])
             for k in ("bboxes", "cls")
         )
 
     def preprocess(self, im):
-        """预处理批次并栅格化其中的视觉提示。"""
+        """预处理批次并栅格化其中的视觉提示。."""
         imgs = super().preprocess(im)
         dst_shape = tuple(imgs.shape[2:])  # preprocess 会堆叠图像，因此每个批次使用同一个 letterbox 后尺寸
         # 张量源跳过 letterbox，因此其源尺寸和目标尺寸相同
@@ -64,7 +64,7 @@ class YOLOEVPDetectPredictor(DetectionPredictor):
         return imgs
 
     def _prompts_to_tensor(self, dst_shape, src_shapes):
-        """将提示栅格化为模型设备上的批量张量。"""
+        """将提示栅格化为模型设备上的批量张量。."""
         bboxes, category = self.prompts.get("bboxes", None), self.prompts["cls"]
         if not self.is_per_image(self.prompts):  # 一组扁平提示，对批次中的每张图像进行栅格化
             masks = self.prompts.get("masks", None)
@@ -80,7 +80,7 @@ class YOLOEVPDetectPredictor(DetectionPredictor):
         return prompts.half() if self.model.fp16 else prompts.float()
 
     def _process_single_image(self, dst_shape, src_shape, category, bboxes=None, masks=None):
-        """调整一张图像的提示大小并生成对应的视觉提示图。"""
+        """调整一张图像的提示大小并生成对应的视觉提示图。."""
         if bboxes is not None and len(bboxes):
             bboxes = np.array(bboxes, dtype=np.float32)
             if bboxes.ndim == 1:
@@ -102,11 +102,11 @@ class YOLOEVPDetectPredictor(DetectionPredictor):
         return LoadVisualPrompt().get_visuals(category, dst_shape, bboxes, masks)
 
     def inference(self, im, *args, **kwargs):
-        """使用视觉提示运行推理。"""
+        """使用视觉提示运行推理。."""
         return super().inference(im, *args, vpe=self.visuals, **kwargs)
 
     def get_vpe(self, source):
-        """从一张源图像中提取视觉提示嵌入。"""
+        """从一张源图像中提取视觉提示嵌入。."""
         self.setup_source(source)
         assert len(self.dataset) == 1, "get_vpe 仅支持一张图像！"
         for _, im0s, _ in self.dataset:
@@ -115,4 +115,4 @@ class YOLOEVPDetectPredictor(DetectionPredictor):
 
 
 class YOLOEVPSegPredictor(YOLOEVPDetectPredictor, SegmentationPredictor):
-    """用于 YOLO-EVP 分割任务的预测器，结合检测和分割能力。"""
+    """用于 YOLO-EVP 分割任务的预测器，结合检测和分割能力。."""

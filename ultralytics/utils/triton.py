@@ -9,7 +9,7 @@ import numpy as np
 
 
 class TritonRemoteModel:
-    """与远程 Triton Inference Server 模型交互的客户端。
+    """与远程 Triton Inference Server 模型交互的客户端。.
 
     此类提供向 Triton Inference Server 发送推理请求并处理响应的便捷接口，支持 HTTP 和 gRPC 通信协议。
 
@@ -37,7 +37,7 @@ class TritonRemoteModel:
     """
 
     def __init__(self, url: str, endpoint: str = "", scheme: str = ""):
-        """初始化 TritonRemoteModel，以便与远程 Triton Inference Server 交互。
+        """初始化 TritonRemoteModel，以便与远程 Triton Inference Server 交互。.
 
         参数可以单独提供，也可以从如下形式的完整 'url' 参数中解析：
         <scheme>://<netloc>/<endpoint>/<task_name>
@@ -82,7 +82,7 @@ class TritonRemoteModel:
         self.metadata = ast.literal_eval(config.get("parameters", {}).get("metadata", {}).get("string_value", "None"))
 
     def __call__(self, *inputs: np.ndarray) -> list[np.ndarray]:
-        """使用给定输入调用模型并返回推理结果。
+        """使用给定输入调用模型并返回推理结果。.
 
         参数：
             *inputs (np.ndarray): 输入模型的数据。每个数组都应符合对应模型输入的预期形状和类型。

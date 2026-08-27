@@ -16,13 +16,13 @@ from .base import BaseBackend
 
 
 class MNNBackend(BaseBackend):
-    """MNN（Mobile Neural Network）推理后端。
+    """MNN（Mobile Neural Network）推理后端。.
 
     使用阿里巴巴 MNN 框架加载并运行 MNN 模型（.mnn 文件），针对移动端和边缘部署进行优化，并支持配置线程数和精度。
     """
 
     def load_model(self, weight: str | Path) -> None:
-        """从 .mnn 文件加载阿里巴巴 MNN 模型。
+        """从 .mnn 文件加载阿里巴巴 MNN 模型。.
 
         参数：
             weight (str | Path): .mnn 模型文件路径。
@@ -45,7 +45,7 @@ class MNNBackend(BaseBackend):
                 pass
 
     def forward(self, im: torch.Tensor) -> list:
-        """使用 MNN 运行时执行推理。
+        """使用 MNN 运行时执行推理。.
 
         参数：
             im (torch.Tensor): 输入图像 张量 in BCHW format, normalized to [0, 1].

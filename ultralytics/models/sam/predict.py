@@ -43,10 +43,9 @@ if TYPE_CHECKING:
 
 
 class Predictor(BasePredictor):
-    """用于 SAM 的预测器，支持实时图像分割和可提示分割能力。
+    """用于 SAM 的预测器，支持实时图像分割和可提示分割能力。.
 
-    此类继承 BasePredictor，实现 Segment Anything Model（SAM）的高级图像分割任务。
-    它支持点、边界框和掩码等多种输入提示，以精细控制分割结果。
+    此类继承 BasePredictor，实现 Segment Anything Model（SAM）的高级图像分割任务。 它支持点、边界框和掩码等多种输入提示，以精细控制分割结果。
 
     属性：
         args (SimpleNamespace): 预测器配置参数。
@@ -86,7 +85,7 @@ class Predictor(BasePredictor):
     stride = 16
 
     def __init__(self, cfg=DEFAULT_CFG, overrides=None, _callbacks: dict | None = None):
-        """使用配置、覆盖项和回调函数初始化预测器。
+        """使用配置、覆盖项和回调函数初始化预测器。.
 
         设置 SAM（Segment Anything Model）预测器对象，并应用提供的配置覆盖项或回调函数。
         初始化 SAM 的任务专用设置，例如将 retina_masks 设置为 True 以获得更佳结果。
@@ -107,7 +106,7 @@ class Predictor(BasePredictor):
         self.segment_all = False
 
     def preprocess(self, im):
-        """预处理用于模型推理的输入图像。
+        """预处理用于模型推理的输入图像。.
 
         此方法通过执行变换和归一化准备输入图像。它同时支持 torch.Tensor 和 np.ndarray 列表作为输入格式。
         对于通过 OpenCV 加载的图像，输入通常为 BGR，并会在预处理期间转换为 RGB。
@@ -140,7 +139,7 @@ class Predictor(BasePredictor):
         return im
 
     def pre_transform(self, im):
-        """对输入图像执行预处理所需的初始变换。
+        """对输入图像执行预处理所需的初始变换。.
 
         此方法执行调整大小等变换，为后续预处理准备图像。目前不支持批量推理，因此列表长度应为 1。
 
@@ -166,7 +165,7 @@ class Predictor(BasePredictor):
         return [letterbox(image=x) for x in im]
 
     def inference(self, im, bboxes=None, points=None, labels=None, masks=None, multimask_output=False, *args, **kwargs):
-        """使用当前加载的图像，根据给定输入提示执行图像分割推理。
+        """使用当前加载的图像，根据给定输入提示执行图像分割推理。.
 
         此方法利用由图像编码器、提示编码器和掩码解码器组成的 SAM（Segment Anything Model）架构，
         执行实时且可提示的分割任务。
@@ -203,7 +202,7 @@ class Predictor(BasePredictor):
         return self.prompt_inference(im, bboxes, points, labels, masks, multimask_output)
 
     def prompt_inference(self, im, bboxes=None, points=None, labels=None, masks=None, multimask_output=False):
-        """使用 SAM 专用架构，根据输入提示执行图像分割推理。
+        """使用 SAM 专用架构，根据输入提示执行图像分割推理。.
 
         此内部函数利用 Segment Anything Model（SAM）执行基于提示的实时分割，
         处理边界框、点和掩码等输入提示以生成分割掩码。
@@ -241,7 +240,7 @@ class Predictor(BasePredictor):
         masks=None,
         multimask_output=False,
     ):
-        """使用 SAM 模型对图像特征执行推理。
+        """使用 SAM 模型对图像特征执行推理。.
 
         参数：
             features (torch.Tensor): Extracted image features with shape (B, C, H, W) from the SAM model image encoder.
@@ -273,7 +272,7 @@ class Predictor(BasePredictor):
         return pred_masks.flatten(0, 1), pred_scores.flatten(0, 1)
 
     def _prepare_prompts(self, dst_shape, src_shape, bboxes=None, points=None, labels=None, masks=None):
-        """根据目标形状准备并变换输入提示。
+        """根据目标形状准备并变换输入提示。.
 
         参数：
             dst_shape (tuple[int, int]): The target shape (height, width) for the prompts.
@@ -337,7 +336,7 @@ class Predictor(BasePredictor):
         stability_score_offset=0.95,
         crop_nms_thresh=0.7,
     ):
-        """使用 Segment Anything Model（SAM）执行图像分割。
+        """使用 Segment Anything Model（SAM）执行图像分割。.
 
         此方法利用 SAM 的先进架构和实时性能能力，将整幅图像分割为不同区域。
         也可以选择对图像裁剪区域进行处理，以获得更精细的分割结果。
@@ -437,7 +436,7 @@ class Predictor(BasePredictor):
 
     @smart_inference_mode(False)  # 模型生命周期超过此次调用，因此其权重不能是推理张量
     def setup_model(self, model=None, verbose=True):
-        """初始化用于推理的 Segment Anything Model（SAM）。
+        """初始化用于推理的 Segment Anything Model（SAM）。.
 
         此方法会将 SAM 模型分配到合适的设备，并初始化图像归一化及其他 Ultralytics 兼容性设置所需的参数。
 
@@ -472,13 +471,13 @@ class Predictor(BasePredictor):
         self.torch_dtype = torch.float16 if self.model.fp16 else torch.float32
 
     def get_model(self):
-        """获取或构建用于图像分割任务的 Segment Anything Model（SAM）。"""
+        """获取或构建用于图像分割任务的 Segment Anything Model（SAM）。."""
         from .build import build_sam  # slow import
 
         return build_sam(self.args.model)
 
     def postprocess(self, preds, img, orig_imgs):
-        """后处理 SAM 的推理输出，生成目标检测掩码和边界框。
+        """后处理 SAM 的推理输出，生成目标检测掩码和边界框。.
 
         此方法会将掩码和边界框缩放到原始图像尺寸，并对掩码预测结果应用阈值，
         从而利用 SAM 的架构完成实时、可提示的分割任务。
@@ -529,7 +528,7 @@ class Predictor(BasePredictor):
         return results
 
     def set_image(self, image):
-        """预处理并设置单张图像以执行推理。
+        """预处理并设置单张图像以执行推理。.
 
         此方法会在模型尚未初始化时完成模型设置，配置数据源并预处理图像以提取特征，
         确保一次只设置一张图像，并提取后续推理所需的图像特征。
@@ -559,7 +558,7 @@ class Predictor(BasePredictor):
             break
 
     def setup_source(self, source):
-        """为 SAM 推理设置数据源。"""
+        """为 SAM 推理设置数据源。."""
         if source is None:  # 处理提前设置 imgsz 的情况
             return
         super().setup_source(source, self.stride)
@@ -569,21 +568,21 @@ class Predictor(BasePredictor):
         self.model.set_imgsz(self.imgsz)
 
     def get_im_features(self, im):
-        """使用 SAM 模型的图像编码器提取特征，供后续掩码预测使用。"""
+        """使用 SAM 模型的图像编码器提取特征，供后续掩码预测使用。."""
         return self.model.image_encoder(im)
 
     def set_prompts(self, prompts):
-        """设置供后续推理操作使用的提示。"""
+        """设置供后续推理操作使用的提示。."""
         self.prompts = prompts
 
     def reset_image(self):
-        """重置当前图像及其特征，为后续推理清除已有数据。"""
+        """重置当前图像及其特征，为后续推理清除已有数据。."""
         self.im = None
         self.features = None
 
     @staticmethod
     def remove_small_regions(masks, min_area=0, nms_thresh=0.7):
-        """从分割掩码中移除较小的非连通区域和孔洞。
+        """从分割掩码中移除较小的非连通区域和孔洞。.
 
         此函数对 Segment Anything Model（SAM）生成的分割掩码执行后处理：
         从输入掩码中移除较小的非连通区域和孔洞，然后执行非极大值抑制（NMS）以消除新产生的重复边界框。
@@ -642,7 +641,7 @@ class Predictor(BasePredictor):
         masks=None,
         multimask_output=False,
     ):
-        """使用 SAM 模型对给定图像特征执行提示预处理和推理。
+        """使用 SAM 模型对给定图像特征执行提示预处理和推理。.
 
         参数：
             features (torch.Tensor | dict[str, Any]): Extracted image features from the SAM/SAM2 model image encoder.
@@ -680,10 +679,9 @@ class Predictor(BasePredictor):
 
 
 class SAM2Predictor(Predictor):
-    """使用 Segment Anything Model 2 架构执行高级图像分割的 SAM2Predictor 类。
+    """使用 Segment Anything Model 2 架构执行高级图像分割的 SAM2Predictor 类。.
 
-    此类继承基础 Predictor，为图像分割任务实现 SAM2 特有的功能。
-    它提供模型初始化、特征提取和基于提示的推理方法。
+    此类继承基础 Predictor，为图像分割任务实现 SAM2 特有的功能。 它提供模型初始化、特征提取和基于提示的推理方法。
 
     属性：
         _bb_feat_sizes (list[tuple]): Feature sizes for different backbone levels.
@@ -715,13 +713,13 @@ class SAM2Predictor(Predictor):
     stride = 16
 
     def get_model(self):
-        """获取并初始化用于图像分割任务的 Segment Anything Model 2（SAM2）。"""
+        """获取并初始化用于图像分割任务的 Segment Anything Model 2（SAM2）。."""
         from .build import build_sam  # slow import
 
         return build_sam(self.args.model)
 
     def _prepare_prompts(self, dst_shape, src_shape, bboxes=None, points=None, labels=None, masks=None):
-        """根据目标尺寸准备并变换输入提示。
+        """根据目标尺寸准备并变换输入提示。.
 
         参数：
             dst_shape (tuple[int, int]): 提示的目标尺寸（高度、宽度）。
@@ -753,12 +751,12 @@ class SAM2Predictor(Predictor):
         return points, labels, masks
 
     def setup_source(self, source):
-        """为 SAM2 推理设置数据源和图像尺寸。"""
+        """为 SAM2 推理设置数据源和图像尺寸。."""
         super().setup_source(source)
         self._bb_feat_sizes = [[int(x / (self.stride * i)) for x in self.imgsz] for i in [1 / 4, 1 / 2, 1]]
 
     def get_im_features(self, im):
-        """使用 SAM 图像编码器提取特征，供后续处理使用。"""
+        """使用 SAM 图像编码器提取特征，供后续处理使用。."""
         backbone_out = self.model.forward_image(im)
         _, vision_feats, _, _ = self.model._prepare_backbone_features(backbone_out)
         if self.model.directly_add_no_mem_embed:
@@ -777,7 +775,7 @@ class SAM2Predictor(Predictor):
         multimask_output=False,
         img_idx=-1,
     ):
-        """使用 SAM2 模型对图像特征执行推理。
+        """使用 SAM2 模型对图像特征执行推理。.
 
         参数：
             features (torch.Tensor | dict[str, Any])：SAM2 图像编码器提取的图像特征，形状为 (B, C, H, W)。
@@ -819,7 +817,7 @@ class SAM2Predictor(Predictor):
 
 
 class SAM2VideoPredictor(SAM2Predictor):
-    """处理用户与视频交互并管理推理状态的 SAM2VideoPredictor。
+    """处理用户与视频交互并管理推理状态的 SAM2VideoPredictor。.
 
     此类扩展 SAM2Predictor 以支持视频处理，并维护推理操作的状态。它包含管理非重叠掩码以及清除非条件输入记忆的配置。
 
@@ -851,7 +849,7 @@ class SAM2VideoPredictor(SAM2Predictor):
     # fill_hole_area = 8  # 当前未使用
 
     def __init__(self, cfg=DEFAULT_CFG, overrides=None, _callbacks: dict | None = None):
-        """使用配置和可选覆盖项初始化预测器。
+        """使用配置和可选覆盖项初始化预测器。.
 
         此构造函数使用给定配置初始化 SAM2VideoPredictor，应用指定覆盖项，并设置推理状态及控制预测器行为的标志。
 
@@ -868,13 +866,13 @@ class SAM2VideoPredictor(SAM2Predictor):
         self.clear_non_cond_mem = True  # 是否定期清除非条件记忆
 
     def setup_source(self, source):
-        """设置数据源，并在任何预测回调运行前构建视频推理状态。"""
+        """设置数据源，并在任何预测回调运行前构建视频推理状态。."""
         super().setup_source(source)
         if self.dataset is not None and self.dataset.mode == "video":
             self.init_state(self)
 
     def get_model(self):
-        """获取并配置启用二值化的模型。
+        """获取并配置启用二值化的模型。.
 
         注意：
             此方法覆盖基类实现，将 binarize 标志设置为 True。
@@ -884,9 +882,7 @@ class SAM2VideoPredictor(SAM2Predictor):
         return model
 
     def inference(self, im, bboxes=None, points=None, labels=None, masks=None):
-        """使用当前加载的图像，根据给定输入提示执行图像分割推理。
-        此方法利用 SAM（Segment Anything Model）的图像编码器、提示编码器和掩码解码器架构，
-        支持实时且可提示的分割任务。
+        """使用当前加载的图像，根据给定输入提示执行图像分割推理。 此方法利用 SAM（Segment Anything Model）的图像编码器、提示编码器和掩码解码器架构， 支持实时且可提示的分割任务。.
 
         参数：
             im (torch.Tensor): 预处理后的输入图像张量，形状为 (N, C, H, W)。
@@ -956,7 +952,7 @@ class SAM2VideoPredictor(SAM2Predictor):
         return pred_masks, torch.ones(pred_masks.shape[0], dtype=pred_masks.dtype, device=pred_masks.device)
 
     def postprocess(self, preds, img, orig_imgs):
-        """对预测结果执行后处理，必要时应用非重叠约束。
+        """对预测结果执行后处理，必要时应用非重叠约束。.
 
         当 `non_overlap_masks` 标志为 True 时，此方法对预测掩码应用非重叠约束，确保掩码之间不重叠，
         这对某些应用很有用。
@@ -990,7 +986,7 @@ class SAM2VideoPredictor(SAM2Predictor):
         frame_idx=0,
         inference_state: dict[str, Any] | None = None,
     ):
-        """为指定目标 ID 在指定帧上添加新的点或掩码。
+        """为指定目标 ID 在指定帧上添加新的点或掩码。.
 
         此方法使用指定目标和帧索引的新提示（点或掩码）更新推理状态，确保每次调用只提供点或掩码之一，
         并相应更新内部状态。同时根据给定提示和已有状态生成新的分割结果。
@@ -1081,7 +1077,7 @@ class SAM2VideoPredictor(SAM2Predictor):
 
     @smart_inference_mode()
     def propagate_in_video_preflight(self, inference_state: dict[str, Any] | None = None):
-        """在跟踪前准备推理状态并整合临时输出。
+        """在跟踪前准备推理状态并整合临时输出。.
 
         此方法标记跟踪开始，在会话重置前禁止添加新目标。它整合 `temp_output_dict_per_obj` 中的临时输出并合并到
         `output_dict`，同时清除输入帧周围的非条件记忆，并确保状态与给定输入一致。
@@ -1151,7 +1147,7 @@ class SAM2VideoPredictor(SAM2Predictor):
 
     @staticmethod
     def init_state(predictor):
-        """为预测器初始化推理状态。
+        """为预测器初始化推理状态。.
 
         此函数设置视频推理所需的初始状态，包括初始化用于保存跟踪输入、输出及其他相关元数据的
         多个字典和有序字典。
@@ -1167,7 +1163,7 @@ class SAM2VideoPredictor(SAM2Predictor):
 
     @staticmethod
     def _init_state(num_frames):
-        """初始化推理状态。
+        """初始化推理状态。.
 
         此函数设置视频推理所需的初始状态，包括初始化用于保存跟踪输入、输出及其他相关元数据的
         多个字典和有序字典。
@@ -1192,10 +1188,10 @@ class SAM2VideoPredictor(SAM2Predictor):
             # 每个目标跟踪结果的切片（视图），与 "output_dict" 共享内存
             "output_dict_per_obj": {},
             # 保存用户在帧上添加点击或掩码时产生的新输出的临时存储
-            #（传播开始前会将其合并到 "output_dict"）
+            # （传播开始前会将其合并到 "output_dict"）
             "temp_output_dict_per_obj": {},
             # 已因点击或掩码输入而保存整合输出的帧
-            #（跟踪过程中直接使用这些整合输出）
+            # （跟踪过程中直接使用这些整合输出）
             "consolidated_frame_inds": {
                 "cond_frame_outputs": set(),  # 保存帧索引的集合
                 "non_cond_frame_outputs": set(),  # 保存帧索引的集合
@@ -1207,7 +1203,7 @@ class SAM2VideoPredictor(SAM2Predictor):
         return inference_state
 
     def get_im_features(self, im, batch=1):
-        """使用 SAM2 图像编码器提取并处理图像特征，供后续分割任务使用。
+        """使用 SAM2 图像编码器提取并处理图像特征，供后续分割任务使用。.
 
         参数：
             im (torch.Tensor): 输入图像张量。
@@ -1230,7 +1226,7 @@ class SAM2VideoPredictor(SAM2Predictor):
         return vis_feats, vis_pos_embed, feat_sizes
 
     def _obj_id_to_idx(self, obj_id, inference_state: dict[str, Any] | None = None):
-        """将客户端目标 ID 映射到模型目标索引。
+        """将客户端目标 ID 映射到模型目标索引。.
 
         参数：
             obj_id (int): 客户端提供的目标唯一标识符。
@@ -1293,7 +1289,7 @@ class SAM2VideoPredictor(SAM2Predictor):
         prev_sam_mask_logits=None,
         inference_state: dict[str, Any] | None = None,
     ):
-        """基于当前输入和之前的记忆信息，在单帧上执行跟踪。
+        """基于当前输入和之前的记忆信息，在单帧上执行跟踪。.
 
         参数：
             output_dict (dict): 包含跟踪过程输出状态的字典。
@@ -1357,7 +1353,7 @@ class SAM2VideoPredictor(SAM2Predictor):
         return current_out
 
     def _get_maskmem_pos_enc(self, out_maskmem_pos_enc, inference_state: dict[str, Any] | None = None):
-        """缓存并管理跨帧、跨目标的掩码记忆位置编码。
+        """缓存并管理跨帧、跨目标的掩码记忆位置编码。.
 
         此方法缓存掩码记忆的位置编码 (`maskmem_pos_enc`) 以优化存储。该编码跨帧和目标保持不变，
         因而可以减少推理过程中保存的冗余信息。若位置编码尚未缓存，则缓存所提供编码的一份切片；
@@ -1400,7 +1396,7 @@ class SAM2VideoPredictor(SAM2Predictor):
         run_mem_encoder=False,
         inference_state: dict[str, Any] | None = None,
     ):
-        """将每个目标的临时输出整合为包含所有目标的单个输出。
+        """将每个目标的临时输出整合为包含所有目标的单个输出。.
 
         此方法将指定帧上每个目标的临时输出合并为统一输出。缺失目标会从主输出字典中补齐；
         如果主输出中也不存在，则保留占位数据。可选地，在对目标分数应用非重叠约束后重新运行记忆编码器。
@@ -1464,15 +1460,15 @@ class SAM2VideoPredictor(SAM2Predictor):
                 or obj_output_dict["non_cond_frame_outputs"].get(frame_idx)
             )
             # 如果目标在 "output_dict_per_obj" 中也不存在，则跳过它，保留默认掩码分数
-            #（即上面的 NO_OBJ_SCORE 占位值），并将其目标指针设为虚拟指针。
+            # （即上面的 NO_OBJ_SCORE 占位值），并将其目标指针设为虚拟指针。
             if out is None:
                 # 为当前帧没有输入或跟踪结果的目标填充虚拟目标指针
-                #（仅在 `run_mem_encoder=True`，即需要构建跟踪记忆时执行）。
+                # （仅在 `run_mem_encoder=True`，即需要构建跟踪记忆时执行）。
                 if run_mem_encoder:
                     # 使用基于空掩码的虚拟指针填充目标指针
                     consolidated_out["obj_ptr"][obj_idx : obj_idx + 1] = self._get_empty_mask_ptr(frame_idx)
                 continue
-        # 将目标临时输出掩码添加到整合输出掩码中
+            # 将目标临时输出掩码添加到整合输出掩码中
             consolidated_out["pred_masks"][obj_idx : obj_idx + 1] = out["pred_masks"]
             consolidated_out["obj_ptr"][obj_idx : obj_idx + 1] = out["obj_ptr"]
 
@@ -1497,7 +1493,7 @@ class SAM2VideoPredictor(SAM2Predictor):
         return consolidated_out
 
     def _get_empty_mask_ptr(self, frame_idx, inference_state: dict[str, Any] | None = None):
-        """根据当前帧的空掩码获取虚拟目标指针。
+        """根据当前帧的空掩码获取虚拟目标指针。.
 
         参数：
             frame_idx (int): 要生成虚拟目标指针的当前帧索引。
@@ -1536,7 +1532,7 @@ class SAM2VideoPredictor(SAM2Predictor):
         is_mask_from_pts,
         inference_state: dict[str, Any] | None = None,
     ):
-        """对掩码运行记忆编码器。
+        """对掩码运行记忆编码器。.
 
         通常在对目标分数应用非重叠约束后调用此方法。由于分数发生了变化，还需要使用记忆编码器重新计算记忆信息。
 
@@ -1571,7 +1567,7 @@ class SAM2VideoPredictor(SAM2Predictor):
     def _add_output_per_object(
         self, frame_idx, current_out, storage_key, inference_state: dict[str, Any] | None = None
     ):
-        """将多目标输出切分为每个目标的输出切片，并添加到 Output_Dict_Per_Obj。
+        """将多目标输出切分为每个目标的输出切片，并添加到 Output_Dict_Per_Obj。.
 
         生成的切片与原输出共享相同的张量存储。
 
@@ -1603,7 +1599,7 @@ class SAM2VideoPredictor(SAM2Predictor):
             obj_output_dict[storage_key][frame_idx] = obj_out
 
     def _clear_non_cond_mem_around_input(self, frame_idx, inference_state: dict[str, Any] | None = None):
-        """删除输入帧周围的非条件记忆。
+        """删除输入帧周围的非条件记忆。.
 
         用户提供修正点击时，相邻帧的非条件记忆可能仍包含过时的目标外观信息，从而干扰模型。
         此方法清除交互帧周围的非条件记忆，避免同时向模型提供目标的新旧信息。
@@ -1623,7 +1619,7 @@ class SAM2VideoPredictor(SAM2Predictor):
 
     @smart_inference_mode()
     def remove_object(self, inference_state, obj_id, strict=False):
-        """从跟踪状态中删除目标 ID。strict 为 True 时检查目标 ID 是否存在，不存在则抛出错误。"""
+        """从跟踪状态中删除目标 ID。strict 为 True 时检查目标 ID 是否存在，不存在则抛出错误。."""
         old_obj_idx_to_rm = inference_state["obj_id_to_idx"].get(obj_id, None)
         # 检查要删除的 object_id 是否存在，必要时抛出错误
         if old_obj_idx_to_rm is None:
@@ -1641,7 +1637,7 @@ class SAM2VideoPredictor(SAM2Predictor):
 
         # 删除该目标 ID 后仍有其他目标。此时需要从推理状态张量中删除该目标的存储。
         # 步骤 0：清除该目标 ID 在包含点或掩码输入的帧上的输入
-        #（注意，此步骤可能将条件帧降级为非条件帧，因此不可省略）
+        # （注意，此步骤可能将条件帧降级为非条件帧，因此不可省略）
         obj_input_frames_inds = set()
         obj_input_frames_inds.update(inference_state["point_inputs_per_obj"][old_obj_idx_to_rm])
         obj_input_frames_inds.update(inference_state["mask_inputs_per_obj"][old_obj_idx_to_rm])
@@ -1662,7 +1658,7 @@ class SAM2VideoPredictor(SAM2Predictor):
         inference_state["obj_ids"] = new_obj_ids
 
         # 步骤 2：对于每目标张量存储，调整字典键中的 obj_idx。
-        #（注意，"consolidated_frame_inds" 已在步骤 0 中处理，此处无需更新）
+        # （注意，"consolidated_frame_inds" 已在步骤 0 中处理，此处无需更新）
         def _map_keys(container):
             new_kvs = []
             for k in old_obj_inds:
@@ -1696,7 +1692,7 @@ class SAM2VideoPredictor(SAM2Predictor):
 
     @smart_inference_mode()
     def clear_all_points_in_frame(self, inference_state, frame_idx, obj_id):
-        """删除指定目标在指定帧上的所有点或掩码输入。"""
+        """删除指定目标在指定帧上的所有点或掩码输入。."""
         obj_idx = self._obj_id_to_idx(obj_id, inference_state)
 
         # 清除指定帧上的条件信息
@@ -1743,7 +1739,7 @@ class SAM2VideoPredictor(SAM2Predictor):
 
     @smart_inference_mode()
     def clear_all_points_in_video(self, inference_state):
-        """删除整个视频所有帧上的输入点或掩码。"""
+        """删除整个视频所有帧上的输入点或掩码。."""
         self._reset_tracking_results(inference_state)
         # 删除所有目标 ID
         inference_state["obj_id_to_idx"].clear()
@@ -1756,7 +1752,7 @@ class SAM2VideoPredictor(SAM2Predictor):
 
     @staticmethod
     def _reset_tracking_results(inference_state):
-        """重置整个视频中的所有跟踪输入和结果。"""
+        """重置整个视频中的所有跟踪输入和结果。."""
         for v in inference_state["point_inputs_per_obj"].values():
             v.clear()
         for v in inference_state["mask_inputs_per_obj"].values():
@@ -1776,7 +1772,7 @@ class SAM2VideoPredictor(SAM2Predictor):
         inference_state["first_ann_frame_idx"] = None
 
     def _prune_non_cond_memory(self, frame_idx, inference_state=None):
-        """清理较早的非条件帧，以限制内存使用。"""
+        """清理较早的非条件帧，以限制内存使用。."""
         if not self.clear_non_cond_mem:
             return
         inference_state = inference_state or self.inference_state
@@ -1796,7 +1792,7 @@ class SAM2VideoPredictor(SAM2Predictor):
 
 
 class SAM2DynamicInteractivePredictor(SAM2Predictor):
-    """SAM2DynamicInteractivePredictor 扩展 SAM2Predictor，支持与视频帧或图像序列进行动态交互。
+    """SAM2DynamicInteractivePredictor 扩展 SAM2Predictor，支持与视频帧或图像序列进行动态交互。.
 
     属性：
         memory_bank (list): OrderedDict: Stores the states of each image with prompts.
@@ -1827,7 +1823,7 @@ class SAM2DynamicInteractivePredictor(SAM2Predictor):
         max_obj_num: int = 3,
         _callbacks: dict | None = None,
     ) -> None:
-        """使用配置和可选覆盖项初始化预测器。
+        """使用配置和可选覆盖项初始化预测器。.
 
         此构造函数使用给定配置初始化 SAM2DynamicInteractivePredictor，并应用指定的覆盖项。
 
@@ -1860,9 +1856,8 @@ class SAM2DynamicInteractivePredictor(SAM2Predictor):
         obj_ids: list[int] | None = None,
         update_memory: bool = False,
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        """在单张图像上执行推理，可选提供边界框、掩码、点和目标 ID。
-        支持两种模式：一种是在不更新记忆的情况下对单张图像推理，另一种是使用给定提示和目标 ID 更新记忆。
-        update_memory 为 True 时使用给定提示和 obj_ids 更新记忆；为 False 时仅对给定图像推理，不更新记忆。
+        """在单张图像上执行推理，可选提供边界框、掩码、点和目标 ID。 支持两种模式：一种是在不更新记忆的情况下对单张图像推理，另一种是使用给定提示和目标 ID 更新记忆。 update_memory 为 True
+        时使用给定提示和 obj_ids 更新记忆；为 False 时仅对给定图像推理，不更新记忆。.
 
         参数：
             im (torch.Tensor | np.ndarray): 输入图像张量或 numpy 数组。
@@ -1915,7 +1910,7 @@ class SAM2DynamicInteractivePredictor(SAM2Predictor):
         return pred_masks.flatten(0, 1), pred_scores.flatten(0, 1)
 
     def get_im_features(self, img: torch.Tensor | np.ndarray) -> None:
-        """处理输入图像并提取特征，以初始化图像状态。
+        """处理输入图像并提取特征，以初始化图像状态。.
 
         参数：
             img (torch.Tensor | np.ndarray): 输入图像张量或 numpy 数组。
@@ -1938,7 +1933,7 @@ class SAM2DynamicInteractivePredictor(SAM2Predictor):
         labels: torch.Tensor | None = None,
         masks: torch.Tensor | None = None,
     ) -> None:
-        """将 imgState 添加到 memory_bank，并更新模型记忆。
+        """将 imgState 添加到 memory_bank，并更新模型记忆。.
 
         参数：
             obj_ids (list[int]): 与提示对应的目标 ID 列表。
@@ -2012,7 +2007,7 @@ class SAM2DynamicInteractivePredictor(SAM2Predictor):
         self.memory_bank.append(consolidated_out)
 
     def _prepare_memory_conditioned_features(self, obj_idx: int | None) -> torch.Tensor:
-        """为当前图像状态准备记忆条件特征。
+        """为当前图像状态准备记忆条件特征。.
 
         如果提供 ``obj_idx``，则为图像中指定的提示目标准备特征；如果 ``obj_idx`` 为 None，则为所有目标准备特征。
         没有可用记忆时，将无记忆嵌入添加到当前视觉特征；否则通过 Transformer 注意力机制使用之前帧的记忆
@@ -2046,7 +2041,7 @@ class SAM2DynamicInteractivePredictor(SAM2Predictor):
         )
 
     def get_maskmem_enc(self) -> tuple[torch.Tensor, torch.Tensor]:
-        """从记忆库获取记忆和位置编码，用于为当前图像特征提供条件。"""
+        """从记忆库获取记忆和位置编码，用于为当前图像特征提供条件。."""
         to_cat_memory, to_cat_memory_pos_embed = [], []
         for consolidated_out in self.memory_bank:
             to_cat_memory.append(consolidated_out["maskmem_features"].flatten(2).permute(2, 0, 1))  # (H*W, B, C)
@@ -2059,7 +2054,7 @@ class SAM2DynamicInteractivePredictor(SAM2Predictor):
         return memory, memory_pos_embed
 
     def _obj_id_to_idx(self, obj_id: int) -> int | None:
-        """将客户端目标 ID 映射到模型目标索引。
+        """将客户端目标 ID 映射到模型目标索引。.
 
         参数：
             obj_id (int): 客户端目标 ID。
@@ -2076,7 +2071,7 @@ class SAM2DynamicInteractivePredictor(SAM2Predictor):
         label: torch.Tensor | None = None,
         mask: torch.Tensor | None = None,
     ) -> dict[str, Any]:
-        """针对当前图像状态执行跟踪步骤并预测掩码。
+        """针对当前图像状态执行跟踪步骤并预测掩码。.
 
         此方法处理图像特征并运行 SAM 头来预测掩码。提供 obj_idx 时处理图像中指定提示目标的特征；
         obj_idx 为 None 时处理所有目标的特征。此方法同时支持不使用 SAM 的基于掩码输出，以及使用记忆条件
@@ -2094,7 +2089,7 @@ class SAM2DynamicInteractivePredictor(SAM2Predictor):
         """
         if mask is not None and self.model.use_mask_input_as_output_without_sam:
             # 当 use_mask_input_as_output_without_sam=True 时，直接输出掩码输入
-            #（将其视为真实标注掩码），不使用 SAM 提示编码器和掩码解码器。
+            # （将其视为真实标注掩码），不使用 SAM 提示编码器和掩码解码器。
             pix_feat = self.vision_feats[-1].permute(1, 2, 0)
             pix_feat = pix_feat.view(-1, self.model.memory_attention.d_model, *self.feat_sizes[-1])
             _, _, _, low_res_masks, high_res_masks, obj_ptr, object_score_logits = self.model._use_mask_as_output(mask)
@@ -2119,7 +2114,7 @@ class SAM2DynamicInteractivePredictor(SAM2Predictor):
 
 
 class SAM3Predictor(SAM2Predictor):
-    """用于图像分割任务的 Segment Anything Model 3（SAM3）交互式预测器。"""
+    """用于图像分割任务的 Segment Anything Model 3（SAM3）交互式预测器。."""
 
     _bb_feat_sizes = [
         (288, 288),
@@ -2129,35 +2124,35 @@ class SAM3Predictor(SAM2Predictor):
     stride = 14
 
     def setup_model(self, model=None, verbose=True):
-        """设置 SAM3 模型，并为预处理配置合适的均值和标准差。"""
+        """设置 SAM3 模型，并为预处理配置合适的均值和标准差。."""
         super().setup_model(model, verbose)
         # 更新均值和标准差
         self.mean = torch.tensor([127.5, 127.5, 127.5]).view(-1, 1, 1).to(self.device)
         self.std = torch.tensor([127.5, 127.5, 127.5]).view(-1, 1, 1).to(self.device)
 
     def get_model(self):
-        """获取并初始化用于图像分割任务的 Segment Anything Model 3（SAM3）。"""
+        """获取并初始化用于图像分割任务的 Segment Anything Model 3（SAM3）。."""
         from .build_sam3 import build_interactive_sam3  # slow import
 
         return build_interactive_sam3(self.args.model, compile=self.args.compile)
 
 
 class SAM3SemanticPredictor(SAM3Predictor):
-    """用于图像分割任务的 Segment Anything Model 3（SAM3）预测器。"""
+    """用于图像分割任务的 Segment Anything Model 3（SAM3）预测器。."""
 
     def get_model(self):
-        """获取并初始化用于图像分割任务的 Segment Anything Model 3（SAM3）。"""
+        """获取并初始化用于图像分割任务的 Segment Anything Model 3（SAM3）。."""
         from .build_sam3 import build_sam3_image_model  # slow import
 
         return build_sam3_image_model(self.args.model, compile=self.args.compile)
 
     @smart_inference_mode()
     def get_im_features(self, im):
-        """使用模型骨干网络提取图像特征。"""
+        """使用模型骨干网络提取图像特征。."""
         return self.model.backbone.forward_image(im)
 
     def pre_transform(self, im):
-        """对输入图像执行预处理所需的初始变换。
+        """对输入图像执行预处理所需的初始变换。.
 
         此方法会应用缩放等变换，为后续预处理准备图像。目前不支持批量推理，因此列表长度应为 1。
 
@@ -2183,7 +2178,7 @@ class SAM3SemanticPredictor(SAM3Predictor):
         return [letterbox(image=x) for x in im]
 
     def _prepare_geometric_prompts(self, src_shape, bboxes=None, labels=None):
-        """通过将边界框和点归一化到目标形状来准备提示。"""
+        """通过将边界框和点归一化到目标形状来准备提示。."""
         if bboxes is not None:
             bboxes = torch.as_tensor(bboxes, dtype=self.torch_dtype, device=self.device)
             bboxes = bboxes[None] if bboxes.ndim == 1 else bboxes
@@ -2203,7 +2198,7 @@ class SAM3SemanticPredictor(SAM3Predictor):
         return bboxes, labels
 
     def _inference_features(self, features, bboxes=None, labels=None, text: list[str] | None = None):
-        """使用提取的特征执行推理，可选提供边界框和标签。"""
+        """使用提取的特征执行推理，可选提供边界框和标签。."""
         # 注意：优先级为 bboxes > text > 预设类别
         nc = 1 if bboxes is not None else len(text) if text is not None else len(self.model.names)
         geometric_prompt = None
@@ -2223,7 +2218,7 @@ class SAM3SemanticPredictor(SAM3Predictor):
         return outputs
 
     def postprocess(self, preds, img, orig_imgs):
-        """对预测结果执行后处理，并在需要时应用不重叠约束。"""
+        """对预测结果执行后处理，并在需要时应用不重叠约束。."""
         import torchvision
 
         pred_boxes = preds["pred_boxes"]  # (nc, num_query, 4)
@@ -2266,7 +2261,7 @@ class SAM3SemanticPredictor(SAM3Predictor):
         return results
 
     def inference(self, im, bboxes=None, labels=None, text: list[str] | None = None, *args, **kwargs):
-        """使用可选提示对单张图像执行推理。"""
+        """使用可选提示对单张图像执行推理。."""
         bboxes = self.prompts.pop("bboxes", bboxes)
         labels = self.prompts.pop("labels", labels)
         text = self.prompts.pop("text", text)
@@ -2283,7 +2278,7 @@ class SAM3SemanticPredictor(SAM3Predictor):
         labels=None,
         text: list[str] | None = None,
     ):
-        """使用 SAM 模型对给定图像特征执行提示预处理和推理。
+        """使用 SAM 模型对给定图像特征执行提示预处理和推理。.
 
         参数：
             features (dict[str, Any])：SAM3 模型图像编码器提取的图像特征。
@@ -2339,12 +2334,12 @@ class SAM3SemanticPredictor(SAM3Predictor):
         return pred_masks, pred_boxes
 
     def reset_prompts(self):
-        """重置预测器的提示。"""
+        """重置预测器的提示。."""
         self.prompts = {}
         self.model.text_embeddings = {}
 
     def _get_dummy_prompt(self, num_prompts=1):
-        """获取不包含边界框的空几何提示。"""
+        """获取不包含边界框的空几何提示。."""
         # 为提高 ultralytics 导入速度，SAM3 几何模块中的 torchvision 算子按需导入。
         from .sam3.geometry_encoders import Prompt
 
@@ -2356,11 +2351,10 @@ class SAM3SemanticPredictor(SAM3Predictor):
 
 
 class SAM3VideoPredictor(SAM2VideoPredictor, SAM3Predictor):
-    """用于视频分割任务的 Segment Anything Model 3（SAM3）视频预测器。"""
+    """用于视频分割任务的 Segment Anything Model 3（SAM3）视频预测器。."""
 
     def propagate_in_video(self, inference_state, frame_idx):
-        """使用当前加载图像，根据给定输入提示执行图像分割推理。
-        此方法利用由图像编码器、提示编码器和掩码解码器组成的 SAM 架构，支持实时且可提示的分割任务。
+        """使用当前加载图像，根据给定输入提示执行图像分割推理。 此方法利用由图像编码器、提示编码器和掩码解码器组成的 SAM 架构，支持实时且可提示的分割任务。.
 
         参数：
             inference_state (dict): The current state of inference, including input cues and previous outputs.
@@ -2408,7 +2402,7 @@ class SAM3VideoPredictor(SAM2VideoPredictor, SAM3Predictor):
 
 
 class SAM3VideoSemanticPredictor(SAM3SemanticPredictor):
-    """Segment Anything Model 3（SAM3）视频语义预测器。"""
+    """Segment Anything Model 3（SAM3）视频语义预测器。."""
 
     HIGH_CONF_THRESH = 0.8
     HIGH_IOU_THRESH = 0.8
@@ -2466,7 +2460,7 @@ class SAM3VideoSemanticPredictor(SAM3SemanticPredictor):
         reconstruction_bbox_iou_thresh=0.0,
         reconstruction_bbox_det_score=0.0,
     ):
-        """使用配置和可选覆盖项初始化 SAM3VideoSemanticPredictor。"""
+        """使用配置和可选覆盖项初始化 SAM3VideoSemanticPredictor。."""
         super().__init__(cfg, overrides, _callbacks)
         self.score_threshold_detection = score_threshold_detection
         self.det_nms_thresh = det_nms_thresh
@@ -2510,7 +2504,7 @@ class SAM3VideoSemanticPredictor(SAM3SemanticPredictor):
 
     @smart_inference_mode(False)  # the tracker model is built after super() returns, outside its decorator
     def setup_model(self, model=None, verbose=True):
-        """设置 SAM3VideoSemanticPredictor 模型。"""
+        """设置 SAM3VideoSemanticPredictor 模型。."""
         super().setup_model(model, verbose)
         from .build_sam3 import build_interactive_sam3
 
@@ -2519,7 +2513,7 @@ class SAM3VideoSemanticPredictor(SAM3SemanticPredictor):
         self.tracker.setup_model(model=model, verbose=False)
 
     def setup_source(self, source):
-        """为 SAM3VideoSemanticPredictor 模型设置数据源。"""
+        """为 SAM3VideoSemanticPredictor 模型设置数据源。."""
         super().setup_source(source)
         self.tracker.imgsz = self.imgsz
         self.tracker.model.set_imgsz(self.imgsz)
@@ -2530,7 +2524,7 @@ class SAM3VideoSemanticPredictor(SAM3SemanticPredictor):
 
     @staticmethod
     def init_state(predictor):
-        """为预测器初始化推理状态。
+        """为预测器初始化推理状态。.
 
         此函数设置视频推理所需的初始状态，包括初始化用于保存输入、输出及其他跟踪元数据的字典和有序字典。
 
@@ -2552,7 +2546,7 @@ class SAM3VideoSemanticPredictor(SAM3SemanticPredictor):
         predictor.inference_state = inference_state
 
     def inference(self, im, bboxes=None, labels=None, text: list[str] | None = None, *args, **kwargs):
-        """在视频序列上执行推理，可选提供提示。"""
+        """在视频序列上执行推理，可选提供提示。."""
         frame = self.dataset.frame - 1  # 将帧索引调整为从 0 开始
         self.inference_state["im"] = im  # 后续帧仅传递图像
         if "text_ids" not in self.inference_state:  # 处理第一帧
@@ -2560,7 +2554,7 @@ class SAM3VideoSemanticPredictor(SAM3SemanticPredictor):
         return self._run_single_frame_inference(frame, reverse=False)
 
     def postprocess(self, preds, img, orig_imgs):
-        """对预测结果执行后处理，必要时应用非重叠约束。"""
+        """对预测结果执行后处理，必要时应用非重叠约束。."""
         obj_id_to_mask = preds["obj_id_to_mask"]  # 低分辨率掩码
         curr_obj_ids = sorted(obj_id_to_mask.keys())
         if not isinstance(orig_imgs, list):  # 输入图像是 torch.Tensor，而不是列表
@@ -2609,7 +2603,7 @@ class SAM3VideoSemanticPredictor(SAM3SemanticPredictor):
         return results
 
     def _run_single_frame_inference(self, frame_idx, reverse=False, inference_state=None):
-        """在单帧上执行推理并获取推理结果。"""
+        """在单帧上执行推理并获取推理结果。."""
         inference_state = inference_state or self.inference_state
         # 准备输入
         tracker_states_local = inference_state["tracker_inference_states"]
@@ -2671,7 +2665,7 @@ class SAM3VideoSemanticPredictor(SAM3SemanticPredictor):
         labels=None,
         inference_state=None,
     ):
-        """在单帧上添加文本、点或边界框提示。此方法仅返回提示帧上的推理输出。
+        """在单帧上添加文本、点或边界框提示。此方法仅返回提示帧上的推理输出。.
 
         注意，文本提示不与特定帧关联（即对所有帧生效）；但此处仅对 `frame_idx` 指定的帧执行推理。
         """
@@ -2701,7 +2695,7 @@ class SAM3VideoSemanticPredictor(SAM3SemanticPredictor):
         return frame_idx, out
 
     def _apply_object_wise_non_overlapping_constraints(self, pred_masks, obj_scores, background_value=-10.0):
-        """按目标应用非重叠约束（即重叠区域只能归属于一个目标）。"""
+        """按目标应用非重叠约束（即重叠区域只能归属于一个目标）。."""
         # 用目标分数替换像素分数
         pred_masks_single_score = torch.where(pred_masks > 0, obj_scores[..., None, None], background_value)
         # 根据掩码分数应用逐像素非重叠约束
@@ -2728,9 +2722,7 @@ class SAM3VideoSemanticPredictor(SAM3SemanticPredictor):
         tracker_metadata_prev: dict[str, Any],
         allow_new_detections: bool = True,
     ):
-        """以 SPMD 方式为 DenseTracking 模型执行单步推理。
-        从整体上看，所有 GPU 像在单个 GPU 上运行一样执行相同函数调用；底层部分调用会基于分片后的 SAM2 状态
-        执行分布式计算。
+        """以 SPMD 方式为 DenseTracking 模型执行单步推理。 从整体上看，所有 GPU 像在单个 GPU 上运行一样执行相同函数调用；底层部分调用会基于分片后的 SAM2 状态 执行分布式计算。.
 
         - `input_batch` 包含整个视频的图像及其他输入，在所有 GPU 上应保持一致。
         - `tracker_states_local` 保存当前 GPU 分片中的本地掩码轨迹信息。
@@ -2759,7 +2751,7 @@ class SAM3VideoSemanticPredictor(SAM3SemanticPredictor):
         )
 
         # 步骤 3：根据检测输出和传播得到的 SAM2 预测掩码，制定 SAM2 掩码轨迹更新计划
-        #（包括添加和删除哪些目标、如何进行负载均衡等）。此步骤还在全局运行 SAM2 记忆编码器，解决非重叠约束。
+        # （包括添加和删除哪些目标、如何进行负载均衡等）。此步骤还在全局运行 SAM2 记忆编码器，解决非重叠约束。
         # **所有更新所需的启发式规则都应在此步骤处理。**大部分更新计划在主进程（GPU 0）上完成，
         # 生成的 `tracker_update_plan` 广播到其他 GPU 执行。此步骤还根据旧元数据 `tracker_metadata_prev`
         # 生成新的掩码轨迹元数据 `tracker_metadata_new`。
@@ -2820,7 +2812,7 @@ class SAM3VideoSemanticPredictor(SAM3SemanticPredictor):
 
     @staticmethod
     def _suppress_detections_close_to_boundary(boxes, margin=0.025):
-        """抑制距离图像边缘过近的检测结果（针对归一化边界框）。
+        """抑制距离图像边缘过近的检测结果（针对归一化边界框）。.
 
         boxes: (N, 4) 的 xyxy 格式边界框，已归一化到 [0,1]。
         margin: 图像尺寸的比例。
@@ -2835,7 +2827,7 @@ class SAM3VideoSemanticPredictor(SAM3SemanticPredictor):
     def run_backbone_and_detection(
         self, im: torch.Tensor, text_ids: torch.Tensor, geometric_prompt: Prompt, allow_new_detections: bool
     ):
-        """对单帧运行骨干网络和检测器。"""
+        """对单帧运行骨干网络和检测器。."""
         features = self.get_im_features(im)
         sam3_image_out = self.model.forward_grounding(
             backbone_out=features, text_ids=text_ids, geometric_prompt=geometric_prompt
@@ -2845,7 +2837,7 @@ class SAM3VideoSemanticPredictor(SAM3SemanticPredictor):
         return det_out
 
     def _extract_detection_outputs(self, sam3_image_out, allow_new_detections):
-        """提取并筛选检测输出。"""
+        """提取并筛选检测输出。."""
         pred_probs = sam3_image_out["pred_logits"].squeeze(-1).sigmoid()
         if not allow_new_detections:
             pred_probs = pred_probs - 1e8
@@ -2868,7 +2860,7 @@ class SAM3VideoSemanticPredictor(SAM3SemanticPredictor):
         }
 
     def _cache_backbone_features(self, sam3_image_out):
-        """构建并缓存 SAM2 骨干网络特征。"""
+        """构建并缓存 SAM2 骨干网络特征。."""
         sam_mask_decoder = self.tracker.model.sam_mask_decoder
         feats = sam3_image_out["backbone_out"]["sam2_backbone_out"]
         tracker_backbone_fpn = [
@@ -2887,7 +2879,7 @@ class SAM3VideoSemanticPredictor(SAM3SemanticPredictor):
     def run_tracker_propagation(
         self, frame_idx: int, tracker_states_local: list[Any], tracker_metadata_prev: dict[str, np.ndarray]
     ):
-        """以 SPMD 方式对单帧运行跟踪器传播阶段。"""
+        """以 SPMD 方式对单帧运行跟踪器传播阶段。."""
         # 步骤 1：传播本地 SAM2 状态，获取当前帧预测结果
         # 当前 GPU 上已有掩码轨迹的 `low_res_masks_local`
         # - obj_ids_local: list[int] —— 目标 ID 列表
@@ -2915,7 +2907,7 @@ class SAM3VideoSemanticPredictor(SAM3SemanticPredictor):
         tracker_metadata: dict[str, np.ndarray],
         tracker_obj_scores_global: torch.Tensor,
     ):
-        """根据新的高置信度检测结果对掩码轨迹重新进行条件化。"""
+        """根据新的高置信度检测结果对掩码轨迹重新进行条件化。."""
         # 根据新的检测结果重新进行掩码轨迹条件化
         for trk_obj_id, det_idx in trk_id_to_max_iou_high_conf_det.items():
             new_mask = det_out["mask"][det_idx : det_idx + 1]
@@ -2958,7 +2950,7 @@ class SAM3VideoSemanticPredictor(SAM3SemanticPredictor):
         tracker_metadata_prev: dict[str, np.ndarray],
         tracker_states_local: list[Any],
     ):
-        """以 SPMD 方式对单帧运行跟踪器更新规划阶段。"""
+        """以 SPMD 方式对单帧运行跟踪器更新规划阶段。."""
         # 根据旧元数据初始化新元数据（稍后会更新其中的值）
         tracker_metadata_new = {
             "obj_ids": deepcopy(tracker_metadata_prev["obj_ids"]),
@@ -3169,7 +3161,7 @@ class SAM3VideoSemanticPredictor(SAM3SemanticPredictor):
         obj_ids_newly_removed: set[int],
         reverse: bool = False,
     ):
-        """根据最近的遮挡信息抑制重叠掩码。如果目标因热启动规则被删除，只要它与其他目标重叠，就始终抑制该目标。
+        """根据最近的遮挡信息抑制重叠掩码。如果目标因热启动规则被删除，只要它与其他目标重叠，就始终抑制该目标。.
 
         参数：
             frame_idx (int): 当前帧索引。
@@ -3237,7 +3229,7 @@ class SAM3VideoSemanticPredictor(SAM3SemanticPredictor):
         tracker_states_local: list[Any],
         tracker_update_plan: dict[str, np.ndarray],
     ):
-        """以 SPMD 方式执行单帧跟踪器更新计划。"""
+        """以 SPMD 方式执行单帧跟踪器更新计划。."""
         # 使用检测分数初始化跟踪分数
         new_det_fa_inds: np.ndarray = tracker_update_plan["new_det_fa_inds"]
         new_det_obj_ids: np.ndarray = tracker_update_plan["new_det_obj_ids"]
@@ -3273,7 +3265,7 @@ class SAM3VideoSemanticPredictor(SAM3SemanticPredictor):
         tracker_update_plan: dict[str, np.ndarray],
         reconditioned_obj_ids: set | None = None,
     ):
-        """构建当前帧的输出掩码。"""
+        """构建当前帧的输出掩码。."""
         new_det_fa_inds: np.ndarray = tracker_update_plan["new_det_fa_inds"]
         new_det_obj_ids: np.ndarray = tracker_update_plan["new_det_obj_ids"]
         obj_id_to_mask = {}  # obj_id --> 输出掩码张量
@@ -3373,7 +3365,7 @@ class SAM3VideoSemanticPredictor(SAM3SemanticPredictor):
         return to_suppress
 
     def _propogate_tracker_one_frame_local_gpu(self, inference_states: list[Any], frame_idx: int):
-        """Inference_states：推理状态列表，每个状态对应一组不同的目标。"""
+        """Inference_states：推理状态列表，每个状态对应一组不同的目标。."""
         obj_ids_local = []
         low_res_masks_list = []
         obj_scores_list = []
@@ -3407,7 +3399,7 @@ class SAM3VideoSemanticPredictor(SAM3SemanticPredictor):
         trk_masks: torch.Tensor,
         trk_obj_ids: np.ndarray,
     ):
-        """将当前帧的检测结果与现有掩码轨迹匹配。
+        """将当前帧的检测结果与现有掩码轨迹匹配。.
 
         参数：
             det_masks: 形状为 (N, H, W) 的预测掩码张量。
@@ -3542,7 +3534,7 @@ class SAM3VideoSemanticPredictor(SAM3SemanticPredictor):
         unmatched_trk_obj_ids: np.ndarray,
         metadata: dict[str, Any],
     ):
-        """处理热启动启发式规则，删除未匹配或重复目标。"""
+        """处理热启动启发式规则，删除未匹配或重复目标。."""
         # obj_id -> 首次检测到该目标的帧索引
         obj_first_frame_idx = metadata["obj_first_frame_idx"]
         # obj_id -> [未匹配帧索引]
@@ -3645,7 +3637,7 @@ class SAM3VideoSemanticPredictor(SAM3SemanticPredictor):
     def _tracker_update_memories(
         self, tracker_inference_states: list[Any], frame_idx: int, low_res_masks: torch.Tensor
     ):
-        """运行 SAM2 记忆编码器，并在全局范围内执行非重叠约束。"""
+        """运行 SAM2 记忆编码器，并在全局范围内执行非重叠约束。."""
         if len(tracker_inference_states) == 0:
             return
         # 注意：如果演示运行出现显存溢出，应检查此处
@@ -3707,7 +3699,7 @@ class SAM3VideoSemanticPredictor(SAM3SemanticPredictor):
         new_obj_masks: torch.Tensor,
         tracker_states_local: list[Any],
     ):
-        """向 SAM2 推理状态添加新目标。"""
+        """向 SAM2 推理状态添加新目标。."""
         prev_tracker_state = tracker_states_local[0] if len(tracker_states_local) > 0 else None
 
         # 准备 inference_state
@@ -3744,7 +3736,7 @@ class SAM3VideoSemanticPredictor(SAM3SemanticPredictor):
         return tracker_states_local
 
     def _tracker_remove_objects(self, tracker_states_local: list[Any], obj_ids: list[int]):
-        """从 SAM2 推理状态中删除目标，同时删除该目标在视频所有帧中的信息。"""
+        """从 SAM2 推理状态中删除目标，同时删除该目标在视频所有帧中的信息。."""
         if not obj_ids:
             return
         # 过滤删除目标后变为空的状态
@@ -3762,7 +3754,7 @@ class SAM3VideoSemanticPredictor(SAM3SemanticPredictor):
         tracker_states_local[:] = active_states
 
     def _initialize_metadata(self):
-        """初始化掩码轨迹元数据。"""
+        """初始化掩码轨迹元数据。."""
         tracker_metadata = {
             "obj_ids": np.array([], np.int32),
             "num_obj": np.zeros(1, np.int32),
@@ -3804,7 +3796,7 @@ class SAM3VideoSemanticPredictor(SAM3SemanticPredictor):
         det_to_matched_trk_obj_ids: dict[int, np.ndarray],
         new_det_obj_ids: np.ndarray,
     ):
-        """根据当前帧的检测结果更新掩码轨迹确认状态。"""
+        """根据当前帧的检测结果更新掩码轨迹确认状态。."""
         confirmation_data = metadata["masklet_confirmation"]
 
         # a）首先扩展 "confirmation_data"，纳入当前帧新增的掩码轨迹
@@ -3857,7 +3849,7 @@ class SAM3VideoSemanticPredictor(SAM3SemanticPredictor):
 
     @staticmethod
     def _drop_new_det_with_obj_limit(new_det_fa_inds, det_scores_np, num_to_keep):
-        """根据最大目标数限制丢弃部分新检测结果。按照检测分数保留高分目标并丢弃低分目标。"""
+        """根据最大目标数限制丢弃部分新检测结果。按照检测分数保留高分目标并丢弃低分目标。."""
         assert 0 <= num_to_keep <= len(new_det_fa_inds)
         if num_to_keep == 0:
             return np.array([], np.int64)  # 全部丢弃

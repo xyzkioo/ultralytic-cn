@@ -16,7 +16,7 @@ from .utils.stracks import parse_bboxes
 
 
 class BOTrack(STrack):
-    """STrack 的扩展版本，为 YOLO 增加对象跟踪特征。
+    """STrack 的扩展版本，为 YOLO 增加对象跟踪特征。.
 
     此类扩展 STrack，增加目标跟踪所需的特征平滑、卡尔曼滤波预测和轨迹重新激活等功能。
 
@@ -50,7 +50,7 @@ class BOTrack(STrack):
     shared_kalman = KalmanFilterXYWH()
 
     def __init__(self, xywh: np.ndarray, score: float, cls: int, feat: np.ndarray | None = None):
-        """初始化 BOTrack 对象，设置特征平滑状态和卡尔曼滤波器。
+        """初始化 BOTrack 对象，设置特征平滑状态和卡尔曼滤波器。.
 
         参数：
             xywh (np.ndarray): `(x, y, w, h, idx)` 或 `(x, y, w, h, angle, idx)` 格式的边界框，其中 (x, y) 为中心点，
@@ -68,13 +68,13 @@ class BOTrack(STrack):
             self.update_features(feat)
 
     def update_features(self, feat: np.ndarray) -> None:
-        """更新当前特征及其指数移动平均平滑特征。"""
+        """更新当前特征及其指数移动平均平滑特征。."""
         curr, smooth = smooth_feature(feat, self.smooth_feat, self.alpha)
         if curr is not None:
             self.curr_feat, self.smooth_feat = curr, smooth
 
     def predict(self) -> None:
-        """使用卡尔曼滤波预测对象的未来状态，并更新其均值和协方差。"""
+        """使用卡尔曼滤波预测对象的未来状态，并更新其均值和协方差。."""
         mean_state = self.mean.copy()
         if self.state != TrackState.Tracked:
             mean_state[6] = 0
@@ -83,20 +83,20 @@ class BOTrack(STrack):
         self.mean, self.covariance = self.kalman_filter.predict(mean_state, self.covariance)
 
     def re_activate(self, new_track: BOTrack, frame_id: int, new_id: bool = False) -> None:
-        """使用更新后的特征重新激活轨迹，并可选择分配新的 ID。"""
+        """使用更新后的特征重新激活轨迹，并可选择分配新的 ID。."""
         if new_track.curr_feat is not None:
             self.update_features(new_track.curr_feat)
         super().re_activate(new_track, frame_id, new_id)
 
     def update(self, new_track: BOTrack, frame_id: int) -> None:
-        """使用新的检测信息和当前帧 ID 更新轨迹。"""
+        """使用新的检测信息和当前帧 ID 更新轨迹。."""
         if new_track.curr_feat is not None:
             self.update_features(new_track.curr_feat)
         super().update(new_track, frame_id)
 
     @property
     def tlwh(self) -> np.ndarray:
-        """返回 `(左上角 x, 左上角 y, 宽度, 高度)` 格式的当前边界框位置。"""
+        """返回 `(左上角 x, 左上角 y, 宽度, 高度)` 格式的当前边界框位置。."""
         if self.mean is None:
             return self._tlwh.copy()
         ret = self.mean[:4].copy()
@@ -105,7 +105,7 @@ class BOTrack(STrack):
 
     @staticmethod
     def multi_predict(stracks: list[BOTrack]) -> None:
-        """使用共享的卡尔曼滤波器预测多个对象轨迹的均值和协方差。"""
+        """使用共享的卡尔曼滤波器预测多个对象轨迹的均值和协方差。."""
         if not stracks:
             return
         multi_mean = np.asarray([st.mean for st in stracks])
@@ -120,19 +120,19 @@ class BOTrack(STrack):
             stracks[i].covariance = cov
 
     def convert_coords(self, tlwh: np.ndarray) -> np.ndarray:
-        """将 tlwh 边界框坐标转换为 xywh 格式。"""
+        """将 tlwh 边界框坐标转换为 xywh 格式。."""
         return self.tlwh_to_xywh(tlwh)
 
     @staticmethod
     def tlwh_to_xywh(tlwh: np.ndarray) -> np.ndarray:
-        """将边界框从 tlwh（左上角坐标、宽度、高度）转换为 xywh（中心坐标、宽度、高度）格式。"""
+        """将边界框从 tlwh（左上角坐标、宽度、高度）转换为 xywh（中心坐标、宽度、高度）格式。."""
         ret = np.asarray(tlwh).copy()
         ret[:2] += ret[2:] / 2
         return ret
 
 
 class BOTSORT(BYTETracker):
-    """BYTETracker 的扩展版本，用于 YOLO 目标跟踪，并支持 ReID 和 GMC 算法。
+    """BYTETracker 的扩展版本，用于 YOLO 目标跟踪，并支持 ReID 和 GMC 算法。.
 
     属性：
         proximity_thresh (float): 轨迹与检测结果之间空间接近度（IoU）的阈值。
@@ -159,7 +159,7 @@ class BOTSORT(BYTETracker):
     """
 
     def __init__(self, args: Any):
-        """初始化 BOTSORT 对象，配置 ReID 模块和 GMC 算法。
+        """初始化 BOTSORT 对象，配置 ReID 模块和 GMC 算法。.
 
         参数：
             args (Any): 包含跟踪参数的解析后命令行参数。
@@ -173,11 +173,11 @@ class BOTSORT(BYTETracker):
         self.encoder = build_encoder(args.with_reid, args.model, getattr(args, "device", None))
 
     def get_kalmanfilter(self) -> KalmanFilterXYWH:
-        """返回用于跟踪过程中预测和更新目标状态的 KalmanFilterXYWH 实例。"""
+        """返回用于跟踪过程中预测和更新目标状态的 KalmanFilterXYWH 实例。."""
         return KalmanFilterXYWH()
 
     def init_track(self, results, img: np.ndarray | None = None) -> list[BOTrack]:
-        """使用检测边界框、分数、类别标签和可选的 ReID 特征初始化目标轨迹。"""
+        """使用检测边界框、分数、类别标签和可选的 ReID 特征初始化目标轨迹。."""
         if len(results) == 0:
             return []
         bboxes = parse_bboxes(results)
@@ -187,7 +187,7 @@ class BOTSORT(BYTETracker):
         return [BOTrack(xywh, s, c) for (xywh, s, c) in zip(bboxes, results.conf, results.cls)]
 
     def get_dists(self, tracks: list[BOTrack], detections: list[BOTrack]) -> np.ndarray:
-        """使用 IoU 和可选的 ReID 嵌入计算轨迹与检测结果之间的距离。"""
+        """使用 IoU 和可选的 ReID 嵌入计算轨迹与检测结果之间的距离。."""
         dists = matching.iou_distance(tracks, detections)
         dists_mask = dists > (1 - self.proximity_thresh)
 
@@ -202,10 +202,10 @@ class BOTSORT(BYTETracker):
         return dists
 
     def multi_predict(self, tracks: list[BOTrack]) -> None:
-        """使用共享的卡尔曼滤波器预测多个对象轨迹的均值和协方差。"""
+        """使用共享的卡尔曼滤波器预测多个对象轨迹的均值和协方差。."""
         BOTrack.multi_predict(tracks)
 
     def reset(self) -> None:
-        """将 BOTSORT 跟踪器重置为初始状态，并清除所有跟踪对象和内部状态。"""
+        """将 BOTSORT 跟踪器重置为初始状态，并清除所有跟踪对象和内部状态。."""
         super().reset()
         self.gmc.reset_params()

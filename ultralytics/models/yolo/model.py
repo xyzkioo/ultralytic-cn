@@ -30,10 +30,9 @@ from ultralytics.utils import ROOT, YAML
 
 
 class YOLO(Model):
-    """YOLO（You Only Look Once）对象检测模型。
+    """YOLO（You Only Look Once）对象检测模型。.
 
-    此类为 YOLO 模型提供统一接口，并根据模型文件名自动切换到专用模型类型（YOLOWorld 或 YOLOE）。
-    它支持多种计算机视觉任务，包括对象检测、实例分割、语义分割、图像分类、姿态估计和有向边界框检测。
+    此类为 YOLO 模型提供统一接口，并根据模型文件名自动切换到专用模型类型（YOLOWorld 或 YOLOE）。 它支持多种计算机视觉任务，包括对象检测、实例分割、语义分割、图像分类、姿态估计和有向边界框检测。
 
     属性：
         model: 已加载的 YOLO 模型实例。
@@ -56,7 +55,7 @@ class YOLO(Model):
     """
 
     def __init__(self, model: str | Path = "yolo26n.pt", task: str | None = None, verbose: bool = False):
-        """初始化 YOLO 模型。
+        """初始化 YOLO 模型。.
 
         此构造函数初始化 YOLO 模型，并根据模型文件名自动切换到专用模型类型（YOLOWorld 或 YOLOE）。
 
@@ -87,7 +86,7 @@ class YOLO(Model):
 
     @property
     def task_map(self) -> dict[str, dict[str, Any]]:
-        """将任务映射到对应的模型、训练器、验证器和预测器类。"""
+        """将任务映射到对应的模型、训练器、验证器和预测器类。."""
         return {
             "classify": {
                 "model": ClassificationModel,
@@ -135,10 +134,9 @@ class YOLO(Model):
 
 
 class YOLOWorld(Model):
-    """YOLO-World 对象检测模型。
+    """YOLO-World 对象检测模型。.
 
-    YOLO-World 是一种开放词汇对象检测模型，可以根据文本描述检测对象，无需针对特定类别进行训练。
-    它扩展了 YOLO 架构，以支持实时开放词汇检测。
+    YOLO-World 是一种开放词汇对象检测模型，可以根据文本描述检测对象，无需针对特定类别进行训练。 它扩展了 YOLO 架构，以支持实时开放词汇检测。
 
     属性：
         model: 已加载的 YOLO-World 模型实例。
@@ -159,7 +157,7 @@ class YOLOWorld(Model):
     """
 
     def __init__(self, model: str | Path = "yolov8s-world.pt", verbose: bool = False) -> None:
-        """使用预训练模型文件初始化 YOLOv8-World 模型。
+        """使用预训练模型文件初始化 YOLOv8-World 模型。.
 
         加载用于对象检测的 YOLOv8-World 模型。如果未提供自定义类别名称，则分配默认 COCO 类别名称。
 
@@ -175,7 +173,7 @@ class YOLOWorld(Model):
 
     @property
     def task_map(self) -> dict[str, dict[str, Any]]:
-        """将任务映射到对应的模型、训练器、验证器和预测器类。"""
+        """将任务映射到对应的模型、训练器、验证器和预测器类。."""
         return {
             "detect": {
                 "model": WorldModel,
@@ -186,7 +184,7 @@ class YOLOWorld(Model):
         }
 
     def set_classes(self, classes: list[str]) -> None:
-        """设置模型用于检测的类别名称。
+        """设置模型用于检测的类别名称。.
 
         参数：
             classes (list[str]): 类别名称列表，例如 ["person"]。
@@ -204,7 +202,7 @@ class YOLOWorld(Model):
 
 
 class YOLOE(Model):
-    """YOLOE 对象检测与实例分割模型。
+    """YOLOE 对象检测与实例分割模型。.
 
     YOLOE 是增强版 YOLO 模型，支持目标检测和实例分割任务，并提供视觉提示、文本提示以及视觉和文本位置嵌入等能力。
 
@@ -241,7 +239,7 @@ class YOLOE(Model):
     """
 
     def __init__(self, model: str | Path = "yoloe-11s-seg.pt", task: str | None = None, verbose: bool = False) -> None:
-        """使用预训练模型文件初始化 YOLOE 模型。
+        """使用预训练模型文件初始化 YOLOE 模型。.
 
         参数：
             model (str | Path): 预训练模型文件的路径，支持 `*.pt` 和 `*.yaml` 格式。
@@ -252,7 +250,7 @@ class YOLOE(Model):
 
     @property
     def task_map(self) -> dict[str, dict[str, Any]]:
-        """将任务映射到对应的模型、训练器、验证器和预测器类。"""
+        """将任务映射到对应的模型、训练器、验证器和预测器类。."""
         return {
             "detect": {
                 "model": YOLOEModel,
@@ -269,12 +267,12 @@ class YOLOE(Model):
         }
 
     def get_text_pe(self, texts):
-        """获取给定文本的位置嵌入。"""
+        """获取给定文本的位置嵌入。."""
         assert isinstance(self.model, YOLOEModel)
         return self.model.get_text_pe(texts)
 
     def get_visual_pe(self, img, visual):
-        """获取给定图像和视觉特征的视觉位置嵌入。
+        """获取给定图像和视觉特征的视觉位置嵌入。.
 
         此方法根据输入图像从视觉特征中提取位置嵌入，要求模型必须是 YOLOEModel 的实例。
 
@@ -295,7 +293,7 @@ class YOLOE(Model):
         return self.model.get_visual_pe(img, visual)
 
     def set_vocab(self, vocab: torch.nn.ModuleList, names: list[str]) -> None:
-        """根据给定类别名称，将模型重新参数化为不依赖提示的模型。
+        """根据给定类别名称，将模型重新参数化为不依赖提示的模型。.
 
         词汇表是针对相同名称由 `get_vocab` 返回的融合分类层，而不是类别名称本身。
         模型必须是 YOLOEModel 的实例。
@@ -318,13 +316,13 @@ class YOLOE(Model):
         self.model.set_vocab(vocab, names=names)
 
     def get_vocab(self, names):
-        """获取给定类别名称对应的词汇表，并在融合检测头后将其作为模型类别。"""
+        """获取给定类别名称对应的词汇表，并在融合检测头后将其作为模型类别。."""
         assert isinstance(self.model, YOLOEModel)
         self.predictor = None  # 委托模型会直接融合可提示检测头
         return self.model.get_vocab(names)
 
     def set_classes(self, classes: list[str], embeddings: torch.Tensor | None = None) -> None:
-        """设置模型用于检测的类别名称和嵌入向量。
+        """设置模型用于检测的类别名称和嵌入向量。.
 
         参数：
             classes (列表[str]): 类别名称列表，例如 `["person"]`。
@@ -344,14 +342,14 @@ class YOLOE(Model):
             self.predictor.model.names = self.model.names
 
     def _prompt_embedding_model(self) -> str:
-        """返回用于将提示嵌入绑定到当前模型的检查点标识符。"""
+        """返回用于将提示嵌入绑定到当前模型的检查点标识符。."""
         source = self.overrides.get("pretrained") or getattr(self.model, "pt_path", None) or self.ckpt_path
         source = source if isinstance(source, (str, Path)) else self.model.yaml["yaml_file"]
         model = Path(source).stem
         return model[:-4] if model.endswith("-seg") else model
 
     def save_prompt_embeddings(self, file: str | Path) -> Path:
-        """将当前提示嵌入和类别名称保存到 NPZ 文件。
+        """将当前提示嵌入和类别名称保存到 NPZ 文件。.
 
         参数：
             file (str | Path): 目标 NPZ 文件路径。
@@ -382,7 +380,7 @@ class YOLOE(Model):
         return file
 
     def load_prompt_embeddings(self, file: str | Path) -> None:
-        """从与模型绑定的 NPZ 文件加载提示嵌入和类别名称。
+        """从与模型绑定的 NPZ 文件加载提示嵌入和类别名称。.
 
         参数：
             file (str | Path): 由 `save_prompt_embeddings` 创建的源 NPZ 文件路径。
@@ -420,7 +418,7 @@ class YOLOE(Model):
         refer_data: str | None = None,
         **kwargs,
     ):
-        """使用文本提示或视觉提示验证模型。
+        """使用文本提示或视觉提示验证模型。.
 
         参数：
             validator (callable, 可选): 可调用的验证器函数；为 `None` 时加载默认验证器。
@@ -448,7 +446,7 @@ class YOLOE(Model):
         predictor=yolo.yoloe.YOLOEVPDetectPredictor,
         **kwargs,
     ):
-        """在图像、视频、目录、数据流等输入上执行预测。
+        """在图像、视频、目录、数据流等输入上执行预测。.
 
         参数：
             source (str | int | PIL.Image | np.ndarray, 可选): 预测输入源。可接受图像路径、目录路径、URL、

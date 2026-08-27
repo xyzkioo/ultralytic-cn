@@ -48,7 +48,7 @@ GITHUB_ASSETS_STEMS = frozenset(k.rpartition(".")[0] for k in GITHUB_ASSETS_NAME
 
 
 def is_url(url: str | Path, check: bool = False) -> bool:
-    """验证给定字符串是否为 URL，并可选地检查该 URL 是否在线存在。
+    """验证给定字符串是否为 URL，并可选地检查该 URL 是否在线存在。.
 
     参数：
         url (str | Path): 要验证为 URL 的字符串。
@@ -76,7 +76,7 @@ def is_url(url: str | Path, check: bool = False) -> bool:
 
 
 def delete_dsstore(path: str | Path, files_to_delete: tuple[str, ...] = (".DS_Store", "__MACOSX")) -> None:
-    """删除目录中指定的所有系统文件和目录。
+    """删除目录中指定的所有系统文件和目录。.
 
     参数：
         path (str | Path): 要删除文件的目录路径。
@@ -106,7 +106,7 @@ def zip_directory(
     exclude: tuple[str, ...] = (".DS_Store", "__MACOSX"),
     progress: bool = True,
 ) -> Path:
-    """压缩目录内容，并排除指定文件。
+    """压缩目录内容，并排除指定文件。.
 
     生成的 ZIP 文件以目录命名，并放置在该目录旁边。
 
@@ -148,10 +148,9 @@ def unzip_file(
     exist_ok: bool = False,
     progress: bool = True,
 ) -> Path:
-    """将 `*.zip` 文件解压到指定路径，并排除指定文件。
+    """将 `*.zip` 文件解压到指定路径，并排除指定文件。.
 
-    如果 ZIP 文件不包含单个顶层目录，则创建一个与 ZIP 文件同名（不含扩展名）的新目录来解压内容。
-    如果未提供路径，则使用 ZIP 文件的父目录作为默认路径。
+    如果 ZIP 文件不包含单个顶层目录，则创建一个与 ZIP 文件同名（不含扩展名）的新目录来解压内容。 如果未提供路径，则使用 ZIP 文件的父目录作为默认路径。
 
     参数：
         file (str | Path): 要解压的 ZIP 文件路径。
@@ -220,7 +219,7 @@ def check_disk_space(
     sf: float = 1.5,
     hard: bool = True,
 ) -> bool:
-    """检查磁盘空间是否足以下载并保存文件。
+    """检查磁盘空间是否足以下载并保存文件。.
 
     参数：
         file_bytes (int): 文件大小，单位为字节。
@@ -254,7 +253,7 @@ def check_disk_space(
 
 
 def get_google_drive_file_info(link: str) -> tuple[str, str | None]:
-    """获取可共享 Google Drive 文件链接对应的直接下载地址和文件名。
+    """获取可共享 Google Drive 文件链接对应的直接下载地址和文件名。.
 
     参数：
         link (str): Google Drive 文件的可共享链接。
@@ -304,7 +303,7 @@ def safe_download(
     exist_ok: bool = False,
     progress: bool = True,
 ) -> Path | str:
-    """从 URL 下载文件，并支持重试、解压和删除已下载文件。通过验证 Content-Length 增强了部分下载检测能力。
+    """从 URL 下载文件，并支持重试、解压和删除已下载文件。通过验证 Content-Length 增强了部分下载检测能力。.
 
     参数：
         url (str | Path): 要下载文件的 URL。
@@ -449,7 +448,7 @@ def get_github_assets(
     version: str = "latest",
     retry: bool = False,
 ) -> tuple[str, list[str]]:
-    """从 GitHub 仓库获取指定版本的标签和资源。
+    """从 GitHub 仓库获取指定版本的标签和资源。.
 
     未指定版本时，获取最新发行版资源。
 
@@ -494,7 +493,7 @@ def attempt_download_asset(
     release: str = "v8.4.0",
     **kwargs,
 ) -> str:
-    """本地找不到文件时，尝试从 GitHub 发行版资源中下载该文件。
+    """本地找不到文件时，尝试从 GitHub 发行版资源中下载该文件。.
 
     参数：
         file (str | Path): 要下载的文件名或文件路径。
@@ -553,7 +552,7 @@ def download(
     retry: int = 3,
     exist_ok: bool = False,
 ) -> None:
-    """将指定 URL 的文件下载到给定目录。
+    """将指定 URL 的文件下载到给定目录。.
 
     指定多个线程时支持并发下载。
 

@@ -18,7 +18,7 @@ from ultralytics.utils.checks import check_requirements
 
 
 def bbox_iof(polygon1: np.ndarray, bbox2: np.ndarray, eps: float = 1e-6) -> np.ndarray:
-    """计算多边形与边界框之间的前景交并比（IoF）。
+    """计算多边形与边界框之间的前景交并比（IoF）。.
 
     参数：
         polygon1 (np.ndarray): 形状为 (N, 8) 的多边形坐标。
@@ -64,7 +64,7 @@ def bbox_iof(polygon1: np.ndarray, bbox2: np.ndarray, eps: float = 1e-6) -> np.n
 
 
 def load_yolo_dota(data_root: str, split: str = "train") -> list[dict[str, Any]]:
-    """加载 DOTA 数据集标注和图像信息。
+    """加载 DOTA 数据集标注和图像信息。.
 
     参数：
         data_root (str): 数据集根目录。
@@ -105,7 +105,7 @@ def get_windows(
     im_rate_thr: float = 0.6,
     eps: float = 0.01,
 ) -> np.ndarray:
-    """获取用于裁剪图像的滑动窗口坐标。
+    """获取用于裁剪图像的滑动窗口坐标。.
 
     参数：
         im_size (tuple[int, int]): 原始图像尺寸 (H, W)。
@@ -151,7 +151,7 @@ def get_windows(
 
 
 def get_window_obj(anno: dict[str, Any], windows: np.ndarray, iof_thr: float = 0.7) -> list[np.ndarray]:
-    """根据 IoF 阈值获取每个窗口中的目标。"""
+    """根据 IoF 阈值获取每个窗口中的目标。."""
     h, w = anno["ori_size"]
     label = anno["label"]
     if len(label):
@@ -172,7 +172,7 @@ def crop_and_save(
     lb_dir: str,
     allow_background_images: bool = True,
 ) -> None:
-    """裁剪图像，并为每个窗口保存新的标签。
+    """裁剪图像，并为每个窗口保存新的标签。.
 
     参数：
         anno (dict[str, Any]): 标注字典，包含 'filepath'、'label' 和 'ori_size' 键。
@@ -222,7 +222,7 @@ def split_images_and_labels(
     crop_sizes: tuple[int, ...] = (1024,),
     gaps: tuple[int, ...] = (200,),
 ) -> None:
-    """拆分指定数据集中的图像和标签。
+    """拆分指定数据集中的图像和标签。.
 
     参数：
         data_root (str): 数据集根目录。
@@ -260,7 +260,7 @@ def split_images_and_labels(
 def split_trainval(
     data_root: str, save_dir: str, crop_size: int = 1024, gap: int = 200, rates: tuple[float, ...] = (1.0,)
 ) -> None:
-    """使用多个缩放比例拆分 DOTA 数据集的 train 和 val 集。
+    """使用多个缩放比例拆分 DOTA 数据集的 train 和 val 集。.
 
     参数：
         data_root (str): 数据集根目录。
@@ -298,7 +298,7 @@ def split_trainval(
 def split_test(
     data_root: str, save_dir: str, crop_size: int = 1024, gap: int = 200, rates: tuple[float, ...] = (1.0,)
 ) -> None:
-    """拆分 DOTA 数据集的测试集，该集合不包含标签。
+    """拆分 DOTA 数据集的测试集，该集合不包含标签。.
 
     参数：
         data_root (str): 数据集根目录。

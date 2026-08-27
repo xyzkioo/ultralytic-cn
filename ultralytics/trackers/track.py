@@ -28,7 +28,7 @@ TRACKER_MAP = {
 
 
 def on_predict_start(predictor: object, persist: bool = False) -> None:
-    """在预测过程中初始化对象跟踪器。
+    """在预测过程中初始化对象跟踪器。.
 
     参数：
         predictor (ultralytics.engine.predictor.BasePredictor): 要为其初始化跟踪器的预测器对象。
@@ -90,7 +90,7 @@ def on_predict_start(predictor: object, persist: bool = False) -> None:
 
 
 def on_predict_postprocess_end(predictor: object, persist: bool = False) -> None:
-    """对检测到的边界框进行后处理，并更新对象跟踪结果。
+    """对检测到的边界框进行后处理，并更新对象跟踪结果。.
 
     参数：
         predictor (对象): 包含预测结果的预测器对象。
@@ -131,7 +131,7 @@ def on_predict_postprocess_end(predictor: object, persist: bool = False) -> None
 
 
 def register_tracker(model: object, persist: bool) -> None:
-    """为模型注册或刷新预测期间进行对象跟踪所需的回调。
+    """为模型注册或刷新预测期间进行对象跟踪所需的回调。.
 
     之前的注册会原地替换，因此重复调用不会叠加回调，也不会保留过期的 `persist` 设置。
 

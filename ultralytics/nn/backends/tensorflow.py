@@ -14,14 +14,13 @@ from .base import BaseBackend
 
 
 class TensorFlowBackend(BaseBackend):
-    """支持多种序列化格式的 Google TensorFlow 推理后端。
+    """支持多种序列化格式的 Google TensorFlow 推理后端。.
 
-    加载并运行 SavedModel、GraphDef（.pb）和 Edge TPU 格式的 Google TensorFlow 模型推理，
-    同时处理量化模型的反量化和任务特定的输出格式化。
+    加载并运行 SavedModel、GraphDef（.pb）和 Edge TPU 格式的 Google TensorFlow 模型推理， 同时处理量化模型的反量化和任务特定的输出格式化。
     """
 
     def __init__(self, weight: str | Path, device: torch.device, fp16: bool = False, format: str = "saved_model"):
-        """初始化 Google TensorFlow 后端。
+        """初始化 Google TensorFlow 后端。.
 
         参数：
             weight (str | Path): SavedModel 目录、.pb 文件或 Edge TPU .tflite 文件的路径。
@@ -34,7 +33,7 @@ class TensorFlowBackend(BaseBackend):
         super().__init__(weight, device, fp16)
 
     def load_model(self, weight: str | Path) -> None:
-        """以 SavedModel、GraphDef 或 Edge TPU 格式加载 Google TensorFlow 模型。
+        """以 SavedModel、GraphDef 或 Edge TPU 格式加载 Google TensorFlow 模型。.
 
         参数：
             weight (str | Path): 模型文件或目录的路径。
@@ -51,7 +50,7 @@ class TensorFlowBackend(BaseBackend):
             from ultralytics.utils.export.tensorflow import gd_outputs
 
             def wrap_frozen_graph(gd, inputs, outputs):
-                """裁剪到指定的输入和输出节点，将 TensorFlow 冻结图包装为推理模型。"""
+                """裁剪到指定的输入和输出节点，将 TensorFlow 冻结图包装为推理模型。."""
                 x = tf.compat.v1.wrap_function(lambda: tf.compat.v1.import_graph_def(gd, name=""), [])
                 ge = x.graph.as_graph_element
                 return x.prune(tf.nest.map_structure(ge, inputs), tf.nest.map_structure(ge, outputs))
@@ -90,7 +89,7 @@ class TensorFlowBackend(BaseBackend):
             self.apply_metadata(self.read_metadata(weight))
 
     def forward(self, im: torch.Tensor) -> list[np.ndarray]:
-        """执行 Google TensorFlow 推理，并根据格式完成对应的执行和输出后处理。
+        """执行 Google TensorFlow 推理，并根据格式完成对应的执行和输出后处理。.
 
         参数：
             im (torch.Tensor): 输入图像张量，格式为 BHWC（由 AutoBackend 从 BCHW 转换而来）。

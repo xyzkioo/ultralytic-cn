@@ -10,12 +10,12 @@ from ultralytics.utils.ops import xywh2xyxy
 
 
 def is_right_padded(mask: torch.Tensor):
-    """判断填充掩码的填充是否位于右侧（遵循 PyTorch 约定，1 表示填充值）。"""
+    """判断填充掩码的填充是否位于右侧（遵循 PyTorch 约定，1 表示填充值）。."""
     return (mask.long() == torch.sort(mask.long(), dim=-1)[0]).all()
 
 
 def concat_padded_sequences(seq1, mask1, seq2, mask2, return_index: bool = False):
-    """将两个右侧填充的序列拼接为连续的右侧填充序列。
+    """将两个右侧填充的序列拼接为连续的右侧填充序列。.
 
     遵循 PyTorch 约定，张量采用序列优先布局，掩码采用批次优先布局，其中 1 表示填充值。
 
@@ -69,20 +69,19 @@ def concat_padded_sequences(seq1, mask1, seq2, mask2, return_index: bool = False
 
 
 class Prompt:
-    """用于处理几何提示的工具类。
+    """用于处理几何提示的工具类。.
 
-    序列遵循 PyTorch 约定，即序列维在前、批次维在后。各张量形状如下：box_embeddings 为 N_boxes x B x C_box，
-    box_mask 为 B x N_boxes；如果没有需要屏蔽的内容，box_mask 可以为 None。
-    point_embeddings 为 N_points x B x C_point，point_mask 为 B x N_points；如果没有需要屏蔽的内容，point_mask 可以为 None。
-    mask_embeddings 为 N_masks x B x 1 x H_mask x W_mask，mask_mask 为 B x N_masks；如果没有需要屏蔽的内容，mask_mask 可以为 None。
+    序列遵循 PyTorch 约定，即序列维在前、批次维在后。各张量形状如下：box_embeddings 为 N_boxes x B x C_box， box_mask 为 B x
+    N_boxes；如果没有需要屏蔽的内容，box_mask 可以为 None。 point_embeddings 为 N_points x B x C_point，point_mask 为 B x
+    N_points；如果没有需要屏蔽的内容，point_mask 可以为 None。 mask_embeddings 为 N_masks x B x 1 x H_mask x W_mask，mask_mask 为 B x
+    N_masks；如果没有需要屏蔽的内容，mask_mask 可以为 None。
 
-    此类还保存正负标签，这些张量同样采用批次优先布局。如果标签为 None，则默认全部为正标签。
-    box_labels 为形状 N_boxes x B 的 long 张量，point_labels 为形状 N_points x B 的 long 张量，
-    mask_labels 为形状 N_masks x B 的 long 张量。
+    此类还保存正负标签，这些张量同样采用批次优先布局。如果标签为 None，则默认全部为正标签。 box_labels 为形状 N_boxes x B 的 long 张量，point_labels 为形状 N_points x B 的
+    long 张量， mask_labels 为形状 N_masks x B 的 long 张量。
     """
 
     def __init__(self, box_embeddings=None, box_mask=None, box_labels=None):
-        """初始化 Prompt 对象。"""
+        """初始化 Prompt 对象。."""
         # 检查是否为空提示
         if box_embeddings is None:
             self.box_embeddings = None
@@ -127,7 +126,7 @@ class Prompt:
         self.box_labels = box_labels
 
     def append_boxes(self, boxes, labels=None, mask=None):
-        """将边界框提示追加到现有提示中。
+        """将边界框提示追加到现有提示中。.
 
         参数：
             boxes (torch.Tensor): 形状为 (N_new_boxes, B, 4) 的归一化边界框坐标张量。
@@ -171,7 +170,7 @@ class Prompt:
 
 
 class SequenceGeometryEncoder(nn.Module):
-    """几何边界框提示的编码器，假设输入边界框使用“归一化 CxCyWH”格式。
+    """几何边界框提示的编码器，假设输入边界框使用“归一化 CxCyWH”格式。.
 
     边界框可以通过以下三种方式中的任意一种进行编码：
     - 直接投影：将坐标空间线性投影到 d_model
@@ -200,7 +199,7 @@ class SequenceGeometryEncoder(nn.Module):
         add_post_encode_proj: bool = True,
         use_act_ckpt: bool = False,
     ):
-        """初始化 SequenceGeometryEncoder。"""
+        """初始化 SequenceGeometryEncoder。."""
         super().__init__()
 
         self.d_model = d_model
@@ -259,7 +258,7 @@ class SequenceGeometryEncoder(nn.Module):
         self.use_act_ckpt = use_act_ckpt
 
     def _encode_points(self, points, points_mask, points_labels, img_feats):
-        """编码点（将边界框转换为角点时使用）。"""
+        """编码点（将边界框转换为角点时使用）。."""
         # 直接投影坐标
         points_embed = self.points_direct_project(points.to(img_feats.dtype))
 
@@ -268,7 +267,7 @@ class SequenceGeometryEncoder(nn.Module):
         return type_embed + points_embed, points_mask
 
     def _encode_boxes(self, boxes, boxes_mask, boxes_labels, img_feats: torch.Tensor):
-        """使用已配置的编码方式对边界框进行编码。"""
+        """使用已配置的编码方式对边界框进行编码。."""
         boxes_embed = None
         n_boxes, bs = boxes.shape[:2]
 
@@ -321,7 +320,7 @@ class SequenceGeometryEncoder(nn.Module):
         return type_embed + boxes_embed, boxes_mask
 
     def forward(self, geo_prompt: Prompt, img_feats, img_sizes, img_pos_embeds=None):
-        """编码几何边界框提示。
+        """编码几何边界框提示。.
 
         参数：
             geo_prompt (Prompt): 包含边界框嵌入、掩码和标签的提示对象。

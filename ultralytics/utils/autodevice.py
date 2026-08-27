@@ -9,13 +9,11 @@ from ultralytics.utils import LOGGER
 
 
 class GPUInfo:
-    """通过 pynvml 管理 NVIDIA GPU 信息，并提供完善的错误处理。
+    """通过 pynvml 管理 NVIDIA GPU 信息，并提供完善的错误处理。.
 
-    提供查询 GPU 详细统计信息（利用率、内存、温度和功耗）以及根据可配置条件选择最空闲 GPU 的方法。
-    如果 pynvml 不存在或初始化失败，函数会记录警告并禁用相关功能，避免应用程序崩溃。
+    提供查询 GPU 详细统计信息（利用率、内存、温度和功耗）以及根据可配置条件选择最空闲 GPU 的方法。 如果 pynvml 不存在或初始化失败，函数会记录警告并禁用相关功能，避免应用程序崩溃。
 
-    如果选择 GPU 时 NVML 不可用，还包含使用 `torch.cuda` 进行基本设备计数的回退逻辑。
-    NVML 的初始化和关闭由此类在内部管理。
+    如果选择 GPU 时 NVML 不可用，还包含使用 `torch.cuda` 进行基本设备计数的回退逻辑。 NVML 的初始化和关闭由此类在内部管理。
 
     属性：
         pynvml (模块 | None): 成功导入并初始化后的 `pynvml` 模块，否则为 `None`。
@@ -42,7 +40,7 @@ class GPUInfo:
     """
 
     def __init__(self):
-        """初始化 GPUInfo，并尝试导入和初始化 pynvml。"""
+        """初始化 GPUInfo，并尝试导入和初始化 pynvml。."""
         self.pynvml: Any | None = None
         self.nvml_available: bool = False
         self.gpu_stats: list[dict[str, Any]] = []
@@ -58,11 +56,11 @@ class GPUInfo:
             LOGGER.warning(f"Failed to initialize pynvml, GPU stats disabled: {e}")
 
     def __del__(self):
-        """确保对象被垃圾回收时关闭 NVML。"""
+        """确保对象被垃圾回收时关闭 NVML。."""
         self.shutdown()
 
     def shutdown(self):
-        """如果 NVML 已初始化，则关闭 NVML。"""
+        """如果 NVML 已初始化，则关闭 NVML。."""
         if self.nvml_available and self.pynvml:
             try:
                 self.pynvml.nvmlShutdown()
@@ -71,7 +69,7 @@ class GPUInfo:
             self.nvml_available = False
 
     def refresh_stats(self):
-        """查询 NVML 并刷新内部的 gpu_stats 列表。"""
+        """查询 NVML 并刷新内部的 gpu_stats 列表。."""
         self.gpu_stats = []
         if not self.nvml_available or not self.pynvml:
             return
@@ -84,7 +82,7 @@ class GPUInfo:
             self.gpu_stats = []
 
     def _get_device_stats(self, index: int) -> dict[str, Any]:
-        """获取单个 GPU 设备的统计信息。"""
+        """获取单个 GPU 设备的统计信息。."""
         handle = self.pynvml.nvmlDeviceGetHandleByIndex(index)
         memory = self.pynvml.nvmlDeviceGetMemoryInfo(handle)
         util = self.pynvml.nvmlDeviceGetUtilizationRates(handle)
@@ -111,7 +109,7 @@ class GPUInfo:
         }
 
     def print_status(self):
-        """使用当前统计信息，以紧凑表格格式打印 GPU 状态。"""
+        """使用当前统计信息，以紧凑表格格式打印 GPU 状态。."""
         self.refresh_stats()
         if not self.gpu_stats:
             LOGGER.warning("No GPU stats available.")
@@ -139,7 +137,7 @@ class GPUInfo:
         min_util_fraction: float = 0,
         indices: list[int] | None = None,
     ) -> list[int]:
-        """根据利用率和可用内存选择最空闲的 GPU。
+        """根据利用率和可用内存选择最空闲的 GPU。.
 
         参数：
             count (int): 要选择的空闲 GPU 数量。

@@ -10,7 +10,7 @@ from ultralytics.utils.plotting import colors
 
 
 class TrackZone(BaseSolution):
-    """管理视频流中基于区域的对象跟踪的类。
+    """管理视频流中基于区域的对象跟踪的类。.
 
     此类扩展 BaseSolution，在多边形区域定义的指定范围内跟踪对象，并排除区域外对象。
 
@@ -35,7 +35,7 @@ class TrackZone(BaseSolution):
     """
 
     def __init__(self, **kwargs: Any) -> None:
-        """初始化 TrackZone 类，用于跟踪视频流指定区域内的对象。
+        """初始化 TrackZone 类，用于跟踪视频流指定区域内的对象。.
 
         参数：
             **kwargs (Any): 传递给父类的其他关键字参数。
@@ -46,7 +46,7 @@ class TrackZone(BaseSolution):
         self.mask = None
 
     def process(self, im0: np.ndarray) -> SolutionResults:
-        """处理输入帧，跟踪指定区域内的对象。
+        """处理输入帧，跟踪指定区域内的对象。.
 
         此方法初始化标注器，为指定区域创建掩码，仅从掩码区域提取跟踪结果并更新跟踪信息，区域外对象会被忽略。
 

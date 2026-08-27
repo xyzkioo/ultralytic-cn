@@ -15,10 +15,9 @@ from .utils.stracks import parse_bboxes
 
 
 class DeepOCSortTrack(OCSortTrack):
-    """带有外观特征和以观测为中心状态管理的 Deep OC-SORT 跟踪对象。
+    """带有外观特征和以观测为中心状态管理的 Deep OC-SORT 跟踪对象。.
 
-    在 OCSortTrack 基础上增加 ReID 嵌入存储和指数移动平均平滑，并支持置信度自适应的
-    embedding update rates.
+    在 OCSortTrack 基础上增加 ReID 嵌入存储和指数移动平均平滑，并支持置信度自适应的 embedding update rates.
 
     属性：
         smooth_feat (np.ndarray | None): Smoothed 特征 vector via EMA.
@@ -37,7 +36,7 @@ class DeepOCSortTrack(OCSortTrack):
         alpha_fixed_emb: float = 0.95,
         det_thresh: float = 0.25,
     ):
-        """使用可选的外观特征初始化 `DeepOCSortTrack`。
+        """使用可选的外观特征初始化 `DeepOCSortTrack`。.
 
         参数：
             xywh (np.ndarray): Bounding 边界框 in `(x, y, w, h, idx)` or `(x, y, w, h, angle, idx)` format.
@@ -58,7 +57,7 @@ class DeepOCSortTrack(OCSortTrack):
             self.update_features(feat, score)
 
     def update_features(self, feat: np.ndarray, score: float | None = None) -> None:
-        """使用置信度自适应 EMA 将新的外观特征融合到 `smooth_feat` 中。
+        """使用置信度自适应 EMA 将新的外观特征融合到 `smooth_feat` 中。.
 
         当 `score` 超过 `det_thresh` 时，EMA 因子为
         `alpha = alpha_fixed_emb + (1 - alpha_fixed_emb) * (1 - trust)`，其中
@@ -80,7 +79,7 @@ class DeepOCSortTrack(OCSortTrack):
             self.curr_feat, self.smooth_feat = curr, smooth
 
     def update(self, new_track: STrack, frame_id: int) -> None:
-        """使用匹配的检测结果更新轨迹状态，并刷新外观特征。
+        """使用匹配的检测结果更新轨迹状态，并刷新外观特征。.
 
         参数：
         new_track (STrack): 当前帧匹配到的检测结果，可选包含 `curr_feat`。
@@ -91,7 +90,7 @@ class DeepOCSortTrack(OCSortTrack):
         super().update(new_track, frame_id)
 
     def re_activate(self, new_track: STrack, frame_id: int, new_id: bool = False) -> None:
-        """重新激活丢失的轨迹，并刷新外观特征。
+        """重新激活丢失的轨迹，并刷新外观特征。.
 
         参数：
             new_track (STrack): Detection used to revive this track.
@@ -104,7 +103,7 @@ class DeepOCSortTrack(OCSortTrack):
 
     @staticmethod
     def multi_gmc(stracks: list[DeepOCSortTrack], H: np.ndarray) -> None:
-        """对 XYAH 卡尔曼状态正确应用全局运动补偿。
+        """对 XYAH 卡尔曼状态正确应用全局运动补偿。.
 
         `utils.stracks` 中的标准 `multi_gmc` 辅助函数会将 `(a, h)` 与 `(x, y)` 一起旋转，
         但这对宽高比维度是不正确的。本变体只旋转位置 `(x, y)` 和速度 `(vx, vy)` 块，
@@ -137,7 +136,7 @@ class DeepOCSortTrack(OCSortTrack):
             stracks[i].mean = mean
             stracks[i].covariance = cov
 
-                # 同时变换已保存的观测，以保持 OCR/ORU 一致性
+            # 同时变换已保存的观测，以保持 OCR/ORU 一致性
             if stracks[i].last_observation[0] >= 0:
                 obs = stracks[i].last_observation
                 # 变换 xyxy 观测中心
@@ -156,7 +155,7 @@ class DeepOCSortTrack(OCSortTrack):
 
 
 class DeepOCSORT(OCSORT):
-    """Deep OC-SORT：在 OC-SORT 基础上增加外观特征、GMC 和自适应权重。
+    """Deep OC-SORT：在 OC-SORT 基础上增加外观特征、GMC 和自适应权重。.
 
     相较于直接集成的改进：
     - GMC 正确处理 XYAH 状态（仅旋转 x、y 位置，不旋转宽高比和高度）
@@ -166,7 +165,7 @@ class DeepOCSORT(OCSORT):
     """
 
     def __init__(self, args: Any):
-        """初始化 Deep OC-SORT 跟踪器。
+        """初始化 Deep OC-SORT 跟踪器。.
 
         参数：
             args (Namespace | IterableSimpleNamespace): Parsed tracker config providing the OC-SORT keys plus
@@ -187,7 +186,7 @@ class DeepOCSORT(OCSORT):
         )
 
     def init_track(self, results, img: np.ndarray | None = None) -> list[DeepOCSortTrack]:
-        """构建 `DeepOCSortTrack` 实例，并在启用时附加 ReID 特征。
+        """构建 `DeepOCSortTrack` 实例，并在启用时附加 ReID 特征。.
 
         当 `with_reid=True` 且 `model="auto"` 时，`img` 应已经是原生骨干特征列表（每个检测结果对应一个特征）；
         对于其他 `model`，`img` 是源图像，配置的外部 ReID 编码器会对检测裁剪区域进行编码。
@@ -231,7 +230,7 @@ class DeepOCSORT(OCSORT):
         img: np.ndarray | None,
         results_high: Any,
     ) -> None:
-        """在第一阶段匹配前将 GMC 扭曲应用于卡尔曼状态。"""
+        """在第一阶段匹配前将 GMC 扭曲应用于卡尔曼状态。."""
         if img is None or self.gmc.method is None:
             return
         try:
@@ -248,7 +247,7 @@ class DeepOCSORT(OCSORT):
         detections: list[DeepOCSortTrack],
         iou_dists: np.ndarray | None = None,
     ) -> np.ndarray:
-        """以 BoT-SORT 风格将外观距离以最小值方式融合到运动代价中。"""
+        """以 BoT-SORT 风格将外观距离以最小值方式融合到运动代价中。."""
         if self.encoder is None or not tracks or not detections:
             return dists
         emb_dists = matching.embedding_distance(tracks, detections) / 2.0
@@ -258,6 +257,6 @@ class DeepOCSORT(OCSORT):
         return np.minimum(dists, emb_dists)
 
     def reset(self) -> None:
-        """重置 Deep OC-SORT 跟踪器，同时清除 GMC 扭曲状态。"""
+        """重置 Deep OC-SORT 跟踪器，同时清除 GMC 扭曲状态。."""
         super().reset()
         self.gmc.reset_params()

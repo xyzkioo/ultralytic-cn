@@ -19,7 +19,7 @@ from ultralytics.utils.plotting import plot_images
 
 
 class DetectionValidator(BaseValidator):
-    """用于检测模型验证的 BaseValidator 子类。
+    """用于检测模型验证的 BaseValidator 子类。.
 
     此类实现目标检测任务专用的验证功能，包括指标计算、预测结果处理和结果可视化。
 
@@ -41,7 +41,7 @@ class DetectionValidator(BaseValidator):
     """
 
     def __init__(self, dataloader=None, save_dir=None, args=None, _callbacks: dict | None = None) -> None:
-        """使用必要的变量和设置初始化检测验证器。
+        """使用必要的变量和设置初始化检测验证器。.
 
         参数：
             dataloader (torch.utils.data.DataLoader，可选)：用于验证的数据加载器。
@@ -61,7 +61,7 @@ class DetectionValidator(BaseValidator):
         self.metrics = DetMetrics()
 
     def preprocess(self, batch: dict[str, Any]) -> dict[str, Any]:
-        """预处理用于 YOLO 验证的图像批次。
+        """预处理用于 YOLO 验证的图像批次。.
 
         参数：
             batch (dict[str, Any])：包含图像和标注的批次。
@@ -76,7 +76,7 @@ class DetectionValidator(BaseValidator):
         return batch
 
     def init_metrics(self, model: torch.nn.Module) -> None:
-        """初始化 YOLO 检测验证的评估指标。
+        """初始化 YOLO 检测验证的评估指标。.
 
         参数：
             model (torch.nn.Module)：待验证的模型。
@@ -101,11 +101,11 @@ class DetectionValidator(BaseValidator):
         self.confusion_matrix = ConfusionMatrix(names=model.names, save_matches=self.args.plots and self.args.visualize)
 
     def get_desc(self) -> str:
-        """返回汇总 YOLO 模型类别指标的格式化字符串。"""
+        """返回汇总 YOLO 模型类别指标的格式化字符串。."""
         return ("%22s" + "%11s" * 6) % ("Class", "Images", "Instances", "Box(P", "R", "mAP50", "mAP50-95)")
 
     def postprocess(self, preds: torch.Tensor) -> list[dict[str, torch.Tensor]]:
-        """对预测输出应用非极大值抑制。
+        """对预测输出应用非极大值抑制。.
 
         参数：
             preds (torch.Tensor)：模型输出的原始预测结果。
@@ -128,7 +128,7 @@ class DetectionValidator(BaseValidator):
         return [{"bboxes": x[:, :4], "conf": x[:, 4], "cls": x[:, 5], "extra": x[:, 6:]} for x in outputs]
 
     def _prepare_batch(self, si: int, batch: dict[str, Any]) -> dict[str, Any]:
-        """准备验证所需的一批图像和标注。
+        """准备验证所需的一批图像和标注。.
 
         参数：
             si (int)：样本在批次中的索引。
@@ -155,7 +155,7 @@ class DetectionValidator(BaseValidator):
         }
 
     def _prepare_pred(self, pred: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
-        """准备预测结果，以便与真实标注进行评估。
+        """准备预测结果，以便与真实标注进行评估。.
 
         参数：
             pred (dict[str, torch.Tensor])：模型输出的后处理预测结果。
@@ -168,7 +168,7 @@ class DetectionValidator(BaseValidator):
         return pred
 
     def update_metrics(self, preds: list[dict[str, torch.Tensor]], batch: dict[str, Any]) -> None:
-        """使用新的预测结果和真实标注更新指标。
+        """使用新的预测结果和真实标注更新指标。.
 
         参数：
             preds (list[dict[str, torch.Tensor]])：模型输出的预测结果列表。
@@ -220,7 +220,7 @@ class DetectionValidator(BaseValidator):
                 )
 
     def finalize_metrics(self) -> None:
-        """设置指标速度和混淆矩阵等最终值。"""
+        """设置指标速度和混淆矩阵等最终值。."""
         if self.args.plots:
             for normalize in True, False:
                 self.confusion_matrix.plot(save_dir=self.save_dir, normalize=normalize, on_plot=self.on_plot)
@@ -229,7 +229,7 @@ class DetectionValidator(BaseValidator):
         self.metrics.save_dir = self.save_dir
 
     def _gather_image_metrics(self, metric) -> None:
-        """从所有 GPU 收集单个指标对象的逐图像指标。"""
+        """从所有 GPU 收集单个指标对象的逐图像指标。."""
         if RANK == 0:
             gathered_image_metrics = [None] * dist.get_world_size()
             dist.gather_object(metric.image_metrics, gathered_image_metrics, dst=0)
@@ -242,7 +242,7 @@ class DetectionValidator(BaseValidator):
             metric.clear_image_metrics()
 
     def gather_stats(self) -> None:
-        """从所有 GPU 收集统计信息。"""
+        """从所有 GPU 收集统计信息。."""
         if RANK == 0:
             gathered_stats = [None] * dist.get_world_size()
             dist.gather_object(self.metrics.stats, gathered_stats, dst=0)
@@ -271,7 +271,7 @@ class DetectionValidator(BaseValidator):
                 self.confusion_matrix.matrix = matrix.cpu().numpy()
 
     def get_stats(self) -> dict[str, Any]:
-        """计算并返回指标统计信息。
+        """计算并返回指标统计信息。.
 
         返回：
             (dict[str, Any]): 包含指标结果的字典。
@@ -281,7 +281,7 @@ class DetectionValidator(BaseValidator):
         return self.metrics.results_dict
 
     def print_results(self) -> None:
-        """打印训练集或验证集的逐类别指标。"""
+        """打印训练集或验证集的逐类别指标。."""
         pf = "%22s" + "%11i" * 2 + "%11.3g" * len(self.metrics.keys)  # 打印格式
         LOGGER.info(pf % ("all", self.seen, self.metrics.nt_per_class.sum(), *self.metrics.mean_results()))
         if self.metrics.nt_per_class.sum() == 0:
@@ -301,7 +301,7 @@ class DetectionValidator(BaseValidator):
                 )
 
     def _process_batch(self, preds: dict[str, torch.Tensor], batch: dict[str, Any]) -> dict[str, np.ndarray]:
-        """返回正确预测矩阵。
+        """返回正确预测矩阵。.
 
         参数：
             preds (dict[str, torch.Tensor]): 包含预测数据的字典，含有 'bboxes' 和 'cls' 键。
@@ -316,7 +316,7 @@ class DetectionValidator(BaseValidator):
         return {"tp": self.match_predictions(preds["cls"], batch["cls"], iou).cpu().numpy()}
 
     def build_dataset(self, img_path: str, mode: str = "val", batch: int | None = None) -> torch.utils.data.Dataset:
-        """构建 YOLO 数据集。
+        """构建 YOLO 数据集。.
 
         参数：
             img_path (str): 包含图像的文件夹路径。
@@ -329,7 +329,7 @@ class DetectionValidator(BaseValidator):
         return build_yolo_dataset(self.args, img_path, batch, self.data, mode=mode, stride=self.stride)
 
     def get_dataloader(self, dataset_path: str, batch_size: int) -> torch.utils.data.DataLoader:
-        """构建并返回数据加载器。
+        """构建并返回数据加载器。.
 
         参数：
             dataset_path (str): 数据集路径。
@@ -351,7 +351,7 @@ class DetectionValidator(BaseValidator):
         )
 
     def plot_val_samples(self, batch: dict[str, Any], ni: int) -> None:
-        """绘制验证图像样本。
+        """绘制验证图像样本。.
 
         参数：
             batch (dict[str, Any]): 包含图像和标注的批次数据。
@@ -368,7 +368,7 @@ class DetectionValidator(BaseValidator):
     def plot_predictions(
         self, batch: dict[str, Any], preds: list[dict[str, torch.Tensor]], ni: int, max_det: int | None = None
     ) -> None:
-        """在输入图像上绘制预测边界框并保存结果。
+        """在输入图像上绘制预测边界框并保存结果。.
 
         参数：
             batch (dict[str, Any]): 包含图像和标注的批次数据。
@@ -394,7 +394,7 @@ class DetectionValidator(BaseValidator):
         )  # pred
 
     def save_one_txt(self, predn: dict[str, torch.Tensor], save_conf: bool, shape: tuple[int, int], file: Path) -> None:
-        """以指定格式将 YOLO 检测结果按归一化坐标保存到 txt 文件。
+        """以指定格式将 YOLO 检测结果按归一化坐标保存到 txt 文件。.
 
         参数：
             predn (dict[str, torch.Tensor]): 包含 'bboxes'、'conf' 和 'cls' 键的预测结果字典。
@@ -412,7 +412,7 @@ class DetectionValidator(BaseValidator):
         ).save_txt(file, save_conf=save_conf)
 
     def pred_to_json(self, predn: dict[str, torch.Tensor], pbatch: dict[str, Any]) -> None:
-        """将 YOLO 预测结果序列化为 COCO JSON 格式。
+        """将 YOLO 预测结果序列化为 COCO JSON 格式。.
 
         参数：
             predn (dict[str, torch.Tensor]): 包含 'bboxes'、'conf' 和 'cls' 键的预测字典，分别表示边界框坐标、置信度分数和类别预测结果。
@@ -444,7 +444,7 @@ class DetectionValidator(BaseValidator):
             )
 
     def scale_preds(self, predn: dict[str, torch.Tensor], pbatch: dict[str, Any]) -> dict[str, torch.Tensor]:
-        """将预测结果缩放到原始图像尺寸。"""
+        """将预测结果缩放到原始图像尺寸。."""
         return {
             **predn,
             "bboxes": ops.scale_boxes(
@@ -456,7 +456,7 @@ class DetectionValidator(BaseValidator):
         }
 
     def eval_json(self, stats: dict[str, Any]) -> dict[str, Any]:
-        """评估 JSON 格式的 YOLO 输出并返回性能统计信息。
+        """评估 JSON 格式的 YOLO 输出并返回性能统计信息。.
 
         参数：
             stats (dict[str, Any]): 当前统计信息字典。
@@ -480,7 +480,7 @@ class DetectionValidator(BaseValidator):
         iou_types: str | list[str] = "bbox",
         suffix: str | list[str] = "Box",
     ) -> dict[str, Any]:
-        """使用 faster-coco-eval 库评估 COCO/LVIS 指标。
+        """使用 faster-coco-eval 库评估 COCO/LVIS 指标。.
 
         使用 faster-coco-eval 库计算目标检测的 mAP 指标，并更新提供的 stats 字典。
         指标包括 mAP50、mAP50-95，以及适用时的 LVIS 专属指标。

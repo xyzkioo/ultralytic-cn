@@ -21,7 +21,7 @@ from ultralytics.utils.torch_utils import TORCH_1_10
 
 
 def _gaussian_filter1d(y, sigma: int = 3, truncate: float = 4.0) -> np.ndarray:
-    """使用高斯核平滑一维数组（scipy.ndimage.gaussian_filter1d 的 NumPy 替代实现）。
+    """使用高斯核平滑一维数组（scipy.ndimage.gaussian_filter1d 的 NumPy 替代实现）。.
 
     参数：
         y (np.ndarray): 要平滑的一维输入数组。
@@ -40,7 +40,7 @@ def _gaussian_filter1d(y, sigma: int = 3, truncate: float = 4.0) -> np.ndarray:
 
 
 class Colors:
-    """用于可视化和绘图的 Ultralytics 调色板。
+    """用于可视化和绘图的 Ultralytics 调色板。.
 
     This class provides methods to work with the Ultralytics color palette, including converting hex color codes to RGB
     values and accessing predefined color schemes for object detection and pose estimation.
@@ -113,7 +113,7 @@ class Colors:
     """
 
     def __init__(self):
-        """根据固定的十六进制颜色代码列表初始化 Ultralytics 调色板。"""
+        """根据固定的十六进制颜色代码列表初始化 Ultralytics 调色板。."""
         hexs = (
             "042AFF",
             "0BDBEB",
@@ -165,7 +165,7 @@ class Colors:
         )
 
     def __call__(self, i: int | torch.Tensor, bgr: bool = False) -> tuple:
-        """根据索引返回调色板中的颜色。
+        """根据索引返回调色板中的颜色。.
 
         参数：
             i (int | torch.Tensor): 颜色索引。
@@ -179,7 +179,7 @@ class Colors:
 
     @staticmethod
     def hex2rgb(h: str) -> tuple:
-        """将十六进制颜色代码转换为 RGB 值（即 PIL 默认顺序）。"""
+        """将十六进制颜色代码转换为 RGB 值（即 PIL 默认顺序）。."""
         return tuple(int(h[1 + i : 1 + i + 2], 16) for i in (0, 2, 4))
 
 
@@ -206,7 +206,7 @@ _SPECTRAL_R_ANCHORS = np.array(
 
 
 def _spectral_lut() -> np.ndarray:
-    """通过线性插值锚点，为 cv2.applyColorMap 构建 256x1x3 的 BGR uint8 Spectral_r 查找表。"""
+    """通过线性插值锚点，为 cv2.applyColorMap 构建 256x1x3 的 BGR uint8 Spectral_r 查找表。."""
     xs = np.linspace(0.0, 10.0, 256)
     i = np.clip(xs.astype(int), 0, 9)
     f = (xs - i)[:, None]
@@ -225,7 +225,7 @@ def colorize_depth(
     cmap: str = "jet",
     mode: str = "disparity",
 ) -> np.ndarray:
-    """将 (H, W) 的度量深度数组映射为 BGR uint8 彩色图像，无效（<= 0）像素显示为黑色。
+    """将 (H, W) 的度量深度数组映射为 BGR uint8 彩色图像，无效（<= 0）像素显示为黑色。.
 
     参数：
         depth (np.ndarray): 以米为单位的 (H, W) 深度数组。
@@ -260,7 +260,7 @@ def colorize_depth(
 
 
 class Annotator:
-    """用于训练/验证拼图、JPG 图像和预测结果标注的 Ultralytics 标注器。
+    """用于训练/验证拼图、JPG 图像和预测结果标注的 Ultralytics 标注器。.
 
     Tensor 图像必须是连续的 HWC BGR uint8 格式。
 
@@ -291,7 +291,7 @@ class Annotator:
         pil: bool = False,
         example: str = "abc",
     ):
-        """使用图像、线宽以及关键点和肢体的颜色调色板初始化 Annotator 类。"""
+        """使用图像、线宽以及关键点和肢体的颜色调色板初始化 Annotator 类。."""
         non_ascii = not is_ascii(example)  # 非拉丁标签，例如中文、阿拉伯文或西里尔文
         input_is_pil = isinstance(im, Image.Image)
         input_is_tensor = isinstance(im, torch.Tensor)
@@ -382,7 +382,7 @@ class Annotator:
         }
 
     def get_txt_color(self, color: tuple = (128, 128, 128), txt_color: tuple = (255, 255, 255)) -> tuple:
-        """根据背景颜色指定文本颜色。
+        """根据背景颜色指定文本颜色。.
 
         参数：
             color (tuple, 可选): 文本矩形框的背景颜色。
@@ -405,7 +405,7 @@ class Annotator:
             return txt_color
 
     def box_label(self, box, label: str = "", color: tuple = (128, 128, 128), txt_color: tuple = (255, 255, 255)):
-        """在图像上绘制带指定标签的边界框。
+        """在图像上绘制带指定标签的边界框。.
 
         参数：
             box (tuple): 边界框坐标 (x1, y1, x2, y2)。
@@ -467,7 +467,7 @@ class Annotator:
                 )
 
     def masks(self, masks, colors, alpha: float = 0.5):
-        """在图像上绘制掩码。
+        """在图像上绘制掩码。.
 
         参数：
             masks (torch.Tensor | np.ndarray): 形状为 [n, h, w] 的预测掩码。
@@ -506,7 +506,7 @@ class Annotator:
             self.fromarray(self.im)
 
     def semantic_mask(self, mask, alpha: float = 0.5, ignore_index: int = 255):
-        """在图像上绘制语义分割掩码。
+        """在图像上绘制语义分割掩码。.
 
         参数：
             mask (np.ndarray): 形状为 [h, w]、包含整数类别索引的语义掩码。
@@ -532,7 +532,7 @@ class Annotator:
         cmap: str = "jet",
         mode: str = "disparity",
     ) -> None:
-        """渲染彩色深度图，并将其叠加到图像上。
+        """渲染彩色深度图，并将其叠加到图像上。.
 
         参数：
             depth (np.ndarray): (H, W) depth in meters.
@@ -559,7 +559,7 @@ class Annotator:
         conf_thres: float = 0.25,
         kpt_color: tuple | None = None,
     ):
-        """在图像上绘制关键点。
+        """在图像上绘制关键点。.
 
         参数：
             kpts (torch.Tensor): 关键点，形状为 [17, 3]（x、y、置信度）。
@@ -619,11 +619,11 @@ class Annotator:
             self.fromarray(self.im)
 
     def rectangle(self, xy, fill=None, outline=None, width: int = 1):
-        """向图像添加矩形（仅 PIL 模式）。"""
+        """向图像添加矩形（仅 PIL 模式）。."""
         self.draw.rectangle(xy, fill, outline, width)
 
     def text(self, xy, text: str, txt_color: tuple = (255, 255, 255), anchor: str = "top", box_color: tuple = ()):
-        """使用 PIL 或 cv2 向图像添加文本。
+        """使用 PIL 或 cv2 向图像添加文本。.
 
         参数：
             xy (列表[int]): 放置文本的左上角坐标。
@@ -654,23 +654,23 @@ class Annotator:
             cv2.putText(self.im, text, xy, 0, self.sf, txt_color, thickness=self.tf, lineType=cv2.LINE_AA)
 
     def fromarray(self, im):
-        """使用 NumPy 数组或 PIL 图像更新 `self.im`。"""
+        """使用 NumPy 数组或 PIL 图像更新 `self.im`。."""
         self.im = im if isinstance(im, Image.Image) else Image.fromarray(im)
         self.draw = ImageDraw.Draw(self.im)
 
     def _to_numpy(self):
-        """仅在 CPU 绘图操作需要时将张量图像移动到 CPU。"""
+        """仅在 CPU 绘图操作需要时将张量图像移动到 CPU。."""
         if isinstance(self.im, torch.Tensor):
             self.im = self.im.cpu().numpy()
 
     def result(self, pil=False):
-        """将标注后的图像作为数组或 PIL 图像返回。"""
+        """将标注后的图像作为数组或 PIL 图像返回。."""
         self._to_numpy()
         im = np.asarray(self.im)  # self.im 为 BGR
         return Image.fromarray(im[..., ::-1]) if pil else im
 
     def show(self, title: str | None = None):
-        """显示标注后的图像。"""
+        """显示标注后的图像。."""
         im = Image.fromarray(self.result()[..., ::-1])  # 将 BGR NumPy 数组转换为 RGB PIL 图像
         if IS_COLAB or IS_KAGGLE:  # 不能使用 IS_JUPYTER，因为它适用于所有 IPython 环境
             try:
@@ -681,12 +681,12 @@ class Annotator:
             im.show(title=title)
 
     def save(self, filename: str = "image.jpg"):
-        """将标注后的图像保存到 filename。"""
+        """将标注后的图像保存到 filename。."""
         cv2.imwrite(filename, self.result())
 
     @staticmethod
     def get_bbox_dimension(bbox: tuple | list):
-        """计算边界框的尺寸和面积。
+        """计算边界框的尺寸和面积。.
 
         参数：
             bbox (tuple | 列表): 格式为 (x_min, y_min, x_max, y_max) 的边界框坐标。
@@ -711,7 +711,7 @@ class Annotator:
 @TryExcept()
 @plt_settings()
 def plot_labels(boxes, cls, names=(), save_dir=Path(""), on_plot=None):
-    """绘制训练标签，包括类别直方图和边界框统计信息。
+    """绘制训练标签，包括类别直方图和边界框统计信息。.
 
     参数：
         boxes (np.ndarray): 格式为 [x, y, 宽度, 高度] 的边界框坐标。
@@ -777,10 +777,9 @@ def save_one_box(
     BGR: bool = False,
     save: bool = True,
 ):
-    """将图像裁剪保存为 {file}，裁剪尺寸按 {gain} 倍放大并添加 {pad} 像素填充；可保存和/或返回裁剪结果。
+    """将图像裁剪保存为 {file}，裁剪尺寸按 {gain} 倍放大并添加 {pad} 像素填充；可保存和/或返回裁剪结果。.
 
-    此函数接收一个边界框和一张图像，然后根据边界框裁剪图像的一部分并保存。
-    还可以选择将裁剪区域调整为正方形，并通过 gain 和填充参数调整边界框。
+    此函数接收一个边界框和一张图像，然后根据边界框裁剪图像的一部分并保存。 还可以选择将裁剪区域调整为正方形，并通过 gain 和填充参数调整边界框。
 
     参数：
         xyxy (torch.Tensor | 列表): 表示 xyxy 格式边界框的张量或列表。
@@ -837,7 +836,7 @@ def plot_images(
     show_labels: bool = True,
     show_conf: bool = True,
 ) -> np.ndarray | None:
-    """绘制带标签、边界框、掩码和关键点的图像网格。
+    """绘制带标签、边界框、掩码和关键点的图像网格。.
 
     参数：
         labels (dict[str, Any]): 包含检测数据的字典，键包括 'cls'、'bboxes'、'conf'、'masks'、
@@ -1041,8 +1040,7 @@ def plot_images(
 
 @plt_settings()
 def plot_results(file: str = "path/to/results.csv", dir: str = "", on_plot: Callable | None = None):
-    """从结果 CSV 文件绘制训练结果。此函数支持实例分割、语义分割、姿态估计和分类等多种数据。
-    绘图结果将以 ``results.png`` 文件保存到 CSV 所在目录。
+    """从结果 CSV 文件绘制训练结果。此函数支持实例分割、语义分割、姿态估计和分类等多种数据。 绘图结果将以 ``results.png`` 文件保存到 CSV 所在目录。.
 
     参数：
         file (str, 可选): 包含训练结果的 CSV 文件路径。
@@ -1096,7 +1094,7 @@ def plot_results(file: str = "path/to/results.csv", dir: str = "", on_plot: Call
 
 @plt_settings()
 def plot_multitrain_results(scores: dict, key: str = "fitness", save_dir=Path()):
-    """将多数据集训练运行中的各数据集指标绘制为柱状图，并显示跨数据集均值。
+    """将多数据集训练运行中的各数据集指标绘制为柱状图，并显示跨数据集均值。.
 
     参数：
         scores (dict): 数据集名称到标量指标值的映射。
@@ -1128,7 +1126,7 @@ def plot_multitrain_results(scores: dict, key: str = "fitness", save_dir=Path())
 
 
 def plt_color_scatter(v, f, bins: int = 20, cmap: str = "viridis", alpha: float = 0.8, edgecolors: str = "none"):
-    """绘制散点图，并根据二维直方图为点着色。
+    """绘制散点图，并根据二维直方图为点着色。.
 
     参数：
         v (数组): x 轴数据。
@@ -1167,10 +1165,9 @@ def plot_depth_panels(
     titles: list[str] | None = None,
     max_images: int = 4,
 ) -> None:
-    """写入深度面板网格：每行一张图像，列为 RGB、GT（如果提供）以及 ``preds`` 中每个预测结果。
+    """写入深度面板网格：每行一张图像，列为 RGB、GT（如果提供）以及 ``preds`` 中每个预测结果。.
 
-    每行的所有深度列共用 GT 有效像素范围，因此 GT 与任意预测之间的尺度误差会直接表现为颜色不匹配。
-    各面板会调整到 RGB 图像尺寸，因此来自不同检测头步长的预测结果无需提前插值。
+    每行的所有深度列共用 GT 有效像素范围，因此 GT 与任意预测之间的尺度误差会直接表现为颜色不匹配。 各面板会调整到 RGB 图像尺寸，因此来自不同检测头步长的预测结果无需提前插值。
 
     参数：
         imgs (torch.Tensor): 形状为 (B, 3, H, W)、取值范围为 [0, 1] 的浮点图像张量。
@@ -1222,7 +1219,7 @@ def plot_depth_panels(
 
 @plt_settings()
 def plot_tune_results(results_file: str = "tune_results.ndjson", exclude_zero_fitness_points: bool = True):
-    """绘制调优 NDJSON 文件中保存的演化结果。
+    """绘制调优 NDJSON 文件中保存的演化结果。.
 
     参数：
         results_file (str, 可选): 包含调优结果的 NDJSON 文件路径。
@@ -1236,7 +1233,7 @@ def plot_tune_results(results_file: str = "tune_results.ndjson", exclude_zero_fi
     import matplotlib.pyplot as plt  # scope for faster 'import ultralytics'
 
     def _save_one_file(file):
-        """将一个 matplotlib 绘图保存到文件。"""
+        """将一个 matplotlib 绘图保存到文件。."""
         plt.savefig(file, dpi=200)
         plt.close()
         LOGGER.info(f"Saved {file}")
@@ -1313,10 +1310,9 @@ def class_activation_map(
     topk: int = 16,
     **kwargs,
 ) -> Any:
-    """运行推理，并为批次中的每张图像保存类别激活热力图。
+    """运行推理，并为批次中的每张图像保存类别激活热力图。.
 
-    LayerCAM 根据预测类别分数沿正梯度方向的大小，为每个检测头输入位置分配权重。
-    每个预测结果和检测头层级会先独立归一化，再取逐元素最大值，避免较强的预测结果或层级掩盖较弱结果。
+    LayerCAM 根据预测类别分数沿正梯度方向的大小，为每个检测头输入位置分配权重。 每个预测结果和检测头层级会先独立归一化，再取逐元素最大值，避免较强的预测结果或层级掩盖较弱结果。
 
     参数：
         model (torch.nn.Module): 封装 PyTorch 模型的 AutoBackend。
@@ -1336,19 +1332,20 @@ def class_activation_map(
     acts, scores = [], []
 
     def pre_hook(module, inputs):
-        """捕获进入检测头的特征图，避免 WorldDetect 等检测头原地覆盖这些特征。"""
+        """捕获进入检测头的特征图，避免 WorldDetect 等检测头原地覆盖这些特征。."""
         x = inputs[0]
         acts.extend(a for a in (x if isinstance(x, (list, tuple)) else [x]) if a.ndim == 4)
 
     def hook(module, inputs, output):
-        """捕获离开检测头的类别 logits。"""
+        """捕获离开检测头的类别 logits。."""
         raw = output[1] if isinstance(output, tuple) else output  # 返回（预测结果，raw）的检测头保留 raw 输出
         if isinstance(raw, dict):  # Detect and subclasses, end2end heads predict from their one2one branch
-            s = raw.get("one2one", raw)["scores"]  # (B, nc, 锚框)
+            raw.get("one2one", raw)["scores"]  # (B, nc, 锚框)
         elif isinstance(raw, tuple):  # RTDETRDecoder, raw = (dec_bboxes, dec_scores, ...)
-            s = raw[1][-1].transpose(1, 2)  # 最后一个解码器层，形状为 (B, nc, queries)
+            raw[1][-1].transpose(1, 2)  # 最后一个解码器层，形状为 (B, nc, queries)
         else:  # Classify (B, nc), SemanticSegment (B, nc, h, w), Depth (B, 1, h, w)
-            s = raw
+            pass
+
     scores.append(s.reshape(*s.shape[:2], -1))  # 类别 logits，（B，nc，预测结果）
 
     head = model.model.model[-1]  # AutoBackend -> PyTorch 模型 -> 检测头
@@ -1402,7 +1399,7 @@ def class_activation_map(
         LOGGER.info(f"Saving {f}... (LayerCAM)")
 
     def detach(x):
-        """将嵌套模型输出中的张量从 autograd 计算图中分离。"""
+        """将嵌套模型输出中的张量从 autograd 计算图中分离。."""
         if isinstance(x, torch.Tensor):
             return x.detach()
         if isinstance(x, dict):

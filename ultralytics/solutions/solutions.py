@@ -19,10 +19,9 @@ from ultralytics.utils.plotting import Annotator
 
 
 class BaseSolution:
-    """管理 Ultralytics 解决方案的基类。
+    """管理 Ultralytics 解决方案的基类。.
 
-    此类为各种 Ultralytics 解决方案提供模型加载、对象跟踪和区域初始化等核心功能，
-    是实现对象计数、姿态估计和数据分析等计算机视觉方案的基础。
+    此类为各种 Ultralytics 解决方案提供模型加载、对象跟踪和区域初始化等核心功能， 是实现对象计数、姿态估计和数据分析等计算机视觉方案的基础。
 
     属性：
         LineString: 使用 shapely 创建线几何对象的类。
@@ -72,7 +71,7 @@ class BaseSolution:
     """
 
     def __init__(self, is_cli: bool = False, **kwargs: Any) -> None:
-        """使用配置设置和 YOLO 模型初始化 BaseSolution 类。
+        """使用配置设置和 YOLO 模型初始化 BaseSolution 类。.
 
         参数：
             is_cli (bool): 设置为 True 时启用 CLI 模式。
@@ -136,7 +135,7 @@ class BaseSolution:
         )
 
     def adjust_box_label(self, cls: int, conf: float, track_id: int | None = None) -> str | None:
-        """生成边界框的格式化标签。
+        """生成边界框的格式化标签。.
 
         此方法使用类别索引和置信度分数构造边界框标签；如果提供跟踪 ID，则将其包含在标签中。
         标签格式根据 `self.show_conf` 和 `self.show_labels` 中定义的显示设置自动调整。
@@ -153,7 +152,7 @@ class BaseSolution:
         return (f"{name} {conf:.2f}" if self.show_conf else name) if self.show_labels else None
 
     def extract_tracks(self, im0: np.ndarray) -> None:
-        """在输入图像或帧上执行对象跟踪并提取跟踪结果。
+        """在输入图像或帧上执行对象跟踪并提取跟踪结果。.
 
         参数：
             im0 (np.ndarray): 输入图像或视频帧。
@@ -181,12 +180,12 @@ class BaseSolution:
         self.forget_tracks([track.track_id for track in self.model.predictor.trackers[0].removed_stracks_frame])
 
     def forget_tracks(self, track_ids: list[int]) -> None:
-        """移除活动跟踪器已经结束的 ID 记录。"""
+        """移除活动跟踪器已经结束的 ID 记录。."""
         for track_id in track_ids:
             self.track_history.pop(track_id, None)
 
     def store_tracking_history(self, track_id: int, box) -> None:
-        """保存对象的跟踪历史。
+        """保存对象的跟踪历史。.
 
         此方法将对象边界框的中心点追加到跟踪线，以更新给定对象的跟踪历史，并将历史点数限制为最多 30 个。
 
@@ -206,7 +205,7 @@ class BaseSolution:
 
     @staticmethod
     def get_enclosing_box(box: torch.Tensor | list[float]) -> torch.Tensor | list[float]:
-        """返回包含 `extract_tracks` 提取边界框的轴对齐边界框 `[x1, y1, x2, y2]`。
+        """返回包含 `extract_tracks` 提取边界框的轴对齐边界框 `[x1, y1, x2, y2]`。.
 
         OBB 模型的框是形状为 `(4, 2)` 的 xyxyxyxy 角点，而检测模型的边界框已经是轴对齐的 `[x1, y1, x2, y2]`。
         此方法将两种格式统一为 `[x1, y1, x2, y2]`，供图像切片或边界框中心点等需要轴对齐坐标的功能使用。
@@ -225,15 +224,13 @@ class BaseSolution:
         return torch.cat([box.amin(0), box.amax(0)]) if isinstance(box, torch.Tensor) and box.numel() > 4 else box
 
     def initialize_region(self) -> None:
-        """根据配置设置初始化计数区域或计数线。"""
+        """根据配置设置初始化计数区域或计数线。."""
         if self.region is None:
             self.region = [(10, 200), (540, 200), (540, 180), (10, 180)]
-        self.r_s = (
-            self.Polygon(self.region) if len(self.region) >= 3 else self.LineString(self.region)
-        )  # 区域或计数线
+        self.r_s = self.Polygon(self.region) if len(self.region) >= 3 else self.LineString(self.region)  # 区域或计数线
 
     def display_output(self, plot_im: np.ndarray) -> None:
-        """显示处理结果，包括显示视频帧、打印计数或保存结果。
+        """显示处理结果，包括显示视频帧、打印计数或保存结果。.
 
         此方法负责可视化对象检测和跟踪流程的输出，显示带标注的处理帧，并允许用户关闭显示窗口。
 
@@ -256,10 +253,10 @@ class BaseSolution:
                 return
 
     def process(self, *args: Any, **kwargs: Any):
-        """处理方法，应由每个 Solution 子类实现。"""
+        """处理方法，应由每个 Solution 子类实现。."""
 
     def __call__(self, *args: Any, **kwargs: Any):
-        """允许以函数方式调用实例，并传入灵活参数。"""
+        """允许以函数方式调用实例，并传入灵活参数。."""
         with self.profilers[1]:
             result = self.process(*args, **kwargs)  # 调用子类专用处理方法
         track_or_predict = "predict" if type(self).__name__ == "ObjectCropper" else "track"
@@ -285,10 +282,9 @@ class BaseSolution:
 
 
 class SolutionAnnotator(Annotator):
-    """用于可视化和分析计算机视觉任务的专用标注器类。
+    """用于可视化和分析计算机视觉任务的专用标注器类。.
 
-    此类扩展基础 Annotator 类，为 Ultralytics 解决方案增加绘制区域、中心点、跟踪轨迹和视觉标注的方法，
-    为目标检测、跟踪、姿态估计和数据分析等计算机视觉应用提供完整的可视化能力。
+    此类扩展基础 Annotator 类，为 Ultralytics 解决方案增加绘制区域、中心点、跟踪轨迹和视觉标注的方法， 为目标检测、跟踪、姿态估计和数据分析等计算机视觉应用提供完整的可视化能力。
 
     属性：
         im (np.ndarray): 要标注的图像。
@@ -329,7 +325,7 @@ class SolutionAnnotator(Annotator):
         pil: bool = False,
         example: str = "abc",
     ):
-        """使用图像初始化用于标注的 SolutionAnnotator 类。
+        """使用图像初始化用于标注的 SolutionAnnotator 类。.
 
         参数：
             im (np.ndarray): 要标注的图像。
@@ -347,7 +343,7 @@ class SolutionAnnotator(Annotator):
         color: tuple[int, int, int] = (0, 255, 0),
         thickness: int = 5,
     ):
-        """在图像上绘制区域或线段。
+        """在图像上绘制区域或线段。.
 
         参数：
             reg_pts (列表[tuple[int, int]], 可选): 区域点（线段使用 2 个点，区域使用 4 个或更多点）。
@@ -367,7 +363,7 @@ class SolutionAnnotator(Annotator):
         region_color: tuple[int, int, int] = (255, 255, 255),
         txt_color: tuple[int, int, int] = (0, 0, 0),
     ):
-        """在以给定点为中心的图像区域中显示队列计数，并支持自定义字体大小和颜色。
+        """在以给定点为中心的图像区域中显示队列计数，并支持自定义字体大小和颜色。.
 
         参数：
             label (str): 队列计数标签。
@@ -413,7 +409,7 @@ class SolutionAnnotator(Annotator):
         bg_color: tuple[int, int, int],
         margin: int,
     ):
-        """显示解决方案的总体统计信息（例如停车场管理和对象计数）。
+        """显示解决方案的总体统计信息（例如停车场管理和对象计数）。.
 
         参数：
             im0 (np.ndarray): 推理图像。
@@ -442,7 +438,7 @@ class SolutionAnnotator(Annotator):
 
     @staticmethod
     def _point_xy(point: Any) -> tuple[float, float]:
-        """将类似关键点的对象转换为 `(x, y)` 浮点数元组。"""
+        """将类似关键点的对象转换为 `(x, y)` 浮点数元组。."""
         if hasattr(point, "detach"):  # torch.Tensor
             point = point.detach()
         if hasattr(point, "cpu"):  # torch.Tensor
@@ -456,14 +452,14 @@ class SolutionAnnotator(Annotator):
     @staticmethod
     @lru_cache(maxsize=256)
     def _estimate_pose_angle_cached(a: tuple[float, float], b: tuple[float, float], c: tuple[float, float]) -> float:
-        """计算健身动作监控中三个点之间的角度（带缓存）。"""
+        """计算健身动作监控中三个点之间的角度（带缓存）。."""
         radians = math.atan2(c[1] - b[1], c[0] - b[0]) - math.atan2(a[1] - b[1], a[0] - b[0])
         angle = abs(radians * 180.0 / math.pi)
         return angle if angle <= 180.0 else (360 - angle)
 
     @staticmethod
     def estimate_pose_angle(a: Any, b: Any, c: Any) -> float:
-        """计算健身动作监控中三个点之间的角度。
+        """计算健身动作监控中三个点之间的角度。.
 
         参数：
             a (Any): 第一个点的坐标（例如列表、元组、NumPy 数组或 torch 张量）。
@@ -487,7 +483,7 @@ class SolutionAnnotator(Annotator):
         radius: int = 2,
         conf_thresh: float = 0.25,
     ) -> np.ndarray:
-        """绘制用于健身动作计数的指定关键点。
+        """绘制用于健身动作计数的指定关键点。.
 
         参数：
             keypoints (列表[列表[float]]): 要绘制的关键点数据，每个关键点格式为 `[x, y, 置信度]`。
@@ -527,7 +523,7 @@ class SolutionAnnotator(Annotator):
         color: tuple[int, int, int] = (104, 31, 17),
         txt_color: tuple[int, int, int] = (255, 255, 255),
     ) -> int:
-        """在图像上绘制带背景的健身动作文本。
+        """在图像上绘制带背景的健身动作文本。.
 
         参数：
             display_text (str): 要显示的文本。
@@ -562,7 +558,7 @@ class SolutionAnnotator(Annotator):
         color: tuple[int, int, int] = (104, 31, 17),
         txt_color: tuple[int, int, int] = (255, 255, 255),
     ):
-        """绘制健身动作监控中的姿态角度、计数值和动作阶段。
+        """绘制健身动作监控中的姿态角度、计数值和动作阶段。.
 
         参数：
             angle_text (str): 健身动作监控的角度值。
@@ -593,7 +589,7 @@ class SolutionAnnotator(Annotator):
         line_color: tuple[int, int, int] = (104, 31, 17),
         centroid_color: tuple[int, int, int] = (255, 0, 255),
     ):
-        """在图像帧上绘制两个中心点之间的距离和连接线。
+        """在图像帧上绘制两个中心点之间的距离和连接线。.
 
         参数：
             pixels_distance (float): 两个边界框中心点之间的像素距离。
@@ -635,7 +631,7 @@ class SolutionAnnotator(Annotator):
         y_center: float,
         margin: int,
     ):
-        """在停车场管理应用中显示边界框标签。
+        """在停车场管理应用中显示边界框标签。.
 
         参数：
             im0 (np.ndarray): 推理图像。
@@ -681,7 +677,7 @@ class SolutionAnnotator(Annotator):
         color: tuple[int, int, int] = (221, 0, 186),
         txt_color: tuple[int, int, int] = (255, 255, 255),
     ):
-        """绘制扫描标注线和可选标签。
+        """绘制扫描标注线和可选标签。.
 
         参数：
             line_x (int): 扫描线的 x 坐标。
@@ -720,7 +716,7 @@ class SolutionAnnotator(Annotator):
         color: tuple[int, int, int] = (235, 219, 11),
         pin_color: tuple[int, int, int] = (255, 0, 255),
     ):
-        """执行人眼视觉映射并绘图。
+        """执行人眼视觉映射并绘图。.
 
         参数：
             box (列表[float]): 边界框坐标，格式为 [x1, y1, x2, y2]。
@@ -742,7 +738,7 @@ class SolutionAnnotator(Annotator):
         shape: str = "rect",
         margin: int = 5,
     ):
-        """在给定边界框中心绘制带矩形或圆形背景的标签。
+        """在给定边界框中心绘制带矩形或圆形背景的标签。.
 
         参数：
             box (tuple[float, float, float, float]): 边界框坐标 (x1, y1, x2, y2)。
@@ -791,10 +787,9 @@ class SolutionAnnotator(Annotator):
 
 
 class SolutionResults:
-    """封装 Ultralytics 解决方案运行结果的类。
+    """封装 Ultralytics 解决方案运行结果的类。.
 
-    此类用于保存和管理解决方案流程生成的各种输出，包括计数值、角度、健身动作阶段以及其他分析数据，
-    并为对象计数、姿态估计和跟踪分析等计算机视觉解决方案提供结构化的结果访问方式。
+    此类用于保存和管理解决方案流程生成的各种输出，包括计数值、角度、健身动作阶段以及其他分析数据， 并为对象计数、姿态估计和跟踪分析等计算机视觉解决方案提供结构化的结果访问方式。
 
     属性：
         plot_im (np.ndarray): 包含计数、模糊效果或其他解决方案处理结果的图像。
@@ -817,7 +812,7 @@ class SolutionResults:
     """
 
     def __init__(self, **kwargs):
-        """使用默认值或用户指定的值初始化 SolutionResults 对象。
+        """使用默认值或用户指定的值初始化 SolutionResults 对象。.
 
         参数：
             **kwargs (Any): 用于覆盖默认属性值的可选参数。
@@ -844,7 +839,7 @@ class SolutionResults:
         self.__dict__.update(kwargs)
 
     def __str__(self) -> str:
-        """返回 SolutionResults 对象的格式化字符串表示。
+        """返回 SolutionResults 对象的格式化字符串表示。.
 
         返回：
             (str): 列出非空属性的字符串表示。

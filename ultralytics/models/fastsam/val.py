@@ -6,11 +6,9 @@ from ultralytics.models.yolo.segment import SegmentationValidator
 
 
 class FastSAMValidator(SegmentationValidator):
-    """Ultralytics YOLO 框架中 FastSAM（Segment Anything Model）分割任务的自定义验证类。
+    """Ultralytics YOLO 框架中 FastSAM（Segment Anything Model）分割任务的自定义验证类。.
 
-    此类继承 SegmentationValidator，专门定制 FastSAM 的验证流程，将任务设置为 'segment'，
-    使用 SegmentMetrics 进行评估，并禁用绘图功能。
-    以避免验证期间出现错误。
+    此类继承 SegmentationValidator，专门定制 FastSAM 的验证流程，将任务设置为 'segment'， 使用 SegmentMetrics 进行评估，并禁用绘图功能。 以避免验证期间出现错误。
 
     属性：
         dataloader (torch.utils.数据.DataLoader): 用于验证的数据加载器对象。
@@ -24,7 +22,7 @@ class FastSAMValidator(SegmentationValidator):
     """
 
     def __init__(self, dataloader=None, save_dir=None, args=None, _callbacks: dict | None = None):
-        """初始化 FastSAMValidator，将任务设置为 'segment'，并使用 SegmentMetrics 作为指标。
+        """初始化 FastSAMValidator，将任务设置为 'segment'，并使用 SegmentMetrics 作为指标。.
 
         参数：
             dataloader (torch.utils.数据.DataLoader, 可选): 用于验证的 DataLoader。

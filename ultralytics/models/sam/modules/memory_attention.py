@@ -11,7 +11,7 @@ from .blocks import RoPEAttention
 
 
 class MemoryAttentionLayer(nn.Module):
-    """为神经网络实现带自注意力和交叉注意力机制的内存注意力层。
+    """为神经网络实现带自注意力和交叉注意力机制的内存注意力层。.
 
     此类结合自注意力、交叉注意力和前馈组件，处理输入张量并生成基于内存的注意力输出。
 
@@ -61,7 +61,7 @@ class MemoryAttentionLayer(nn.Module):
         self_attn: nn.Module | None = None,
         cross_attn: nn.Module | None = None,
     ):
-        """初始化带自注意力、交叉注意力和前馈组件的内存注意力层。
+        """初始化带自注意力、交叉注意力和前馈组件的内存注意力层。.
 
         参数：
             d_model (int): 模型维度。
@@ -106,7 +106,7 @@ class MemoryAttentionLayer(nn.Module):
         self.pos_enc_at_cross_attn_keys = pos_enc_at_cross_attn_keys
 
     def _forward_sa(self, tgt: torch.Tensor, query_pos: torch.Tensor | None) -> torch.Tensor:
-        """使用位置编码和 RoPE 注意力机制对输入张量执行自注意力。"""
+        """使用位置编码和 RoPE 注意力机制对输入张量执行自注意力。."""
         tgt2 = self.norm1(tgt)
         q = k = tgt2 + query_pos if self.pos_enc_at_attn else tgt2
         tgt2 = self.self_attn(q, k, v=tgt2)
@@ -121,7 +121,7 @@ class MemoryAttentionLayer(nn.Module):
         pos: torch.Tensor | None,
         num_k_exclude_rope: int = 0,
     ) -> torch.Tensor:
-        """使用 RoPEAttention 机制在目标张量和内存张量之间执行交叉注意力。"""
+        """使用 RoPEAttention 机制在目标张量和内存张量之间执行交叉注意力。."""
         kwds = {}
         if num_k_exclude_rope > 0:
             assert isinstance(self.cross_attn_image, RoPEAttention)
@@ -146,7 +146,7 @@ class MemoryAttentionLayer(nn.Module):
         query_pos: torch.Tensor | None = None,
         num_k_exclude_rope: int = 0,
     ) -> torch.Tensor:
-        """通过自注意力、交叉注意力和前馈网络层处理输入张量。
+        """通过自注意力、交叉注意力和前馈网络层处理输入张量。.
 
         参数：
             tgt (torch.Tensor): 用于自注意力的目标张量，形状为 (N, L, D)。
@@ -168,7 +168,7 @@ class MemoryAttentionLayer(nn.Module):
 
 
 class MemoryAttention(nn.Module):
-    """使用自注意力和交叉注意力机制处理序列数据的内存注意力模块。
+    """使用自注意力和交叉注意力机制处理序列数据的内存注意力模块。.
 
     此类实现结合自注意力和交叉注意力的多层注意力机制，用于处理序列数据，尤其适合 Transformer 类架构。
 
@@ -204,7 +204,7 @@ class MemoryAttention(nn.Module):
         num_layers: int,
         batch_first: bool = True,  # 层是否期望批次维度位于第一维？
     ):
-        """使用指定层和归一化配置初始化用于序列数据处理的 MemoryAttention。
+        """使用指定层和归一化配置初始化用于序列数据处理的 MemoryAttention。.
 
         此类实现结合自注意力和交叉注意力的多层注意力机制，用于处理序列数据，尤其适合 Transformer 类架构。
 
@@ -231,7 +231,7 @@ class MemoryAttention(nn.Module):
         memory_pos: torch.Tensor | None = None,  # 交叉注意力输入的位置编码
         num_obj_ptr_tokens: int = 0,  # 对象指针 token 的数量
     ) -> torch.Tensor:
-        """通过注意力层处理输入，并使用位置编码应用自注意力和交叉注意力。
+        """通过注意力层处理输入，并使用位置编码应用自注意力和交叉注意力。.
 
         参数：
             curr (torch.Tensor): 自注意力输入张量，表示当前状态。

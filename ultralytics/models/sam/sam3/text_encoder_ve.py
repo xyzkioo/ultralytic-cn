@@ -15,7 +15,7 @@ from .model_misc import LayerScale
 
 
 class ResidualAttentionBlock(nn.Module):
-    """包含多头注意力、层归一化和 MLP 前馈网络的 Transformer 块。"""
+    """包含多头注意力、层归一化和 MLP 前馈网络的 Transformer 块。."""
 
     def __init__(
         self,
@@ -26,7 +26,7 @@ class ResidualAttentionBlock(nn.Module):
         act_layer: Callable[[], nn.Module] = nn.GELU,
         norm_layer: Callable[[int], nn.Module] = nn.LayerNorm,
     ):
-        """初始化可配置维度和归一化方式的残差注意力块。"""
+        """初始化可配置维度和归一化方式的残差注意力块。."""
         super().__init__()
         # Attention
         self.attn = nn.MultiheadAttention(d_model, n_head, batch_first=True)
@@ -53,7 +53,7 @@ class ResidualAttentionBlock(nn.Module):
     def attention(
         self, q_x: torch.Tensor, k_x: torch.Tensor = None, v_x: torch.Tensor = None, attn_mask: torch.Tensor = None
     ) -> torch.Tensor:
-        """计算多头注意力，并支持可选的交叉注意力和掩码。"""
+        """计算多头注意力，并支持可选的交叉注意力和掩码。."""
         k_x = k_x if k_x is not None else q_x
         v_x = v_x if v_x is not None else q_x
         if attn_mask is not None and attn_mask.dtype != torch.bool:  # 保持布尔掩码不变
@@ -64,7 +64,7 @@ class ResidualAttentionBlock(nn.Module):
     def forward(
         self, q_x: torch.Tensor, k_x: torch.Tensor = None, v_x: torch.Tensor = None, attn_mask: torch.Tensor = None
     ) -> torch.Tensor:
-        """应用带层归一化和 MLP 的残差注意力，并支持可选交叉注意力。"""
+        """应用带层归一化和 MLP 的残差注意力，并支持可选交叉注意力。."""
         k_x = self.ln_1_kv(k_x) if hasattr(self, "ln_1_kv") and k_x is not None else None
         v_x = self.ln_1_kv(v_x) if hasattr(self, "ln_1_kv") and v_x is not None else None
         x = q_x + self.ls_1(self.attention(q_x=self.ln_1(q_x), k_x=k_x, v_x=v_x, attn_mask=attn_mask))
@@ -73,7 +73,7 @@ class ResidualAttentionBlock(nn.Module):
 
 
 class Transformer(nn.Module):
-    """由残差注意力块堆叠而成的 Transformer 编码器，支持可选的梯度检查点。"""
+    """由残差注意力块堆叠而成的 Transformer 编码器，支持可选的梯度检查点。."""
 
     def __init__(
         self,
@@ -87,7 +87,7 @@ class Transformer(nn.Module):
         compile_mode: str | None = None,
         use_act_checkpoint: bool = False,
     ):
-        """初始化具有可配置深度、宽度以及可选编译和检查点功能的 Transformer。"""
+        """初始化具有可配置深度、宽度以及可选编译和检查点功能的 Transformer。."""
         super().__init__()
         self.width = width
         self.layers = layers
@@ -112,7 +112,7 @@ class Transformer(nn.Module):
                 torch._dynamo.config.optimize_ddp = False
 
     def forward(self, x: torch.Tensor, attn_mask: torch.Tensor = None) -> torch.Tensor:
-        """在训练期间通过所有 Transformer 块处理输入，并可选使用梯度检查点。"""
+        """在训练期间通过所有 Transformer 块处理输入，并可选使用梯度检查点。."""
         for _, r in enumerate(self.resblocks):
             if self.grad_checkpointing and not torch.jit.is_scripting() and self.training:
                 x = checkpoint(r, x, None, None, attn_mask, use_reentrant=False)
@@ -124,8 +124,7 @@ class Transformer(nn.Module):
 def text_global_pool(
     x: torch.Tensor, text: torch.Tensor = None, pool_type: str = "argmax"
 ) -> tuple[torch.Tensor, torch.Tensor]:
-    """使用指定的池化策略从文本嵌入中提取池化表示和词元。
-    (first/last/argmax/none).
+    """使用指定的池化策略从文本嵌入中提取池化表示和词元。 (first/last/argmax/none).
     """
     if pool_type == "first":
         pooled, tokens = x[:, 0], x[:, 1:]
@@ -141,7 +140,7 @@ def text_global_pool(
 
 
 class TextTransformer(nn.Module):
-    """带因果掩码和灵活池化策略的文本 Transformer 编码器。"""
+    """带因果掩码和灵活池化策略的文本 Transformer 编码器。."""
 
     def __init__(
         self,
@@ -163,7 +162,7 @@ class TextTransformer(nn.Module):
         compile_mode: str | None = None,
         use_act_checkpoint: bool = False,
     ):
-        """初始化文本 Transformer，包括嵌入层、Transformer 块和池化选项。"""
+        """初始化文本 Transformer，包括嵌入层、Transformer 块和池化选项。."""
         super().__init__()
         assert pool_type in ("first", "last", "argmax", "none")
         self.output_tokens = output_tokens
@@ -198,8 +197,8 @@ class TextTransformer(nn.Module):
             self.text_projection = nn.Parameter(torch.empty(width, output_dim))
 
     def build_causal_mask(self) -> torch.Tensor:
-        """创建因果注意力掩码，防止关注未来词元。"""
-            # 延迟创建因果注意力掩码，令牌之间使用完整注意力
+        """创建因果注意力掩码，防止关注未来词元。."""
+        # 延迟创建因果注意力掩码，令牌之间使用完整注意力
         # PyTorch 使用加性注意力掩码；使用 -inf 填充
         mask = torch.empty(self.num_pos, self.num_pos)
         mask.fill_(float("-inf"))
@@ -207,7 +206,7 @@ class TextTransformer(nn.Module):
         return mask
 
     def forward(self, text: torch.Tensor) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]:
-        """执行文本 Transformer 的前向传播，返回池化输出，并可选返回词元嵌入。"""
+        """执行文本 Transformer 的前向传播，返回池化输出，并可选返回词元嵌入。."""
         seq_len = text.shape[1]
         x = self.token_embedding(text)  # [batch_size, n_ctx, d_model]
 
@@ -231,7 +230,7 @@ class TextTransformer(nn.Module):
 
 
 class VETextEncoder(nn.Module):
-    """用于视觉编码器（VE）模型的文本编码器，由文本 Transformer 和线性调整器组成。"""
+    """用于视觉编码器（VE）模型的文本编码器，由文本 Transformer 和线性调整器组成。."""
 
     def __init__(
         self,
@@ -246,7 +245,7 @@ class VETextEncoder(nn.Module):
         compile_mode: str | None = None,
         use_act_checkpoint: bool = True,
     ):
-        """初始化 VE 文本编码器，并使用线性调整器匹配解码器维度。"""
+        """初始化 VE 文本编码器，并使用线性调整器匹配解码器维度。."""
         super().__init__()
         self.context_length = context_length
         self.use_ln_post = use_ln_post
@@ -269,7 +268,7 @@ class VETextEncoder(nn.Module):
     def forward(
         self, text: list[str] | tuple[torch.Tensor, torch.Tensor, dict], input_boxes: list | None = None
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        """编码文本输入（原始字符串或预编码张量），并调整到解码器维度。"""
+        """编码文本输入（原始字符串或预编码张量），并调整到解码器维度。."""
         if isinstance(text[0], str):
             # 当前没有使用场景
             assert input_boxes is None or len(input_boxes) == 0, "not supported"

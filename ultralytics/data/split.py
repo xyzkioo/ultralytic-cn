@@ -11,10 +11,9 @@ from ultralytics.utils import DATASETS_DIR, LOGGER, TQDM
 
 
 def split_classify_dataset(source_dir: str | Path, train_ratio: float = 0.8) -> Path:
-    """将分类数据集拆分为新目录中的 train 和 val 目录。
+    """将分类数据集拆分为新目录中的 train 和 val 目录。.
 
-    创建一个新的 '{source_dir}_split' 目录，其中包含 train/val 子目录，并保留原始类别结构，
-    默认按 80/20 的比例拆分。仅复制扩展名匹配 IMG_FORMATS 的文件。
+    创建一个新的 '{source_dir}_split' 目录，其中包含 train/val 子目录，并保留原始类别结构， 默认按 80/20 的比例拆分。仅复制扩展名匹配 IMG_FORMATS 的文件。
 
     目录结构：
         拆分前：
@@ -100,7 +99,7 @@ def autosplit(
     weights: tuple[float, float, float] = (0.9, 0.1, 0.0),
     annotated_only: bool = False,
 ) -> None:
-    """自动将数据集拆分为 train/val/test 集，并将拆分结果保存到 autosplit_*.txt 文件。
+    """自动将数据集拆分为 train/val/test 集，并将拆分结果保存到 autosplit_*.txt 文件。.
 
     参数：
         path (Path): 图像目录路径。

@@ -11,10 +11,9 @@ from ultralytics.utils.plotting import colors
 
 
 class RegionCounter(BaseSolution):
-    """在视频流的用户自定义区域内实时统计目标数量的类。
+    """在视频流的用户自定义区域内实时统计目标数量的类。.
 
-    此类继承自 `BaseSolution`，用于在视频帧中定义多边形区域、跟踪目标，并统计经过每个区域的目标数量。
-    适用于需要在指定区域计数的场景，例如监控区域或分段区域。
+    此类继承自 `BaseSolution`，用于在视频帧中定义多边形区域、跟踪目标，并统计经过每个区域的目标数量。 适用于需要在指定区域计数的场景，例如监控区域或分段区域。
 
     属性：
         region_template (dict): 创建新计数区域的模板，包含名称、多边形坐标和显示颜色等默认属性。
@@ -35,7 +34,7 @@ class RegionCounter(BaseSolution):
     """
 
     def __init__(self, **kwargs: Any) -> None:
-        """初始化 RegionCounter，用于在用户自定义区域内实时统计目标数量。"""
+        """初始化 RegionCounter，用于在用户自定义区域内实时统计目标数量。."""
         super().__init__(**kwargs)
         self.region_template = {
             "name": "Default Region",
@@ -56,7 +55,7 @@ class RegionCounter(BaseSolution):
         region_color: tuple[int, int, int],
         text_color: tuple[int, int, int],
     ) -> dict[str, Any]:
-        """根据给定模板和指定属性，向计数列表添加新区域。
+        """根据给定模板和指定属性，向计数列表添加新区域。.
 
         参数：
             name (str): 分配给新区域的名称。
@@ -87,7 +86,7 @@ class RegionCounter(BaseSolution):
         return region
 
     def initialize_regions(self):
-        """仅根据 `self.region` 初始化一次区域。"""
+        """仅根据 `self.region` 初始化一次区域。."""
         if self.region is None:
             self.initialize_region()
         if not isinstance(self.region, dict):  # 确保 self.region 已初始化为字典结构
@@ -96,7 +95,7 @@ class RegionCounter(BaseSolution):
             self.add_region(name, pts, colors(i, True), (255, 255, 255))
 
     def process(self, im0: np.ndarray) -> SolutionResults:
-        """处理输入帧，检测并统计每个定义区域内的对象。
+        """处理输入帧，检测并统计每个定义区域内的对象。.
 
         参数：
             im0 (np.ndarray): 要处理的输入图像帧，对象和区域会在其上标注。

@@ -61,10 +61,9 @@ MCT_CONFIG = {
 
 
 class FXModel(torch.nn.Module):
-    """用于兼容 torch.fx 的自定义模型类。
+    """用于兼容 torch.fx 的自定义模型类。.
 
-    此类继承 `torch.nn.Module`，用于确保 torch.fx 的跟踪和图操作兼容性。
-    它会复制现有模型的属性，并显式设置模型属性以确保正确复制。
+    此类继承 `torch.nn.Module`，用于确保 torch.fx 的跟踪和图操作兼容性。 它会复制现有模型的属性，并显式设置模型属性以确保正确复制。
 
     属性：
         model (nn.Module): 原始模型的层。
@@ -72,7 +71,7 @@ class FXModel(torch.nn.Module):
     """
 
     def __init__(self, model, imgsz=(640, 640)):
-        """初始化 FXModel。
+        """初始化 FXModel。.
 
         参数：
             model (nn.Module): 为兼容 torch.fx 而封装的原始模型。
@@ -85,7 +84,7 @@ class FXModel(torch.nn.Module):
         self.imgsz = imgsz
 
     def forward(self, x):
-        """执行模型前向传播。
+        """执行模型前向传播。.
 
         此方法执行模型前向传播，处理层之间的依赖关系并保存中间输出。
 
@@ -118,13 +117,13 @@ class FXModel(torch.nn.Module):
 
 
 def _inference(self, x: dict[str, torch.Tensor]) -> tuple[torch.Tensor, torch.Tensor]:
-    """解码 IMX 目标检测的边界框和类别分数。"""
+    """解码 IMX 目标检测的边界框和类别分数。."""
     dbox = self.decode_bboxes(self.dfl(x["boxes"]), self.anchors.unsqueeze(0)) * self.strides
     return dbox.transpose(1, 2), x["scores"].sigmoid().permute(0, 2, 1)
 
 
 def pose_forward(self, x: list[torch.Tensor]) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-    """执行 IMX 姿态估计前向传播，包括关键点解码。"""
+    """执行 IMX 姿态估计前向传播，包括关键点解码。."""
     bs = x[0].shape[0]  # 批次大小
     nk_out = getattr(self, "nk_output", self.nk)
     kpt = torch.cat([self.cv4[i](x[i]).view(bs, nk_out, -1) for i in range(self.nl)], -1)
@@ -141,7 +140,7 @@ def pose_forward(self, x: list[torch.Tensor]) -> tuple[torch.Tensor, torch.Tenso
 
 
 def segment_forward(self, x: list[torch.Tensor]) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
-    """执行 IMX 分割前向传播。"""
+    """执行 IMX 分割前向传播。."""
     p = self.proto(x[0])  # 掩码原型
     bs = p.shape[0]  # 批次大小
     mc = torch.cat([self.cv4[i](x[i]).view(bs, self.nm, -1) for i in range(self.nl)], 2)  # 掩码系数
@@ -150,7 +149,7 @@ def segment_forward(self, x: list[torch.Tensor]) -> tuple[torch.Tensor, torch.Te
 
 
 class NMSWrapper(torch.nn.Module):
-    """使用 edge-mdt-cl 的 multiclass_nms 层包装 PyTorch 模块。"""
+    """使用 edge-mdt-cl 的 multiclass_nms 层包装 PyTorch 模块。."""
 
     def __init__(
         self,
@@ -160,7 +159,7 @@ class NMSWrapper(torch.nn.Module):
         max_detections: int = 300,
         task: str = "detect",
     ):
-        """使用 PyTorch 模块和 NMS 参数初始化 NMSWrapper。
+        """使用 PyTorch 模块和 NMS 参数初始化 NMSWrapper。.
 
         参数：
             model (torch.nn.Module): 模型实例。
@@ -177,7 +176,7 @@ class NMSWrapper(torch.nn.Module):
         self.task = task
 
     def forward(self, images):
-        """执行模型推理和 NMS 后处理的前向传播。"""
+        """执行模型推理和 NMS 后处理的前向传播。."""
         from edgemdt_cl.pytorch.nms.nms_with_indices import multiclass_nms_with_indices
 
         # 模型 推理
@@ -212,10 +211,10 @@ def torch2imx(
     dataset=None,
     prefix: str = "",
 ) -> str:
-    """将 YOLO 模型导出为 IMX 格式，以部署到 Sony IMX500 设备。
+    """将 YOLO 模型导出为 IMX 格式，以部署到 Sony IMX500 设备。.
 
-    此函数使用 Model Compression Toolkit（MCT）量化 YOLO 模型，并将其导出为兼容 Sony IMX500 边缘设备的 IMX 格式。
-    支持 YOLOv8n 和 YOLO11n 模型的检测、分割、姿态估计和分类任务。
+    此函数使用 Model Compression Toolkit（MCT）量化 YOLO 模型，并将其导出为兼容 Sony IMX500 边缘设备的 IMX 格式。 支持 YOLOv8n 和 YOLO11n
+    模型的检测、分割、姿态估计和分类任务。
 
     参数：
         model (torch.nn.Module): 要导出的 YOLO 模型，必须是 YOLOv8n 或 YOLO11n。

@@ -30,7 +30,7 @@ def torch2axelera(
     metadata: dict | None = None,
     prefix: str = "",
 ) -> str:
-    """将 YOLO 模型转换为 Axelera 格式。
+    """将 YOLO 模型转换为 Axelera 格式。.
 
     参数：
         model (torch.nn.Module): 用于量化的源 YOLO 模型。

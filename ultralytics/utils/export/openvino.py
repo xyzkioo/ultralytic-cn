@@ -20,7 +20,7 @@ def torch2openvino(
     int8_detect: bool = False,
     prefix: str = "",
 ) -> Any:
-    """将 PyTorch 模型导出为 OpenVINO 格式，并支持可选 INT8 量化。
+    """将 PyTorch 模型导出为 OpenVINO 格式，并支持可选 INT8 量化。.
 
     参数：
         model (torch.nn.Module): 要导出的模型（可能已使用 NMS 包装）。

@@ -33,10 +33,9 @@ from ultralytics.utils.tqdm import TQDM  # noqa
 
 
 def env_bool(name: str, default: bool = False) -> bool:
-    """解析布尔环境变量，并接受常见的真值字符串。
+    """解析布尔环境变量，并接受常见的真值字符串。.
 
-    接受 `"1"`、`"true"`、`"yes"`、`"on"`、`"y"` 和 `"t"`（不区分大小写并去除空白）作为 True；
-    其他已设置的值均为 False。仅当环境变量未设置时返回默认值，设置为空字符串时不会返回默认值。
+    接受 `"1"`、`"true"`、`"yes"`、`"on"`、`"y"` 和 `"t"`（不区分大小写并去除空白）作为 True； 其他已设置的值均为 False。仅当环境变量未设置时返回默认值，设置为空字符串时不会返回默认值。
 
     参数：
         name (str): 环境变量名称。
@@ -187,10 +186,9 @@ STR_OR_PATH = (str, Path)
 
 
 class DataExportMixin:
-    """用于将验证指标或预测结果导出为多种格式的混入类。
+    """用于将验证指标或预测结果导出为多种格式的混入类。.
 
-    此类提供工具，可将分类、目标检测、分割或姿态估计任务的性能指标（例如 mAP、精确率、召回率）或预测结果
-    导出为 Polars DataFrame、CSV 和 JSON 等格式。
+    此类提供工具，可将分类、目标检测、分割或姿态估计任务的性能指标（例如 mAP、精确率、召回率）或预测结果 导出为 Polars DataFrame、CSV 和 JSON 等格式。
 
     方法：
         to_df: 将摘要转换为 Polars DataFrame。
@@ -207,7 +205,7 @@ class DataExportMixin:
     """
 
     def to_df(self, normalize=False, decimals=5):
-        """根据预测结果摘要或验证指标创建 Polars DataFrame。
+        """根据预测结果摘要或验证指标创建 Polars DataFrame。.
 
         参数：
             normalize (bool, 可选): 是否归一化数值，以便进行比较。
@@ -221,7 +219,7 @@ class DataExportMixin:
         return pl.DataFrame(self.summary(normalize=normalize, decimals=decimals))
 
     def to_csv(self, normalize=False, decimals=5):
-        """将结果或指标导出为 CSV 字符串。
+        """将结果或指标导出为 CSV 字符串。.
 
         参数：
             normalize (bool, 可选): 是否归一化数值。
@@ -252,7 +250,7 @@ class DataExportMixin:
             return df_str.write_csv()
 
     def to_json(self, normalize=False, decimals=5):
-        """将结果导出为 JSON 格式。
+        """将结果导出为 JSON 格式。.
 
         参数：
             normalize (bool, 可选): 是否归一化数值。
@@ -265,7 +263,7 @@ class DataExportMixin:
 
 
 class SimpleClass:
-    """用于创建可将属性转换为字符串表示的对象的简单基类。
+    """用于创建可将属性转换为字符串表示的对象的简单基类。.
 
     此类为创建易于打印或转换为字符串的对象提供基础，并显示所有不可调用属性，适用于调试和检查对象状态。
 
@@ -289,7 +287,7 @@ class SimpleClass:
     """
 
     def __str__(self):
-        """返回对象的可读字符串表示。"""
+        """返回对象的可读字符串表示。."""
         attr = []
         for a in dir(self):
             v = getattr(self, a)
@@ -303,17 +301,17 @@ class SimpleClass:
         return f"{self.__module__}.{self.__class__.__name__} object with attributes:\n\n" + "\n".join(attr)
 
     def __repr__(self):
-        """返回对象的机器可读字符串表示。"""
+        """返回对象的机器可读字符串表示。."""
         return self.__str__()
 
     def __getattr__(self, attr):
-        """提供包含有用信息的自定义属性访问错误消息。"""
+        """提供包含有用信息的自定义属性访问错误消息。."""
         name = self.__class__.__name__
         raise AttributeError(f"'{name}' object has no attribute '{attr}'. See valid attributes below.\n{self.__doc__}")
 
 
 class IterableSimpleNamespace(SimpleNamespace):
-    """可迭代的 SimpleNamespace 类，为属性访问和迭代提供增强功能。
+    """可迭代的 SimpleNamespace 类，为属性访问和迭代提供增强功能。.
 
     此类扩展 SimpleNamespace，增加了迭代、字符串表示和属性访问方法，适合作为便捷的配置参数容器。
 
@@ -344,15 +342,15 @@ class IterableSimpleNamespace(SimpleNamespace):
     """
 
     def __iter__(self):
-        """返回命名空间属性的键值对迭代器。"""
+        """返回命名空间属性的键值对迭代器。."""
         return iter(vars(self).items())
 
     def __str__(self):
-        """返回对象的可读字符串表示。"""
+        """返回对象的可读字符串表示。."""
         return "\n".join(f"{k}={v}" for k, v in vars(self).items())
 
     def __getattr__(self, attr):
-        """提供包含有用信息的自定义属性访问错误消息。"""
+        """提供包含有用信息的自定义属性访问错误消息。."""
         name = self.__class__.__name__
         raise AttributeError(
             f"""
@@ -364,12 +362,12 @@ class IterableSimpleNamespace(SimpleNamespace):
         )
 
     def get(self, key, default=None):
-        """如果指定键存在则返回其值，否则返回默认值。"""
+        """如果指定键存在则返回其值，否则返回默认值。."""
         return getattr(self, key, default)
 
 
 def plt_settings(rcparams=None, backend="Agg"):
-    """临时设置绘图函数 rc 参数和后端的装饰器。
+    """临时设置绘图函数 rc 参数和后端的装饰器。.
 
     参数：
         rcparams (dict, 可选): 要设置的 rc 参数字典。
@@ -394,10 +392,10 @@ def plt_settings(rcparams=None, backend="Agg"):
         rcparams = {"font.size": 11}
 
     def decorator(func):
-        """将临时 rc 参数和后端应用到函数的装饰器。"""
+        """将临时 rc 参数和后端应用到函数的装饰器。."""
 
         def wrapper(*args, **kwargs):
-            """设置 rc 参数和后端，调用原函数，然后恢复原设置。"""
+            """设置 rc 参数和后端，调用原函数，然后恢复原设置。."""
             import matplotlib.pyplot as plt  # scope for faster 'import ultralytics'
 
             # 为非拉丁文本（中文、阿拉伯文等）优先添加 Arial Unicode；缺少时由 Matplotlib 使用后备字体
@@ -439,10 +437,9 @@ def plt_settings(rcparams=None, backend="Agg"):
 
 
 def set_logging(name="LOGGING_NAME", verbose=True):
-    """使用 UTF-8 编码和可配置的详细程度设置日志记录。
+    """使用 UTF-8 编码和可配置的详细程度设置日志记录。.
 
-    此函数为 Ultralytics 库配置日志，根据详细输出标志和当前进程秩设置合适的日志级别与格式化器，
-    并处理 Windows 环境中默认编码可能不是 UTF-8 的特殊情况。
+    此函数为 Ultralytics 库配置日志，根据详细输出标志和当前进程秩设置合适的日志级别与格式化器， 并处理 Windows 环境中默认编码可能不是 UTF-8 的特殊情况。
 
     参数：
         name (str): 日志记录器名称。
@@ -466,7 +463,7 @@ def set_logging(name="LOGGING_NAME", verbose=True):
 
     class PrefixFormatter(logging.Formatter):
         def format(self, record):
-            """根据日志级别为日志记录添加前缀。"""
+            """根据日志级别为日志记录添加前缀。."""
             # 根据日志级别添加前缀
             if record.levelno == logging.WARNING:
                 prefix = "WARNING" if WINDOWS else "WARNING ⚠️"
@@ -515,12 +512,12 @@ logging.getLogger("sentry_sdk").setLevel(logging.CRITICAL + 1)
 
 
 def emojis(string=""):
-    """返回适配当前平台、可安全处理表情符号的字符串版本。"""
+    """返回适配当前平台、可安全处理表情符号的字符串版本。."""
     return string.encode().decode("ascii", "ignore") if WINDOWS else string
 
 
 class ThreadingLocked:
-    """确保函数或方法以线程安全方式执行的装饰器类。
+    """确保函数或方法以线程安全方式执行的装饰器类。.
 
     此类可作为装饰器使用，确保被装饰函数即使被多个线程调用，也只有一个线程能同时执行该函数。
 
@@ -535,16 +532,16 @@ class ThreadingLocked:
     """
 
     def __init__(self):
-        """使用线程锁初始化装饰器类。"""
+        """使用线程锁初始化装饰器类。."""
         self.lock = threading.Lock()
 
     def __call__(self, f):
-        """以线程安全方式执行函数或方法。"""
+        """以线程安全方式执行函数或方法。."""
         from functools import wraps
 
         @wraps(f)
         def decorated(*args, **kwargs):
-            """将线程安全机制应用到被装饰函数或方法。"""
+            """将线程安全机制应用到被装饰函数或方法。."""
             with self.lock:
                 return f(*args, **kwargs)
 
@@ -552,10 +549,9 @@ class ThreadingLocked:
 
 
 class YAML:
-    """高效文件操作的 YAML 工具类，并自动检测 C 实现。
+    """高效文件操作的 YAML 工具类，并自动检测 C 实现。.
 
-    此类使用 PyYAML 可用的最快实现（尽可能使用基于 C 的实现）优化 YAML 加载和保存操作。
-    它采用单例模式和延迟初始化，无需显式实例化即可直接调用类方法，并自动处理文件路径创建、验证和字符编码问题。
+    此类使用 PyYAML 可用的最快实现（尽可能使用基于 C 的实现）优化 YAML 加载和保存操作。 它采用单例模式和延迟初始化，无需显式实例化即可直接调用类方法，并自动处理文件路径创建、验证和字符编码问题。
 
     此实现通过以下方式优先保证性能：
         - 可用时自动选择基于 C 的加载器和转储器
@@ -580,13 +576,13 @@ class YAML:
 
     @classmethod
     def _get_instance(cls):
-        """首次使用时初始化单例实例。"""
+        """首次使用时初始化单例实例。."""
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance
 
     def __init__(self):
-        """使用最佳 YAML 实现进行初始化（可用时使用基于 C 的实现）。"""
+        """使用最佳 YAML 实现进行初始化（可用时使用基于 C 的实现）。."""
         import yaml
 
         self.yaml = yaml
@@ -600,7 +596,7 @@ class YAML:
 
     @classmethod
     def save(cls, file="data.yaml", data=None, header=""):
-        """将 Python 对象保存为 YAML 文件。
+        """将 Python 对象保存为 YAML 文件。.
 
         参数：
             file (str | Path): 要保存的 YAML 文件路径。
@@ -629,7 +625,7 @@ class YAML:
 
     @classmethod
     def load(cls, file="data.yaml", append_filename=False):
-        """将 YAML 文件加载为 Python 对象，并提供稳健的错误处理。
+        """将 YAML 文件加载为 Python 对象，并提供稳健的错误处理。.
 
         参数：
             file (str | Path): YAML 文件路径。
@@ -675,7 +671,7 @@ class YAML:
 
     @classmethod
     def print(cls, yaml_file):
-        """将 YAML 文件或对象格式化后输出到控制台。
+        """将 YAML 文件或对象格式化后输出到控制台。.
 
         参数：
             yaml_file (str | Path | dict): 要输出的 YAML 文件路径或字典。
@@ -698,7 +694,7 @@ DEFAULT_CFG = IterableSimpleNamespace(**DEFAULT_CFG_DICT)
 
 
 def read_device_model() -> str:
-    """读取系统中的设备型号信息。
+    """读取系统中的设备型号信息。.
 
     返回：
         (str): 小写的平台版本字符串，用于识别 Jetson 或 Raspberry Pi 等设备型号。
@@ -707,7 +703,7 @@ def read_device_model() -> str:
 
 
 def is_ubuntu() -> bool:
-    """检查操作系统是否为 Ubuntu。
+    """检查操作系统是否为 Ubuntu。.
 
     返回：
         (bool): 操作系统为 Ubuntu 时返回 True，否则返回 False。
@@ -720,7 +716,7 @@ def is_ubuntu() -> bool:
 
 
 def is_debian(codenames: list[str] | str | None = None) -> list[bool] | bool:
-    """检查操作系统是否为 Debian。
+    """检查操作系统是否为 Debian。.
 
     参数：
         codenames (列表[str] | None | str): 要检查的 Debian 代号（例如 'buster'、'bullseye'）。为 None 时仅检查是否为 Debian。
@@ -744,7 +740,7 @@ def is_debian(codenames: list[str] | str | None = None) -> list[bool] | bool:
 
 
 def is_colab():
-    """检查当前脚本是否运行在 Google Colab 笔记本中。
+    """检查当前脚本是否运行在 Google Colab 笔记本中。.
 
     返回：
         (bool): 运行在 Colab 笔记本中时返回 True，否则返回 False。
@@ -753,7 +749,7 @@ def is_colab():
 
 
 def is_kaggle():
-    """检查当前脚本是否运行在 Kaggle 内核中。
+    """检查当前脚本是否运行在 Kaggle 内核中。.
 
     返回：
         (bool): 运行在 Kaggle 内核中时返回 True，否则返回 False。
@@ -762,7 +758,7 @@ def is_kaggle():
 
 
 def is_jupyter():
-    """检查当前脚本是否运行在 Jupyter Notebook 中。
+    """检查当前脚本是否运行在 Jupyter Notebook 中。.
 
     返回：
         (bool): 运行在 Jupyter Notebook 中时返回 True，否则返回 False。
@@ -775,7 +771,7 @@ def is_jupyter():
 
 
 def is_runpod():
-    """检查当前脚本是否运行在 RunPod 容器中。
+    """检查当前脚本是否运行在 RunPod 容器中。.
 
     返回：
         (bool): 运行在 RunPod 中时返回 True，否则返回 False。
@@ -784,7 +780,7 @@ def is_runpod():
 
 
 def is_docker() -> bool:
-    """判断当前脚本是否运行在 Docker 容器中。
+    """判断当前脚本是否运行在 Docker 容器中。.
 
     返回：
         (bool): 运行在 Docker 容器中时返回 True，否则返回 False。
@@ -796,7 +792,7 @@ def is_docker() -> bool:
 
 
 def is_raspberrypi() -> bool:
-    """判断 Python 环境是否运行在 Raspberry Pi 上。
+    """判断 Python 环境是否运行在 Raspberry Pi 上。.
 
     返回：
         (bool): 运行在 Raspberry Pi 上时返回 True，否则返回 False。
@@ -806,7 +802,7 @@ def is_raspberrypi() -> bool:
 
 @lru_cache(maxsize=3)
 def is_jetson(jetpack=None) -> bool:
-    """判断 Python 环境是否运行在 NVIDIA Jetson 设备上。
+    """判断 Python 环境是否运行在 NVIDIA Jetson 设备上。.
 
     参数：
         jetpack (int | None): 如果指定，则检查特定的 JetPack 版本（4、5、6）。
@@ -826,7 +822,7 @@ def is_jetson(jetpack=None) -> bool:
 
 
 def is_dgx() -> bool:
-    """检查当前脚本是否运行在 DGX（NVIDIA Data Center GPU）、DGX-Ready 或 DGX Spark 系统中。
+    """检查当前脚本是否运行在 DGX（NVIDIA Data Center GPU）、DGX-Ready 或 DGX Spark 系统中。.
 
     返回：
         (bool): 运行在 DGX、DGX-Ready 或 DGX Spark 系统中时返回 True，否则返回 False。
@@ -839,7 +835,7 @@ def is_dgx() -> bool:
 
 
 def is_online() -> bool:
-    """使用 DNS（IPv4/IPv6）解析快速检查网络连接（Cloudflare + Google）。
+    """使用 DNS（IPv4/IPv6）解析快速检查网络连接（Cloudflare + Google）。.
 
     返回：
         (bool): 连接成功时返回 True，否则返回 False。
@@ -857,7 +853,7 @@ def is_online() -> bool:
 
 
 def is_pip_package(filepath: str = __name__) -> bool:
-    """判断给定路径中的文件是否属于 pip 包。
+    """判断给定路径中的文件是否属于 pip 包。.
 
     参数：
         filepath (str): 要检查的文件路径。
@@ -875,7 +871,7 @@ def is_pip_package(filepath: str = __name__) -> bool:
 
 
 def is_dir_writeable(dir_path: str | Path) -> bool:
-    """检查目录是否可写。
+    """检查目录是否可写。.
 
     参数：
         dir_path (str | Path): 目录路径。
@@ -887,7 +883,7 @@ def is_dir_writeable(dir_path: str | Path) -> bool:
 
 
 def is_pytest_running():
-    """判断 pytest 当前是否正在运行。
+    """判断 pytest 当前是否正在运行。.
 
     返回：
         (bool): pytest 正在运行时返回 True，否则返回 False。
@@ -896,7 +892,7 @@ def is_pytest_running():
 
 
 def is_github_action_running() -> bool:
-    """判断当前环境是否为 GitHub Actions 运行器。
+    """判断当前环境是否为 GitHub Actions 运行器。.
 
     返回：
         (bool): 当前环境为 GitHub Actions 运行器时返回 True，否则返回 False。
@@ -905,7 +901,7 @@ def is_github_action_running() -> bool:
 
 
 def get_default_args(func):
-    """返回函数的默认参数字典。
+    """返回函数的默认参数字典。.
 
     参数：
         func (callable): 要检查的函数。
@@ -918,7 +914,7 @@ def get_default_args(func):
 
 
 def get_ubuntu_version():
-    """如果操作系统为 Ubuntu，则获取 Ubuntu 版本。
+    """如果操作系统为 Ubuntu，则获取 Ubuntu 版本。.
 
     返回：
         (str): Ubuntu 版本；如果不是 Ubuntu 系统则返回 None。
@@ -932,7 +928,7 @@ def get_ubuntu_version():
 
 
 def get_user_config_dir(sub_dir="Ultralytics"):
-    """返回可写配置目录，优先使用 YOLO_CONFIG_DIR，并根据操作系统选择路径。
+    """返回可写配置目录，优先使用 YOLO_CONFIG_DIR，并根据操作系统选择路径。.
 
     参数：
         sub_dir (str): 要创建的子目录名称。
@@ -992,7 +988,7 @@ SETTINGS_FILE = USER_CONFIG_DIR / "settings.json"
 
 
 def colorstr(*input):
-    r"""根据给定的颜色和样式参数，使用 ANSI 转义码为字符串添加颜色。
+    r"""根据给定的颜色和样式参数，使用 ANSI 转义码为字符串添加颜色。.
 
     此函数有两种调用方式：
         - colorstr('color', 'style', 'your string')
@@ -1046,7 +1042,7 @@ def colorstr(*input):
 
 
 def remove_colorstr(input_string):
-    """移除字符串中的 ANSI 转义码，使其恢复为无颜色文本。
+    """移除字符串中的 ANSI 转义码，使其恢复为无颜色文本。.
 
     参数：
         input_string (str): 要移除颜色和样式的字符串。
@@ -1063,10 +1059,9 @@ def remove_colorstr(input_string):
 
 
 class TryExcept(contextlib.ContextDecorator):
-    """用于平稳处理异常的 Ultralytics TryExcept 类。
+    """用于平稳处理异常的 Ultralytics TryExcept 类。.
 
-    此类可作为装饰器或上下文管理器捕获异常，并按需打印警告消息。即使发生异常，也可以让代码继续执行，
-    适用于非关键操作。
+    此类可作为装饰器或上下文管理器捕获异常，并按需打印警告消息。即使发生异常，也可以让代码继续执行， 适用于非关键操作。
 
     属性：
         msg (str): 发生异常时要显示的可选消息。
@@ -1086,25 +1081,24 @@ class TryExcept(contextlib.ContextDecorator):
     """
 
     def __init__(self, msg="", verbose=True):
-        """使用可选消息和详细输出设置初始化 TryExcept 类。"""
+        """使用可选消息和详细输出设置初始化 TryExcept 类。."""
         self.msg = msg
         self.verbose = verbose
 
     def __enter__(self):
-        """进入 TryExcept 上下文时执行并初始化实例。"""
+        """进入 TryExcept 上下文时执行并初始化实例。."""
 
     def __exit__(self, exc_type, value, traceback):
-        """定义退出 with 代码块时的行为，并在需要时打印错误消息。"""
+        """定义退出 with 代码块时的行为，并在需要时打印错误消息。."""
         if self.verbose and value:
             LOGGER.warning(f"{self.msg}{': ' if self.msg else ''}{value}")
         return True
 
 
 class Retry(contextlib.ContextDecorator):
-    """使用指数退避重试函数执行的 Retry 类。
+    """使用指数退避重试函数执行的 Retry 类。.
 
-    此装饰器可在函数发生异常时重试，最多重试指定次数，并在每次重试之间逐步增加等待时间。
-    它适用于处理网络操作或其他不稳定流程中的临时故障。
+    此装饰器可在函数发生异常时重试，最多重试指定次数，并在每次重试之间逐步增加等待时间。 它适用于处理网络操作或其他不稳定流程中的临时故障。
 
     属性：
         times (int): 最大重试次数。
@@ -1119,17 +1113,17 @@ class Retry(contextlib.ContextDecorator):
     """
 
     def __init__(self, times=3, delay=2, verbose=True):
-        """使用指定的重试次数和延迟初始化 Retry 类。"""
+        """使用指定的重试次数和延迟初始化 Retry 类。."""
         self.times = times
         self.delay = delay
         self.verbose = verbose  # 调用方自己的日志会反馈到重试流程时设为 False
         self._attempts = 0
 
     def __call__(self, func):
-        """实现带指数退避的 Retry 装饰器。"""
+        """实现带指数退避的 Retry 装饰器。."""
 
         def wrapped_func(*args, **kwargs):
-            """对被装饰函数或方法执行重试。"""
+            """对被装饰函数或方法执行重试。."""
             self._attempts = 0
             while self._attempts < self.times:
                 try:
@@ -1146,10 +1140,9 @@ class Retry(contextlib.ContextDecorator):
 
 
 def threaded(func):
-    """默认在多线程中运行目标函数，并返回线程对象或函数结果。
+    """默认在多线程中运行目标函数，并返回线程对象或函数结果。.
 
-    此装饰器支持在独立线程中或同步执行目标函数。默认在线程中运行，也可以通过 `threaded=False` 关键字参数控制；
-    该参数会在调用函数前从 kwargs 中移除。
+    此装饰器支持在独立线程中或同步执行目标函数。默认在线程中运行，也可以通过 `threaded=False` 关键字参数控制； 该参数会在调用函数前从 kwargs 中移除。
 
     参数：
         func (callable): 可能在独立线程中执行的函数。
@@ -1168,7 +1161,7 @@ def threaded(func):
     """
 
     def wrapper(*args, **kwargs):
-        """根据 `threaded` 关键字参数多线程运行函数，并返回线程对象或函数结果。"""
+        """根据 `threaded` 关键字参数多线程运行函数，并返回线程对象或函数结果。."""
         if kwargs.pop("threaded", True):  # 在线程中运行
             # 使用非守护线程，使解释器关闭时先等待线程结束；守护线程可能在 C 调用中途被终止，导致进程异常退出。
             thread = threading.Thread(target=func, args=args, kwargs=kwargs, daemon=False)
@@ -1181,7 +1174,7 @@ def threaded(func):
 
 
 def set_sentry():
-    """初始化 Sentry SDK，用于错误跟踪和报告。
+    """初始化 Sentry SDK，用于错误跟踪和报告。.
 
     仅当已安装 sentry_sdk 包且设置中的 sync=True 时使用。运行 `yolo settings` 可查看和更新设置。
 
@@ -1212,7 +1205,7 @@ def set_sentry():
         return
 
     def before_send(event, hint):
-        """根据特定异常类型和消息，在将事件发送到 Sentry 前修改事件。
+        """根据特定异常类型和消息，在将事件发送到 Sentry 前修改事件。.
 
         参数：
             event (dict): 包含错误信息的事件字典。
@@ -1248,7 +1241,7 @@ def set_sentry():
 
 
 class JSONDict(dict):
-    """为内容提供 JSON 持久化功能的类字典对象。
+    """为内容提供 JSON 持久化功能的类字典对象。.
 
     此类扩展内置字典，在内容修改时自动保存到 JSON 文件。它使用锁确保操作线程安全，并处理 Path 对象的 JSON 序列化。
 
@@ -1275,14 +1268,14 @@ class JSONDict(dict):
     """
 
     def __init__(self, file_path: str | Path = "data.json"):
-        """使用指定的文件路径初始化 JSONDict 对象，以进行 JSON 持久化。"""
+        """使用指定的文件路径初始化 JSONDict 对象，以进行 JSON 持久化。."""
         super().__init__()
         self.file_path = Path(file_path)
         self.lock = Lock()
         self._load()
 
     def _load(self):
-        """从 JSON 文件将数据加载到字典。"""
+        """从 JSON 文件将数据加载到字典。."""
         try:
             if self.file_path.exists():
                 with open(self.file_path) as f:
@@ -1294,7 +1287,7 @@ class JSONDict(dict):
             LOGGER.error(f"Error reading from {self.file_path}: {e}")
 
     def _save(self):
-        """将字典当前状态保存到 JSON 文件。"""
+        """将字典当前状态保存到 JSON 文件。."""
         try:
             self.file_path.parent.mkdir(parents=True, exist_ok=True)
             with open(self.file_path, "w", encoding="utf-8") as f:
@@ -1304,46 +1297,45 @@ class JSONDict(dict):
 
     @staticmethod
     def _json_default(obj):
-        """处理 Path 对象的 JSON 序列化。"""
+        """处理 Path 对象的 JSON 序列化。."""
         if isinstance(obj, Path):
             return str(obj)
         raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
 
     def __setitem__(self, key, value):
-        """保存键值对并持久化到磁盘。"""
+        """保存键值对并持久化到磁盘。."""
         with self.lock:
             super().__setitem__(key, value)
             self._save()
 
     def __delitem__(self, key):
-        """移除项目并更新持久化存储。"""
+        """移除项目并更新持久化存储。."""
         with self.lock:
             super().__delitem__(key)
             self._save()
 
     def __str__(self):
-        """返回字典的格式化 JSON 字符串表示。"""
+        """返回字典的格式化 JSON 字符串表示。."""
         contents = json.dumps(dict(self), indent=2, ensure_ascii=False, default=self._json_default)
         return f'JSONDict("{self.file_path}"):\n{contents}'
 
     def update(self, *args, **kwargs):
-        """更新字典并持久化修改。"""
+        """更新字典并持久化修改。."""
         with self.lock:
             super().update(*args, **kwargs)
             self._save()
 
     def clear(self):
-        """清空所有条目并更新持久化存储。"""
+        """清空所有条目并更新持久化存储。."""
         with self.lock:
             super().clear()
             self._save()
 
 
 class SettingsManager(JSONDict):
-    """用于管理和持久化 Ultralytics 设置的 SettingsManager 类。
+    """用于管理和持久化 Ultralytics 设置的 SettingsManager 类。.
 
-    此类扩展 JSONDict，为设置提供 JSON 持久化，确保操作线程安全并提供默认值。初始化时会验证设置，
-    并提供更新或重置设置的方法。设置包括数据集、权重和运行结果目录，以及各种集成开关。
+    此类扩展 JSONDict，为设置提供 JSON 持久化，确保操作线程安全并提供默认值。初始化时会验证设置， 并提供更新或重置设置的方法。设置包括数据集、权重和运行结果目录，以及各种集成开关。
 
     属性：
         file (Path): 用于持久化的 JSON 文件路径。
@@ -1365,7 +1357,7 @@ class SettingsManager(JSONDict):
     """
 
     def __init__(self, file=SETTINGS_FILE, version="0.0.7"):
-        """使用默认设置初始化 SettingsManager，并加载用户设置。"""
+        """使用默认设置初始化 SettingsManager，并加载用户设置。."""
         import hashlib
         import uuid
 
@@ -1413,7 +1405,7 @@ class SettingsManager(JSONDict):
             self._validate_settings()
 
     def _validate_settings(self):
-        """验证设置，并将有效值迁移到当前架构。"""
+        """验证设置，并将有效值迁移到当前架构。."""
         correct_keys = frozenset(self.keys()) == frozenset(self.defaults.keys())
         correct_types = all(isinstance(self.get(k), type(v)) for k, v in self.defaults.items())
         correct_version = self.get("settings_version", "") == self.version
@@ -1424,12 +1416,11 @@ class SettingsManager(JSONDict):
                 f"{self.help_msg}"
             )
             valid = {k: v for k, v in self.items() if k in self.defaults and isinstance(v, type(self.defaults[k]))}
-            if not re.fullmatch(r"ul_[0-9a-f]{40}", valid.get("api_key", "")):
-                if valid.get("api_key"):
-                    LOGGER.warning(
-                        f"Legacy API key removed. Get a Platform API key from {PLATFORM_URL}/settings?tab=api-keys "
-                        "and run 'yolo login API_KEY'."
-                    )
+            if not re.fullmatch(r"ul_[0-9a-f]{40}", valid.get("api_key", "")) and valid.get("api_key"):
+                LOGGER.warning(
+                    f"Legacy API key removed. Get a Platform API key from {PLATFORM_URL}/settings?tab=api-keys "
+                    "and run 'yolo login API_KEY'."
+                )
             valid["api_key"] = ""  # 丢弃无法通过 Platform 身份验证的旧密钥
             valid["settings_version"] = self.version
             self.clear()
@@ -1443,11 +1434,11 @@ class SettingsManager(JSONDict):
             )
 
     def __setitem__(self, key, value):
-        """更新一个键值对。"""
+        """更新一个键值对。."""
         self.update({key: value})
 
     def update(self, *args, **kwargs):
-        """验证键和值类型后更新设置。"""
+        """验证键和值类型后更新设置。."""
         for arg in args:
             if isinstance(arg, dict):
                 kwargs.update(arg)
@@ -1462,13 +1453,13 @@ class SettingsManager(JSONDict):
         super().update(*args, **kwargs)
 
     def reset(self):
-        """将设置重置为默认值并保存。"""
+        """将设置重置为默认值并保存。."""
         self.clear()
         self.update(self.defaults)
 
 
 def deprecation_warn(arg, new_arg=None):
-    """使用弃用参数时发出弃用警告，并建议使用更新后的参数。"""
+    """使用弃用参数时发出弃用警告，并建议使用更新后的参数。."""
     msg = f"'{arg}' is deprecated and will be removed in the future."
     if new_arg is not None:
         msg += f" Use '{new_arg}' instead."
@@ -1476,18 +1467,18 @@ def deprecation_warn(arg, new_arg=None):
 
 
 def clean_url(url):
-    """移除 URL 中的身份验证信息，例如将 `https://example.com/path/file.txt?auth` 转为 `https://example.com/path/file.txt`。"""
+    """移除 URL 中的身份验证信息，例如将 `https://example.com/path/file.txt?auth` 转为 `https://example.com/path/file.txt`。."""
     url = Path(url).as_posix().replace(":/", "://")  # Pathlib 会将 :// 转为 :/，as_posix() 用于 Windows
     return unquote(url).split("?", 1)[0]  # 将 '%2F' 转为 '/'，并去除认证查询字符串
 
 
 def url2file(url):
-    """将 URL 转换为文件名，例如将 `https://example.com/path/file.txt?auth` 转为 `file.txt`。"""
+    """将 URL 转换为文件名，例如将 `https://example.com/path/file.txt?auth` 转为 `file.txt`。."""
     return Path(clean_url(url)).name or "download"
 
 
 def vscode_msg(ext="ultralytics.ultralytics-snippets") -> str:
-    """如果尚未安装 Ultralytics-Snippets，则显示安装 VS Code 扩展的提示。"""
+    """如果尚未安装 Ultralytics-Snippets，则显示安装 VS Code 扩展的提示。."""
     path = (USER_CONFIG_DIR.parents[2] if WINDOWS else USER_CONFIG_DIR.parents[1]) / ".vscode/extensions"
     obs_file = path / ".obsolete"  # 该文件记录已卸载的扩展，而源目录仍可能保留
     installed = any(path.glob(f"{ext}*")) and ext not in (obs_file.read_text("utf-8") if obs_file.exists() else "")

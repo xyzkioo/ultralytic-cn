@@ -7,7 +7,7 @@ from ultralytics.solutions.solutions import BaseSolution, SolutionResults
 
 
 class InstanceSegmentation(BaseSolution):
-    """管理图像或视频流中实例分割任务的类。
+    """管理图像或视频流中实例分割任务的类。.
 
     此类扩展 BaseSolution，提供实例分割功能，包括绘制分割掩码、边界框和标签。
 
@@ -34,7 +34,7 @@ class InstanceSegmentation(BaseSolution):
     """
 
     def __init__(self, **kwargs: Any) -> None:
-        """初始化 InstanceSegmentation 类，用于检测和标注分割实例。
+        """初始化 InstanceSegmentation 类，用于检测和标注分割实例。.
 
         参数：
             **kwargs (Any): 传递给 BaseSolution 父类的关键字参数，包括：
@@ -48,7 +48,7 @@ class InstanceSegmentation(BaseSolution):
         self.show_boxes = self.CFG.get("show_boxes", True)
 
     def process(self, im0) -> SolutionResults:
-        """在输入图像上执行实例分割并标注结果。
+        """在输入图像上执行实例分割并标注结果。.
 
         参数：
             im0 (np.ndarray): 用于分割的输入图像。
