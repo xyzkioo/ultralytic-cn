@@ -16,7 +16,7 @@ from ultralytics.utils.plotting import plot_images
 
 
 class OBBValidator(DetectionValidator):
-    """继承 DetectionValidator 的验证器，用于验证旋转边界框（OBB）模型。
+    """继承 DetectionValidator 的验证器，用于验证旋转边界框（OBB）模型。.
 
     此验证器专门评估预测旋转边界框的模型，常用于目标可能呈现不同方向的航空和卫星图像。
 
@@ -43,7 +43,7 @@ class OBBValidator(DetectionValidator):
     """
 
     def __init__(self, dataloader=None, save_dir=None, args=None, _callbacks: dict | None = None) -> None:
-        """初始化 OBBValidator，并将任务设置为 'obb'、指标设置为 OBBMetrics。
+        """初始化 OBBValidator，并将任务设置为 'obb'、指标设置为 OBBMetrics。.
 
         此构造函数初始化用于验证旋转边界框（OBB）模型的 OBBValidator 实例。
         它继承 DetectionValidator，并针对 OBB 任务进行专门配置。
@@ -59,7 +59,7 @@ class OBBValidator(DetectionValidator):
         self.metrics = OBBMetrics()
 
     def init_metrics(self, model: torch.nn.Module) -> None:
-        """初始化 YOLO OBB 验证的评估指标。
+        """初始化 YOLO OBB 验证的评估指标。.
 
         参数：
             model (torch.nn.Module): 待验证的模型。
@@ -70,7 +70,7 @@ class OBBValidator(DetectionValidator):
         self.confusion_matrix.task = "obb"  # 将混淆矩阵任务设置为 'obb'
 
     def _process_batch(self, preds: dict[str, torch.Tensor], batch: dict[str, torch.Tensor]) -> dict[str, np.ndarray]:
-        """计算检测结果与真实边界框批次的正确预测矩阵。
+        """计算检测结果与真实边界框批次的正确预测矩阵。.
 
         参数：
             preds (dict[str, torch.Tensor]): 包含 'cls' 和 'bboxes' 键的预测字典，表示检测类别标签和边界框。
@@ -91,7 +91,7 @@ class OBBValidator(DetectionValidator):
         return {"tp": self.match_predictions(preds["cls"], batch["cls"], iou).cpu().numpy()}
 
     def postprocess(self, preds: torch.Tensor) -> list[dict[str, torch.Tensor]]:
-        """后处理 OBB 预测结果。
+        """后处理 OBB 预测结果。.
 
         参数：
             preds (torch.Tensor): 模型输出的原始预测结果。
@@ -105,7 +105,7 @@ class OBBValidator(DetectionValidator):
         return preds
 
     def _prepare_batch(self, si: int, batch: dict[str, Any]) -> dict[str, Any]:
-        """按正确的缩放和格式准备 OBB 验证批次数据。
+        """按正确的缩放和格式准备 OBB 验证批次数据。.
 
         参数：
             si (int): 样本在批次中的索引。
@@ -138,7 +138,7 @@ class OBBValidator(DetectionValidator):
         }
 
     def plot_predictions(self, batch: dict[str, Any], preds: list[dict[str, torch.Tensor]], ni: int) -> None:
-        """在输入图像上绘制预测旋转边界框并保存结果。
+        """在输入图像上绘制预测旋转边界框并保存结果。.
 
         参数：
             batch (dict[str, Any]): 包含图像、文件路径和其他元数据的批次数据。
@@ -167,7 +167,7 @@ class OBBValidator(DetectionValidator):
         )
 
     def pred_to_json(self, predn: dict[str, torch.Tensor], pbatch: dict[str, Any]) -> None:
-        """将 YOLO 预测结果转换为包含旋转边界框信息的 COCO JSON 格式。
+        """将 YOLO 预测结果转换为包含旋转边界框信息的 COCO JSON 格式。.
 
         参数：
             predn (dict[str, torch.Tensor]): 包含 'bboxes'、'conf' 和 'cls' 键的预测字典，分别表示边界框坐标、置信度分数和类别预测结果。
@@ -195,7 +195,7 @@ class OBBValidator(DetectionValidator):
             )
 
     def save_one_txt(self, predn: dict[str, torch.Tensor], save_conf: bool, shape: tuple[int, int], file: Path) -> None:
-        """按归一化坐标将 YOLO OBB 检测结果保存到文本文件。
+        """按归一化坐标将 YOLO OBB 检测结果保存到文本文件。.
 
         参数：
             predn (dict[str, torch.Tensor]): 包含 'bboxes'、'conf' 和 'cls' 键的预测字典，分别表示带角度的边界框坐标、置信度分数和类别预测结果。
@@ -224,7 +224,7 @@ class OBBValidator(DetectionValidator):
         ).save_txt(file, save_conf=save_conf)
 
     def scale_preds(self, predn: dict[str, torch.Tensor], pbatch: dict[str, Any]) -> dict[str, torch.Tensor]:
-        """将预测结果缩放到原始图像尺寸。"""
+        """将预测结果缩放到原始图像尺寸。."""
         return {
             **predn,
             "bboxes": ops.scale_boxes(
@@ -233,7 +233,7 @@ class OBBValidator(DetectionValidator):
         }
 
     def eval_json(self, stats: dict[str, Any]) -> dict[str, Any]:
-        """评估 JSON 格式的 YOLO 输出，并以 DOTA 格式保存预测结果。
+        """评估 JSON 格式的 YOLO 输出，并以 DOTA 格式保存预测结果。.
 
         参数：
             stats (dict[str, Any]): Performance statistics 字典.

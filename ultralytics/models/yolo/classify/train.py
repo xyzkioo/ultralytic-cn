@@ -17,7 +17,7 @@ from ultralytics.utils.torch_utils import is_parallel, torch_distributed_zero_fi
 
 
 class ClassificationTrainer(BaseTrainer):
-    """继承 BaseTrainer 的训练器，用于训练图像分类模型。
+    """继承 BaseTrainer 的训练器，用于训练图像分类模型。.
 
     此训练器负责图像分类任务的训练流程，同时支持 YOLO 分类模型和 torchvision 模型，并提供完整的数据集处理与验证功能。
 
@@ -48,7 +48,7 @@ class ClassificationTrainer(BaseTrainer):
     """
 
     def __init__(self, cfg=DEFAULT_CFG, overrides: dict[str, Any] | None = None, _callbacks: dict | None = None):
-        """初始化 ClassificationTrainer 对象。
+        """初始化 ClassificationTrainer 对象。.
 
         参数：
             cfg (dict[str, Any], 可选): 包含训练参数的默认配置字典。
@@ -63,11 +63,11 @@ class ClassificationTrainer(BaseTrainer):
         super().__init__(cfg, overrides, _callbacks)
 
     def set_model_attributes(self):
-        """从加载的数据集中设置 YOLO 模型的类别名称。"""
+        """从加载的数据集中设置 YOLO 模型的类别名称。."""
         self.model.names = self.data["names"]
 
     def get_model(self, cfg=None, weights=None, verbose: bool = True):
-        """返回配置好的修改版 PyTorch YOLO 分类模型。
+        """返回配置好的修改版 PyTorch YOLO 分类模型。.
 
         参数：
             cfg (Any, 可选): 模型配置。
@@ -91,7 +91,7 @@ class ClassificationTrainer(BaseTrainer):
         return model
 
     def setup_model(self):
-        """为分类任务加载、创建或下载模型。
+        """为分类任务加载、创建或下载模型。.
 
         返回：
             (Any): 适用时返回模型检查点，否则返回 None。
@@ -109,7 +109,7 @@ class ClassificationTrainer(BaseTrainer):
         return ckpt
 
     def build_dataset(self, img_path: str, mode: str = "train", batch=None):
-        """根据图像路径和模式创建 ClassificationDataset 实例。
+        """根据图像路径和模式创建 ClassificationDataset 实例。.
 
         参数：
             img_path (str): 数据集图像路径。
@@ -122,7 +122,7 @@ class ClassificationTrainer(BaseTrainer):
         return ClassificationDataset(root=img_path, args=self.args, augment=mode == "train", prefix=mode)
 
     def get_dataloader(self, dataset_path: str, batch_size: int = 16, rank: int = 0, mode: str = "train"):
-        """返回包含图像预处理变换的 PyTorch 数据加载器。
+        """返回包含图像预处理变换的 PyTorch 数据加载器。.
 
         参数：
             dataset_path (str): 数据集路径。
@@ -172,13 +172,13 @@ class ClassificationTrainer(BaseTrainer):
         return loader
 
     def preprocess_batch(self, batch: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
-        """预处理图像和类别组成的批次。"""
+        """预处理图像和类别组成的批次。."""
         batch["img"] = batch["img"].to(self.device, non_blocking=self.device.type not in {"cpu", "mps"})
         batch["cls"] = batch["cls"].to(self.device, non_blocking=self.device.type not in {"cpu", "mps"})
         return batch
 
     def progress_string(self) -> str:
-        """返回显示训练进度的格式化字符串。"""
+        """返回显示训练进度的格式化字符串。."""
         return ("\n" + "%11s" * (4 + len(self.loss_names))) % (
             "Epoch",
             "GPU_mem",
@@ -188,13 +188,13 @@ class ClassificationTrainer(BaseTrainer):
         )
 
     def get_validator(self):
-        """返回用于验证的 ClassificationValidator 实例。"""
+        """返回用于验证的 ClassificationValidator 实例。."""
         return yolo.classify.ClassificationValidator(
             self.test_loader, self.save_dir, args=copy(self.args), _callbacks=self.callbacks
         )
 
     def plot_training_samples(self, batch: dict[str, torch.Tensor], ni: int):
-        """绘制带有标注的训练样本。
+        """绘制带有标注的训练样本。.
 
         参数：
             batch (dict[str, torch.Tensor]): 包含图像和类别标签的批次数据。

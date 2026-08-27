@@ -21,7 +21,7 @@ from .blocks import (
 
 
 class ImageEncoderViT(nn.Module):
-    """使用 Vision Transformer（ViT）架构将图像编码到紧凑潜在空间的图像编码器。
+    """使用 Vision Transformer（ViT）架构将图像编码到紧凑潜在空间的图像编码器。.
 
     此类将图像划分为图像块，应用 Transformer 块，并通过 neck 模块生成最终编码表示。
 
@@ -62,7 +62,7 @@ class ImageEncoderViT(nn.Module):
         window_size: int = 0,
         global_attn_indexes: tuple[int, ...] = (),
     ) -> None:
-        """初始化使用 Vision Transformer 架构编码图像的 ImageEncoderViT 实例。
+        """初始化使用 Vision Transformer 架构编码图像的 ImageEncoderViT 实例。.
 
         参数：
             img_size (int): 输入图像尺寸，假定为正方形。
@@ -132,7 +132,7 @@ class ImageEncoderViT(nn.Module):
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """依次通过图像块嵌入、位置嵌入、Transformer 块和 neck 模块处理输入。"""
+        """依次通过图像块嵌入、位置嵌入、Transformer 块和 neck 模块处理输入。."""
         x = self.patch_embed(x)
         if self.pos_embed is not None:
             pos_embed = (
@@ -147,7 +147,7 @@ class ImageEncoderViT(nn.Module):
 
 
 class PromptEncoder(nn.Module):
-    """编码输入 SAM 掩码解码器的不同类型提示，生成稀疏嵌入和密集嵌入。
+    """编码输入 SAM 掩码解码器的不同类型提示，生成稀疏嵌入和密集嵌入。.
 
     属性：
         embed_dim (int): 嵌入维度。
@@ -183,7 +183,7 @@ class PromptEncoder(nn.Module):
         mask_in_chans: int,
         activation: type[nn.Module] = nn.GELU,
     ) -> None:
-        """初始化用于编码各种类型提示的 PromptEncoder 模块。
+        """初始化用于编码各种类型提示的 PromptEncoder 模块。.
 
         参数：
             embed_dim (int): 嵌入维度。
@@ -216,7 +216,7 @@ class PromptEncoder(nn.Module):
         self.no_mask_embed = nn.Embedding(1, embed_dim)
 
     def get_dense_pe(self) -> torch.Tensor:
-        """返回用于编码点提示的密集位置编码。
+        """返回用于编码点提示的密集位置编码。.
 
         为与图像编码形状匹配的密集点集合生成位置编码，在处理点提示时为模型提供空间信息。
 
@@ -232,7 +232,7 @@ class PromptEncoder(nn.Module):
         return self.pe_layer(self.image_embedding_size).unsqueeze(0)
 
     def _embed_points(self, points: torch.Tensor, labels: torch.Tensor, pad: bool) -> torch.Tensor:
-        """应用位置编码和标签专属嵌入，编码点提示。"""
+        """应用位置编码和标签专属嵌入，编码点提示。."""
         points = points + 0.5  # 移动到像素中心
         if pad:
             padding_point = torch.zeros((points.shape[0], 1, 2), dtype=points.dtype, device=points.device)
@@ -249,7 +249,7 @@ class PromptEncoder(nn.Module):
         return point_embedding
 
     def _embed_boxes(self, boxes: torch.Tensor) -> torch.Tensor:
-        """应用位置编码并添加角点嵌入，编码边界框提示。"""
+        """应用位置编码并添加角点嵌入，编码边界框提示。."""
         boxes = boxes + 0.5  # 移动到像素中心
         coords = boxes.reshape(-1, 2, 2)
         corner_embedding = self.pe_layer.forward_with_coords(coords, self.input_image_size)
@@ -258,7 +258,7 @@ class PromptEncoder(nn.Module):
         return corner_embedding
 
     def _embed_masks(self, masks: torch.Tensor) -> torch.Tensor:
-        """通过下采样和卷积层处理输入掩码并生成嵌入。"""
+        """通过下采样和卷积层处理输入掩码并生成嵌入。."""
         return self.mask_downscaling(masks)
 
     @staticmethod
@@ -267,7 +267,7 @@ class PromptEncoder(nn.Module):
         boxes: torch.Tensor | None,
         masks: torch.Tensor | None,
     ) -> int:
-        """根据输入提示的批次大小获取输出批次大小。"""
+        """根据输入提示的批次大小获取输出批次大小。."""
         if points is not None:
             return points[0].shape[0]
         elif boxes is not None:
@@ -283,7 +283,7 @@ class PromptEncoder(nn.Module):
         boxes: torch.Tensor | None,
         masks: torch.Tensor | None,
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        """编码不同类型的提示，同时返回稀疏嵌入和密集嵌入。
+        """编码不同类型的提示，同时返回稀疏嵌入和密集嵌入。.
 
         参数：
             points (tuple[torch.Tensor, torch.Tensor] | None): 要编码的点坐标和标签。第一个张量包含形状为 (B, N, 2) 的坐标，第二个张量包含形状为 (B, N) 的标签。
@@ -328,7 +328,7 @@ class PromptEncoder(nn.Module):
 
 
 class MemoryEncoder(nn.Module):
-    """将像素特征和掩码编码为内存表示，以高效执行图像分割。
+    """将像素特征和掩码编码为内存表示，以高效执行图像分割。.
 
     此类处理像素级特征和掩码，将其融合为编码后的内存表示，供 SAM（Segment Anything Model）等图像分割模型的下游任务使用。
 
@@ -358,7 +358,7 @@ class MemoryEncoder(nn.Module):
         in_dim=256,  # pix_feats 的输入维度
         interpol_size: tuple[int, int] | None = None,
     ):
-        """初始化将像素特征和掩码编码为内存表示的 MemoryEncoder。
+        """初始化将像素特征和掩码编码为内存表示的 MemoryEncoder。.
 
         此编码器处理像素级特征和掩码并将其融合，生成适用于 SAM（Segment Anything Model）等图像分割模型下游任务的内存表示。
 
@@ -384,7 +384,7 @@ class MemoryEncoder(nn.Module):
         masks: torch.Tensor,
         skip_mask_sigmoid: bool = False,
     ) -> dict:
-        """处理像素特征和掩码，生成用于分割的编码内存表示。"""
+        """处理像素特征和掩码，生成用于分割的编码内存表示。."""
         if not skip_mask_sigmoid:
             masks = F.sigmoid(masks)
         masks = self.mask_downsampler(masks)
@@ -403,7 +403,7 @@ class MemoryEncoder(nn.Module):
 
 
 class ImageEncoder(nn.Module):
-    """使用 trunk-neck 架构编码图像，生成多尺度特征和位置编码。
+    """使用 trunk-neck 架构编码图像，生成多尺度特征和位置编码。.
 
     此类将用于特征提取的 trunk 网络与用于特征细化和位置编码生成的 neck 网络结合起来，并可选择丢弃最低分辨率特征。
 
@@ -431,7 +431,7 @@ class ImageEncoder(nn.Module):
         neck: nn.Module,
         scalp: int = 0,
     ):
-        """使用 trunk 和 neck 网络初始化用于特征提取和细化的 ImageEncoder。
+        """使用 trunk 和 neck 网络初始化用于特征提取和细化的 ImageEncoder。.
 
         此编码器将 trunk 特征提取网络与 neck 特征细化及位置编码生成网络结合，并可选择丢弃最低分辨率特征。
 
@@ -449,7 +449,7 @@ class ImageEncoder(nn.Module):
         )
 
     def forward(self, sample: torch.Tensor):
-        """通过 trunk 和 neck 网络编码输入，返回多尺度特征和位置编码。"""
+        """通过 trunk 和 neck 网络编码输入，返回多尺度特征和位置编码。."""
         features, pos = self.neck(self.trunk(sample))
         if self.scalp > 0:
             # 丢弃最低分辨率特征
@@ -464,7 +464,7 @@ class ImageEncoder(nn.Module):
 
 
 class FpnNeck(nn.Module):
-    """用于目标检测模型多尺度特征融合的特征金字塔网络（FPN）neck 变体。
+    """用于目标检测模型多尺度特征融合的特征金字塔网络（FPN）neck 变体。.
 
     此 FPN 变体移除输出卷积，并使用可配置插值（默认双线性）调整特征尺寸，类似于 ViT 位置嵌入插值。
 
@@ -499,7 +499,7 @@ class FpnNeck(nn.Module):
         fuse_type: str = "sum",
         fpn_top_down_levels: list[int] | None = None,
     ):
-        """初始化改进的特征金字塔网络（FPN）neck。
+        """初始化改进的特征金字塔网络（FPN）neck。.
 
         此 FPN 变体移除输出卷积，并使用可配置插值（默认双线性）调整特征尺寸，类似于 ViT 位置嵌入插值。
 
@@ -544,7 +544,7 @@ class FpnNeck(nn.Module):
         self.fpn_top_down_levels = list(fpn_top_down_levels)
 
     def forward(self, xs: list[torch.Tensor]):
-        """通过特征金字塔网络（FPN）neck 执行前向传播。
+        """通过特征金字塔网络（FPN）neck 执行前向传播。.
 
         此方法将 backbone 输入张量列表送入 FPN，应用横向连接和自顶向下特征融合，生成输出特征图及对应的位置编码。
 
@@ -594,7 +594,7 @@ class FpnNeck(nn.Module):
 
 
 class Hiera(nn.Module):
-    """用于图像处理任务高效提取多尺度特征的层次化视觉 Transformer。
+    """用于图像处理任务高效提取多尺度特征的层次化视觉 Transformer。.
 
     此类实现 Hiera 模型，这是一种为高效提取多尺度特征而设计的层次化视觉 Transformer 架构。它将一系列 Transformer 块组织为多个阶段，并支持可选池化和全局注意力机制。
 
@@ -650,7 +650,7 @@ class Hiera(nn.Module):
         ),
         return_interm_layers=True,  # 返回每个阶段的特征
     ):
-        """初始化用于高效提取多尺度特征的层次化视觉 Transformer Hiera 模型。
+        """初始化用于高效提取多尺度特征的层次化视觉 Transformer Hiera 模型。.
 
         Hiera 是一种为图像处理任务高效提取多尺度特征而设计的层次化视觉 Transformer 架构。它将 Transformer 块组织为多个阶段，并支持可选池化和全局注意力机制。
 
@@ -731,7 +731,7 @@ class Hiera(nn.Module):
         )
 
     def _get_pos_embed(self, hw: tuple[int, int]) -> torch.Tensor:
-        """通过插值并组合窗口嵌入与背景嵌入生成位置嵌入。"""
+        """通过插值并组合窗口嵌入与背景嵌入生成位置嵌入。."""
         h, w = hw
         window_embed = self.pos_embed_window
         pos_embed = F.interpolate(self.pos_embed, size=(h, w), mode="bicubic")
@@ -740,7 +740,7 @@ class Hiera(nn.Module):
         return pos_embed
 
     def forward(self, x: torch.Tensor) -> list[torch.Tensor]:
-        """执行 Hiera 模型的前向传播，从输入图像中提取多尺度特征。
+        """执行 Hiera 模型的前向传播，从输入图像中提取多尺度特征。.
 
         参数：
             x (torch.Tensor): 输入张量，形状为 (B, C, H, W)，表示一批图像。

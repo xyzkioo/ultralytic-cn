@@ -14,14 +14,13 @@ from .base import BaseBackend
 
 
 class NCNNBackend(BaseBackend):
-    """用于移动端和嵌入式部署的腾讯 NCNN 推理后端。
+    """用于移动端和嵌入式部署的腾讯 NCNN 推理后端。.
 
-    加载并执行腾讯 NCNN 模型（*_ncnn_model/ 目录）推理。
-    针对移动平台进行优化，并在可用时支持可选的 Vulkan GPU 加速。
+    加载并执行腾讯 NCNN 模型（*_ncnn_model/ 目录）推理。 针对移动平台进行优化，并在可用时支持可选的 Vulkan GPU 加速。
     """
 
     def load_model(self, weight: str | Path) -> None:
-        """从 .param/.bin 文件对或模型目录加载 NCNN 模型。
+        """从 .param/.bin 文件对或模型目录加载 NCNN 模型。.
 
         参数：
             weight (str | Path): .param 文件或包含 NCNN 模型文件的目录路径。
@@ -51,7 +50,7 @@ class NCNNBackend(BaseBackend):
         self.apply_metadata(self.read_metadata(w))
 
     def forward(self, im: torch.Tensor) -> list[np.ndarray]:
-        """使用 NCNN 运行时执行推理。
+        """使用 NCNN 运行时执行推理。.
 
         参数：
             im (torch.Tensor): 输入图像 张量 in BCHW format, normalized to [0, 1].

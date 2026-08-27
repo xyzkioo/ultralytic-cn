@@ -14,7 +14,7 @@ from ultralytics.utils.checks import check_requirements
 
 
 class LLM:
-    """兼容 OpenAI 接口的大语言模型类。
+    """兼容 OpenAI 接口的大语言模型类。.
 
     属性：
         model (str): 每次请求发送的模型名称。
@@ -51,7 +51,7 @@ class LLM:
         prompt: str | None = None,
         **kwargs: Any,
     ) -> None:
-        """初始化兼容 OpenAI 接口的 LLM。
+        """初始化兼容 OpenAI 接口的 LLM。.
 
         参数：
             model (str): 模型名称。
@@ -74,11 +74,11 @@ class LLM:
         self._api_key = api_key
 
     def __call__(self, source: Any = None, image: Any = None, **kwargs: Any) -> Any:
-        """使用已配置的模型执行推理。"""
+        """使用已配置的模型执行推理。."""
         return self._call(self._prepare(source, image), kwargs)
 
     def _call(self, source: Any, kwargs: dict[str, Any]) -> Any:
-        """通过同步客户端发送准备好的输入。"""
+        """通过同步客户端发送准备好的输入。."""
         request = self._request(source, kwargs)
         client = self._get_client()
         return (
@@ -86,11 +86,11 @@ class LLM:
         )
 
     async def async_call(self, source: Any = None, image: Any = None, **kwargs: Any) -> Any:
-        """使用已配置的模型执行异步推理。"""
+        """使用已配置的模型执行异步推理。."""
         return await self._async_call(self._prepare(source, image), kwargs)
 
     async def _async_call(self, source: Any, kwargs: dict[str, Any]) -> Any:
-        """通过异步客户端发送准备好的输入。"""
+        """通过异步客户端发送准备好的输入。."""
         request = self._request(source, kwargs)
         client = self._get_async_client()
         return (
@@ -100,7 +100,7 @@ class LLM:
         )
 
     def _request(self, source: Any, kwargs: dict[str, Any]) -> dict[str, Any]:
-        """构建 Responses 或 Chat Completions 请求。
+        """构建 Responses 或 Chat Completions 请求。.
 
         参数：
             source (Any, 可选): Responses 输入或聊天消息。字符串会转换为 Chat Completions 的用户消息。
@@ -118,7 +118,7 @@ class LLM:
         return request
 
     def _prepare(self, source: Any, image: Any = None) -> Any:
-        """规范化文本或图像输入，同时保留原生消息载荷。"""
+        """规范化文本或图像输入，同时保留原生消息载荷。."""
         if image is None:
             if source is None:
                 return self.prompt
@@ -155,7 +155,7 @@ class LLM:
 
     @staticmethod
     def _image_url(source: Any) -> str:
-        """将图像 URL、路径或数组转换为 OpenAI 图像 URL。"""
+        """将图像 URL、路径或数组转换为 OpenAI 图像 URL。."""
         if isinstance(source, str) and source.startswith(("http://", "https://", "data:image/")):
             return source
         if isinstance(source, (str, Path)):
@@ -174,7 +174,7 @@ class LLM:
         return f"data:image/jpeg;base64,{base64.b64encode(buffer).decode()}"
 
     def _get_client(self) -> Any:
-        """首次推理时创建 OpenAI 客户端。"""
+        """首次推理时创建 OpenAI 客户端。."""
         if self.client is None:
             check_requirements("openai>=2.0.0")
             from openai import OpenAI
@@ -184,7 +184,7 @@ class LLM:
         return self.client
 
     def _get_async_client(self) -> Any:
-        """首次推理时创建异步 OpenAI 客户端。"""
+        """首次推理时创建异步 OpenAI 客户端。."""
         if self.async_client is None:
             check_requirements("openai>=2.0.0")
             from openai import AsyncOpenAI

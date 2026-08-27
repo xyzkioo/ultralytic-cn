@@ -20,7 +20,7 @@ from .tal import bbox2dist, rbox2dist
 
 
 class VarifocalLoss(nn.Module):
-    """Zhang 等人提出的 Varifocal Loss。
+    """Zhang 等人提出的 Varifocal Loss。.
 
     该损失函数通过关注难分类样本并平衡正负样本，解决目标检测中的类别不平衡问题。
 
@@ -33,13 +33,13 @@ class VarifocalLoss(nn.Module):
     """
 
     def __init__(self, gamma: float = 2.0, alpha: float = 0.75):
-        """使用聚焦参数和平衡参数初始化 VarifocalLoss。"""
+        """使用聚焦参数和平衡参数初始化 VarifocalLoss。."""
         super().__init__()
         self.gamma = gamma
         self.alpha = alpha
 
     def forward(self, pred_score: torch.Tensor, gt_score: torch.Tensor, label: torch.Tensor) -> torch.Tensor:
-        """计算预测结果与真实标签之间的 varifocal 损失。"""
+        """计算预测结果与真实标签之间的 varifocal 损失。."""
         weight = self.alpha * pred_score.sigmoid().pow(self.gamma) * (1 - label) + gt_score * label
         with autocast(enabled=False, device=pred_score.device.type):
             loss = (
@@ -51,7 +51,7 @@ class VarifocalLoss(nn.Module):
 
 
 class FocalLoss(nn.Module):
-    """在现有 loss_fcn() 外封装 Focal Loss，例如 criteria = FocalLoss(nn.BCEWithLogitsLoss(), gamma=1.5)。
+    """在现有 loss_fcn() 外封装 Focal Loss，例如 criteria = FocalLoss(nn.BCEWithLogitsLoss(), gamma=1.5)。.
 
     该损失函数通过降低简单样本的权重并关注训练期间的困难负样本，解决类别不平衡问题。
 
@@ -61,13 +61,13 @@ class FocalLoss(nn.Module):
     """
 
     def __init__(self, gamma: float = 1.5, alpha: float = 0.25):
-        """使用聚焦参数和平衡参数初始化 FocalLoss。"""
+        """使用聚焦参数和平衡参数初始化 FocalLoss。."""
         super().__init__()
         self.gamma = gamma
         self.alpha = torch.tensor(alpha)
 
     def forward(self, pred: torch.Tensor, label: torch.Tensor) -> torch.Tensor:
-        """计算带调制因子的 focal 损失，以解决类别不平衡问题。"""
+        """计算带调制因子的 focal 损失，以解决类别不平衡问题。."""
         loss = F.binary_cross_entropy_with_logits(pred, label, reduction="none")
         # p_t = torch.exp(-loss)
         # 损失 *= self.alpha * (1.000001 - p_t) ** self.gamma  # 使用非零幂以保持梯度稳定
@@ -85,15 +85,15 @@ class FocalLoss(nn.Module):
 
 
 class DFLoss(nn.Module):
-    """用于计算分布焦点损失（DFL）的损失准则。"""
+    """用于计算分布焦点损失（DFL）的损失准则。."""
 
     def __init__(self, reg_max: int = 16) -> None:
-        """使用回归最大值初始化 DFL 模块。"""
+        """使用回归最大值初始化 DFL 模块。."""
         super().__init__()
         self.reg_max = reg_max
 
     def __call__(self, pred_dist: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
-        """返回左侧和右侧 DFL 损失的加权和，方法参见 https://arxiv.org/abs/2006.04388。"""
+        """返回左侧和右侧 DFL 损失的加权和，方法参见 https://arxiv.org/abs/2006.04388。."""
         target = target.clamp_(0, self.reg_max - 1 - 0.01)
         tl = target.long()  # 目标 left
         tr = tl + 1  # 目标 right
@@ -107,10 +107,10 @@ class DFLoss(nn.Module):
 
 
 class BboxLoss(nn.Module):
-    """用于计算目标检测训练中边界框损失的损失准则。"""
+    """用于计算目标检测训练中边界框损失的损失准则。."""
 
     def __init__(self, reg_max: int = 16):
-        """使用回归最大值和 DFL 设置初始化 BboxLoss 模块。"""
+        """使用回归最大值和 DFL 设置初始化 BboxLoss 模块。."""
         super().__init__()
         self.dfl_loss = DFLoss(reg_max) if reg_max > 1 else None
 
@@ -126,7 +126,7 @@ class BboxLoss(nn.Module):
         imgsz: torch.Tensor,
         stride: torch.Tensor,
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        """计算边界框的 IoU 损失和 DFL 损失。"""
+        """计算边界框的 IoU 损失和 DFL 损失。."""
         weight = target_scores[fg_mask].sum(-1, keepdim=True)
         iou = bbox_iou(pred_bboxes[fg_mask], target_bboxes[fg_mask], xywh=False, CIoU=True)
         loss_iou = ((1.0 - iou) * weight).sum() / target_scores_sum
@@ -154,7 +154,7 @@ class BboxLoss(nn.Module):
 
 
 class RLELoss(nn.Module):
-    """残差对数似然估计损失。
+    """残差对数似然估计损失。.
 
     属性：
         size_average (bool): 是否按批次大小对损失求平均。
@@ -167,7 +167,7 @@ class RLELoss(nn.Module):
     """
 
     def __init__(self, use_target_weight: bool = True, size_average: bool = True, residual: bool = True):
-        """使用目标权重和残差选项初始化 RLELoss。
+        """使用目标权重和残差选项初始化 RLELoss。.
 
         参数：
             use_target_weight (bool): 是否使用目标权重计算损失。
@@ -182,12 +182,8 @@ class RLELoss(nn.Module):
     def forward(
         self, sigma: torch.Tensor, log_phi: torch.Tensor, error: torch.Tensor, target_weight: torch.Tensor = None
     ) -> torch.Tensor:
-        """
-        参数：
-            sigma (torch.Tensor): 输出 sigma，形状为 (N, D)。
-            log_phi (torch.Tensor): 输出 log_phi，形状为 (N)。
-            error (torch.Tensor): 误差，形状为 (N, D)。
-            target_weight (torch.Tensor): 不同关节类型的权重，形状为 (N)。
+        """参数： sigma (torch.Tensor): 输出 sigma，形状为 (N, D)。 log_phi (torch.Tensor): 输出 log_phi，形状为 (N)。 error
+        (torch.Tensor): 误差，形状为 (N, D)。 target_weight (torch.Tensor): 不同关节类型的权重，形状为 (N)。.
         """
         log_sigma = torch.log(sigma)
         loss = log_sigma - log_phi.unsqueeze(1)
@@ -208,12 +204,12 @@ class RLELoss(nn.Module):
 
 
 class RotatedBboxLoss(BboxLoss):
-    """用于计算旋转边界框训练损失的损失准则。"""
+    """用于计算旋转边界框训练损失的损失准则。."""
 
     floor = 0.01
 
     def __init__(self, reg_max: int):
-        """使用回归最大值和 DFL 设置初始化 RotatedBboxLoss 模块。"""
+        """使用回归最大值和 DFL 设置初始化 RotatedBboxLoss 模块。."""
         super().__init__(reg_max)
 
     def forward(
@@ -228,7 +224,7 @@ class RotatedBboxLoss(BboxLoss):
         imgsz: torch.Tensor,
         stride: torch.Tensor,
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        """计算旋转边界框的 IoU 损失和 DFL 损失。"""
+        """计算旋转边界框的 IoU 损失和 DFL 损失。."""
         weight = target_scores[fg_mask].sum(-1, keepdim=True)
         iou = probiou(pred_bboxes[fg_mask], target_bboxes[fg_mask], floor=self.floor)
         loss_iou = ((1.0 - iou) * weight).sum() / target_scores_sum
@@ -257,10 +253,10 @@ class RotatedBboxLoss(BboxLoss):
 
 
 class MultiChannelDiceLoss(nn.Module):
-    """用于计算多通道 Dice 损失的损失准则。"""
+    """用于计算多通道 Dice 损失的损失准则。."""
 
     def __init__(self, smooth: float = 1e-6, reduction: str = "mean"):
-        """使用平滑和归约选项初始化 MultiChannelDiceLoss。
+        """使用平滑和归约选项初始化 MultiChannelDiceLoss。.
 
         参数：
             smooth (float): 用于避免除零的平滑因子。
@@ -271,7 +267,7 @@ class MultiChannelDiceLoss(nn.Module):
         self.reduction = reduction
 
     def forward(self, pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
-        """计算预测结果与目标之间的多通道 Dice 损失。"""
+        """计算预测结果与目标之间的多通道 Dice 损失。."""
         assert pred.size() == target.size(), "预测结果和目标的尺寸必须相同。"
 
         pred = pred.sigmoid()
@@ -290,10 +286,10 @@ class MultiChannelDiceLoss(nn.Module):
 
 
 class BCEDiceLoss(nn.Module):
-    """用于计算 BCE 与 Dice 组合损失的损失准则。"""
+    """用于计算 BCE 与 Dice 组合损失的损失准则。."""
 
     def __init__(self, weight_bce: float = 0.5, weight_dice: float = 0.5):
-        """使用 BCE 和 Dice 的权重因子初始化 BCEDiceLoss。
+        """使用 BCE 和 Dice 的权重因子初始化 BCEDiceLoss。.
 
         参数：
             weight_bce (float): BCE 损失分量的权重因子。
@@ -306,7 +302,7 @@ class BCEDiceLoss(nn.Module):
         self.dice = MultiChannelDiceLoss(smooth=1)
 
     def forward(self, pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
-        """计算预测结果与目标之间的 BCE 和 Dice 组合损失。"""
+        """计算预测结果与目标之间的 BCE 和 Dice 组合损失。."""
         _, _, mask_h, mask_w = pred.shape
         if tuple(target.shape[-2:]) != (mask_h, mask_w):  # 下采样到与 pred 相同的尺寸
             target = F.interpolate(target, (mask_h, mask_w), mode="nearest")
@@ -314,17 +310,17 @@ class BCEDiceLoss(nn.Module):
 
 
 class KeypointLoss(nn.Module):
-    """用于计算关键点损失的损失准则。"""
+    """用于计算关键点损失的损失准则。."""
 
     def __init__(self, sigmas: torch.Tensor) -> None:
-        """使用关键点 sigma 初始化 KeypointLoss。"""
+        """使用关键点 sigma 初始化 KeypointLoss。."""
         super().__init__()
         self.sigmas = sigmas
 
     def forward(
         self, pred_kpts: torch.Tensor, gt_kpts: torch.Tensor, kpt_mask: torch.Tensor, area: torch.Tensor
     ) -> torch.Tensor:
-        """计算关键点损失因子和关键点的欧氏距离损失。"""
+        """计算关键点损失因子和关键点的欧氏距离损失。."""
         d = (pred_kpts[..., 0] - gt_kpts[..., 0]).pow(2) + (pred_kpts[..., 1] - gt_kpts[..., 1]).pow(2)
         kpt_loss_factor = kpt_mask.shape[1] / (torch.sum(kpt_mask != 0, dim=1) + 1e-9)
         # e = d / (2 * (area * self.sigmas) ** 2 + 1e-9)  # 根据公式计算
@@ -333,12 +329,12 @@ class KeypointLoss(nn.Module):
 
 
 class v8DetectionLoss:
-    """用于计算 YOLOv8 目标检测训练损失的损失准则。"""
+    """用于计算 YOLOv8 目标检测训练损失的损失准则。."""
 
     def __init__(
         self, model: torch.nn.Module, tal_topk: int = 10, tal_topk2: int | None = None
     ):  # 模型必须解除并行封装
-        """使用模型参数和任务对齐分配设置初始化 v8DetectionLoss。"""
+        """使用模型参数和任务对齐分配设置初始化 v8DetectionLoss。."""
         device = next(model.parameters()).device  # 获取模型设备
         h = model.args  # 超参数
 
@@ -371,7 +367,7 @@ class v8DetectionLoss:
         self.proj = torch.arange(m.reg_max, dtype=torch.float, device=device)
 
     def preprocess(self, targets: torch.Tensor, batch_size: int, scale_tensor: torch.Tensor) -> torch.Tensor:
-        """将目标转换为张量格式并缩放坐标。"""
+        """将目标转换为张量格式并缩放坐标。."""
         nl, ne = targets.shape
         if nl == 0:
             out = torch.zeros(batch_size, 0, ne - 1, device=self.device)
@@ -389,7 +385,7 @@ class v8DetectionLoss:
         return out
 
     def bbox_decode(self, anchor_points: torch.Tensor, pred_dist: torch.Tensor) -> torch.Tensor:
-        """根据锚框点和分布解码预测的目标边界框坐标。"""
+        """根据锚框点和分布解码预测的目标边界框坐标。."""
         if self.use_dfl:
             b, a, c = pred_dist.shape  # batch, 锚框, 通道
             pred_dist = pred_dist.view(b, a, 4, c // 4).softmax(3).matmul(self.proj.type(pred_dist.dtype))
@@ -398,8 +394,7 @@ class v8DetectionLoss:
         return dist2bbox(pred_dist, anchor_points, xywh=False)
 
     def get_assigned_targets_and_loss(self, preds: dict[str, torch.Tensor], batch: dict[str, Any]) -> tuple:
-        """计算边界框、cls 和 dfl 损失之和并乘以批次大小，同时返回前景掩码和目标索引。
-        """
+        """计算边界框、cls 和 dfl 损失之和并乘以批次大小，同时返回前景掩码和目标索引。."""
         loss = torch.zeros(3, device=self.device)  # 边界框, cls, dfl
         pred_distri, pred_scores = (
             preds["boxes"].permute(0, 2, 1).contiguous(),
@@ -463,7 +458,7 @@ class v8DetectionLoss:
     def parse_output(
         self, preds: dict[str, torch.Tensor] | tuple[torch.Tensor, dict[str, torch.Tensor]]
     ) -> torch.Tensor:
-        """解析模型预测结果并提取特征。"""
+        """解析模型预测结果并提取特征。."""
         return preds[1] if isinstance(preds, tuple) else preds
 
     def __call__(
@@ -471,25 +466,25 @@ class v8DetectionLoss:
         preds: dict[str, torch.Tensor] | tuple[torch.Tensor, dict[str, torch.Tensor]],
         batch: dict[str, torch.Tensor],
     ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
-        """计算边界框、cls 和 dfl 损失之和，并乘以批次大小。"""
+        """计算边界框、cls 和 dfl 损失之和，并乘以批次大小。."""
         return self.loss(self.parse_output(preds), batch)
 
     def loss(
         self, preds: dict[str, torch.Tensor], batch: dict[str, torch.Tensor]
     ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
-        """使用已分配的目标计算检测损失。"""
+        """使用已分配的目标计算检测损失。."""
         batch_size = preds["boxes"].shape[0]
         loss, loss_detach = self.get_assigned_targets_and_loss(preds, batch)[1:]
         return loss * batch_size, loss_detach
 
 
 class v8SegmentationLoss(v8DetectionLoss):
-    """用于计算 YOLOv8 分割训练损失的损失准则。"""
+    """用于计算 YOLOv8 分割训练损失的损失准则。."""
 
     def __init__(
         self, model: torch.nn.Module, tal_topk: int = 10, tal_topk2: int | None = None
     ):  # 模型必须解除并行封装
-        """使用模型参数和掩码重叠设置初始化 v8SegmentationLoss。"""
+        """使用模型参数和掩码重叠设置初始化 v8SegmentationLoss。."""
         super().__init__(model, tal_topk, tal_topk2)
         self.loss_names = ("box_loss", "seg_loss", *self.loss_names[1:], "sem_loss")
         self.overlap = model.args.overlap_mask
@@ -498,7 +493,7 @@ class v8SegmentationLoss(v8DetectionLoss):
     def loss(
         self, preds: dict[str, torch.Tensor], batch: dict[str, torch.Tensor]
     ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
-        """计算并返回检测和分割的组合损失。"""
+        """计算并返回检测和分割的组合损失。."""
         pred_masks, proto = preds["mask_coefficient"].permute(0, 2, 1).contiguous(), preds["proto"]
         loss = torch.zeros(5, device=self.device)  # 边界框, seg, cls, dfl, semantic
         if isinstance(proto, tuple) and len(proto) == 2:
@@ -561,7 +556,7 @@ class v8SegmentationLoss(v8DetectionLoss):
     def single_mask_loss(
         gt_mask: torch.Tensor, pred: torch.Tensor, proto: torch.Tensor, xyxy: torch.Tensor, area: torch.Tensor
     ) -> torch.Tensor:
-        """计算单张图像的实例分割损失。
+        """计算单张图像的实例分割损失。.
 
         参数：
             gt_mask (torch.Tensor): 真实掩码，形状为 (N, H, W)，其中 N 为目标数量。
@@ -592,7 +587,7 @@ class v8SegmentationLoss(v8DetectionLoss):
         pred_masks: torch.Tensor,
         imgsz: torch.Tensor,
     ) -> torch.Tensor:
-        """计算实例分割损失。
+        """计算实例分割损失。.
 
         参数：
             fg_mask (torch.Tensor): 二值张量，形状为 (BS, N_anchors)，表示哪些锚框为正样本。
@@ -647,10 +642,10 @@ class v8SegmentationLoss(v8DetectionLoss):
 
 
 class v8PoseLoss(v8DetectionLoss):
-    """用于计算 YOLOv8 姿态估计训练损失的损失准则。"""
+    """用于计算 YOLOv8 姿态估计训练损失的损失准则。."""
 
     def __init__(self, model: torch.nn.Module, tal_topk: int = 10, tal_topk2: int = 10):  # 模型必须解除并行封装
-        """使用模型参数和关键点专用损失函数初始化 v8PoseLoss。"""
+        """使用模型参数和关键点专用损失函数初始化 v8PoseLoss。."""
         super().__init__(model, tal_topk, tal_topk2)
         self.loss_names = ("box_loss", "pose_loss", "kobj_loss", *self.loss_names[1:])
         self.kpt_shape = model.model[-1].kpt_shape
@@ -673,7 +668,7 @@ class v8PoseLoss(v8DetectionLoss):
     def loss(
         self, preds: dict[str, torch.Tensor], batch: dict[str, torch.Tensor]
     ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
-        """计算总损失，并将其分离用于姿态估计。"""
+        """计算总损失，并将其分离用于姿态估计。."""
         pred_kpts = preds["kpts"].permute(0, 2, 1).contiguous()
         loss = torch.zeros(5, device=self.device)  # 边界框, kpt_location, kpt_visibility, cls, dfl
         (fg_mask, target_gt_idx, target_bboxes, anchor_points, stride_tensor), det_loss, _ = (
@@ -711,7 +706,7 @@ class v8PoseLoss(v8DetectionLoss):
 
     @staticmethod
     def kpts_decode(anchor_points: torch.Tensor, pred_kpts: torch.Tensor) -> torch.Tensor:
-        """将预测关键点解码为图像坐标。"""
+        """将预测关键点解码为图像坐标。."""
         y = pred_kpts.clone()
         y[..., :2] *= 2.0
         y[..., 0] += anchor_points[:, [0]] - 0.5
@@ -725,7 +720,7 @@ class v8PoseLoss(v8DetectionLoss):
         target_gt_idx: torch.Tensor,
         masks: torch.Tensor,
     ) -> torch.Tensor:
-        """根据批次索引和目标真实索引，为每个锚框选择目标关键点。
+        """根据批次索引和目标真实索引，为每个锚框选择目标关键点。.
 
         参数：
             keypoints (torch.Tensor): 真实关键点，形状为 (N_kpts_in_batch, N_kpts_per_object, kpts_dim)。
@@ -775,7 +770,7 @@ class v8PoseLoss(v8DetectionLoss):
         target_bboxes: torch.Tensor,
         pred_kpts: torch.Tensor,
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        """计算模型的关键点损失。
+        """计算模型的关键点损失。.
 
         此函数计算给定批次的关键点损失和关键点目标损失。关键点损失基于预测关键点与真实关键点的差异，
         关键点目标损失是用于判断关键点是否存在的二分类损失。
@@ -815,12 +810,12 @@ class v8PoseLoss(v8DetectionLoss):
 
 
 class PoseLoss26(v8PoseLoss):
-    """支持 RLE 损失、用于计算 YOLO26 姿态估计训练损失的损失准则。"""
+    """支持 RLE 损失、用于计算 YOLO26 姿态估计训练损失的损失准则。."""
 
     def __init__(
         self, model: torch.nn.Module, tal_topk: int = 10, tal_topk2: int | None = None
     ):  # 模型必须解除并行封装
-        """使用模型参数和关键点专用损失函数（包括 RLE 损失）初始化 PoseLoss26。"""
+        """使用模型参数和关键点专用损失函数（包括 RLE 损失）初始化 PoseLoss26。."""
         super().__init__(model, tal_topk, tal_topk2)
         is_pose = self.kpt_shape == [17, 3]
         nkpt = self.kpt_shape[0]  # 关键点数量
@@ -836,7 +831,7 @@ class PoseLoss26(v8PoseLoss):
     def loss(
         self, preds: dict[str, torch.Tensor], batch: dict[str, torch.Tensor]
     ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
-        """计算总损失，并将其分离用于姿态估计。"""
+        """计算总损失，并将其分离用于姿态估计。."""
         pred_kpts = preds["kpts"].permute(0, 2, 1).contiguous()
         loss = torch.zeros(
             6 if self.rle_loss else 5, device=self.device
@@ -889,14 +884,14 @@ class PoseLoss26(v8PoseLoss):
 
     @staticmethod
     def kpts_decode(anchor_points: torch.Tensor, pred_kpts: torch.Tensor) -> torch.Tensor:
-        """将预测关键点解码为图像坐标。"""
+        """将预测关键点解码为图像坐标。."""
         y = pred_kpts.clone()
         y[..., 0] += anchor_points[:, [0]]
         y[..., 1] += anchor_points[:, [1]]
         return y
 
     def calculate_rle_loss(self, pred_kpt: torch.Tensor, gt_kpt: torch.Tensor, kpt_mask: torch.Tensor) -> torch.Tensor:
-        """计算关键点的 RLE（残差对数似然估计）损失。
+        """计算关键点的 RLE（残差对数似然估计）损失。.
 
         参数：
             pred_kpt (torch.Tensor): 带 sigma 的预测关键点，形状为 (N, num_keypoints, kpts_dim)，其中 kpts_dim >= 4。
@@ -947,7 +942,7 @@ class PoseLoss26(v8PoseLoss):
         target_bboxes: torch.Tensor,
         pred_kpts: torch.Tensor,
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        """计算模型的关键点损失。
+        """计算模型的关键点损失。.
 
         此函数计算给定批次的关键点损失和关键点目标损失。关键点损失基于预测关键点与真实关键点之间的差异，
         关键点目标损失是用于判断关键点是否存在的二分类损失。
@@ -992,20 +987,20 @@ class PoseLoss26(v8PoseLoss):
 
 
 class v8ClassificationLoss:
-    """用于计算分类训练损失的损失准则。"""
+    """用于计算分类训练损失的损失准则。."""
 
     def __call__(self, preds: Any, batch: dict[str, torch.Tensor]) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
-        """计算预测结果与真实标签之间的分类损失。"""
+        """计算预测结果与真实标签之间的分类损失。."""
         preds = preds[1] if isinstance(preds, (list, tuple)) else preds
         loss = F.cross_entropy(preds, batch["cls"], reduction="mean")
         return loss, {"loss": loss.detach()}
 
 
 class v8OBBLoss(v8DetectionLoss):
-    """计算旋转 YOLO 模型中的目标检测、分类和边界框分布损失。"""
+    """计算旋转 YOLO 模型中的目标检测、分类和边界框分布损失。."""
 
     def __init__(self, model: torch.nn.Module, tal_topk=10, tal_topk2: int | None = None):
-        """使用模型、分配器和旋转边界框损失初始化 v8OBBLoss；模型必须已解除并行封装。"""
+        """使用模型、分配器和旋转边界框损失初始化 v8OBBLoss；模型必须已解除并行封装。."""
         super().__init__(model, tal_topk=tal_topk)
         self.loss_names = (*self.loss_names, "angle_loss")
         self.assigner = RotatedTaskAlignedAssigner(
@@ -1019,7 +1014,7 @@ class v8OBBLoss(v8DetectionLoss):
         self.bbox_loss = RotatedBboxLoss(self.reg_max).to(self.device)
 
     def preprocess(self, targets: torch.Tensor, batch_size: int, scale_tensor: torch.Tensor) -> torch.Tensor:
-        """为有向边界框检测预处理目标。"""
+        """为有向边界框检测预处理目标。."""
         if targets.shape[0] == 0:
             out = torch.zeros(batch_size, 0, 6, device=self.device)
         else:
@@ -1039,7 +1034,7 @@ class v8OBBLoss(v8DetectionLoss):
     def loss(
         self, preds: dict[str, torch.Tensor], batch: dict[str, torch.Tensor]
     ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
-        """计算并返回有向边界框检测损失。"""
+        """计算并返回有向边界框检测损失。."""
         loss = torch.zeros(4, device=self.device)  # 边界框, cls, dfl, angle
         pred_distri, pred_scores, pred_angle = (
             preds["boxes"].permute(0, 2, 1).contiguous(),
@@ -1125,7 +1120,7 @@ class v8OBBLoss(v8DetectionLoss):
     def bbox_decode(
         self, anchor_points: torch.Tensor, pred_dist: torch.Tensor, pred_angle: torch.Tensor
     ) -> torch.Tensor:
-        """根据锚框点和分布解码预测的目标边界框坐标。
+        """根据锚框点和分布解码预测的目标边界框坐标。.
 
         参数：
             anchor_points (torch.Tensor): 锚框点，形状为 (h*w, 2)。
@@ -1141,7 +1136,7 @@ class v8OBBLoss(v8DetectionLoss):
         return torch.cat((dist2rbox(pred_dist, pred_angle, anchor_points), pred_angle), dim=-1)
 
     def calculate_angle_loss(self, pred_bboxes, target_bboxes, fg_mask, weight, target_scores_sum, lambda_val=3):
-        """计算有向边界框的角度损失。
+        """计算有向边界框的角度损失。.
 
         参数：
             pred_bboxes (torch.Tensor): 预测边界框，形状为 [N, 5]（x、y、w、h、theta）。
@@ -1173,10 +1168,9 @@ class v8OBBLoss(v8DetectionLoss):
 
 
 class DepthLoss26:
-    """用于计算 YOLO 深度估计训练损失的损失准则。
+    """用于计算 YOLO 深度估计训练损失的损失准则。.
 
-    遵循 Depth Anything 方法，使用尺度不变对数损失（SILog）和梯度匹配损失。
-    SILog 处理尺度歧义，梯度损失保留边缘。
+    遵循 Depth Anything 方法，使用尺度不变对数损失（SILog）和梯度匹配损失。 SILog 处理尺度歧义，梯度损失保留边缘。
     """
 
     def __init__(self, model: torch.nn.Module):
@@ -1192,7 +1186,7 @@ class DepthLoss26:
 
     @staticmethod
     def _grad_l1(pred_log: torch.Tensor, gt_log: torch.Tensor, valid_f: torch.Tensor) -> torch.Tensor:
-        """计算预测值与真实值 log-depth 空间梯度（dx、dy）之间的 L1 损失，并使用有效掩码进行筛选。
+        """计算预测值与真实值 log-depth 空间梯度（dx、dy）之间的 L1 损失，并使用有效掩码进行筛选。.
 
         只有在参与计算的两个像素都有效时才保留梯度，因此只在真实值有定义的位置匹配边缘。
         """
@@ -1266,15 +1260,15 @@ class DepthLoss26:
 
 
 class E2EDetectLoss:
-    """计算端到端检测训练损失的准则类。"""
+    """计算端到端检测训练损失的准则类。."""
 
     def __init__(self, model: torch.nn.Module):
-        """使用给定模型初始化 E2EDetectLoss，并配置一对多和一对一检测损失。"""
+        """使用给定模型初始化 E2EDetectLoss，并配置一对多和一对一检测损失。."""
         self.one2many = v8DetectionLoss(model, tal_topk=10)
         self.one2one = v8DetectionLoss(model, tal_topk=1)
 
     def __call__(self, preds: Any, batch: dict[str, torch.Tensor]) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
-        """计算边界框、分类和 DFL 损失之和，并乘以批次大小。"""
+        """计算边界框、分类和 DFL 损失之和，并乘以批次大小。."""
         preds = preds[1] if isinstance(preds, tuple) else preds
         one2many = preds["one2many"]
         loss_one2many = self.one2many(one2many, batch)
@@ -1286,10 +1280,10 @@ class E2EDetectLoss:
 
 
 class E2ELoss:
-    """计算端到端检测训练损失的准则类。"""
+    """计算端到端检测训练损失的准则类。."""
 
     def __init__(self, model: torch.nn.Module, loss_fn=v8DetectionLoss):
-        """使用给定模型初始化 E2ELoss，并配置一对多和一对一检测损失。"""
+        """使用给定模型初始化 E2ELoss，并配置一对多和一对一检测损失。."""
         self.one2many = loss_fn(model, tal_topk=10)
         self.one2one = loss_fn(model, tal_topk=7, tal_topk2=1)
         self.updates = 0
@@ -1302,7 +1296,7 @@ class E2ELoss:
         self.final_o2m = 0.1
 
     def __call__(self, preds: Any, batch: dict[str, torch.Tensor]) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
-        """计算边界框、分类和 DFL 损失之和，并乘以批次大小。"""
+        """计算边界框、分类和 DFL 损失之和，并乘以批次大小。."""
         preds = self.one2many.parse_output(preds)
         one2many, one2one = preds["one2many"], preds["one2one"]
         loss_one2many = self.one2many.loss(one2many, batch)
@@ -1310,21 +1304,21 @@ class E2ELoss:
         return loss_one2many[0] * self.o2m + loss_one2one[0] * self.o2o, loss_one2one[1]
 
     def update(self) -> None:
-        """根据衰减计划更新一对多损失和一对一损失的权重。"""
+        """根据衰减计划更新一对多损失和一对一损失的权重。."""
         self.updates += 1
         self.o2m = self.decay(self.updates)
         self.o2o = max(self.total - self.o2m, 0)
 
     def decay(self, x) -> float:
-        """根据当前更新步数计算一对多损失的衰减权重。"""
+        """根据当前更新步数计算一对多损失的衰减权重。."""
         return max(1 - x / max(self.one2one.hyp.epochs - 1, 1), 0) * (self.o2m_copy - self.final_o2m) + self.final_o2m
 
 
 class TVPDetectLoss:
-    """计算文本-视觉提示检测训练损失的准则类。"""
+    """计算文本-视觉提示检测训练损失的准则类。."""
 
     def __init__(self, model: torch.nn.Module, tal_topk=10, tal_topk2: int | None = None):
-        """使用给定模型初始化 TVPDetectLoss，并配置任务提示和视觉提示准则。"""
+        """使用给定模型初始化 TVPDetectLoss，并配置任务提示和视觉提示准则。."""
         self.vp_criterion = v8DetectionLoss(model, tal_topk, tal_topk2)
         self.loss_names = tuple(k[:-5] for k in self.vp_criterion.loss_names)  # 去除 "_loss" 后缀
         # 注意：以下信息会在 __call__ 中变化，因此需要保存
@@ -1334,17 +1328,17 @@ class TVPDetectLoss:
         self.ori_reg_max = self.vp_criterion.reg_max
 
     def parse_output(self, preds) -> dict[str, torch.Tensor]:
-        """解析模型预测结果并提取特征。"""
+        """解析模型预测结果并提取特征。."""
         return self.vp_criterion.parse_output(preds)
 
     def __call__(self, preds: Any, batch: dict[str, torch.Tensor]) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
-        """计算文本-视觉提示检测损失。"""
+        """计算文本-视觉提示检测损失。."""
         return self.loss(self.parse_output(preds), batch)
 
     def loss(
         self, preds: dict[str, torch.Tensor], batch: dict[str, torch.Tensor]
     ) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
-        """计算文本-视觉提示检测损失。"""
+        """计算文本-视觉提示检测损失。."""
         if self.ori_nc == preds["scores"].shape[1]:
             loss = torch.zeros(3, device=self.vp_criterion.device, requires_grad=True)
             return loss, dict(zip(self.loss_names, loss.detach()))
@@ -1354,7 +1348,7 @@ class TVPDetectLoss:
         return vp_loss[0][1], dict(zip(self.loss_names, vp_loss[1].values()))
 
     def _get_vp_features(self, preds: dict[str, torch.Tensor]) -> list[torch.Tensor]:
-        """从模型输出中提取视觉提示特征。"""
+        """从模型输出中提取视觉提示特征。."""
         scores = preds["scores"]
         vnc = scores.shape[1]
 
@@ -1365,21 +1359,21 @@ class TVPDetectLoss:
 
 
 class TVPSegmentLoss(TVPDetectLoss):
-    """计算文本-视觉提示分割训练损失的准则类。"""
+    """计算文本-视觉提示分割训练损失的准则类。."""
 
     def __init__(self, model: torch.nn.Module, tal_topk=10, tal_topk2: int | None = None):
-        """使用给定模型初始化 TVPSegmentLoss，并配置任务提示和视觉提示准则。"""
+        """使用给定模型初始化 TVPSegmentLoss，并配置任务提示和视觉提示准则。."""
         super().__init__(model)
         self.vp_criterion = v8SegmentationLoss(model, tal_topk, tal_topk2)
         self.loss_names = tuple(k[:-5] for k in self.vp_criterion.loss_names if k != "sem_loss")  # 去除 "_loss" 后缀
         self.hyp = self.vp_criterion.hyp
 
     def __call__(self, preds: Any, batch: dict[str, torch.Tensor]) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
-        """计算文本-视觉提示分割损失。"""
+        """计算文本-视觉提示分割损失。."""
         return self.loss(self.parse_output(preds), batch)
 
     def loss(self, preds: Any, batch: dict[str, torch.Tensor]) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
-        """计算文本-视觉提示分割损失。"""
+        """计算文本-视觉提示分割损失。."""
         if self.ori_nc == preds["scores"].shape[1]:
             loss = torch.zeros(4, device=self.vp_criterion.device, requires_grad=True)
             return loss, dict(zip(self.loss_names, loss.detach()))
@@ -1392,7 +1386,7 @@ class TVPSegmentLoss(TVPDetectLoss):
 
 
 class SemanticSegmentationLoss(nn.Module):
-    """使用交叉熵项和 Dice 项计算语义分割损失。
+    """使用交叉熵项和 Dice 项计算语义分割损失。.
 
     属性：
         nc (int): 语义类别数量。
@@ -1400,7 +1394,7 @@ class SemanticSegmentationLoss(nn.Module):
     """
 
     def __init__(self, model: torch.nn.Module):
-        """初始化语义分割损失。
+        """初始化语义分割损失。.
 
         参数：
             model (torch.nn.Module): 包含 SemanticSegment 头部的模型。
@@ -1425,7 +1419,7 @@ class SemanticSegmentationLoss(nn.Module):
                 self.ce.register_buffer("weight", weight, persistent=False)
 
     def _resize_masks(self, masks, target_shape):
-        """调整掩码尺寸，使其匹配预测结果的空间维度。"""
+        """调整掩码尺寸，使其匹配预测结果的空间维度。."""
         if masks.shape[1:] != target_shape:
             return (
                 F.interpolate(masks.float().unsqueeze(1), size=target_shape, mode="nearest").squeeze(1).to(torch.int32)
@@ -1433,7 +1427,7 @@ class SemanticSegmentationLoss(nn.Module):
         return masks
 
     def _ce_loss(self, preds, masks, valid):
-        """在展平的像素上计算交叉熵，以避免使用 CUDA nll_loss2d 路径。"""
+        """在展平的像素上计算交叉熵，以避免使用 CUDA nll_loss2d 路径。."""
         flat = masks.reshape(-1)
         if self.nc == 1:
             logits = preds.reshape(-1)[valid]
@@ -1461,7 +1455,7 @@ class SemanticSegmentationLoss(nn.Module):
         return (1.0 - (2.0 * intersection + 1.0) / (cardinality + 1.0)).mean()
 
     def _binary_dice_loss(self, preds, masks, valid):
-        """计算单类别（二分类）分割的 Dice 损失。
+        """计算单类别（二分类）分割的 Dice 损失。.
 
         值为 255 的像素会从 Dice 项中排除，以匹配 BCE 的有效像素筛选规则。
         """
@@ -1473,7 +1467,7 @@ class SemanticSegmentationLoss(nn.Module):
         return 1.0 - (2.0 * intersection + 1.0) / (cardinality + 1.0)
 
     def forward(self, preds, batch):
-        """计算语义分割损失，并支持可选的辅助损失。
+        """计算语义分割损失，并支持可选的辅助损失。.
 
         参数：
             preds (torch.Tensor | tuple): 主 logits [B, nc, H', W']，或 (main, aux) 元组。

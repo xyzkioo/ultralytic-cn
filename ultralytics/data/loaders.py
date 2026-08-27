@@ -26,7 +26,7 @@ from ultralytics.utils.patches import imread
 
 @dataclass
 class SourceTypes:
-    """表示预测输入源不同类型的类。
+    """表示预测输入源不同类型的类。.
 
     此类使用 dataclass 定义布尔标志，用于区分 YOLO 模型预测时可能使用的不同输入源类型。
 
@@ -51,7 +51,7 @@ class SourceTypes:
 
 
 class LoadStreams:
-    """用于加载多种视频流的流式加载器。
+    """用于加载多种视频流的流式加载器。.
 
     支持 RTSP、RTMP、HTTP 和 TCP 流。此类可以同时加载和处理多个视频流，适用于实时视频分析任务。
 
@@ -91,7 +91,7 @@ class LoadStreams:
     """
 
     def __init__(self, sources: str = "file.streams", vid_stride: int = 1, buffer: bool = False, channels: int = 3):
-        """初始化支持多种流类型的多视频源流式加载器。
+        """初始化支持多种流类型的多视频源流式加载器。.
 
         参数：
             sources (str): streams 文件路径或单个视频流 URL。
@@ -135,9 +135,7 @@ class LoadStreams:
                 w = int(self.caps[i].get(cv2.CAP_PROP_FRAME_WIDTH))
                 h = int(self.caps[i].get(cv2.CAP_PROP_FRAME_HEIGHT))
                 fps = self.caps[i].get(cv2.CAP_PROP_FPS)  # 注意：可能返回 0 或 nan
-                self.frames[i] = max(int(self.caps[i].get(cv2.CAP_PROP_FRAME_COUNT)), 0) or float(
-                    "inf"
-                )  # 无限流回退值
+                self.frames[i] = max(int(self.caps[i].get(cv2.CAP_PROP_FRAME_COUNT)), 0) or float("inf")  # 无限流回退值
                 self.fps[i] = max((fps if math.isfinite(fps) else 0) % 100, 0) or 30  # 30 FPS 回退值
 
                 success, im = self.caps[i].read()  # 确保读取第一帧
@@ -155,7 +153,7 @@ class LoadStreams:
         LOGGER.info("")  # 换行
 
     def update(self, i: int, cap: cv2.VideoCapture, stream: str):
-        """在线程中读取视频流帧，并更新图像缓冲区。"""
+        """在线程中读取视频流帧，并更新图像缓冲区。."""
         n, f = 0, self.frames[i]  # 当前帧数量、总帧数
         while self.running and cap.isOpened() and n < (f - 1):
             if len(self.imgs[i]) < 30:  # 保持不超过 30 张图像的缓冲区
@@ -177,7 +175,7 @@ class LoadStreams:
                 time.sleep(0.01)  # 等待缓冲区变空
 
     def close(self):
-        """终止流式加载器，停止线程并释放视频捕获资源。"""
+        """终止流式加载器，停止线程并释放视频捕获资源。."""
         self.running = False  # 线程停止标志
         for thread in self.threads:
             if thread is not None and thread.is_alive():
@@ -191,12 +189,12 @@ class LoadStreams:
                 LOGGER.warning(f"Could not release VideoCapture object: {e}")
 
     def __iter__(self):
-        """返回迭代器对象，并重置帧计数器。"""
+        """返回迭代器对象，并重置帧计数器。."""
         self.count = -1
         return self
 
     def __next__(self) -> tuple[list[str], list[np.ndarray], list[str]]:
-        """返回多个视频流的下一批帧，供后续处理。"""
+        """返回多个视频流的下一批帧，供后续处理。."""
         self.count += 1
 
         images = []
@@ -223,12 +221,12 @@ class LoadStreams:
         return self.sources, images, [""] * self.bs
 
     def __len__(self) -> int:
-        """返回 LoadStreams 对象中视频流的数量。"""
+        """返回 LoadStreams 对象中视频流的数量。."""
         return self.bs
 
 
 class LoadScreenshots:
-    """用于捕获和处理屏幕图像的 Ultralytics 截图数据加载器。
+    """用于捕获和处理屏幕图像的 Ultralytics 截图数据加载器。.
 
     此类负责加载截图并将其交给 YOLO 处理，适用于 `yolo predict source=screen` 场景。
 
@@ -257,7 +255,7 @@ class LoadScreenshots:
     """
 
     def __init__(self, source: str, channels: int = 3):
-        """使用指定的屏幕和区域参数初始化截图捕获器。
+        """使用指定的屏幕和区域参数初始化截图捕获器。.
 
         参数：
             source (str): 屏幕捕获源字符串，格式为 `"screen_num left top width height"`。
@@ -290,11 +288,11 @@ class LoadScreenshots:
         self.monitor = {"left": self.left, "top": self.top, "width": self.width, "height": self.height}
 
     def __iter__(self):
-        """返回截图捕获器的迭代器对象。"""
+        """返回截图捕获器的迭代器对象。."""
         return self
 
     def __next__(self) -> tuple[list[str], list[np.ndarray], list[str]]:
-        """使用 mss 库捕获并返回下一张截图的 NumPy 数组。"""
+        """使用 mss 库捕获并返回下一张截图的 NumPy 数组。."""
         im0 = np.asarray(self.sct.grab(self.monitor))[:, :, :3]  # 从 BGRA 转为 BGR
         im0 = cv2.cvtColor(im0, cv2.COLOR_BGR2GRAY)[..., None] if self.cv2_flag == cv2.IMREAD_GRAYSCALE else im0
         s = f"screen {self.screen} (LTWH): {self.left},{self.top},{self.width},{self.height}: "
@@ -304,7 +302,7 @@ class LoadScreenshots:
 
 
 class LoadImagesAndVideos:
-    """用于为 YOLO 对象检测加载和处理图像与视频的类。
+    """用于为 YOLO 对象检测加载和处理图像与视频的类。.
 
     此类负责从多种来源加载并预处理图像和视频数据，包括单个图像文件、视频文件以及图像和视频路径列表。
 
@@ -342,7 +340,7 @@ class LoadImagesAndVideos:
     """
 
     def __init__(self, path: str | Path | list, batch: int = 1, vid_stride: int = 1, channels: int = 3):
-        """初始化图像和视频数据加载器，支持多种输入格式。
+        """初始化图像和视频数据加载器，支持多种输入格式。.
 
         参数：
             path (str | Path | 列表): 图像或视频路径、目录，或路径列表。
@@ -357,7 +355,9 @@ class LoadImagesAndVideos:
             path = [p.strip() for p in path]
         files = []
         for p in sorted(path) if isinstance(path, (list, tuple)) else [path]:
-            a = str(Path(p).absolute())  # 不要使用 .resolve()，详见 https://github.com/ultralytics/ultralytics/issues/2912
+            a = str(
+                Path(p).absolute()
+            )  # 不要使用 .resolve()，详见 https://github.com/ultralytics/ultralytics/issues/2912
             if "*" in a:
                 files.extend(sorted(glob.glob(a, recursive=True)))  # 使用 glob 模式匹配
             elif os.path.isdir(a):
@@ -395,12 +395,12 @@ class LoadImagesAndVideos:
             raise FileNotFoundError(f"No images or videos found in {p}. {FORMATS_HELP_MSG}")
 
     def __iter__(self):
-        """遍历图像和视频文件，依次返回源路径、图像和元数据。"""
+        """遍历图像和视频文件，依次返回源路径、图像和元数据。."""
         self.count = 0
         return self
 
     def __next__(self) -> tuple[list[str], list[np.ndarray], list[str]]:
-        """返回下一批图像或视频帧，以及对应的路径和元数据。"""
+        """返回下一批图像或视频帧，以及对应的路径和元数据。."""
         paths, imgs, info = [], [], []
         while len(imgs) < self.bs:
             if self.count >= self.nf:  # 文件列表结束
@@ -457,7 +457,7 @@ class LoadImagesAndVideos:
         return paths, imgs, info
 
     def _new_video(self, path: str):
-        """为指定路径创建新的视频捕获对象，并初始化视频相关属性。"""
+        """为指定路径创建新的视频捕获对象，并初始化视频相关属性。."""
         self.frame = 0
         self.cap = cv2.VideoCapture(path)
         self.fps = int(self.cap.get(cv2.CAP_PROP_FPS))
@@ -466,12 +466,12 @@ class LoadImagesAndVideos:
         self.frames = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT) / self.vid_stride)
 
     def __len__(self) -> int:
-        """返回数据集中的批次数量。"""
+        """返回数据集中的批次数量。."""
         return math.ceil(self.nf / self.bs)  # 批次数量
 
 
 class LoadPilAndNumpy:
-    """从 PIL 图像和 NumPy 数组加载图像，以便进行批处理。
+    """从 PIL 图像和 NumPy 数组加载图像，以便进行批处理。.
 
     此类负责加载并预处理 PIL 和 NumPy 格式的图像数据，执行基本验证和格式转换，确保图像符合后续处理的要求。
 
@@ -496,7 +496,7 @@ class LoadPilAndNumpy:
     """
 
     def __init__(self, im0: Image.Image | np.ndarray | list, channels: int = 3):
-        """初始化 PIL 和 NumPy 图像加载器，并将输入转换为统一格式。
+        """初始化 PIL 和 NumPy 图像加载器，并将输入转换为统一格式。.
 
         参数：
             im0 (PIL.Image.Image | np.ndarray | 列表): 单张图像，或 PIL/NumPy 格式的图像列表。
@@ -515,7 +515,7 @@ class LoadPilAndNumpy:
 
     @staticmethod
     def _single_check(im: Image.Image | np.ndarray, channels: int = 3) -> np.ndarray:
-        """验证单张图像，并统一其通道数量。
+        """验证单张图像，并统一其通道数量。.
 
         注意：
             - PIL 输入会转换为 NumPy 数组，彩色图像按 OpenCV 兼容的 BGR 顺序返回。
@@ -547,24 +547,24 @@ class LoadPilAndNumpy:
         return np.ascontiguousarray(im[..., :3])
 
     def __len__(self) -> int:
-        """返回 `im0` 属性的长度，即已加载图像的数量。"""
+        """返回 `im0` 属性的长度，即已加载图像的数量。."""
         return len(self.im0)
 
     def __next__(self) -> tuple[list[str], list[np.ndarray], list[str]]:
-        """返回下一批图像、路径和元数据，供后续处理。"""
+        """返回下一批图像、路径和元数据，供后续处理。."""
         if self.count == 1:  # 这是批量推理，因此只迭代一次
             raise StopIteration
         self.count += 1
         return self.paths, self.im0, [""] * self.bs
 
     def __iter__(self):
-        """遍历 PIL/NumPy 图像，依次返回路径、原始图像和元数据。"""
+        """遍历 PIL/NumPy 图像，依次返回路径、原始图像和元数据。."""
         self.count = 0
         return self
 
 
 class LoadTensor:
-    """用于为对象检测任务加载和处理张量数据的类。
+    """用于为对象检测任务加载和处理张量数据的类。.
 
     此类负责加载并预处理来自 PyTorch 张量的图像数据，为后续对象检测流程做好准备。
 
@@ -586,7 +586,7 @@ class LoadTensor:
     """
 
     def __init__(self, im0: torch.Tensor) -> None:
-        """初始化 LoadTensor 对象，以处理 torch.Tensor 图像数据。
+        """初始化 LoadTensor 对象，以处理 torch.Tensor 图像数据。.
 
         参数：
             im0 (torch.Tensor): 输入张量，形状为 (B, C, H, W)。
@@ -599,7 +599,7 @@ class LoadTensor:
 
     @staticmethod
     def _single_check(im: torch.Tensor, stride: int = 32) -> torch.Tensor:
-        """验证并格式化图像张量，确保形状正确且数值已归一化。"""
+        """验证并格式化图像张量，确保形状正确且数值已归一化。."""
         s = (
             f"torch.Tensor inputs should be BCHW i.e. shape(1, 3, 640, 640) "
             f"divisible by stride {stride}. Input shape{tuple(im.shape)} is incompatible."
@@ -612,32 +612,30 @@ class LoadTensor:
         if not all(im.shape) or im.shape[2] % stride or im.shape[3] % stride:
             raise ValueError(s)  # 零维度张量会在后续调用 im.max() 时触发错误
         if im.max() > 1.0 + (torch.finfo(im.dtype).eps if im.is_floating_point() else 0):
-            LOGGER.warning(
-                f"torch.Tensor 输入应归一化到 0.0-1.0，但当前最大值为 {im.max()}。正在将输入除以 255。"
-            )
+            LOGGER.warning(f"torch.Tensor 输入应归一化到 0.0-1.0，但当前最大值为 {im.max()}。正在将输入除以 255。")
             im = im.float() / 255.0
 
         return im
 
     def __iter__(self):
-        """返回用于遍历张量图像数据的迭代器对象。"""
+        """返回用于遍历张量图像数据的迭代器对象。."""
         self.count = 0
         return self
 
     def __next__(self) -> tuple[list[str], torch.Tensor, list[str]]:
-        """返回下一批张量图像和元数据，供后续处理。"""
+        """返回下一批张量图像和元数据，供后续处理。."""
         if self.count == 1:
             raise StopIteration
         self.count += 1
         return self.paths, self.im0, [""] * self.bs
 
     def __len__(self) -> int:
-        """返回张量输入的批次大小。"""
+        """返回张量输入的批次大小。."""
         return self.bs
 
 
 def autocast_list(source: list[Any]) -> list[Image.Image | np.ndarray]:
-    """将源列表转换为 NumPy 数组或 PIL 图像列表，供 Ultralytics 预测使用。"""
+    """将源列表转换为 NumPy 数组或 PIL 图像列表，供 Ultralytics 预测使用。."""
     files = []
     for im in source:
         if isinstance(im, (str, Path)):  # 文件名或 URI
@@ -662,7 +660,7 @@ def autocast_list(source: list[Any]) -> list[Image.Image | np.ndarray]:
 
 
 def get_best_youtube_url(url: str, method: str = "pytube") -> str | None:
-    """从指定的 YouTube 视频中获取质量最高的 MP4 视频流 URL。
+    """从指定的 YouTube 视频中获取质量最高的 MP4 视频流 URL。.
 
         参数：
         url (str): YouTube 视频的 URL。

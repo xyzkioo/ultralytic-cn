@@ -20,7 +20,7 @@ from .val import YOLOEDetectValidator, YOLOESegValidator
 
 
 class YOLOETrainer(DetectionTrainer):
-    """用于 YOLOE 目标检测模型的训练器。
+    """用于 YOLOE 目标检测模型的训练器。.
 
     此类扩展 DetectionTrainer，为 YOLOE 模型提供专用训练功能，包括自定义模型初始化、验证以及支持多模态的数据集构建。
 
@@ -34,7 +34,7 @@ class YOLOETrainer(DetectionTrainer):
     """
 
     def __init__(self, cfg=DEFAULT_CFG, overrides: dict | None = None, _callbacks: dict | None = None):
-        """使用指定配置初始化 YOLOE 训练器。
+        """使用指定配置初始化 YOLOE 训练器。.
 
         参数：
             cfg (dict): 来自 DEFAULT_CFG 的默认训练设置配置字典。
@@ -48,7 +48,7 @@ class YOLOETrainer(DetectionTrainer):
         super().__init__(cfg, overrides, _callbacks)
 
     def get_model(self, cfg=None, weights=None, verbose: bool = True):
-        """使用指定配置和权重初始化并返回适合当前任务的 YOLOE 模型。
+        """使用指定配置和权重初始化并返回适合当前任务的 YOLOE 模型。.
 
         参数：
             cfg (dict | str, 可选): 模型配置，可以是包含 'yaml_file' 键的字典、YAML 文件路径或 None（使用默认配置）。
@@ -76,7 +76,7 @@ class YOLOETrainer(DetectionTrainer):
         return model
 
     def get_validator(self):
-        """返回适合当前任务的 YOLOE 验证器。"""
+        """返回适合当前任务的 YOLOE 验证器。."""
         validator = YOLOESegValidator if self.args.task == "segment" else YOLOEDetectValidator
         return validator(self.test_loader, save_dir=self.save_dir, args=copy(self.args), _callbacks=self.callbacks)
 
@@ -98,7 +98,7 @@ class YOLOETrainer(DetectionTrainer):
 
 
 class YOLOEPETrainer(DetectionTrainer):
-    """使用线性探测方法微调 YOLOE 模型。
+    """使用线性探测方法微调 YOLOE 模型。.
 
     此训练器冻结大部分模型层，只训练特定投影层，从而在保留预训练特征的同时高效适配新数据集。
 
@@ -108,7 +108,7 @@ class YOLOEPETrainer(DetectionTrainer):
     """
 
     def get_model(self, cfg=None, weights=None, verbose: bool = True):
-        """使用指定配置和权重初始化并返回适合当前任务的 YOLOE 模型。
+        """使用指定配置和权重初始化并返回适合当前任务的 YOLOE 模型。.
 
         参数：
             cfg (dict | str, 可选): 模型配置。
@@ -152,13 +152,13 @@ class YOLOEPETrainer(DetectionTrainer):
         return model
 
     def get_validator(self):
-        """返回不需要 YOLOE 验证器所要求文本提示的适合当前任务的验证器。"""
+        """返回不需要 YOLOE 验证器所要求文本提示的适合当前任务的验证器。."""
         validator = SegmentationValidator if self.args.task == "segment" else DetectionValidator
         return validator(self.test_loader, save_dir=self.save_dir, args=copy(self.args), _callbacks=self.callbacks)
 
 
 class YOLOETrainerFromScratch(YOLOETrainer, WorldTrainerFromScratch):
-    """从头训练支持文本嵌入的 YOLOE 模型。
+    """从头训练支持文本嵌入的 YOLOE 模型。.
 
     此训练器结合 YOLOE 训练能力与 World 训练特征，支持使用文本嵌入和 grounding 数据集从头训练。
 
@@ -168,7 +168,7 @@ class YOLOETrainerFromScratch(YOLOETrainer, WorldTrainerFromScratch):
     """
 
     def build_dataset(self, img_path: list[str] | str, mode: str = "train", batch: int | None = None):
-        """构建用于训练或验证的 YOLO 数据集。
+        """构建用于训练或验证的 YOLO 数据集。.
 
         此方法根据模式和输入路径构建合适的数据集，同时处理标准 YOLO 数据集和不同格式的 grounding 数据集。
 
@@ -183,7 +183,7 @@ class YOLOETrainerFromScratch(YOLOETrainer, WorldTrainerFromScratch):
         return WorldTrainerFromScratch.build_dataset(self, img_path, mode, batch)
 
     def generate_text_embeddings(self, texts: list[str], batch: int, cache_dir: Path):
-        """为文本样本列表生成文本嵌入。
+        """为文本样本列表生成文本嵌入。.
 
         参数：
             texts (列表[str]): 要编码的文本样本列表。
@@ -208,7 +208,7 @@ class YOLOETrainerFromScratch(YOLOETrainer, WorldTrainerFromScratch):
 
 
 class YOLOEPEFreeTrainer(YOLOEPETrainer, YOLOETrainerFromScratch):
-    """训练无提示的 YOLOE 模型。
+    """训练无提示的 YOLOE 模型。.
 
     此训练器结合线性探测能力和从头训练能力，用于训练推理期间不需要文本提示的无提示 YOLOE 模型。
 
@@ -218,11 +218,11 @@ class YOLOEPEFreeTrainer(YOLOEPETrainer, YOLOETrainerFromScratch):
     """
 
     def preprocess_batch(self, batch):
-        """预处理 YOLOE 训练图像批次，并根据需要调整格式和维度。"""
+        """预处理 YOLOE 训练图像批次，并根据需要调整格式和维度。."""
         return DetectionTrainer.preprocess_batch(self, batch)
 
     def set_text_embeddings(self, datasets, batch: int):
-        """无提示训练不需要文本嵌入，因此此处为空操作覆盖。
+        """无提示训练不需要文本嵌入，因此此处为空操作覆盖。.
 
         参数：
             datasets (列表[Dataset]): 包含待处理类别名称的数据集列表。
@@ -231,7 +231,7 @@ class YOLOEPEFreeTrainer(YOLOEPETrainer, YOLOETrainerFromScratch):
 
 
 class YOLOEVPTrainer(YOLOETrainerFromScratch):
-    """使用视觉提示训练 YOLOE 模型。
+    """使用视觉提示训练 YOLOE 模型。.
 
     此训练器扩展 YOLOETrainerFromScratch，支持基于视觉提示的训练，在图像之外提供视觉线索以引导检测过程。
 
@@ -240,7 +240,7 @@ class YOLOEVPTrainer(YOLOETrainerFromScratch):
     """
 
     def build_dataset(self, img_path: list[str] | str, mode: str = "train", batch: int | None = None):
-        """构建包含视觉提示、用于训练或验证的 YOLO 数据集。
+        """构建包含视觉提示、用于训练或验证的 YOLO 数据集。.
 
         参数：
             img_path (列表[str] | str): 包含图像的文件夹路径或路径列表。
@@ -259,7 +259,7 @@ class YOLOEVPTrainer(YOLOETrainerFromScratch):
         return dataset
 
     def _close_dataloader_mosaic(self):
-        """关闭马赛克增强，并向训练数据集添加视觉提示加载。"""
+        """关闭马赛克增强，并向训练数据集添加视觉提示加载。."""
         super()._close_dataloader_mosaic()
         if isinstance(self.train_loader.dataset, YOLOConcatDataset):
             for d in self.train_loader.dataset.datasets:

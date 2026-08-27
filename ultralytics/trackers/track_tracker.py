@@ -28,7 +28,7 @@ _LOOSE_NMS_DEDUP_IOU = 0.97  # 将检测结果视为“新结果”时使用的 
 
 
 def _hmiou_distance(tracks_a: list[TTSTrack], tracks_b: list[TTSTrack]) -> tuple[np.ndarray, np.ndarray]:
-    """返回 (iou_sim, 1 - HMIoU)，其中 HMIoU = HIoU * IoU，HIoU 为垂直重叠与垂直并集之比。"""
+    """返回 (iou_sim, 1 - HMIoU)，其中 HMIoU = HIoU * IoU，HIoU 为垂直重叠与垂直并集之比。."""
     n, m = len(tracks_a), len(tracks_b)
     if n == 0 or m == 0:
         return np.zeros((n, m), dtype=np.float32), np.ones((n, m), dtype=np.float32)
@@ -44,7 +44,7 @@ def _hmiou_distance(tracks_a: list[TTSTrack], tracks_b: list[TTSTrack]) -> tuple
 def _angle_distance(
     tracks: list[TTSTrack], dets: list[TTSTrack], frame_id: int, pairs: tuple[np.ndarray, np.ndarray], delta_t: int = 3
 ) -> np.ndarray:
-    """仅为 IoU 支持的 `(track, det)` 索引 `pairs` 返回角度距离。
+    """仅为 IoU 支持的 `(track, det)` 索引 `pairs` 返回角度距离。.
 
     `_cost_matrix` 会覆盖不受支持的配对，因此计算完整的 `(N, M)` 网格会产生无用开销。
     """
@@ -64,7 +64,7 @@ def _angle_distance(
 
 
 def _confidence_distance(tracks: list[TTSTrack], dets: list[TTSTrack]) -> np.ndarray:
-    """计算每个跟踪目标的投影分数与每个检测结果置信度之间的绝对差值。"""
+    """计算每个跟踪目标的投影分数与每个检测结果置信度之间的绝对差值。."""
     if len(tracks) == 0 or len(dets) == 0:
         return np.ones((len(tracks), len(dets)), dtype=np.float32)
     track_prev_scores = np.array([track.prev_score for track in tracks])
@@ -75,7 +75,7 @@ def _confidence_distance(tracks: list[TTSTrack], dets: list[TTSTrack]) -> np.nda
 
 
 def _iterative_associate(cost: np.ndarray, match_thr: float, reduce_step: float = 0.05) -> tuple[list]:
-    """使用相互最近邻的贪心匹配，并在每次迭代中缩小阈值。
+    """使用相互最近邻的贪心匹配，并在每次迭代中缩小阈值。.
 
     返回 (matches, unmatched_tracks, unmatched_dets)。
     """
@@ -107,7 +107,7 @@ def _iterative_associate(cost: np.ndarray, match_thr: float, reduce_step: float 
 def _track_aware_nms(
     tracks: list[TTSTrack], dets: list[TTSTrack], tai_thr: float, new_track_thresh: float
 ) -> list[bool]:
-    """TAI NMS：抑制与现有跟踪目标或更强检测结果高度重叠的检测结果。"""
+    """TAI NMS：抑制与现有跟踪目标或更强检测结果高度重叠的检测结果。."""
     if not dets:
         return []
     scores = np.array([det.score for det in dets])
@@ -134,7 +134,7 @@ def _track_aware_nms(
 
 
 def attach_raw_preds_hook(predictor) -> None:
-    """包装 `predictor.postprocess`，捕获 NMS 前的原始预测结果和输入（操作幂等）。"""
+    """包装 `predictor.postprocess`，捕获 NMS 前的原始预测结果和输入（操作幂等）。."""
     if hasattr(predictor, "_orig_postprocess"):
         return
     orig = predictor.postprocess
@@ -153,7 +153,7 @@ def attach_raw_preds_hook(predictor) -> None:
 
 
 def compute_dets_del(predictor) -> list | None:
-    """返回每个批次中被严格 NMS 丢弃的 `(xywh, conf, cls)` 元组；不可用时返回 None。"""
+    """返回每个批次中被严格 NMS 丢弃的 `(xywh, conf, cls)` 元组；不可用时返回 None。."""
     raw = getattr(predictor, "_raw_preds", None)
     if raw is None or not isinstance(raw, torch.Tensor):
         return None
@@ -190,10 +190,9 @@ def compute_dets_del(predictor) -> list | None:
 
 
 def _cosine_distance(tracks: list[TTSTrack], dets: list[TTSTrack]) -> np.ndarray:
-    """计算 `[0, 1]` 范围内的跟踪目标与检测结果嵌入余弦距离；任一侧没有特征时返回 NaN。
+    """计算 `[0, 1]` 范围内的跟踪目标与检测结果嵌入余弦距离；任一侧没有特征时返回 NaN。.
 
-    NaN 表示“该配对没有外观证据”，调用方会回退到运动信息，而不是将缺失或被遮挡抑制的嵌入视为最大不相似，
-    从而避免错误惩罚真实匹配。
+    NaN 表示“该配对没有外观证据”，调用方会回退到运动信息，而不是将缺失或被遮挡抑制的嵌入视为最大不相似， 从而避免错误惩罚真实匹配。
     """
     if not tracks or not dets:
         return np.ones((len(tracks), len(dets)), dtype=np.float32)
@@ -210,7 +209,7 @@ def _cosine_distance(tracks: list[TTSTrack], dets: list[TTSTrack]) -> np.ndarray
 
 
 class TTSTrack(BOTrack):
-    """TrackTrack 使用的单目标跟踪对象，包含角点速度、分数历史和 ReID 特征。
+    """TrackTrack 使用的单目标跟踪对象，包含角点速度、分数历史和 ReID 特征。.
 
     该类扩展 `BOTrack`（XYWH 卡尔曼状态和 EMA ReID 平滑），增加角点速度运动信息、分数历史和自适应分数的特征平滑。
 
@@ -237,7 +236,7 @@ class TTSTrack(BOTrack):
     _delta_t = 3
 
     def __init__(self, xywh: np.ndarray, score: float, cls: Any, feat: np.ndarray | None = None):
-        """根据检测边界框初始化 TTSTrack。
+        """根据检测边界框初始化 TTSTrack。.
 
         参数：
             xywh (np.ndarray): `(x, y, w, h, idx)` 或 `(x, y, w, h, angle, idx)`，以中心点表示，并包含检测索引。
@@ -253,14 +252,14 @@ class TTSTrack(BOTrack):
             self.update_features(feat)
 
     def update_features(self, feat: np.ndarray) -> None:
-        """归一化 `feat`，并通过分数自适应 EMA 将其融合到 `smooth_feat` 中。"""
+        """归一化 `feat`，并通过分数自适应 EMA 将其融合到 `smooth_feat` 中。."""
         beta = self._alpha + (1 - self._alpha) * (1 - self.score)
         curr, smooth = smooth_feature(feat, self.smooth_feat, beta)
         if curr is not None:
             self.curr_feat, self.smooth_feat = curr, smooth
 
     def get_history_box(self, frame_id: int, dt: int) -> np.ndarray:
-        """返回 `dt` 帧之前的边界框；若不存在，则返回最近的边界框或当前边界框。"""
+        """返回 `dt` 帧之前的边界框；若不存在，则返回最近的边界框或当前边界框。."""
         target = frame_id - dt
         for fid, box in self._history:
             if fid == target:
@@ -270,7 +269,7 @@ class TTSTrack(BOTrack):
         return self.xyxy
 
     def activate(self, kalman_filter: KalmanFilterXYWH, frame_id: int) -> None:
-        """初始化卡尔曼状态，并将跟踪目标提升为 New 状态。"""
+        """初始化卡尔曼状态，并将跟踪目标提升为 New 状态。."""
         self.kalman_filter = kalman_filter
         self.track_id = self.next_id()
         self.mean, self.covariance = kalman_filter.initiate(self.convert_coords(self._tlwh))
@@ -281,7 +280,7 @@ class TTSTrack(BOTrack):
         self.frame_id = self.start_frame = frame_id
 
     def re_activate(self, new_track, frame_id: int, new_id: bool = False) -> None:
-        """通过 NSA-Kalman 将丢失的跟踪目标重新绑定到新的检测结果。"""
+        """通过 NSA-Kalman 将丢失的跟踪目标重新绑定到新的检测结果。."""
         self.prev_score = self.score
         self.mean, self.covariance = self.kalman_filter.update(
             self.mean, self.covariance, self.convert_coords(new_track.tlwh), confidence=new_track.score
@@ -299,7 +298,7 @@ class TTSTrack(BOTrack):
         self.cls, self.angle, self.idx = new_track.cls, new_track.angle, new_track.idx
 
     def update(self, new_track, frame_id: int) -> None:
-        """使用新的检测结果更新已匹配目标；达到 min_track_len 后提升为 Tracked 状态。"""
+        """使用新的检测结果更新已匹配目标；达到 min_track_len 后提升为 Tracked 状态。."""
         self.frame_id = frame_id
         self.tracklet_len += 1
         self.prev_score = self.score
@@ -327,15 +326,14 @@ class TTSTrack(BOTrack):
         self.cls, self.angle, self.idx = new_track.cls, new_track.angle, new_track.idx
 
     def __repr__(self) -> str:
-        """返回跟踪目标的简短字符串表示。"""
+        """返回跟踪目标的简短字符串表示。."""
         return f"TT_{self.track_id}_({self.start_frame}-{self.end_frame})"
 
 
 class TRACKTRACK:
-    """实现基于轨迹视角关联和轨迹感知初始化的多目标跟踪器。
+    """实现基于轨迹视角关联和轨迹感知初始化的多目标跟踪器。.
 
-    检测结果被划分为高分、低分和删除集（由宽松 NMS 恢复），随后与已跟踪和已丢失目标的并集进行匹配。
-    匹配代价融合 HMIoU、余弦 ReID、置信度和角度距离，并通过迭代分配求解。未匹配但仍处于 Lost 状态的目标可选地在
+    检测结果被划分为高分、低分和删除集（由宽松 NMS 恢复），随后与已跟踪和已丢失目标的并集进行匹配。 匹配代价融合 HMIoU、余弦 ReID、置信度和角度距离，并通过迭代分配求解。未匹配但仍处于 Lost 状态的目标可选地在
     第二轮宽松匹配中与剩余检测结果重新关联；通过轨迹感知 NMS 保留下来的剩余检测结果将生成新目标。
 
     属性：
@@ -361,7 +359,7 @@ class TRACKTRACK:
     """
 
     def __init__(self, args):
-        """根据跟踪器配置初始化 TRACKTRACK（参见 `ultralytics/cfg/trackers/tracktrack.yaml`）。
+        """根据跟踪器配置初始化 TRACKTRACK（参见 `ultralytics/cfg/trackers/tracktrack.yaml`）。.
 
         参数：
             args (Any): 解析后的跟踪器配置。所有参数均通过 `getattr(..., default)` 读取，因此缺少近期新增键的旧版 YAML
@@ -398,7 +396,7 @@ class TRACKTRACK:
 
     @classmethod
     def setup_predictor(cls, predictor):
-        """为轨迹感知初始化附加原始预测结果钩子（仅支持 detect/obb）。
+        """为轨迹感知初始化附加原始预测结果钩子（仅支持 detect/obb）。.
 
         恢复的检测结果（由宽松 NMS 获取）仅包含边界框，并且在 NMS 后的 Results 中没有对应记录；
         因此在分割和姿态任务中无法携带掩码或关键点数据，还会导致下游索引错误。对于这些任务跳过恢复流程及其逐帧开销。
@@ -408,11 +406,11 @@ class TRACKTRACK:
 
     @classmethod
     def compute_frame_extras(cls, predictor):
-        """返回每个批次中被严格 NMS 丢弃的 ``(xywh, conf, cls)`` 元组。"""
+        """返回每个批次中被严格 NMS 丢弃的 ``(xywh, conf, cls)`` 元组。."""
         return compute_dets_del(predictor)
 
     def _cost_matrix(self, tracks: list[TTSTrack], dets: list[TTSTrack]) -> np.ndarray:
-        """返回融合多种线索的代价矩阵（HMIoU + ReID + 置信度 + 角度），并由 IoU 支持关系进行门控。"""
+        """返回融合多种线索的代价矩阵（HMIoU + ReID + 置信度 + 角度），并由 IoU 支持关系进行门控。."""
         iou_sim, hmiou_dist = _hmiou_distance(tracks, dets)
         if self.encoder is not None:
             cos = _cosine_distance(tracks, dets)
@@ -431,7 +429,7 @@ class TRACKTRACK:
         return np.clip(cost, 0, 1)
 
     def _apply_gmc(self, img: np.ndarray, detections: list, pools: list[list[TTSTrack]]) -> None:
-        """使用当前 GMC 仿射变换原地变换 `pools`。"""
+        """使用当前 GMC 仿射变换原地变换 `pools`。."""
         try:
             warp = self.gmc.apply(img, [det.xyxy for det in detections])
         except Exception as e:
@@ -441,7 +439,7 @@ class TRACKTRACK:
             multi_gmc(pool, warp)
 
     def update(self, results, img: np.ndarray | None = None, dets_del=None, **kwargs) -> np.ndarray:
-        """推进跟踪器一帧，并返回形状为 `(N, 8)` 的数组 `[x1, y1, x2, y2, id, score, cls, idx]`。"""
+        """推进跟踪器一帧，并返回形状为 `(N, 8)` 的数组 `[x1, y1, x2, y2, id, score, cls, idx]`。."""
         self.frame_id += 1
         activated, refind, lost, removed = [], [], [], []
 
@@ -565,7 +563,7 @@ class TRACKTRACK:
         )
 
     def reset(self) -> None:
-        """清除跟踪器的所有状态，包括 GMC 变换历史和全局 ID 计数器。"""
+        """清除跟踪器的所有状态，包括 GMC 变换历史和全局 ID 计数器。."""
         self.tracked_stracks = []
         self.lost_stracks = []
         self.removed_stracks = []

@@ -42,7 +42,7 @@ except (ImportError, AssertionError):
 
 
 def _get_comet_mode() -> str:
-    """从环境变量获取 Comet 模式，默认使用 `online`。"""
+    """从环境变量获取 Comet 模式，默认使用 `online`。."""
     comet_mode = os.getenv("COMET_MODE")
     if comet_mode is not None:
         LOGGER.warning(
@@ -57,38 +57,38 @@ def _get_comet_mode() -> str:
 
 
 def _get_comet_model_name() -> str:
-    """从环境变量获取 Comet 模型名称；未设置时默认为 `Ultralytics`。"""
+    """从环境变量获取 Comet 模型名称；未设置时默认为 `Ultralytics`。."""
     return os.getenv("COMET_MODEL_NAME", "Ultralytics")
 
 
 def _get_eval_batch_logging_interval() -> int:
-    """从环境变量获取评估批次日志间隔；未设置时使用默认值 1。"""
+    """从环境变量获取评估批次日志间隔；未设置时使用默认值 1。."""
     return int(os.getenv("COMET_EVAL_BATCH_LOGGING_INTERVAL", "1"))
 
 
 def _get_max_image_predictions_to_log() -> int:
-    """从环境变量获取要记录的图像预测结果最大数量。"""
+    """从环境变量获取要记录的图像预测结果最大数量。."""
     return int(os.getenv("COMET_MAX_IMAGE_PREDICTIONS", "100"))
 
 
 def _scale_confidence_score(score: float) -> float:
-    """按照环境变量指定的倍率缩放置信度分数。"""
+    """按照环境变量指定的倍率缩放置信度分数。."""
     scale = float(os.getenv("COMET_MAX_CONFIDENCE_SCORE", "100.0"))
     return score * scale
 
 
 def _should_log_confusion_matrix() -> bool:
-    """根据环境变量设置确定是否记录混淆矩阵。"""
+    """根据环境变量设置确定是否记录混淆矩阵。."""
     return env_bool("COMET_EVAL_LOG_CONFUSION_MATRIX", False)
 
 
 def _should_log_image_predictions() -> bool:
-    """根据环境变量确定是否记录图像预测结果。"""
+    """根据环境变量确定是否记录图像预测结果。."""
     return env_bool("COMET_EVAL_LOG_IMAGE_PREDICTIONS", True)
 
 
 def _resume_or_create_experiment(args: SimpleNamespace) -> None:
-    """根据 args 恢复 CometML 实验，或创建新的实验。
+    """根据 args 恢复 CometML 实验，或创建新的实验。.
 
     确保分布式训练期间只在一个进程中创建实验对象。
 
@@ -123,7 +123,7 @@ def _resume_or_create_experiment(args: SimpleNamespace) -> None:
 
 
 def _fetch_trainer_metadata(trainer) -> dict:
-    """返回 YOLO 训练元数据，包括周期和资源保存状态。
+    """返回 YOLO 训练元数据，包括周期和资源保存状态。.
 
     参数：
         trainer (ultralytics.engine.trainer.BaseTrainer): 包含训练状态和配置的 YOLO 训练器对象。
@@ -148,10 +148,9 @@ def _fetch_trainer_metadata(trainer) -> dict:
 def _scale_bounding_box_to_original_image_shape(
     box, resized_image_shape, original_image_shape, ratio_pad
 ) -> list[float]:
-    """将边界框从缩放图像坐标转换回原始图像坐标。
+    """将边界框从缩放图像坐标转换回原始图像坐标。.
 
-    YOLO 会在训练期间缩放图像，标签值以缩放后的图像形状为基准进行归一化。
-    此函数会将边界框标签重新缩放到原始图像形状。
+    YOLO 会在训练期间缩放图像，标签值以缩放后的图像形状为基准进行归一化。 此函数会将边界框标签重新缩放到原始图像形状。
 
     参数：
         box (torch.Tensor): 归一化 xywh 格式的边界框。
@@ -178,10 +177,9 @@ def _scale_bounding_box_to_original_image_shape(
 
 
 def _format_ground_truth_annotations_for_detection(img_idx, image_path, batch, class_name_map=None) -> dict | None:
-    """整理目标检测任务的真实标注。
+    """整理目标检测任务的真实标注。.
 
-    此函数处理目标检测任务中一个图像批次的真实标注，提取指定图像的边界框、类别标签及其他元数据，
-    并将其整理为可用于可视化或评估的格式。
+    此函数处理目标检测任务中一个图像批次的真实标注，提取指定图像的边界框、类别标签及其他元数据， 并将其整理为可用于可视化或评估的格式。
 
     参数：
         img_idx (int): 要处理的图像在批次中的索引。
@@ -228,7 +226,7 @@ def _format_ground_truth_annotations_for_detection(img_idx, image_path, batch, c
 
 
 def _format_prediction_annotations(image_path, metadata, class_label_map=None, class_map=None) -> dict | None:
-    """整理用于目标检测可视化的 YOLO 预测结果。
+    """整理用于目标检测可视化的 YOLO 预测结果。.
 
     参数：
         image_path (Path): 图像文件路径。
@@ -280,7 +278,7 @@ def _format_prediction_annotations(image_path, metadata, class_label_map=None, c
 
 
 def _extract_segmentation_annotation(segmentation_raw: str, decode: Callable) -> list[list[Any]] | None:
-    """从压缩的分割数据中提取分割标注，并返回多边形列表。
+    """从压缩的分割数据中提取分割标注，并返回多边形列表。.
 
     参数：
         segmentation_raw (str): 压缩格式的原始分割数据。
@@ -300,7 +298,7 @@ def _extract_segmentation_annotation(segmentation_raw: str, decode: Callable) ->
 
 
 def _fetch_annotations(img_idx, image_path, batch, prediction_metadata_map, class_label_map, class_map) -> list | None:
-    """如果真实标注和预测标注存在，则将二者合并。
+    """如果真实标注和预测标注存在，则将二者合并。.
 
     参数：
         img_idx (int): 图像在批次中的索引。
@@ -327,7 +325,7 @@ def _fetch_annotations(img_idx, image_path, batch, prediction_metadata_map, clas
 
 
 def _create_prediction_metadata_map(model_predictions) -> dict:
-    """按图像 ID 对模型预测结果分组，创建预测元数据映射。"""
+    """按图像 ID 对模型预测结果分组，创建预测元数据映射。."""
     pred_metadata_map = {}
     for prediction in model_predictions:
         pred_metadata_map.setdefault(prediction["image_id"], [])
@@ -337,7 +335,7 @@ def _create_prediction_metadata_map(model_predictions) -> dict:
 
 
 def _log_confusion_matrix(experiment, trainer, curr_step, curr_epoch) -> None:
-    """将混淆矩阵记录到 Comet 实验。"""
+    """将混淆矩阵记录到 Comet 实验。."""
     conf_mat = trainer.validator.confusion_matrix.matrix
     names = [*list(trainer.data["names"].values()), "background"]
     experiment.log_confusion_matrix(
@@ -346,7 +344,7 @@ def _log_confusion_matrix(experiment, trainer, curr_step, curr_epoch) -> None:
 
 
 def _log_images(experiment, image_paths, curr_step: int | None, annotations=None) -> None:
-    """将图像及可选标注记录到实验中。
+    """将图像及可选标注记录到实验中。.
 
     此函数会将图像记录到 Comet ML 实验，并可选地附带用于可视化的边界框或分割掩码等标注数据。
 
@@ -366,10 +364,9 @@ def _log_images(experiment, image_paths, curr_step: int | None, annotations=None
 
 
 def _log_image_predictions(experiment, validator, curr_step) -> None:
-    """在模型验证期间将图像预测结果记录到 Comet ML 实验。
+    """在模型验证期间将图像预测结果记录到 Comet ML 实验。.
 
-    此函数处理验证数据，并整理真实标注和预测标注，以便在 Comet 面板中可视化。
-    函数会遵守配置的图像记录数量限制。
+    此函数处理验证数据，并整理真实标注和预测标注，以便在 Comet 面板中可视化。 函数会遵守配置的图像记录数量限制。
 
     参数：
         experiment (comet_ml.CometExperiment): 要记录数据的 Comet ML 实验。
@@ -427,10 +424,9 @@ def _log_image_predictions(experiment, validator, curr_step) -> None:
 
 
 def _log_plots(experiment, trainer) -> None:
-    """将评估绘图和标签绘图记录到实验中。
+    """将评估绘图和标签绘图记录到实验中。.
 
-    此函数会将各种评估绘图和混淆矩阵记录到实验跟踪系统。
-    它处理不同类型的指标（SegmentMetrics、PoseMetrics、DetMetrics、OBBMetrics），并记录每种类型对应的绘图。
+    此函数会将各种评估绘图和混淆矩阵记录到实验跟踪系统。 它处理不同类型的指标（SegmentMetrics、PoseMetrics、DetMetrics、OBBMetrics），并记录每种类型对应的绘图。
 
     参数：
         experiment (comet_ml.CometExperiment): 要记录绘图的 Comet ML 实验。
@@ -472,19 +468,19 @@ def _log_plots(experiment, trainer) -> None:
 
 
 def _log_model(experiment, trainer) -> None:
-    """将训练得到的最佳模型记录到 Comet.ml。"""
+    """将训练得到的最佳模型记录到 Comet.ml。."""
     model_name = _get_comet_model_name()
     experiment.log_model(model_name, file_or_folder=str(trainer.best), file_name="best.pt", overwrite=True)
 
 
 def _log_image_batches(experiment, trainer, curr_step: int) -> None:
-    """记录训练和验证图像批次的样本。"""
+    """记录训练和验证图像批次的样本。."""
     _log_images(experiment, trainer.save_dir.glob("train_batch*.jpg"), curr_step)
     _log_images(experiment, trainer.save_dir.glob("val_batch*.jpg"), curr_step)
 
 
 def _log_asset(experiment, asset_path) -> None:
-    """将指定资源文件记录到给定实验。
+    """将指定资源文件记录到给定实验。.
 
     此函数用于将文件等资源记录到指定实验，从而实现与实验跟踪平台的集成。
 
@@ -496,7 +492,7 @@ def _log_asset(experiment, asset_path) -> None:
 
 
 def _log_table(experiment, table_path) -> None:
-    """将表格记录到指定实验。
+    """将表格记录到指定实验。.
 
     此函数用于将表格文件记录到给定实验，表格由其文件路径标识。
 
@@ -508,12 +504,12 @@ def _log_table(experiment, table_path) -> None:
 
 
 def on_pretrain_routine_start(trainer) -> None:
-    """在 YOLO 预训练流程开始时创建或恢复 CometML 实验。"""
+    """在 YOLO 预训练流程开始时创建或恢复 CometML 实验。."""
     _resume_or_create_experiment(trainer.args)
 
 
 def on_train_epoch_end(trainer) -> None:
-    """在训练周期结束时记录指标并保存批次图像。"""
+    """在训练周期结束时记录指标并保存批次图像。."""
     experiment = comet_ml.get_running_experiment()
     if not experiment:
         return
@@ -526,13 +522,11 @@ def on_train_epoch_end(trainer) -> None:
 
 
 def on_fit_epoch_end(trainer) -> None:
-    """在每个训练周期结束时记录模型资源。
+    """在每个训练周期结束时记录模型资源。.
 
-    此函数会在每个训练周期结束时，将指标、学习率和模型信息记录到 Comet ML 实验。
-    它还会根据配置记录模型资源、混淆矩阵和图像预测结果。
+    此函数会在每个训练周期结束时，将指标、学习率和模型信息记录到 Comet ML 实验。 它还会根据配置记录模型资源、混淆矩阵和图像预测结果。
 
-    此函数获取当前 Comet ML 实验并记录各种训练指标。如果是第一个周期，还会记录模型信息。
-    在指定的保存间隔内，它会记录模型、混淆矩阵（如果启用）以及图像预测结果（如果启用）。
+    此函数获取当前 Comet ML 实验并记录各种训练指标。如果是第一个周期，还会记录模型信息。 在指定的保存间隔内，它会记录模型、混淆矩阵（如果启用）以及图像预测结果（如果启用）。
 
     参数：
         trainer (BaseTrainer): 包含训练状态、指标和配置的 YOLO 训练器对象。
@@ -568,7 +562,7 @@ def on_fit_epoch_end(trainer) -> None:
 
 
 def on_train_end(trainer) -> None:
-    """在训练结束时执行相关操作。"""
+    """在训练结束时执行相关操作。."""
     experiment = comet_ml.get_running_experiment()
     if not experiment:
         return

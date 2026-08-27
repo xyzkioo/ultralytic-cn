@@ -63,14 +63,14 @@ if WINDOWS and check_version(TORCH_VERSION, "==2.4.0"):  # reject version 2.4.0 
 
 
 def get_torch_device_backend(device: torch.device | str):
-    """返回负责所选设备后端的 PyTorch 模块。"""
+    """返回负责所选设备后端的 PyTorch 模块。."""
     device_type = getattr(device, "type", str(device).split(":")[0])
     return torch.get_device_module(device_type) if hasattr(torch, "get_device_module") else getattr(torch, device_type)
 
 
 @contextmanager
 def torch_distributed_zero_first(local_rank: int):
-    """确保分布式训练中的所有进程等待本地主进程（rank 0）先完成任务。"""
+    """确保分布式训练中的所有进程等待本地主进程（rank 0）先完成任务。."""
     initialized = dist.is_available() and dist.is_initialized()
     use_ids = initialized and dist.get_backend() == "nccl"
 
@@ -82,10 +82,10 @@ def torch_distributed_zero_first(local_rank: int):
 
 
 def smart_inference_mode(mode=True):
-    """启用或禁用 torch 推理模式，同时兼容最低支持的 torch 版本。"""
+    """启用或禁用 torch 推理模式，同时兼容最低支持的 torch 版本。."""
 
     def decorate(fn):
-        """根据 torch 版本应用适用的推理模式装饰器。"""
+        """根据 torch 版本应用适用的推理模式装饰器。."""
         if not mode:
             return torch.inference_mode(False)(torch.no_grad()(fn)) if TORCH_1_9 else torch.no_grad()(fn)
         if TORCH_1_9 and torch.is_inference_mode_enabled():
@@ -97,10 +97,9 @@ def smart_inference_mode(mode=True):
 
 
 def autocast(enabled: bool, device: str = "cuda"):
-    """根据 PyTorch 版本和 AMP 设置获取适用的 autocast 上下文管理器。
+    """根据 PyTorch 版本和 AMP 设置获取适用的 autocast 上下文管理器。.
 
-    此函数返回一个适用于自动混合精度（AMP）训练的上下文管理器，兼容新旧 PyTorch 版本，
-    并处理不同 PyTorch 版本之间 autocast API 的差异。
+    此函数返回一个适用于自动混合精度（AMP）训练的上下文管理器，兼容新旧 PyTorch 版本， 并处理不同 PyTorch 版本之间 autocast API 的差异。
 
     参数：
         enabled (bool): 是否启用自动混合精度。
@@ -132,19 +131,19 @@ def autocast(enabled: bool, device: str = "cuda"):
 
 @functools.lru_cache
 def get_cpu_info():
-    """返回系统 CPU 信息字符串，例如 'Apple M2'。"""
+    """返回系统 CPU 信息字符串，例如 'Apple M2'。."""
     return CPUInfo.name()
 
 
 @functools.lru_cache
 def get_gpu_info(index):
-    """返回系统 GPU 信息字符串，例如 'Tesla T4, 15102MiB'。"""
+    """返回系统 GPU 信息字符串，例如 'Tesla T4, 15102MiB'。."""
     properties = torch.cuda.get_device_properties(index)
     return f"{properties.name}, {properties.total_memory / (1 << 20):.0f}MiB"
 
 
 def parse_device(device: str | int | list | tuple | torch.device = "") -> str:
-    """将任意形式的设备请求解析为规范设备字符串。
+    """将任意形式的设备请求解析为规范设备字符串。.
 
     参数：
         device (str | int | 列表 | tuple | torch.device, 可选): 设备请求，例如 'cuda:0'、'0,1'、[0, 1]、'cpu'、
@@ -208,10 +207,9 @@ def parse_device(device: str | int | list | tuple | torch.device = "") -> str:
 
 
 def select_device(device="", newline=False, verbose=True):
-    """根据提供的参数选择适用的 PyTorch 设备。
+    """根据提供的参数选择适用的 PyTorch 设备。.
 
-    此函数接收指定设备的字符串或 torch.device 对象，并返回代表所选设备的 torch.device 对象。
-    同时验证可用设备数量；请求的设备不可用时抛出异常。
+    此函数接收指定设备的字符串或 torch.device 对象，并返回代表所选设备的 torch.device 对象。 同时验证可用设备数量；请求的设备不可用时抛出异常。
 
     参数：
         device (str | torch.device, 可选): 设备字符串或 torch.device 对象。可选值包括 'cpu'、'cuda'、'0'、
@@ -328,7 +326,7 @@ def select_device(device="", newline=False, verbose=True):
 
 
 def time_sync(device: torch.device | None = None):
-    """返回与 PyTorch 同步的准确时间。"""
+    """返回与 PyTorch 同步的准确时间。."""
     if device is None or device.type not in {"cpu", "mps"}:
         accelerator = get_torch_device_backend(device or "cuda")
         if accelerator.is_available() and hasattr(accelerator, "synchronize"):
@@ -337,7 +335,7 @@ def time_sync(device: torch.device | None = None):
 
 
 def fuse_conv_and_bn(conv, bn):
-    """融合 Conv2d 和 BatchNorm2d 层，以优化推理。
+    """融合 Conv2d 和 BatchNorm2d 层，以优化推理。.
 
     参数：
         conv (nn.Conv2d): 要融合的卷积层。
@@ -373,7 +371,7 @@ def fuse_conv_and_bn(conv, bn):
 
 
 def fuse_deconv_and_bn(deconv, bn):
-    """融合 ConvTranspose2d 和 BatchNorm2d 层，以优化推理。
+    """融合 ConvTranspose2d 和 BatchNorm2d 层，以优化推理。.
 
     参数：
         deconv (nn.ConvTranspose2d): 要融合的转置卷积层。
@@ -413,7 +411,7 @@ def fuse_deconv_and_bn(deconv, bn):
 
 
 def model_info(model, detailed=False, verbose=True, imgsz=640):
-    """逐层打印并返回详细的模型信息。
+    """逐层打印并返回详细的模型信息。.
 
     参数：
         model (nn.Module): 要分析的模型。
@@ -458,17 +456,17 @@ def model_info(model, detailed=False, verbose=True, imgsz=640):
 
 
 def get_num_params(model):
-    """返回 YOLO 模型中的参数总量。"""
+    """返回 YOLO 模型中的参数总量。."""
     return sum(x.numel() for x in model.parameters())
 
 
 def get_num_gradients(model):
-    """返回 YOLO 模型中需要梯度的参数总量。"""
+    """返回 YOLO 模型中需要梯度的参数总量。."""
     return sum(x.numel() for x in model.parameters() if x.requires_grad)
 
 
 def model_info_for_loggers(trainer):
-    """返回包含有用模型信息的模型信息字典。
+    """返回包含有用模型信息的模型信息字典。.
 
     参数：
             trainer (ultralytics.engine.trainer.BaseTrainer): 包含模型和验证数据的训练器对象。
@@ -501,11 +499,10 @@ def model_info_for_loggers(trainer):
 
 
 def _attention_ops(m, x, y):
-    """统计注意力块中查询-键和注意力-值矩阵乘法的 THOP 运算量。
+    """统计注意力块中查询-键和注意力-值矩阵乘法的 THOP 运算量。.
 
-    两种运算都在重塑后的张量上以函数形式运行，因此子模块 hook 无法观测到它们；否则该模块只会统计
-    qkv/proj/pe 卷积的运算量。两个乘积的每个输出元素在收缩轴上产生一次乘加操作，因此每个头的运算量为
-    `tokens**2 * (key_dim + head_dim)`。
+    两种运算都在重塑后的张量上以函数形式运行，因此子模块 hook 无法观测到它们；否则该模块只会统计 qkv/proj/pe 卷积的运算量。两个乘积的每个输出元素在收缩轴上产生一次乘加操作，因此每个头的运算量为 `tokens**2
+    * (key_dim + head_dim)`。
     """
     b, _, h, w = x[0].shape
     area = getattr(m, "area", 1)  # area attention 在指定数量的独立组内执行注意力，仅 AAttn 使用
@@ -515,7 +512,7 @@ def _attention_ops(m, x, y):
 
 
 def get_flops(model, imgsz=640):
-    """计算模型的 FLOPs（浮点运算次数），单位为 GFLOPs。
+    """计算模型的 FLOPs（浮点运算次数），单位为 GFLOPs。.
 
     使用 THOP 的步长感知图像分析来提高效率，并准确统计与尺寸无关的操作。如果 thop 不可用或分析失败，则返回 0.0。
 
@@ -556,7 +553,7 @@ def get_flops(model, imgsz=640):
 
 
 def initialize_weights(model):
-    """将模型权重、偏置和模块配置初始化为默认值。"""
+    """将模型权重、偏置和模块配置初始化为默认值。."""
     for m in model.modules():
         t = type(m)
         if t is nn.Conv2d:
@@ -569,7 +566,7 @@ def initialize_weights(model):
 
 
 def scale_img(img, ratio=1.0, same_shape=False, gs=32):
-    """缩放并填充图像张量，可选择保持宽高比并填充到 gs 的整数倍。
+    """缩放并填充图像张量，可选择保持宽高比并填充到 gs 的整数倍。.
 
     参数：
         img (torch.Tensor): 输入图像张量。
@@ -591,7 +588,7 @@ def scale_img(img, ratio=1.0, same_shape=False, gs=32):
 
 
 def copy_attr(a, b, include=(), exclude=()):
-    """将对象 b 的属性复制到对象 a，并支持包含或排除指定属性。
+    """将对象 b 的属性复制到对象 a，并支持包含或排除指定属性。.
 
     参数：
         a (Any): 接收属性的目标对象。
@@ -607,7 +604,7 @@ def copy_attr(a, b, include=(), exclude=()):
 
 
 def intersect_dicts(da, db, exclude=()):
-    """返回形状匹配的交集键字典，排除 exclude 键，并使用 da 值。
+    """返回形状匹配的交集键字典，排除 exclude 键，并使用 da 值。.
 
     参数：
         da (dict): 第一个字典。
@@ -621,7 +618,7 @@ def intersect_dicts(da, db, exclude=()):
 
 
 def is_parallel(model):
-    """如果模型类型为 DP 或 DDP，则返回 True。
+    """如果模型类型为 DP 或 DDP，则返回 True。.
 
     参数：
         模型 (nn.Module): 要检查的模型。
@@ -633,7 +630,7 @@ def is_parallel(model):
 
 
 def unwrap_model(m: nn.Module) -> nn.Module:
-    """解除编译模型和并行模型的包装，获取基础模型。
+    """解除编译模型和并行模型的包装，获取基础模型。.
 
     参数：
         m (nn.Module): 可能被 torch.compile（._orig_mod）或 DataParallel/DistributedDataParallel（.module）等并行包装器封装的模型。
@@ -651,7 +648,7 @@ def unwrap_model(m: nn.Module) -> nn.Module:
 
 
 def one_cycle(y1=0.0, y2=1.0, steps=100):
-    """返回从 y1 到 y2 的正弦渐变 lambda 函数，参见 https://arxiv.org/pdf/1812.01187.pdf。
+    """返回从 y1 到 y2 的正弦渐变 lambda 函数，参见 https://arxiv.org/pdf/1812.01187.pdf。.
 
     参数：
         y1 (float, optional): Initial value.
@@ -665,7 +662,7 @@ def one_cycle(y1=0.0, y2=1.0, steps=100):
 
 
 def init_seeds(seed=0, deterministic=False):
-    """初始化随机数生成器（RNG）种子，参见 https://pytorch.org/docs/stable/notes/randomness.html。
+    """初始化随机数生成器（RNG）种子，参见 https://pytorch.org/docs/stable/notes/randomness.html。.
 
     参数：
         seed (int, optional): Random seed.
@@ -690,7 +687,7 @@ def init_seeds(seed=0, deterministic=False):
 
 
 def unset_deterministic():
-    """取消为确定性训练应用的所有配置。"""
+    """取消为确定性训练应用的所有配置。."""
     torch.use_deterministic_algorithms(False)
     torch.backends.cudnn.deterministic = False
     os.environ.pop("CUBLAS_WORKSPACE_CONFIG", None)
@@ -698,7 +695,7 @@ def unset_deterministic():
 
 
 class ModelEMA:
-    """更新后的指数移动平均（EMA）实现。
+    """更新后的指数移动平均（EMA）实现。.
 
     保存模型 state_dict 中所有参数和缓冲区的移动平均值。有关 EMA 的详细信息，请参阅参考资料。
 
@@ -716,7 +713,7 @@ class ModelEMA:
     """
 
     def __init__(self, model, decay=0.9999, tau=2000, updates=0):
-        """使用给定参数为“模型”初始化 EMA。
+        """使用给定参数为“模型”初始化 EMA。.
 
         参数：
             model (nn.Module): 用于创建 EMA 的模型。
@@ -735,7 +732,7 @@ class ModelEMA:
         self.enabled = True
 
     def update(self, model):
-        """更新 EMA 参数。
+        """更新 EMA 参数。.
 
         参数：
             model (nn.Module): 用于更新 EMA 的模型。
@@ -759,7 +756,7 @@ class ModelEMA:
                     v.mul_(d).add_(m, alpha=1 - d)
 
     def update_attr(self, model, include=(), exclude=("process_group", "reducer")):
-        """将模型属性复制到 EMA，并支持包含或排除指定属性。
+        """将模型属性复制到 EMA，并支持包含或排除指定属性。.
 
         参数：
             model (nn.Module): 要复制属性的模型。
@@ -771,7 +768,7 @@ class ModelEMA:
 
 
 def strip_optimizer(f: str | Path = "best.pt", s: str = "", updates: dict[str, Any] | None = None) -> dict[str, Any]:
-    """从 f 中移除优化器以完成训练，并可选择保存为 s。
+    """从 f 中移除优化器以完成训练，并可选择保存为 s。.
 
     参数：
         f (str | Path): 要从中移除优化器的模型文件路径。
@@ -838,7 +835,7 @@ def strip_optimizer(f: str | Path = "best.pt", s: str = "", updates: dict[str, A
 
 
 def convert_optimizer_state_dict_to_fp16(state_dict):
-    """将给定优化器的 state_dict 转换为 FP16，重点转换 state 键中的张量。
+    """将给定优化器的 state_dict 转换为 FP16，重点转换 state 键中的张量。.
 
     参数：
         state_dict (dict): 优化器状态字典。
@@ -856,7 +853,7 @@ def convert_optimizer_state_dict_to_fp16(state_dict):
 
 @contextmanager
 def cuda_memory_usage(device=None):
-    """监控并管理加速器内存使用情况。
+    """监控并管理加速器内存使用情况。.
 
     此函数清空当前加速器缓存，返回包含内存使用信息的字典，然后记录指定设备上的已保留内存。
 
@@ -882,7 +879,7 @@ def cuda_memory_usage(device=None):
 
 
 def profile_ops(input, ops, n=10, device=None, max_num_obj=0):
-    """Ultralytics 速度、内存和 FLOPs 分析器。
+    """Ultralytics 速度、内存和 FLOPs 分析器。.
 
     参数：
         input (torch.Tensor | 列表): 要分析的输入张量。
@@ -974,7 +971,7 @@ def profile_ops(input, ops, n=10, device=None, max_num_obj=0):
 
 
 class EarlyStopping:
-    """早停类：指定数量的周期没有改进时停止训练。
+    """早停类：指定数量的周期没有改进时停止训练。.
 
     属性：
         best_fitness (float): 观察到的最佳适应度值。
@@ -984,7 +981,7 @@ class EarlyStopping:
     """
 
     def __init__(self, patience=50):
-        """初始化早停对象。
+        """初始化早停对象。.
 
         参数：
             patience (int, 可选): 适应度停止改善后、停止训练前等待的轮数。
@@ -995,7 +992,7 @@ class EarlyStopping:
         self.possible_stop = False  # possible stop may occur next epoch
 
     def __call__(self, epoch, fitness):
-        """检查是否应停止训练。
+        """检查是否应停止训练。.
 
         参数：
         epoch (int): 当前训练轮次。
@@ -1032,7 +1029,7 @@ def attempt_compile(
     warmup: bool = False,
     mode: bool | str = "default",
 ) -> torch.nn.Module:
-    """使用 torch.compile 编译模型，并可选择预热计算图以降低首次迭代延迟。
+    """使用 torch.compile 编译模型，并可选择预热计算图以降低首次迭代延迟。.
 
         此工具尝试使用 inductor 后端编译提供的模型。如果编译不可用或失败，则原样返回原始模型。
         可选的预热会使用虚拟输入执行一次前向传播，以预热编译图并测量编译/预热时间。

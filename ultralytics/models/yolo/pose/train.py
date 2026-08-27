@@ -12,7 +12,7 @@ from ultralytics.utils import DEFAULT_CFG, RANK
 
 
 class PoseTrainer(yolo.detect.DetectionTrainer):
-    """继承 DetectionTrainer 的训练器，用于训练 YOLO 姿态估计模型。
+    """继承 DetectionTrainer 的训练器，用于训练 YOLO 姿态估计模型。.
 
     此训练器专门处理姿态估计任务，负责模型训练、验证，以及姿态关键点和边界框的可视化。
 
@@ -37,7 +37,7 @@ class PoseTrainer(yolo.detect.DetectionTrainer):
     """
 
     def __init__(self, cfg=DEFAULT_CFG, overrides: dict[str, Any] | None = None, _callbacks: dict | None = None):
-        """初始化用于训练 YOLO 姿态估计模型的 PoseTrainer 对象。
+        """初始化用于训练 YOLO 姿态估计模型的 PoseTrainer 对象。.
 
         参数：
             cfg (dict, 可选): 包含训练参数的默认配置字典。
@@ -59,7 +59,7 @@ class PoseTrainer(yolo.detect.DetectionTrainer):
         weights: str | Path | None = None,
         verbose: bool = True,
     ) -> PoseModel:
-        """使用指定配置和权重获取姿态估计模型。
+        """使用指定配置和权重获取姿态估计模型。.
 
         参数：
             cfg (str | Path | dict, 可选): 模型配置文件路径或配置字典。
@@ -84,7 +84,7 @@ class PoseTrainer(yolo.detect.DetectionTrainer):
         return model
 
     def set_model_attributes(self):
-        """设置 PoseModel 的关键点形状属性。"""
+        """设置 PoseModel 的关键点形状属性。."""
         super().set_model_attributes()
         self.model.kpt_shape = self.data["kpt_shape"]
         self.model.kpt_oks_sigmas = self.data.get("kpt_oks_sigmas")
@@ -95,13 +95,13 @@ class PoseTrainer(yolo.detect.DetectionTrainer):
         self.model.kpt_names = kpt_names
 
     def get_validator(self):
-        """返回用于验证的 PoseValidator 实例。"""
+        """返回用于验证的 PoseValidator 实例。."""
         return yolo.pose.PoseValidator(
             self.test_loader, save_dir=self.save_dir, args=copy(self.args), _callbacks=self.callbacks
         )
 
     def get_dataset(self) -> dict[str, Any]:
-        """获取数据集并确保其中包含必需的 `kpt_shape` 键。
+        """获取数据集并确保其中包含必需的 `kpt_shape` 键。.
 
         返回：
             (dict): 包含训练、验证和测试数据集及类别名称的字典。

@@ -10,10 +10,9 @@ from ultralytics.utils.plotting import colors
 
 
 class ObjectBlurrer(BaseSolution):
-    """管理实时视频流中检测对象模糊处理的类。
+    """管理实时视频流中检测对象模糊处理的类。.
 
-    此类扩展 BaseSolution，根据检测到的边界框对对象进行模糊处理。模糊区域会直接更新到输入图像中，
-    可用于保护隐私或实现其他视觉效果。
+    此类扩展 BaseSolution，根据检测到的边界框对对象进行模糊处理。模糊区域会直接更新到输入图像中， 可用于保护隐私或实现其他视觉效果。
 
     属性：
         blur_ratio (int): 应用于检测对象的模糊强度（值越大，模糊越明显）。
@@ -33,7 +32,7 @@ class ObjectBlurrer(BaseSolution):
     """
 
     def __init__(self, **kwargs: Any) -> None:
-        """初始化 ObjectBlurrer 类，用于对视频流或图像中的检测对象应用模糊效果。
+        """初始化 ObjectBlurrer 类，用于对视频流或图像中的检测对象应用模糊效果。.
 
         参数：
             **kwargs (Any): 传递给父类并用于配置的关键字参数，包括：
@@ -47,7 +46,7 @@ class ObjectBlurrer(BaseSolution):
         self.blur_ratio = int(blur_ratio * 100)
 
     def process(self, im0) -> SolutionResults:
-        """对输入图像中的检测对象应用模糊效果。
+        """对输入图像中的检测对象应用模糊效果。.
 
         此方法提取跟踪信息，对应检测对象所在区域应用模糊，并使用边界框标注图像。
 
@@ -79,9 +78,7 @@ class ObjectBlurrer(BaseSolution):
             blur_obj = cv2.blur(im0[y0:y1, x0:x1], (self.blur_ratio, self.blur_ratio))
             # 更新原图像中的模糊区域
             im0[y0:y1, x0:x1] = blur_obj
-            annotator.box_label(
-                box, label=self.adjust_box_label(cls, conf), color=colors(cls, True)
-            )  # 标注边界框
+            annotator.box_label(box, label=self.adjust_box_label(cls, conf), color=colors(cls, True))  # 标注边界框
 
         plot_im = annotator.result()
         self.display_output(plot_im)  # 使用基类函数显示输出

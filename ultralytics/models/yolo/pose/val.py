@@ -14,7 +14,7 @@ from ultralytics.utils.metrics import OKS_SIGMA, PoseMetrics, kpt_iou
 
 
 class PoseValidator(DetectionValidator):
-    """继承 DetectionValidator 的验证器，用于验证姿态模型。
+    """继承 DetectionValidator 的验证器，用于验证姿态模型。.
 
     此验证器专门处理姿态估计任务，负责关键点处理并实现姿态评估所需的专用指标。
 
@@ -49,7 +49,7 @@ class PoseValidator(DetectionValidator):
     """
 
     def __init__(self, dataloader=None, save_dir=None, args=None, _callbacks: dict | None = None) -> None:
-        """初始化用于姿态估计验证的 PoseValidator 对象。
+        """初始化用于姿态估计验证的 PoseValidator 对象。.
 
         此验证器专门处理姿态估计任务，负责关键点处理并实现姿态评估所需的专用指标。
 
@@ -66,13 +66,13 @@ class PoseValidator(DetectionValidator):
         self.metrics = PoseMetrics()
 
     def preprocess(self, batch: dict[str, Any]) -> dict[str, Any]:
-        """将关键点数据转换为浮点数并移动到指定设备。"""
+        """将关键点数据转换为浮点数并移动到指定设备。."""
         batch = super().preprocess(batch)
         batch["keypoints"] = batch["keypoints"].float()
         return batch
 
     def get_desc(self) -> str:
-        """以字符串格式返回评估指标描述。"""
+        """以字符串格式返回评估指标描述。."""
         return ("%22s" + "%11s" * 10) % (
             "Class",
             "Images",
@@ -88,7 +88,7 @@ class PoseValidator(DetectionValidator):
         )
 
     def init_metrics(self, model: torch.nn.Module) -> None:
-        """初始化 YOLO 姿态验证的评估指标。
+        """初始化 YOLO 姿态验证的评估指标。.
 
         参数：
             model (torch.nn.Module): 待验证的模型。
@@ -105,7 +105,7 @@ class PoseValidator(DetectionValidator):
             self.sigma = OKS_SIGMA if is_pose else np.ones(nkpt) / nkpt
 
     def postprocess(self, preds: torch.Tensor) -> list[dict[str, torch.Tensor]]:
-        """后处理 YOLO 预测结果，提取并重塑姿态估计所需的关键点。
+        """后处理 YOLO 预测结果，提取并重塑姿态估计所需的关键点。.
 
         此方法继承父类后处理流程，从预测结果的 'extra' 字段提取关键点，并根据关键点形状配置重塑它们。
         关键点会从展平格式重塑为正确的维度结构（COCO 姿态格式通常为 [N, 17, 3]）。
@@ -129,7 +129,7 @@ class PoseValidator(DetectionValidator):
         return preds
 
     def _prepare_batch(self, si: int, batch: dict[str, Any]) -> dict[str, Any]:
-        """将关键点转换为浮点数并缩放到原始尺寸，准备处理批次数据。
+        """将关键点转换为浮点数并缩放到原始尺寸，准备处理批次数据。.
 
         参数：
             si (int): 样本在批次中的索引。
@@ -151,7 +151,7 @@ class PoseValidator(DetectionValidator):
         return pbatch
 
     def _process_batch(self, preds: dict[str, torch.Tensor], batch: dict[str, Any]) -> dict[str, np.ndarray]:
-        """计算检测结果与真实标注之间的交并比（IoU），并返回正确预测矩阵。
+        """计算检测结果与真实标注之间的交并比（IoU），并返回正确预测矩阵。.
 
         参数：
             preds (dict[str, torch.Tensor]): 包含预测数据的字典，其中 'cls' 为类别预测，'keypoints' 为关键点预测。
@@ -177,12 +177,12 @@ class PoseValidator(DetectionValidator):
         return tp
 
     def gather_stats(self) -> None:
-        """从所有 GPU 收集统计信息。"""
+        """从所有 GPU 收集统计信息。."""
         super().gather_stats()  # 收集 DetectionValidator 的统计信息
         self._gather_image_metrics(self.metrics.pose)
 
     def save_one_txt(self, predn: dict[str, torch.Tensor], save_conf: bool, shape: tuple[int, int], file: Path) -> None:
-        """按归一化坐标将 YOLO 姿态检测结果保存到文本文件。
+        """按归一化坐标将 YOLO 姿态检测结果保存到文本文件。.
 
         参数：
             predn (dict[str, torch.Tensor]): 包含 'bboxes'、'conf'、'cls' 和 'keypoints' 键的预测字典。
@@ -204,7 +204,7 @@ class PoseValidator(DetectionValidator):
         ).save_txt(file, save_conf=save_conf)
 
     def pred_to_json(self, predn: dict[str, torch.Tensor], pbatch: dict[str, Any]) -> None:
-        """将 YOLO 预测结果转换为 COCO JSON 格式。
+        """将 YOLO 预测结果转换为 COCO JSON 格式。.
 
         此方法接收预测张量和批次数据，将边界框从 YOLO 格式转换为 COCO 格式，并将包含关键点的结果追加到内部 JSON 字典（self.jdict）。
 
@@ -222,7 +222,7 @@ class PoseValidator(DetectionValidator):
             self.jdict[-len(kpts) + i]["keypoints"] = k  # 关键点
 
     def scale_preds(self, predn: dict[str, torch.Tensor], pbatch: dict[str, Any]) -> dict[str, torch.Tensor]:
-        """将预测结果缩放到原始图像尺寸。"""
+        """将预测结果缩放到原始图像尺寸。."""
         return {
             **super().scale_preds(predn, pbatch),
             "keypoints": ops.scale_coords(
@@ -234,7 +234,7 @@ class PoseValidator(DetectionValidator):
         }
 
     def eval_json(self, stats: dict[str, Any]) -> dict[str, Any]:
-        """使用 COCO JSON 格式评估目标检测模型。"""
+        """使用 COCO JSON 格式评估目标检测模型。."""
         anno_json = self.data["path"] / "annotations/person_keypoints_val2017.json"  # 标注
         pred_json = self.save_dir / "predictions.json"  # 预测结果
         return super().coco_evaluate(stats, pred_json, anno_json, ["bbox", "keypoints"], suffix=["Box", "Pose"])

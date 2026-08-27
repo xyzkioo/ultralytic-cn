@@ -1,6 +1,6 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 """
-对 YOLO 模型格式进行速度和精度基准测试。
+对 YOLO 模型格式进行速度和精度基准测试。.
 
 Usage:
     from ultralytics.utils.benchmarks import ProfileModels, benchmark
@@ -71,7 +71,7 @@ def benchmark(
     format="",
     **kwargs,
 ):
-    """在不同格式下测试 YOLO 模型的速度和精度。
+    """在不同格式下测试 YOLO 模型的速度和精度。.
 
     参数：
         model (str | Path): 模型文件或目录路径。
@@ -258,7 +258,7 @@ def benchmark(
 
 
 class ProfileModels:
-    """用于在 ONNX 和 TensorRT 上分析不同模型性能的 ProfileModels 类。
+    """用于在 ONNX 和 TensorRT 上分析不同模型性能的 ProfileModels 类。.
 
     此类分析不同模型的性能，并返回模型速度和 FLOPs 等结果。
 
@@ -301,7 +301,7 @@ class ProfileModels:
         trt: bool = True,
         device: torch.device | str | None = None,
     ):
-        """初始化用于模型性能分析的 ProfileModels 类。
+        """初始化用于模型性能分析的 ProfileModels 类。.
 
         参数：
             paths (列表[str]): 待分析的模型路径列表。
@@ -326,7 +326,7 @@ class ProfileModels:
         self.device = device if isinstance(device, torch.device) else select_device(device)
 
     def run(self):
-        """在多种格式（包括 ONNX 和 TensorRT）下分析 YOLO 模型的速度和精度。
+        """在多种格式（包括 ONNX 和 TensorRT）下分析 YOLO 模型的速度和精度。.
 
         返回：
             (列表[dict]): 包含每个模型性能分析结果的字典列表。
@@ -380,7 +380,7 @@ class ProfileModels:
         return output
 
     def get_files(self):
-        """返回用户指定的所有相关模型文件路径列表。
+        """返回用户指定的所有相关模型文件路径列表。.
 
         返回：
             (列表[Path]): 模型文件的 Path 对象列表。
@@ -401,12 +401,12 @@ class ProfileModels:
 
     @staticmethod
     def get_onnx_model_info(onnx_file: str):
-        """从 ONNX 模型文件提取元数据，包括层数、参数量、梯度数量和 FLOPs。"""
+        """从 ONNX 模型文件提取元数据，包括层数、参数量、梯度数量和 FLOPs。."""
         return 0.0, 0.0, 0.0, 0.0  # 返回 (num_layers, num_params, num_gradients, num_flops)
 
     @staticmethod
     def iterative_sigma_clipping(data: np.ndarray, sigma: float = 2, max_iters: int = 3):
-        """对数据迭代应用 sigma 裁剪，以移除异常值。
+        """对数据迭代应用 sigma 裁剪，以移除异常值。.
 
         参数：
             数据 (np.ndarray): 输入数据 数组.
@@ -427,7 +427,7 @@ class ProfileModels:
         return data
 
     def profile_tensorrt_model(self, engine_file: str, eps: float = 1e-3):
-        """使用 TensorRT 分析 YOLO 模型性能，测量平均运行时间和标准差。
+        """使用 TensorRT 分析 YOLO 模型性能，测量平均运行时间和标准差。.
 
         参数：
             engine_file (str): TensorRT engine 文件路径。
@@ -465,11 +465,11 @@ class ProfileModels:
 
     @staticmethod
     def check_dynamic(tensor_shape):
-        """检查 ONNX 模型中的张量形状是否为动态形状。"""
+        """检查 ONNX 模型中的张量形状是否为动态形状。."""
         return not all(isinstance(dim, int) and dim >= 0 for dim in tensor_shape)
 
     def profile_onnx_model(self, onnx_file: str, eps: float = 1e-3):
-        """分析 ONNX 模型，测量多次运行的平均推理时间和标准差。
+        """分析 ONNX 模型，测量多次运行的平均推理时间和标准差。.
 
         参数：
             onnx_file (str): ONNX 模型文件路径。
@@ -547,7 +547,7 @@ class ProfileModels:
         t_engine: tuple[float, float],
         model_info: tuple[float, float, float, float],
     ):
-        """生成包含模型性能指标的表格行字符串。
+        """生成包含模型性能指标的表格行字符串。.
 
         参数：
             model_name (str): 模型名称。
@@ -571,7 +571,7 @@ class ProfileModels:
         t_engine: tuple[float, float],
         model_info: tuple[float, float, float, float],
     ):
-        """生成性能分析结果字典。
+        """生成性能分析结果字典。.
 
         参数：
             model_name (str): 模型名称。
@@ -593,7 +593,7 @@ class ProfileModels:
 
     @staticmethod
     def print_table(table_rows: list[str]):
-        """打印格式化的模型性能分析结果表格。
+        """打印格式化的模型性能分析结果表格。.
 
         参数：
             table_rows (列表[str]): 格式化表格行字符串列表。

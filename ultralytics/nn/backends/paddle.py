@@ -14,14 +14,13 @@ from .base import BaseBackend
 
 
 class PaddleBackend(BaseBackend):
-    """百度 PaddlePaddle 推理后端。
+    """百度 PaddlePaddle 推理后端。.
 
-    加载并执行百度 PaddlePaddle 模型（*_paddle_model/ 目录）推理。
-    支持 CPU 和 GPU 执行，并自动配置设备和初始化内存池。
+    加载并执行百度 PaddlePaddle 模型（*_paddle_model/ 目录）推理。 支持 CPU 和 GPU 执行，并自动配置设备和初始化内存池。
     """
 
     def load_model(self, weight: str | Path) -> None:
-        """从包含 .json 和 .pdiparams 文件的目录加载百度 PaddlePaddle 模型。
+        """从包含 .json 和 .pdiparams 文件的目录加载百度 PaddlePaddle 模型。.
 
         参数：
             weight (str | Path): 模型目录或 .pdiparams 文件的路径。
@@ -61,7 +60,7 @@ class PaddleBackend(BaseBackend):
         self.apply_metadata(self.read_metadata(w))
 
     def forward(self, im: torch.Tensor) -> list[np.ndarray]:
-        """执行百度 PaddlePaddle 推理。
+        """执行百度 PaddlePaddle 推理。.
 
         参数：
             im (torch.Tensor): 输入图像 张量 in BCHW format, normalized to [0, 1].

@@ -8,7 +8,7 @@ from ultralytics.utils import DEFAULT_CFG, ops
 
 
 class SegmentationPredictor(DetectionPredictor):
-    """继承 DetectionPredictor、用于根据分割模型生成预测结果的类。
+    """继承 DetectionPredictor、用于根据分割模型生成预测结果的类。.
 
     此类专门处理分割模型输出，在预测结果中同时处理边界框和掩码。
 
@@ -31,7 +31,7 @@ class SegmentationPredictor(DetectionPredictor):
     """
 
     def __init__(self, cfg=DEFAULT_CFG, overrides=None, _callbacks: dict | None = None):
-        """使用配置、覆盖项和回调初始化 SegmentationPredictor。
+        """使用配置、覆盖项和回调初始化 SegmentationPredictor。.
 
         此类专门处理分割模型输出，在预测结果中同时处理边界框和掩码。
 
@@ -44,7 +44,7 @@ class SegmentationPredictor(DetectionPredictor):
         self.args.task = "segment"
 
     def postprocess(self, preds, img, orig_imgs):
-        """对输入批次中的每张图像应用非极大值抑制并处理分割检测结果。
+        """对输入批次中的每张图像应用非极大值抑制并处理分割检测结果。.
 
         参数：
             preds (tuple): 模型预测结果，包含边界框、分数、类别和掩码系数。
@@ -64,7 +64,7 @@ class SegmentationPredictor(DetectionPredictor):
         return super().postprocess(preds[0], img, orig_imgs, protos=protos)
 
     def construct_results(self, preds, img, orig_imgs, protos):
-        """根据预测结果构建结果对象列表。
+        """根据预测结果构建结果对象列表。.
 
         参数：
             preds (列表[torch.Tensor]): 预测边界框、分数和掩码列表。
@@ -81,7 +81,7 @@ class SegmentationPredictor(DetectionPredictor):
         ]
 
     def construct_result(self, pred, img, orig_img, img_path, proto):
-        """根据预测结果构建单个结果对象。
+        """根据预测结果构建单个结果对象。.
 
         参数：
             pred (torch.Tensor): 预测边界框、分数和掩码。

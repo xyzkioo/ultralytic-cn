@@ -24,7 +24,7 @@ from .sam3.vl_combiner import SAM3VLBackbone
 
 
 def _create_vision_backbone(compile_mode=None, enable_inst_interactivity=True) -> Sam3DualViTDetNeck:
-    """使用 ViT 和 neck 创建 SAM3 视觉骨干网络。"""
+    """使用 ViT 和 neck 创建 SAM3 视觉骨干网络。."""
     # 位置编码
     position_encoding = PositionEmbeddingSine(
         num_pos_feats=256,
@@ -70,7 +70,7 @@ def _create_vision_backbone(compile_mode=None, enable_inst_interactivity=True) -
 
 
 def _create_sam3_transformer() -> TransformerWrapper:
-    """创建 SAM3 检测器编码器和解码器。"""
+    """创建 SAM3 检测器编码器和解码器。."""
     encoder: TransformerEncoderFusion = TransformerEncoderFusion(
         layer=TransformerEncoderLayer(
             d_model=256,
@@ -133,7 +133,7 @@ def _create_sam3_transformer() -> TransformerWrapper:
 
 
 def build_sam3_image_model(checkpoint_path: str, enable_segmentation: bool = True, compile: bool = False):
-    """构建 SAM3 图像模型。
+    """构建 SAM3 图像模型。.
 
     参数：
         checkpoint_path: 可选的模型检查点路径。
@@ -256,7 +256,7 @@ def build_sam3_image_model(checkpoint_path: str, enable_segmentation: bool = Tru
 
 
 def build_interactive_sam3(checkpoint_path: str, compile=None, with_backbone=True) -> SAM3Model:
-    """构建用于视频跟踪的 SAM3 Tracker 模块。
+    """构建用于视频跟踪的 SAM3 Tracker 模块。.
 
     参数：
         checkpoint_path (str): 模型检查点路径。
@@ -349,7 +349,7 @@ def build_interactive_sam3(checkpoint_path: str, compile=None, with_backbone=Tru
 
 
 def _load_checkpoint(model, checkpoint, interactive=False):
-    """从文件加载 SAM3 模型检查点。"""
+    """从文件加载 SAM3 模型检查点。."""
     with open(checkpoint, "rb") as f:
         ckpt = torch_load(f)
     if "model" in ckpt and isinstance(ckpt["model"], dict):

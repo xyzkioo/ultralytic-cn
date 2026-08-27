@@ -7,10 +7,9 @@ from ultralytics.utils import ops
 
 
 class NASPredictor(DetectionPredictor):
-    """用于对象检测的 Ultralytics YOLO NAS 预测器。
+    """用于对象检测的 Ultralytics YOLO NAS 预测器。.
 
-    此类继承 Ultralytics 引擎中的 DetectionPredictor，负责后处理 YOLO NAS 模型生成的原始预测结果。
-    它会执行非极大值抑制，并缩放边界框以匹配原始图像尺寸。
+    此类继承 Ultralytics 引擎中的 DetectionPredictor，负责后处理 YOLO NAS 模型生成的原始预测结果。 它会执行非极大值抑制，并缩放边界框以匹配原始图像尺寸。
 
     属性：
         args (Namespace): 包含后处理配置的命名空间，包括置信度阈值、IoU 阈值、类别无关 NMS 标志、
@@ -31,7 +30,7 @@ class NASPredictor(DetectionPredictor):
     """
 
     def postprocess(self, preds_in, img, orig_imgs):
-        """后处理 NAS 模型预测结果，生成最终检测结果。
+        """后处理 NAS 模型预测结果，生成最终检测结果。.
 
         此方法接收 YOLO NAS 模型的原始预测结果，转换边界框格式并执行后处理，
         生成可供 Ultralytics 结果可视化和分析工具使用的最终检测结果。

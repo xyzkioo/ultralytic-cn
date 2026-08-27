@@ -12,7 +12,7 @@ from .torch_utils import TORCH_1_11
 
 
 class TaskAlignedAssigner(nn.Module):
-    """用于目标检测的任务对齐分配器。
+    """用于目标检测的任务对齐分配器。.
 
     此类根据结合分类和定位信息的任务对齐指标，将真实目标（gt）分配给锚框。
 
@@ -37,7 +37,7 @@ class TaskAlignedAssigner(nn.Module):
         eps: float = 1e-9,
         topk2=None,
     ):
-        """使用可自定义超参数初始化 TaskAlignedAssigner 对象。
+        """使用可自定义超参数初始化 TaskAlignedAssigner 对象。.
 
         参数：
             topk (int, 可选): 要考虑的候选项数量。
@@ -60,7 +60,7 @@ class TaskAlignedAssigner(nn.Module):
 
     @torch.no_grad()
     def forward(self, pd_scores, pd_bboxes, anc_points, gt_labels, gt_bboxes, mask_gt):
-        """计算任务对齐分配结果。
+        """计算任务对齐分配结果。.
 
         参数：
             pd_scores (torch.Tensor): 预测分类分数，形状为 (bs, num_total_anchors, num_classes)。
@@ -105,7 +105,7 @@ class TaskAlignedAssigner(nn.Module):
         return tuple(t.to(device) for t in result)
 
     def _forward(self, pd_scores, pd_bboxes, anc_points, gt_labels, gt_bboxes, mask_gt):
-        """计算任务对齐分配结果。
+        """计算任务对齐分配结果。.
 
         参数：
             pd_scores (torch.Tensor): 预测分类分数，形状为 (bs, num_total_anchors, num_classes)。
@@ -143,7 +143,7 @@ class TaskAlignedAssigner(nn.Module):
         return target_labels, target_bboxes, target_scores, fg_mask.bool(), target_gt_idx
 
     def get_pos_mask(self, pd_scores, pd_bboxes, gt_labels, gt_bboxes, anc_points, mask_gt):
-        """获取每个真实边界框对应的正样本掩码。
+        """获取每个真实边界框对应的正样本掩码。.
 
         参数：
             pd_scores (torch.Tensor): 预测分类分数，形状为 (bs, num_total_anchors, num_classes)。
@@ -169,7 +169,7 @@ class TaskAlignedAssigner(nn.Module):
         return mask_pos, align_metric, overlaps
 
     def get_box_metrics(self, pd_scores, pd_bboxes, gt_labels, gt_bboxes, mask_gt):
-        """根据预测边界框和真实边界框计算对齐指标。
+        """根据预测边界框和真实边界框计算对齐指标。.
 
         参数：
             pd_scores (torch.Tensor): 预测分类分数，形状为 (bs, num_total_anchors, num_classes)。
@@ -200,7 +200,7 @@ class TaskAlignedAssigner(nn.Module):
         return align_metric, overlaps
 
     def iou_calculation(self, gt_bboxes, pd_bboxes):
-        """计算水平边界框的 IoU。
+        """计算水平边界框的 IoU。.
 
         参数：
             gt_bboxes (torch.Tensor): 真实边界框。
@@ -212,7 +212,7 @@ class TaskAlignedAssigner(nn.Module):
         return bbox_iou(gt_bboxes, pd_bboxes, xywh=False, CIoU=True).squeeze(-1).clamp_(0)
 
     def select_topk_candidates(self, metrics, topk_mask=None):
-        """根据给定指标选择前 k 个候选项。
+        """根据给定指标选择前 k 个候选项。.
 
         参数：
             metrics (torch.Tensor): 形状为 (b, max_num_obj, h*w) 的指标张量，其中 b 为批次大小，max_num_obj 为最大对象数量，h*w 为锚框点总数。
@@ -237,7 +237,7 @@ class TaskAlignedAssigner(nn.Module):
         return count_tensor.to(metrics.dtype)
 
     def get_targets(self, gt_labels, gt_bboxes, target_gt_idx, fg_mask):
-        """为正样本锚框点计算目标标签、目标边界框和目标分数。
+        """为正样本锚框点计算目标标签、目标边界框和目标分数。.
 
         参数：
             gt_labels (torch.Tensor): 真实标签，形状为 (b, max_num_obj, 1)，其中 b 为批次大小，max_num_obj 为最大目标数量。
@@ -274,7 +274,7 @@ class TaskAlignedAssigner(nn.Module):
         return target_labels, target_bboxes, target_scores
 
     def select_candidates_in_gts(self, xy_centers, gt_bboxes, mask_gt, eps=1e-9):
-        """选择位于真实边界框内的正样本锚框中心。
+        """选择位于真实边界框内的正样本锚框中心。.
 
         参数：
             xy_centers (torch.Tensor): 锚框中心坐标，形状为 (h*w, 2)。
@@ -302,7 +302,7 @@ class TaskAlignedAssigner(nn.Module):
         return ((xy_centers - lt > eps) & (rb - xy_centers > eps)).all(3)
 
     def select_highest_overlaps(self, mask_pos, overlaps, n_max_boxes, align_metric):
-        """当锚框被分配给多个真实目标时，选择 IoU 最高的真实边界框。
+        """当锚框被分配给多个真实目标时，选择 IoU 最高的真实边界框。.
 
         参数：
             mask_pos (torch.Tensor): 正样本掩码，形状为 (b, n_max_boxes, h*w)。
@@ -341,14 +341,14 @@ class TaskAlignedAssigner(nn.Module):
 
 
 class RotatedTaskAlignedAssigner(TaskAlignedAssigner):
-    """使用任务对齐指标将真实目标分配给旋转边界框。"""
+    """使用任务对齐指标将真实目标分配给旋转边界框。."""
 
     def iou_calculation(self, gt_bboxes, pd_bboxes):
-        """计算旋转边界框的 IoU。"""
+        """计算旋转边界框的 IoU。."""
         return probiou(gt_bboxes, pd_bboxes).squeeze(-1).clamp_(0)
 
     def select_candidates_in_gts(self, xy_centers, gt_bboxes, mask_gt):
-        """为旋转边界框选择 gt 中的正样本锚框中心。
+        """为旋转边界框选择 gt 中的正样本锚框中心。.
 
         参数：
             xy_centers (torch.Tensor): 锚框中心坐标，形状为 (h*w, 2)。
@@ -383,7 +383,7 @@ class RotatedTaskAlignedAssigner(TaskAlignedAssigner):
 
 
 def make_anchors(feats, strides, grid_cell_offset=0.5):
-    """根据特征生成锚框。"""
+    """根据特征生成锚框。."""
     anchor_points, stride_tensor = [], []
     assert feats is not None
     dtype = feats[0].dtype
@@ -400,7 +400,7 @@ def make_anchors(feats, strides, grid_cell_offset=0.5):
 
 
 def dist2bbox(distance, anchor_points, xywh=True, dim=-1):
-    """将距离（ltrb）转换为边界框（xywh 或 xyxy）。"""
+    """将距离（ltrb）转换为边界框（xywh 或 xyxy）。."""
     lt, rb = distance.chunk(2, dim)
     x1y1 = anchor_points - lt
     x2y2 = anchor_points + rb
@@ -412,7 +412,7 @@ def dist2bbox(distance, anchor_points, xywh=True, dim=-1):
 
 
 def bbox2dist(anchor_points: torch.Tensor, bbox: torch.Tensor, reg_max: int | None = None) -> torch.Tensor:
-    """将边界框（xyxy）转换为距离（ltrb）。"""
+    """将边界框（xyxy）转换为距离（ltrb）。."""
     x1y1, x2y2 = bbox.chunk(2, -1)
     dist = torch.cat((anchor_points - x1y1, x2y2 - anchor_points), -1)
     if reg_max is not None:
@@ -421,7 +421,7 @@ def bbox2dist(anchor_points: torch.Tensor, bbox: torch.Tensor, reg_max: int | No
 
 
 def dist2rbox(pred_dist, pred_angle, anchor_points, dim=-1):
-    """根据锚框点和分布解码预测的旋转边界框坐标。
+    """根据锚框点和分布解码预测的旋转边界框坐标。.
 
     参数：
         pred_dist (torch.Tensor): 预测旋转距离，形状为 (bs, h*w, 4)。
@@ -448,7 +448,7 @@ def rbox2dist(
     dim: int = -1,
     reg_max: int | None = None,
 ):
-    """将旋转边界框（xywh）转换为距离（ltrb），这是 dist2rbox 的逆变换。
+    """将旋转边界框（xywh）转换为距离（ltrb），这是 dist2rbox 的逆变换。.
 
     参数：
         target_bboxes (torch.Tensor): 目标旋转边界框，形状为 (bs, h*w, 4)，格式为 [x, y, w, h]。

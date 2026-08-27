@@ -8,10 +8,9 @@ from ultralytics.utils.plotting import colors
 
 
 class SecurityAlarm(BaseSolution):
-    """管理实时监控安全报警功能的类。
+    """管理实时监控安全报警功能的类。.
 
-    此类继承 BaseSolution，可监控帧中的对象，在检测总数超过指定阈值时发送电子邮件通知，
-    并为输出帧添加可视化标注。
+    此类继承 BaseSolution，可监控帧中的对象，在检测总数超过指定阈值时发送电子邮件通知， 并为输出帧添加可视化标注。
 
     属性：
         email_sent (bool): 标记当前事件是否已经发送过邮件。
@@ -33,7 +32,7 @@ class SecurityAlarm(BaseSolution):
     """
 
     def __init__(self, **kwargs: Any) -> None:
-        """使用实时对象监控参数初始化 SecurityAlarm 类。
+        """使用实时对象监控参数初始化 SecurityAlarm 类。.
 
         参数：
             **kwargs (Any): 传递给父类的其他关键字参数。
@@ -46,7 +45,7 @@ class SecurityAlarm(BaseSolution):
         self.from_email = ""
 
     def authenticate(self, from_email: str, password: str, to_email: str) -> None:
-        """验证用于发送报警通知的电子邮件服务器。
+        """验证用于发送报警通知的电子邮件服务器。.
 
         此方法会与 SMTP 服务器建立安全连接，并使用提供的凭据登录。
 
@@ -68,7 +67,7 @@ class SecurityAlarm(BaseSolution):
         self.from_email = from_email
 
     def send_email(self, im0, records: int = 5) -> None:
-        """发送包含图像附件的电子邮件通知，说明检测到的对象数量。
+        """发送包含图像附件的电子邮件通知，说明检测到的对象数量。.
 
         此方法会编码输入图像，组合包含检测详情的邮件，并将邮件发送给指定收件人。
 
@@ -111,7 +110,7 @@ class SecurityAlarm(BaseSolution):
             LOGGER.error(f"Failed to send email: {e}")
 
     def process(self, im0) -> SolutionResults:
-        """监控帧并处理对象检测结果，在达到阈值时触发报警。
+        """监控帧并处理对象检测结果，在达到阈值时触发报警。.
 
         此方法处理输入帧，提取检测结果并使用边界框标注帧；当检测对象数量达到或超过指定阈值，
         且尚未发送过报警时，发送电子邮件通知。

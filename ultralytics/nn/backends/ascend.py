@@ -13,13 +13,13 @@ from .base import BaseBackend
 
 
 class AscendBackend(BaseBackend):
-    """用于 CANN 离线模型的华为 Ascend NPU 推理后端。
+    """用于 CANN 离线模型的华为 Ascend NPU 推理后端。.
 
     加载编译后的 .om 离线模型，并通过封装 CANN pyACL 绑定的 ais_bench 运行时在 Ascend AI 处理器上执行推理。
     """
 
     def load_model(self, weight: str | Path) -> None:
-        """从包含 .om 文件的目录加载 Ascend 模型。
+        """从包含 .om 文件的目录加载 Ascend 模型。.
 
         参数：
             weight (str | Path): 包含 .om 离线模型的 Ascend 模型目录路径。
@@ -48,12 +48,12 @@ class AscendBackend(BaseBackend):
         self.apply_metadata(self.read_metadata(found))
 
     def __del__(self):
-        """释放推理会话持有的 Ascend 设备端资源。"""
+        """释放推理会话持有的 Ascend 设备端资源。."""
         if model := getattr(self, "model", None):
             model.free_resource()
 
     def forward(self, im: torch.Tensor) -> np.ndarray | list[np.ndarray]:
-        """在 Ascend NPU 上执行推理。
+        """在 Ascend NPU 上执行推理。.
 
         参数：
             im (torch.Tensor): 输入图像 张量 in BCHW format, normalized to [0, 1].

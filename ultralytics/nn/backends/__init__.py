@@ -1,5 +1,5 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
-"""Ultralytics YOLO 推理后端。
+"""Ultralytics YOLO 推理后端。.
 
 此包为各种深度学习框架和硬件加速器提供模块化推理后端。
 每个后端都实现 `BaseBackend` 接口，可独立使用，也可通过统一的 `AutoBackend` 调度器自动检测格式并路由推理。

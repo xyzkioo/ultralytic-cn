@@ -6,20 +6,19 @@ from ultralytics.utils import LOGGER
 
 
 def onnx_calibration_reader(dataset, transform_fn, input_name: str = "images", batch: int = 0):
-    """根据 Ultralytics 校准数据加载器创建 ONNX Runtime 校准数据读取器。
+    """根据 Ultralytics 校准数据加载器创建 ONNX Runtime 校准数据读取器。.
 
-    ``batch`` 是图的静态批次维度（动态批次模型为 0）：小于导出批次的数据集会产生静态图无法接受的较小批次，
-    因此会复制样本，直到批次大小恰好达到 ``batch``。
+    ``batch`` 是图的静态批次维度（动态批次模型为 0）：小于导出批次的数据集会产生静态图无法接受的较小批次， 因此会复制样本，直到批次大小恰好达到 ``batch``。
     """
     from onnxruntime.quantization import CalibrationDataReader
 
     class _CalibrationReader(CalibrationDataReader):
         def __init__(self):
-            """初始化校准数据集迭代。"""
+            """初始化校准数据集迭代。."""
             self.iterator = iter(dataset)
 
         def get_next(self):
-            """返回下一个校准样本；数据耗尽时返回 None。"""
+            """返回下一个校准样本；数据耗尽时返回 None。."""
             if (b := next(self.iterator, None)) is None:
                 return None
             im = transform_fn(b)
@@ -28,7 +27,7 @@ def onnx_calibration_reader(dataset, transform_fn, input_name: str = "images", b
             return {input_name: im}
 
         def rewind(self):
-            """重置迭代器，以便再次执行校准。"""
+            """重置迭代器，以便再次执行校准。."""
             self.iterator = iter(dataset)
 
     return _CalibrationReader()
@@ -43,7 +42,7 @@ def onnx_int8_quantize(
     batch: int = 0,
     prefix: str = "",
 ) -> str:
-    """使用 ONNX Runtime 静态量化将 ONNX 模型量化为 INT8。"""
+    """使用 ONNX Runtime 静态量化将 ONNX 模型量化为 INT8。."""
     import onnx
     from onnxruntime.quantization import quantize_static
 

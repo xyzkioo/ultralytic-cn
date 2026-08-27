@@ -15,7 +15,7 @@ from .ops import HungarianMatcher
 
 
 class DETRLoss(nn.Module):
-    """用于计算各类损失分量的 DETR（DEtection TRansformer）损失类。
+    """用于计算各类损失分量的 DETR（DEtection TRansformer）损失类。.
 
     此类计算分类损失、边界框损失和 GIoU 损失，并可为 DETR 对象检测模型计算辅助损失。
 
@@ -45,7 +45,7 @@ class DETRLoss(nn.Module):
         gamma: float = 1.5,
         alpha: float = 0.25,
     ):
-        """使用可自定义的损失分量和权重初始化 DETR 损失函数。
+        """使用可自定义的损失分量和权重初始化 DETR 损失函数。.
 
         未提供 loss_gain 时使用默认值，使用预设代价权重初始化 HungarianMatcher，并支持辅助损失和多种损失类型。
 
@@ -78,7 +78,7 @@ class DETRLoss(nn.Module):
     def _get_loss_class(
         self, pred_scores: torch.Tensor, targets: torch.Tensor, gt_scores: torch.Tensor, num_gts: int, postfix: str = ""
     ) -> dict[str, torch.Tensor]:
-        """根据预测结果、目标值和真实分数计算分类损失。
+        """根据预测结果、目标值和真实分数计算分类损失。.
 
         参数：
             pred_scores (torch.Tensor): 预测类别分数，形状为 (B, N, C)。
@@ -119,7 +119,7 @@ class DETRLoss(nn.Module):
     def _get_loss_bbox(
         self, pred_bboxes: torch.Tensor, gt_bboxes: torch.Tensor, postfix: str = ""
     ) -> dict[str, torch.Tensor]:
-        """计算预测边界框和真实边界框之间的边界框损失与 GIoU 损失。
+        """计算预测边界框和真实边界框之间的边界框损失与 GIoU 损失。.
 
         参数：
             pred_bboxes (torch.Tensor): 预测边界框，形状为 (N, 4)。
@@ -193,7 +193,7 @@ class DETRLoss(nn.Module):
         masks: torch.Tensor | None = None,
         gt_mask: torch.Tensor | None = None,
     ) -> dict[str, torch.Tensor]:
-        """获取中间解码器层的辅助损失。
+        """获取中间解码器层的辅助损失。.
 
         参数：
             pred_bboxes (torch.Tensor): 辅助层的预测边界框。
@@ -253,7 +253,7 @@ class DETRLoss(nn.Module):
 
     @staticmethod
     def _get_index(match_indices: list[tuple]) -> tuple[tuple[torch.Tensor, torch.Tensor], torch.Tensor]:
-        """从匹配索引中提取批次索引、源索引和目标索引。
+        """从匹配索引中提取批次索引、源索引和目标索引。.
 
         参数：
             match_indices (列表[tuple]): List of tuples containing matched 索引.
@@ -270,7 +270,7 @@ class DETRLoss(nn.Module):
     def _get_assigned_bboxes(
         self, pred_bboxes: torch.Tensor, gt_bboxes: torch.Tensor, match_indices: list[tuple]
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        """根据匹配索引将预测边界框分配给真实边界框。
+        """根据匹配索引将预测边界框分配给真实边界框。.
 
         参数：
             pred_bboxes (torch.Tensor): Predicted bounding 边界框.
@@ -307,7 +307,7 @@ class DETRLoss(nn.Module):
         postfix: str = "",
         match_indices: list[tuple] | None = None,
     ) -> dict[str, torch.Tensor]:
-        """计算单个预测层的损失。
+        """计算单个预测层的损失。.
 
         参数：
             pred_bboxes (torch.Tensor): 预测边界框。
@@ -353,7 +353,7 @@ class DETRLoss(nn.Module):
         postfix: str = "",
         **kwargs: Any,
     ) -> dict[str, torch.Tensor]:
-        """计算预测边界框和分数的损失。
+        """计算预测边界框和分数的损失。.
 
         参数：
             pred_bboxes (torch.Tensor): 预测边界框，形状为 (L, B, N, 4)。
@@ -388,7 +388,7 @@ class DETRLoss(nn.Module):
 
 
 class RTDETRDetectionLoss(DETRLoss):
-    """继承 DETRLoss 的实时检测 Transformer（RT-DETR）检测损失类。
+    """继承 DETRLoss 的实时检测 Transformer（RT-DETR）检测损失类。.
 
     此类计算 RT-DETR 模型的检测损失，包括标准检测损失；提供去噪元数据时，还会计算额外的去噪训练损失。
     """
@@ -401,7 +401,7 @@ class RTDETRDetectionLoss(DETRLoss):
         dn_scores: torch.Tensor | None = None,
         dn_meta: dict[str, Any] | None = None,
     ) -> dict[str, torch.Tensor]:
-        """执行前向计算，得到检测损失和可选的去噪损失。
+        """执行前向计算，得到检测损失和可选的去噪损失。.
 
         参数：
             preds (tuple[torch.Tensor, torch.Tensor]): 包含预测边界框和分数的元组。
@@ -437,7 +437,7 @@ class RTDETRDetectionLoss(DETRLoss):
     def get_dn_match_indices(
         dn_pos_idx: list[torch.Tensor], dn_num_group: int, dn_gt_idx: list[torch.Tensor]
     ) -> list[tuple[torch.Tensor, torch.Tensor]]:
-        """获取去噪匹配索引。
+        """获取去噪匹配索引。.
 
         参数：
             dn_pos_idx (列表[torch.Tensor]): 包含去噪正样本索引的张量列表。

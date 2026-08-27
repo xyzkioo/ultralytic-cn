@@ -1,6 +1,6 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 """
-YOLO 模型元数据模块。
+YOLO 模型元数据模块。.
 
 此模块保存各种 YOLO 模型的详细元数据，包括作者、组织、发布日期、arXiv 链接、GitHub
 仓库、文档地址和性能指标。作为脚本执行时，会将这些元数据序列化到名为

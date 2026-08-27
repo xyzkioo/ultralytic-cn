@@ -55,7 +55,7 @@ DEPTH_PNG_SCALE = 1000  # uint16 默认表示毫米；零值无效
 
 
 def save_depth_png(path: str | Path, depth: np.ndarray, scale: float = DEPTH_PNG_SCALE) -> None:
-    """将以米为单位的深度保存为缩放后的 uint16 PNG，零值保留给无效像素。"""
+    """将以米为单位的深度保存为缩放后的 uint16 PNG，零值保留给无效像素。."""
     if not isinstance(scale, (int, float)) or isinstance(scale, bool) or not np.isfinite(scale) or scale <= 0:
         raise ValueError("Depth scale must be a positive finite number")
     depth = np.asarray(depth, dtype=np.float32).squeeze()
@@ -73,7 +73,7 @@ def save_depth_png(path: str | Path, depth: np.ndarray, scale: float = DEPTH_PNG
 
 
 def load_depth(path: str | Path, scale: float = DEPTH_PNG_SCALE) -> np.ndarray:
-    """从缩放后的 uint16 PNG 或以米为单位的浮点 NPY 文件加载深度。"""
+    """从缩放后的 uint16 PNG 或以米为单位的浮点 NPY 文件加载深度。."""
     path = Path(path)
     if path.suffix.lower() == ".npy":
         depth = np.load(path, allow_pickle=False)
@@ -92,7 +92,7 @@ def load_depth(path: str | Path, scale: float = DEPTH_PNG_SCALE) -> np.ndarray:
 
 
 def img2label_paths(img_paths: list[str], label_dir: str = "labels", suffix: str = ".txt") -> list[str]:
-    """将图像路径转换为标签路径：把 `images` 目录替换为标签目录，并将扩展名替换为 `.txt`。"""
+    """将图像路径转换为标签路径：把 `images` 目录替换为标签目录，并将扩展名替换为 `.txt`。."""
     sa, sb = f"{os.sep}images{os.sep}", f"{os.sep}{label_dir}{os.sep}"  # /images/ 和标签目录的路径片段
     return [sb.join(x.rsplit(sa, 1)).rsplit(".", 1)[0] + f"{suffix}" for x in img_paths]
 
@@ -100,10 +100,9 @@ def img2label_paths(img_paths: list[str], label_dir: str = "labels", suffix: str
 def check_file_speeds(
     files: list[str], threshold_ms: float = 10, threshold_mb: float = 50, max_files: int = 5, prefix: str = ""
 ):
-    """检查数据集文件访问速度并提供性能反馈。
+    """检查数据集文件访问速度并提供性能反馈。.
 
-    此函数通过测量 ping（stat 调用）耗时和读取速度来测试数据集文件的访问速度，从给定列表中最多抽取
-    `max_files` 个文件，并在访问时间超过阈值时发出警告。
+    此函数通过测量 ping（stat 调用）耗时和读取速度来测试数据集文件的访问速度，从给定列表中最多抽取 `max_files` 个文件，并在访问时间超过阈值时发出警告。
 
     参数：
         files (列表[str]): 要检查访问速度的文件路径列表。
@@ -176,7 +175,7 @@ def check_file_speeds(
 
 
 def get_hash(paths: list[str]) -> str:
-    """根据文件或目录路径列表返回单个哈希值。"""
+    """根据文件或目录路径列表返回单个哈希值。."""
     size = 0
     for p in paths:
         try:
@@ -189,7 +188,7 @@ def get_hash(paths: list[str]) -> str:
 
 
 def exif_size(img: Image.Image) -> tuple[int, int]:
-    """返回经过 EXIF 校正的 PIL 图像尺寸。"""
+    """返回经过 EXIF 校正的 PIL 图像尺寸。."""
     s = img.size  # （宽度，高度）
     if img.format == "JPEG":  # 仅支持 JPEG 图像
         try:
@@ -203,7 +202,7 @@ def exif_size(img: Image.Image) -> tuple[int, int]:
 
 
 def check_image(im_file: str) -> tuple[str, tuple[int, int]]:
-    """检查图像文件的完整性，并在发现损坏的 JPEG 时进行修复。
+    """检查图像文件的完整性，并在发现损坏的 JPEG 时进行修复。.
 
     参数：
         im_file (str): 要检查的图像文件路径。
@@ -232,7 +231,7 @@ def check_image(im_file: str) -> tuple[str, tuple[int, int]]:
 
 
 def verify_image(args: tuple) -> tuple:
-    """检查单张图像。"""
+    """检查单张图像。."""
     (im_file, cls), prefix = args
     # 数量（找到、损坏）和消息
     nf, nc, msg = 0, 0, ""
@@ -247,7 +246,7 @@ def verify_image(args: tuple) -> tuple:
 
 
 def verify_image_depth(args: tuple) -> tuple:
-    """检查图像及其配对深度图是否存在且可读取。"""
+    """检查图像及其配对深度图是否存在且可读取。."""
     im_file, depth_file, prefix, scale = args
     # 数量（找到、缺失、损坏）和消息
     nf, nm, nc, msg = 0, 0, 0, ""
@@ -284,7 +283,7 @@ def verify_image_depth(args: tuple) -> tuple:
 
 
 def verify_image_mask(args: tuple) -> tuple:
-    """检查图像及其语义掩码是否存在、可读取且尺寸匹配。"""
+    """检查图像及其语义掩码是否存在、可读取且尺寸匹配。."""
     im_file, mask_file, prefix, check_bit_depth = args
     # 数量（找到、缺失、损坏）和消息
     nf, nm, nc, msg = 0, 0, 0, ""
@@ -318,7 +317,7 @@ def verify_image_mask(args: tuple) -> tuple:
 
 
 def verify_image_label(args: tuple) -> list:
-    """检查单个图像与标签对。"""
+    """检查单个图像与标签对。."""
     im_file, lb_file, prefix, keypoint, num_cls, nkpt, ndim, single_cls = args
     # 数量（缺失、找到、空白、损坏）、消息、分割段和关键点
     nm, nf, ne, nc, msg, segments, keypoints = 0, 0, 0, 0, "", [], None
@@ -381,10 +380,9 @@ def verify_image_label(args: tuple) -> list:
 
 
 def visualize_image_annotations(image_path: str, txt_path: str, label_map: dict[int, str]):
-    """在图像上可视化 YOLO 标注（边界框和类别标签）。
+    """在图像上可视化 YOLO 标注（边界框和类别标签）。.
 
-    此函数读取图像及其 YOLO 格式的标注文件，为检测到的对象绘制边界框，并使用对应类别名称进行标注。
-    边界框颜色根据类别 ID 分配，文字颜色则根据背景亮度动态调整，以保证可读性。
+    此函数读取图像及其 YOLO 格式的标注文件，为检测到的对象绘制边界框，并使用对应类别名称进行标注。 边界框颜色根据类别 ID 分配，文字颜色则根据背景亮度动态调整，以保证可读性。
 
     参数：
         image_path (str): 待标注图像的路径，文件必须可由 PIL 读取。
@@ -424,7 +422,7 @@ def visualize_image_annotations(image_path: str, txt_path: str, label_map: dict[
 def polygon2mask(
     imgsz: tuple[int, int], polygons: list[np.ndarray], color: int = 1, downsample_ratio: int = 1
 ) -> np.ndarray:
-    """将多边形列表转换为指定图像尺寸的二值掩码。
+    """将多边形列表转换为指定图像尺寸的二值掩码。.
 
     参数：
         imgsz (tuple[int, int]): 图像尺寸，格式为 `(高度, 宽度)`。
@@ -447,7 +445,7 @@ def polygon2mask(
 def polygons2masks(
     imgsz: tuple[int, int], polygons: list[np.ndarray], color: int, downsample_ratio: int = 1
 ) -> np.ndarray:
-    """将多边形列表转换为指定图像尺寸的一组二值掩码。
+    """将多边形列表转换为指定图像尺寸的一组二值掩码。.
 
     参数：
         imgsz (tuple[int, int]): 图像尺寸，格式为 `(高度, 宽度)`。
@@ -464,7 +462,7 @@ def polygons2masks(
 def polygons2masks_overlap(
     imgsz: tuple[int, int], segments: list[np.ndarray], downsample_ratio: int = 1
 ) -> tuple[np.ndarray, np.ndarray]:
-    """返回下采样后的重叠掩码和按面积排序的索引。"""
+    """返回下采样后的重叠掩码和按面积排序的索引。."""
     masks = np.zeros(
         (imgsz[0] // downsample_ratio, imgsz[1] // downsample_ratio),
         dtype=np.int32 if len(segments) > 255 else np.uint8,
@@ -490,10 +488,9 @@ def polygons2masks_overlap(
 
 
 def find_dataset_yaml(path: Path) -> Path:
-    """查找并返回 Detect、Segment 或 Pose 数据集对应的 YAML 文件。
+    """查找并返回 Detect、Segment 或 Pose 数据集对应的 YAML 文件。.
 
-    此函数首先在给定目录的根目录中搜索 YAML 文件；如果未找到，则执行递归搜索。
-    如果存在与给定路径主文件名相同的 YAML 文件，则优先返回该文件。
+    此函数首先在给定目录的根目录中搜索 YAML 文件；如果未找到，则执行递归搜索。 如果存在与给定路径主文件名相同的 YAML 文件，则优先返回该文件。
 
     参数：
         path (Path): 要搜索 YAML 文件的目录路径。
@@ -510,7 +507,7 @@ def find_dataset_yaml(path: Path) -> Path:
 
 
 def convert_ndjson_to_yolo_if_needed(data: str | Path) -> str | Path:
-    """在需要时将 NDJSON 数据集或 Platform 数据集 URI 转换为 YOLO 格式。"""
+    """在需要时将 NDJSON 数据集或 Platform 数据集 URI 转换为 YOLO 格式。."""
     data = normalize_platform_uri(data)  # 接受 Platform 网页 URL
     data_str = str(data)
     if clean_url(data_str).endswith(".ndjson") or (data_str.startswith("ul://") and "/datasets/" in data_str):
@@ -523,10 +520,9 @@ def convert_ndjson_to_yolo_if_needed(data: str | Path) -> str | Path:
 
 
 def check_det_dataset(dataset: str, autodownload: bool = True, split: str = "") -> dict[str, Any]:
-    """在本地找不到数据集时下载、验证并按需解压数据集。
+    """在本地找不到数据集时下载、验证并按需解压数据集。.
 
-    此函数检查指定数据集是否可用；如果找不到，可选择下载并解压数据集。随后读取并解析配套 YAML 数据，
-    确保满足关键要求，并解析与数据集相关的路径。
+    此函数检查指定数据集是否可用；如果找不到，可选择下载并解压数据集。随后读取并解析配套 YAML 数据， 确保满足关键要求，并解析与数据集相关的路径。
 
     参数：
         dataset (str): 数据集或数据集描述文件（例如 YAML 文件）的路径。
@@ -635,7 +631,7 @@ def check_det_dataset(dataset: str, autodownload: bool = True, split: str = "") 
 
 
 def check_cls_dataset(dataset: str | Path, split: str = "") -> dict[str, Any]:
-    """检查 ImageNet 等图像分类数据集。
+    """检查 ImageNet 等图像分类数据集。.
 
     此函数接受数据集名称，并尝试获取对应的数据集信息。如果本地找不到数据集，则尝试从互联网下载并保存到本地。
 
@@ -736,8 +732,7 @@ def check_cls_dataset(dataset: str | Path, split: str = "") -> dict[str, Any]:
 
 
 def compress_one_image(f: str, f_new: str | None = None, max_dim: int = 1920, quality: int = 50):
-    """使用 Python Imaging Library（PIL）或 OpenCV 压缩单张图像文件，在保持宽高比和质量的同时缩小尺寸。
-    如果输入图像小于最大尺寸，则不会调整大小。
+    """使用 Python Imaging Library（PIL）或 OpenCV 压缩单张图像文件，在保持宽高比和质量的同时缩小尺寸。 如果输入图像小于最大尺寸，则不会调整大小。.
 
     参数：
         f (str): 输入图像文件路径。
@@ -771,7 +766,7 @@ def compress_one_image(f: str, f_new: str | None = None, max_dim: int = 1920, qu
 
 
 def load_dataset_cache_file(path: Path) -> dict:
-    """从路径加载 Ultralytics 的 `*.cache` 字典。"""
+    """从路径加载 Ultralytics 的 `*.cache` 字典。."""
     import gc
 
     gc.disable()  # 减少 pickle 加载时间
@@ -781,7 +776,7 @@ def load_dataset_cache_file(path: Path) -> dict:
 
 
 def save_dataset_cache_file(prefix: str, path: Path, x: dict, version: str):
-    """将 Ultralytics 数据集 `*.cache` 字典 x 保存到路径。"""
+    """将 Ultralytics 数据集 `*.cache` 字典 x 保存到路径。."""
     x["version"] = version  # 添加缓存版本
     if is_dir_writeable(path.parent):
         if path.exists():
@@ -798,7 +793,7 @@ def save_dataset_cache_file(prefix: str, path: Path, x: dict, version: str):
 
 
 def add_polygon_background(data: dict) -> dict:
-    """为没有 `masks_dir` 的多边形语义数据集设置背景类别。
+    """为没有 `masks_dir` 的多边形语义数据集设置背景类别。.
 
     - nc > 1：在 id=nc 处追加 `background` 类别，并将 `data['nc']` 增加到 nc+1；多边形的 cls 值保持为前景类别 ID。
     - nc == 1：保持 nc=1（二值分割）。无论标签 cls 值如何，多边形栅格化都会得到 `{0=背景, 1=前景}` 掩码。
