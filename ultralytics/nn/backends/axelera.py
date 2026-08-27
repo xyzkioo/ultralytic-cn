@@ -12,13 +12,13 @@ from .base import BaseBackend
 
 
 class AxeleraBackend(BaseBackend):
-    """用于 Axelera Metis AI 加速器的 Axelera AI 推理后端。
+    """用于 Axelera Metis AI 加速器的 Axelera AI 推理后端。.
 
     加载已编译的 Axelera 模型（.axm 文件），并使用 Axelera AI 运行时 SDK 执行推理。
     """
 
     def load_model(self, weight: str | Path) -> None:
-        """从包含 .axm 文件的目录加载 Axelera 模型。
+        """从包含 .axm 文件的目录加载 Axelera 模型。.
 
         参数：
             weight (str | Path): 包含 .axm 二进制文件的 Axelera 模型目录路径。
@@ -43,7 +43,7 @@ class AxeleraBackend(BaseBackend):
         self.apply_metadata(self.read_metadata(found))
 
     def forward(self, im: torch.Tensor) -> list:
-        """在 Axelera 硬件加速器上执行推理。
+        """在 Axelera 硬件加速器上执行推理。.
 
         参数：
             im (torch.Tensor): 输入图像 张量 in BCHW format, normalized to [0, 1].

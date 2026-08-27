@@ -1,5 +1,5 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
-"""网络模块。"""
+"""网络模块。."""
 
 from __future__ import annotations
 
@@ -58,13 +58,13 @@ __all__ = (
 
 
 class DFL(nn.Module):
-    """分布焦点损失（DFL）的积分模块。
+    """分布焦点损失（DFL）的积分模块。.
 
     该模块提出于 Generalized Focal Loss：https://arxiv.org/abs/2006.04388
     """
 
     def __init__(self, c1: int = 16):
-        """使用给定的输入通道数量初始化卷积层。
+        """使用给定的输入通道数量初始化卷积层。.
 
         参数：
             c1 (int)：输入通道数量。
@@ -76,17 +76,17 @@ class DFL(nn.Module):
         self.c1 = c1
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """将 DFL 模块应用于输入张量并返回变换后的输出。"""
+        """将 DFL 模块应用于输入张量并返回变换后的输出。."""
         b, _, a = x.shape  # 批次、通道、锚框
         return self.conv(x.view(b, 4, self.c1, a).transpose(2, 1).softmax(1)).view(b, 4, a)
         # 返回 self.conv(x.view(b, self.c1, 4, a).softmax(1)).view(b, 4, a)
 
 
 class Proto(nn.Module):
-    """Ultralytics YOLO 分割模型的掩码原型模块。"""
+    """Ultralytics YOLO 分割模型的掩码原型模块。."""
 
     def __init__(self, c1: int, c_: int = 256, c2: int = 32):
-        """使用指定的原型数量和掩码数量初始化 Ultralytics YOLO 掩码原型模块。
+        """使用指定的原型数量和掩码数量初始化 Ultralytics YOLO 掩码原型模块。.
 
         参数：
             c1 (int)：输入通道数量。
@@ -100,18 +100,18 @@ class Proto(nn.Module):
         self.cv3 = Conv(c_, c2)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """对上采样后的输入图像执行前向传播。"""
+        """对上采样后的输入图像执行前向传播。."""
         return self.cv3(self.cv2(self.upsample(self.cv1(x))))
 
 
 class HGStem(nn.Module):
-    """PPHGNetV2 的 StemBlock，包含 5 个卷积层和一个 maxpool2d。
+    """PPHGNetV2 的 StemBlock，包含 5 个卷积层和一个 maxpool2d。.
 
     https://github.com/PaddlePaddle/PaddleDetection/blob/develop/ppdet/modeling/backbones/hgnet_v2.py
     """
 
     def __init__(self, c1: int, cm: int, c2: int):
-        """初始化 PPHGNetV2 的 StemBlock。
+        """初始化 PPHGNetV2 的 StemBlock。.
 
         参数：
             c1 (int)：输入通道数量。
@@ -127,7 +127,7 @@ class HGStem(nn.Module):
         self.pool = nn.MaxPool2d(kernel_size=2, stride=1, padding=0, ceil_mode=True)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """执行 PPHGNetV2 主干网络层的前向传播。"""
+        """执行 PPHGNetV2 主干网络层的前向传播。."""
         x = self.stem1(x)
         x = F.pad(x, [0, 1, 0, 1])
         x2 = self.stem2a(x)
@@ -141,7 +141,7 @@ class HGStem(nn.Module):
 
 
 class HGBlock(nn.Module):
-    """PPHGNetV2 的 HG_Block，包含 2 个卷积层和 LightConv。
+    """PPHGNetV2 的 HG_Block，包含 2 个卷积层和 LightConv。.
 
     https://github.com/PaddlePaddle/PaddleDetection/blob/develop/ppdet/modeling/backbones/hgnet_v2.py
     """
@@ -157,7 +157,7 @@ class HGBlock(nn.Module):
         shortcut: bool = False,
         act: nn.Module | None = None,
     ):
-        """使用指定参数初始化 HGBlock。
+        """使用指定参数初始化 HGBlock。.
 
         参数：
             c1 (int)：输入通道数量。
@@ -178,7 +178,7 @@ class HGBlock(nn.Module):
         self.add = shortcut and c1 == c2
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """执行 PPHGNetV2 主干网络层的前向传播。"""
+        """执行 PPHGNetV2 主干网络层的前向传播。."""
         y = [x]
         y.extend(m(y[-1]) for m in self.m)
         y = self.ec(self.sc(torch.cat(y, 1)))
@@ -186,10 +186,10 @@ class HGBlock(nn.Module):
 
 
 class SPP(nn.Module):
-    """空间金字塔池化（SPP）层，参见 https://arxiv.org/abs/1406.4729。"""
+    """空间金字塔池化（SPP）层，参见 https://arxiv.org/abs/1406.4729。."""
 
     def __init__(self, c1: int, c2: int, k: tuple[int, ...] = (5, 9, 13)):
-        """使用输入/输出通道数和池化卷积核尺寸初始化 SPP 层。
+        """使用输入/输出通道数和池化卷积核尺寸初始化 SPP 层。.
 
         参数：
             c1 (int)：输入通道数量。
@@ -203,16 +203,16 @@ class SPP(nn.Module):
         self.m = nn.ModuleList([nn.MaxPool2d(kernel_size=x, stride=1, padding=x // 2) for x in k])
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """执行 SPP 层的前向传播，并完成空间金字塔池化。"""
+        """执行 SPP 层的前向传播，并完成空间金字塔池化。."""
         x = self.cv1(x)
         return self.cv2(torch.cat([x] + [m(x) for m in self.m], 1))
 
 
 class SPPF(nn.Module):
-    """Glenn Jocher 为 YOLOv5 提出的快速空间金字塔池化（SPPF）层。"""
+    """Glenn Jocher 为 YOLOv5 提出的快速空间金字塔池化（SPPF）层。."""
 
     def __init__(self, c1: int, c2: int, k: int = 5, n: int = 3, shortcut: bool = False):
-        """使用给定的输入/输出通道数和卷积核尺寸初始化 SPPF 层。
+        """使用给定的输入/输出通道数和卷积核尺寸初始化 SPPF 层。.
 
         参数：
             c1 (int)：输入通道数量。
@@ -233,7 +233,7 @@ class SPPF(nn.Module):
         self.add = shortcut and c1 == c2
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """对输入执行连续池化操作，并返回拼接后的特征图。"""
+        """对输入执行连续池化操作，并返回拼接后的特征图。."""
         y = [self.cv1(x)]
         y.extend(self.m(y[-1]) for _ in range(getattr(self, "n", 3)))
         y = self.cv2(torch.cat(y, 1))
@@ -241,10 +241,10 @@ class SPPF(nn.Module):
 
 
 class C1(nn.Module):
-    """包含 1 个卷积层的 CSP 瓶颈模块。"""
+    """包含 1 个卷积层的 CSP 瓶颈模块。."""
 
     def __init__(self, c1: int, c2: int, n: int = 1):
-        """初始化包含 1 个卷积层的 CSP 瓶颈模块。
+        """初始化包含 1 个卷积层的 CSP 瓶颈模块。.
 
         参数：
             c1 (int)：输入通道数量。
@@ -256,16 +256,16 @@ class C1(nn.Module):
         self.m = nn.Sequential(*(Conv(c2, c2, 3) for _ in range(n)))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """对输入张量应用卷积和残差连接。"""
+        """对输入张量应用卷积和残差连接。."""
         y = self.cv1(x)
         return self.m(y) + y
 
 
 class C2(nn.Module):
-    """包含 2 个卷积层的 CSP 瓶颈模块。"""
+    """包含 2 个卷积层的 CSP 瓶颈模块。."""
 
     def __init__(self, c1: int, c2: int, n: int = 1, shortcut: bool = True, g: int = 1, e: float = 0.5):
-        """初始化包含 2 个卷积层的 CSP 瓶颈模块。
+        """初始化包含 2 个卷积层的 CSP 瓶颈模块。.
 
         参数：
             c1 (int): 输入通道数。
@@ -283,16 +283,16 @@ class C2(nn.Module):
         self.m = nn.Sequential(*(Bottleneck(self.c, self.c, shortcut, g, k=((3, 3), (3, 3)), e=1.0) for _ in range(n)))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """执行包含 2 个卷积层的 CSP 瓶颈模块前向传播。"""
+        """执行包含 2 个卷积层的 CSP 瓶颈模块前向传播。."""
         a, b = self.cv1(x).chunk(2, 1)
         return self.cv2(torch.cat((self.m(a), b), 1))
 
 
 class C2f(nn.Module):
-    """包含 2 个卷积层的快速 CSP 瓶颈实现。"""
+    """包含 2 个卷积层的快速 CSP 瓶颈实现。."""
 
     def __init__(self, c1: int, c2: int, n: int = 1, shortcut: bool = False, g: int = 1, e: float = 0.5):
-        """初始化包含 2 个卷积层的 CSP 瓶颈模块。
+        """初始化包含 2 个卷积层的 CSP 瓶颈模块。.
 
         参数：
             c1 (int)：输入通道数量。
@@ -309,13 +309,13 @@ class C2f(nn.Module):
         self.m = nn.ModuleList(Bottleneck(self.c, self.c, shortcut, g, k=((3, 3), (3, 3)), e=1.0) for _ in range(n))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """执行 C2f 层的前向传播。"""
+        """执行 C2f 层的前向传播。."""
         y = list(self.cv1(x).chunk(2, 1))
         y.extend(m(y[-1]) for m in self.m)
         return self.cv2(torch.cat(y, 1))
 
     def forward_split(self, x: torch.Tensor) -> torch.Tensor:
-        """使用 split() 而不是 chunk() 执行前向传播。"""
+        """使用 split() 而不是 chunk() 执行前向传播。."""
         y = self.cv1(x).split((self.c, self.c), 1)
         y = [y[0], y[1]]
         y.extend(m(y[-1]) for m in self.m)
@@ -323,10 +323,10 @@ class C2f(nn.Module):
 
 
 class C3(nn.Module):
-    """包含 3 个卷积层的 CSP 瓶颈模块。"""
+    """包含 3 个卷积层的 CSP 瓶颈模块。."""
 
     def __init__(self, c1: int, c2: int, n: int = 1, shortcut: bool = True, g: int = 1, e: float = 0.5):
-        """初始化包含 3 个卷积层的 CSP 瓶颈模块。
+        """初始化包含 3 个卷积层的 CSP 瓶颈模块。.
 
         参数：
             c1 (int)：输入通道数量。
@@ -344,15 +344,15 @@ class C3(nn.Module):
         self.m = nn.Sequential(*(Bottleneck(c_, c_, shortcut, g, k=((1, 1), (3, 3)), e=1.0) for _ in range(n)))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """执行包含 3 个卷积层的 CSP 瓶颈模块前向传播。"""
+        """执行包含 3 个卷积层的 CSP 瓶颈模块前向传播。."""
         return self.cv3(torch.cat((self.m(self.cv1(x)), self.cv2(x)), 1))
 
 
 class C3x(C3):
-    """使用交叉卷积的 C3 模块。"""
+    """使用交叉卷积的 C3 模块。."""
 
     def __init__(self, c1: int, c2: int, n: int = 1, shortcut: bool = True, g: int = 1, e: float = 0.5):
-        """使用交叉卷积初始化 C3 模块。
+        """使用交叉卷积初始化 C3 模块。.
 
         参数：
             c1 (int)：输入通道数量。
@@ -368,10 +368,10 @@ class C3x(C3):
 
 
 class RepC3(nn.Module):
-    """Rep C3 模块。"""
+    """Rep C3 模块。."""
 
     def __init__(self, c1: int, c2: int, n: int = 3, e: float = 1.0):
-        """使用 RepConv 模块初始化 RepC3。
+        """使用 RepConv 模块初始化 RepC3。.
 
         参数：
             c1 (int)：输入通道数量。
@@ -387,15 +387,15 @@ class RepC3(nn.Module):
         self.cv3 = Conv(c_, c2, 1, 1) if c_ != c2 else nn.Identity()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """执行 RepC3 模块的前向传播。"""
+        """执行 RepC3 模块的前向传播。."""
         return self.cv3(self.m(self.cv1(x)) + self.cv2(x))
 
 
 class C3TR(C3):
-    """使用 TransformerBlock() 的 C3 模块。"""
+    """使用 TransformerBlock() 的 C3 模块。."""
 
     def __init__(self, c1: int, c2: int, n: int = 1, shortcut: bool = True, g: int = 1, e: float = 0.5):
-        """使用 TransformerBlock 初始化 C3 模块。
+        """使用 TransformerBlock 初始化 C3 模块。.
 
         参数：
             c1 (int)：输入通道数量。
@@ -411,10 +411,10 @@ class C3TR(C3):
 
 
 class C3Ghost(C3):
-    """使用 GhostBottleneck() 的 C3 模块。"""
+    """使用 GhostBottleneck() 的 C3 模块。."""
 
     def __init__(self, c1: int, c2: int, n: int = 1, shortcut: bool = True, g: int = 1, e: float = 0.5):
-        """使用 GhostBottleneck 初始化 C3 模块。
+        """使用 GhostBottleneck 初始化 C3 模块。.
 
         参数：
             c1 (int)：输入通道数量。
@@ -430,10 +430,10 @@ class C3Ghost(C3):
 
 
 class GhostBottleneck(nn.Module):
-    """Ghost 瓶颈模块，参见 https://github.com/huawei-noah/Efficient-AI-Backbones。"""
+    """Ghost 瓶颈模块，参见 https://github.com/huawei-noah/Efficient-AI-Backbones。."""
 
     def __init__(self, c1: int, c2: int, k: int = 3, s: int = 1):
-        """初始化 Ghost 瓶颈模块。
+        """初始化 Ghost 瓶颈模块。.
 
         参数：
             c1 (int)：输入通道数量。
@@ -453,17 +453,17 @@ class GhostBottleneck(nn.Module):
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """对输入张量应用跳跃连接并执行相加。"""
+        """对输入张量应用跳跃连接并执行相加。."""
         return self.conv(x) + self.shortcut(x)
 
 
 class Bottleneck(nn.Module):
-    """标准瓶颈模块。"""
+    """标准瓶颈模块。."""
 
     def __init__(
         self, c1: int, c2: int, shortcut: bool = True, g: int = 1, k: tuple[int, int] = (3, 3), e: float = 0.5
     ):
-        """初始化标准瓶颈模块。
+        """初始化标准瓶颈模块。.
 
         参数：
             c1 (int)：输入通道数量。
@@ -480,15 +480,15 @@ class Bottleneck(nn.Module):
         self.add = shortcut and c1 == c2
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """对输入应用瓶颈模块，并根据配置使用可选的残差连接。"""
+        """对输入应用瓶颈模块，并根据配置使用可选的残差连接。."""
         return x + self.cv2(self.cv1(x)) if self.add else self.cv2(self.cv1(x))
 
 
 class BottleneckCSP(nn.Module):
-    """CSP 瓶颈模块，参见 https://github.com/WongKinYiu/CrossStagePartialNetworks。"""
+    """CSP 瓶颈模块，参见 https://github.com/WongKinYiu/CrossStagePartialNetworks。."""
 
     def __init__(self, c1: int, c2: int, n: int = 1, shortcut: bool = True, g: int = 1, e: float = 0.5):
-        """初始化 CSP 瓶颈模块。
+        """初始化 CSP 瓶颈模块。.
 
         参数：
             c1 (int)：输入通道数量。
@@ -509,17 +509,17 @@ class BottleneckCSP(nn.Module):
         self.m = nn.Sequential(*(Bottleneck(c_, c_, shortcut, g, e=1.0) for _ in range(n)))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """对输入应用包含 4 个卷积层的 CSP 瓶颈模块。"""
+        """对输入应用包含 4 个卷积层的 CSP 瓶颈模块。."""
         y1 = self.cv3(self.m(self.cv1(x)))
         y2 = self.cv2(x)
         return self.cv4(self.act(self.bn(torch.cat((y1, y2), 1))))
 
 
 class ResNetBlock(nn.Module):
-    """使用标准卷积层构成的 ResNet 模块。"""
+    """使用标准卷积层构成的 ResNet 模块。."""
 
     def __init__(self, c1: int, c2: int, s: int = 1, e: int = 4):
-        """初始化 ResNet 模块。
+        """初始化 ResNet 模块。.
 
         参数：
             c1 (int): 输入通道数。
@@ -535,15 +535,15 @@ class ResNetBlock(nn.Module):
         self.shortcut = nn.Sequential(Conv(c1, c3, k=1, s=s, act=False)) if s != 1 or c1 != c3 else nn.Identity()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """执行 ResNet 模块的前向传播。"""
+        """执行 ResNet 模块的前向传播。."""
         return F.relu(self.cv3(self.cv2(self.cv1(x))) + self.shortcut(x))
 
 
 class ResNetLayer(nn.Module):
-    """由多个 ResNet 模块组成的 ResNet 层。"""
+    """由多个 ResNet 模块组成的 ResNet 层。."""
 
     def __init__(self, c1: int, c2: int, s: int = 1, is_first: bool = False, n: int = 1, e: int = 4):
-        """初始化 ResNet 层。
+        """初始化 ResNet 层。.
 
         参数：
             c1 (int): 输入通道数。
@@ -566,15 +566,15 @@ class ResNetLayer(nn.Module):
             self.layer = nn.Sequential(*blocks)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """执行 ResNet 层的前向传播。"""
+        """执行 ResNet 层的前向传播。."""
         return self.layer(x)
 
 
 class MaxSigmoidAttnBlock(nn.Module):
-    """最大 Sigmoid 注意力模块。"""
+    """最大 Sigmoid 注意力模块。."""
 
     def __init__(self, c1: int, c2: int, nh: int = 1, ec: int = 128, gc: int = 512, scale: bool = False):
-        """初始化 MaxSigmoidAttnBlock。
+        """初始化 MaxSigmoidAttnBlock。.
 
         参数：
             c1 (int): 输入通道数。
@@ -594,7 +594,7 @@ class MaxSigmoidAttnBlock(nn.Module):
         self.scale = nn.Parameter(torch.ones(1, nh, 1, 1)) if scale else 1.0
 
     def forward(self, x: torch.Tensor, guide: torch.Tensor) -> torch.Tensor:
-        """执行 MaxSigmoidAttnBlock 的前向传播。
+        """执行 MaxSigmoidAttnBlock 的前向传播。.
 
         参数：
             x (torch.Tensor): 输入张量.
@@ -623,7 +623,7 @@ class MaxSigmoidAttnBlock(nn.Module):
 
 
 class C2fAttn(nn.Module):
-    """带有额外注意力模块的 C2f 模块。"""
+    """带有额外注意力模块的 C2f 模块。."""
 
     def __init__(
         self,
@@ -637,7 +637,7 @@ class C2fAttn(nn.Module):
         g: int = 1,
         e: float = 0.5,
     ):
-        """初始化带有注意力机制的 C2f 模块。
+        """初始化带有注意力机制的 C2f 模块。.
 
         参数：
             c1 (int): 输入通道数。
@@ -658,7 +658,7 @@ class C2fAttn(nn.Module):
         self.attn = MaxSigmoidAttnBlock(self.c, self.c, gc=gc, ec=ec, nh=nh)
 
     def forward(self, x: torch.Tensor, guide: torch.Tensor) -> torch.Tensor:
-        """执行带有注意力机制的 C2f 层前向传播。
+        """执行带有注意力机制的 C2f 层前向传播。.
 
         参数：
             x (torch.Tensor): 输入张量.
@@ -673,7 +673,7 @@ class C2fAttn(nn.Module):
         return self.cv2(torch.cat(y, 1))
 
     def forward_split(self, x: torch.Tensor, guide: torch.Tensor) -> torch.Tensor:
-        """使用 split() 而不是 chunk() 执行前向传播。
+        """使用 split() 而不是 chunk() 执行前向传播。.
 
         参数：
             x (torch.Tensor): 输入张量.
@@ -689,12 +689,12 @@ class C2fAttn(nn.Module):
 
 
 class ImagePoolingAttn(nn.Module):
-    """ImagePoolingAttn：使用图像相关信息增强文本嵌入。"""
+    """ImagePoolingAttn：使用图像相关信息增强文本嵌入。."""
 
     def __init__(
         self, ec: int = 256, ch: tuple[int, ...] = (), ct: int = 512, nh: int = 8, k: int = 3, scale: bool = False
     ):
-        """初始化 ImagePoolingAttn 模块。
+        """初始化 ImagePoolingAttn 模块。.
 
         参数：
             ec (int): 嵌入通道数。
@@ -721,7 +721,7 @@ class ImagePoolingAttn(nn.Module):
         self.k = k
 
     def forward(self, x: list[torch.Tensor], text: torch.Tensor) -> torch.Tensor:
-        """执行 ImagePoolingAttn 的前向传播。
+        """执行 ImagePoolingAttn 的前向传播。.
 
         参数：
             x (列表[torch.Tensor]): 输入特征图列表。
@@ -754,17 +754,17 @@ class ImagePoolingAttn(nn.Module):
 
 
 class ContrastiveHead(nn.Module):
-    """用于视觉语言模型区域与文本相似度计算的对比学习头。"""
+    """用于视觉语言模型区域与文本相似度计算的对比学习头。."""
 
     def __init__(self):
-        """初始化用于区域与文本相似度计算的 ContrastiveHead。"""
+        """初始化用于区域与文本相似度计算的 ContrastiveHead。."""
         super().__init__()
         # 注意：使用 -10.0，使初始分类损失与其他损失保持一致
         self.bias = nn.Parameter(torch.tensor([-10.0]))
         self.logit_scale = nn.Parameter(torch.ones([]) * torch.tensor(1 / 0.07).log())
 
     def forward(self, x: torch.Tensor, w: torch.Tensor) -> torch.Tensor:
-        """执行对比学习的前向计算。
+        """执行对比学习的前向计算。.
 
         参数：
             x (torch.Tensor): 图像特征。
@@ -780,14 +780,14 @@ class ContrastiveHead(nn.Module):
 
 
 class BNContrastiveHead(nn.Module):
-    """使用批归一化代替 L2 归一化的对比学习头。
+    """使用批归一化代替 L2 归一化的对比学习头。.
 
     参数：
         embed_dims (int): 文本和图像特征的嵌入维度。
     """
 
     def __init__(self, embed_dims: int):
-        """初始化 BNContrastiveHead。
+        """初始化 BNContrastiveHead。.
 
         参数：
             embed_dims (int): 特征嵌入维度。
@@ -800,7 +800,7 @@ class BNContrastiveHead(nn.Module):
         self.logit_scale = nn.Parameter(-1.0 * torch.ones([]))
 
     def fuse(self):
-        """融合 BNContrastiveHead 模块中的批归一化层。"""
+        """融合 BNContrastiveHead 模块中的批归一化层。."""
         del self.norm
         del self.bias
         del self.logit_scale
@@ -808,11 +808,11 @@ class BNContrastiveHead(nn.Module):
 
     @staticmethod
     def forward_fuse(x: torch.Tensor, w: torch.Tensor) -> torch.Tensor:
-        """融合后直接返回图像特征，不对其进行修改。"""
+        """融合后直接返回图像特征，不对其进行修改。."""
         return x
 
     def forward(self, x: torch.Tensor, w: torch.Tensor) -> torch.Tensor:
-        """执行带批归一化的对比学习前向计算。
+        """执行带批归一化的对比学习前向计算。.
 
         参数：
             x (torch.Tensor): 图像特征。
@@ -829,12 +829,12 @@ class BNContrastiveHead(nn.Module):
 
 
 class RepBottleneck(Bottleneck):
-    """RepBottleneck 瓶颈模块。"""
+    """RepBottleneck 瓶颈模块。."""
 
     def __init__(
         self, c1: int, c2: int, shortcut: bool = True, g: int = 1, k: tuple[int, int] = (3, 3), e: float = 0.5
     ):
-        """初始化 RepBottleneck。
+        """初始化 RepBottleneck。.
 
         参数：
             c1 (int): 输入通道数。
@@ -850,10 +850,10 @@ class RepBottleneck(Bottleneck):
 
 
 class RepCSP(C3):
-    """用于高效特征提取的可重复跨阶段局部网络（RepCSP）模块。"""
+    """用于高效特征提取的可重复跨阶段局部网络（RepCSP）模块。."""
 
     def __init__(self, c1: int, c2: int, n: int = 1, shortcut: bool = True, g: int = 1, e: float = 0.5):
-        """初始化 RepCSP 层。
+        """初始化 RepCSP 层。.
 
         参数：
             c1 (int): 输入通道数。
@@ -869,10 +869,10 @@ class RepCSP(C3):
 
 
 class RepNCSPELAN4(nn.Module):
-    """CSP-ELAN 模块。"""
+    """CSP-ELAN 模块。."""
 
     def __init__(self, c1: int, c2: int, c3: int, c4: int, n: int = 1):
-        """初始化 CSP-ELAN 层。
+        """初始化 CSP-ELAN 层。.
 
         参数：
             c1 (int): 输入通道数。
@@ -889,20 +889,20 @@ class RepNCSPELAN4(nn.Module):
         self.cv4 = Conv(c3 + (2 * c4), c2, 1, 1)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """执行 RepNCSPELAN4 层的前向传播。"""
+        """执行 RepNCSPELAN4 层的前向传播。."""
         y = list(self.cv1(x).chunk(2, 1))
         y.extend((m(y[-1])) for m in [self.cv2, self.cv3])
         return self.cv4(torch.cat(y, 1))
 
     def forward_split(self, x: torch.Tensor) -> torch.Tensor:
-        """使用 split() 而不是 chunk() 执行前向传播。"""
+        """使用 split() 而不是 chunk() 执行前向传播。."""
         y = list(self.cv1(x).split((self.c, self.c), 1))
         y.extend(m(y[-1]) for m in [self.cv2, self.cv3])
         return self.cv4(torch.cat(y, 1))
 
 
 class ELAN1(RepNCSPELAN4):
-    """包含 4 个卷积层的 ELAN1 模块。"""
+    """包含 4 个卷积层的 ELAN1 模块。."""
 
     def __init__(self, c1: int, c2: int, c3: int, c4: int):
         """初始化 ELAN1 层.
@@ -922,10 +922,10 @@ class ELAN1(RepNCSPELAN4):
 
 
 class AConv(nn.Module):
-    """AConv 下采样卷积模块。"""
+    """AConv 下采样卷积模块。."""
 
     def __init__(self, c1: int, c2: int):
-        """初始化 AConv 模块。
+        """初始化 AConv 模块。.
 
         参数：
             c1 (int): 输入通道数。
@@ -935,16 +935,16 @@ class AConv(nn.Module):
         self.cv1 = Conv(c1, c2, 3, 2, 1)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """执行 AConv 层的前向传播。"""
+        """执行 AConv 层的前向传播。."""
         x = torch.nn.functional.avg_pool2d(x, 2, 1, 0, False, True)
         return self.cv1(x)
 
 
 class ADown(nn.Module):
-    """ADown 下采样模块。"""
+    """ADown 下采样模块。."""
 
     def __init__(self, c1: int, c2: int):
-        """初始化 ADown 模块。
+        """初始化 ADown 模块。.
 
         参数：
             c1 (int): 输入通道数。
@@ -956,7 +956,7 @@ class ADown(nn.Module):
         self.cv2 = Conv(c1 // 2, self.c, 1, 1, 0)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """执行 ADown 层的前向传播。"""
+        """执行 ADown 层的前向传播。."""
         x = torch.nn.functional.avg_pool2d(x, 2, 1, 0, False, True)
         x1, x2 = x.chunk(2, 1)
         x1 = self.cv1(x1)
@@ -966,10 +966,10 @@ class ADown(nn.Module):
 
 
 class SPPELAN(nn.Module):
-    """SPP-ELAN 模块。"""
+    """SPP-ELAN 模块。."""
 
     def __init__(self, c1: int, c2: int, c3: int, k: int = 5):
-        """初始化 SPP-ELAN 模块。
+        """初始化 SPP-ELAN 模块。.
 
         参数：
             c1 (int): 输入通道数。
@@ -986,14 +986,14 @@ class SPPELAN(nn.Module):
         self.cv5 = Conv(4 * c3, c2, 1, 1)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """执行 SPPELAN 层的前向传播。"""
+        """执行 SPPELAN 层的前向传播。."""
         y = [self.cv1(x)]
         y.extend(m(y[-1]) for m in [self.cv2, self.cv3, self.cv4])
         return self.cv5(torch.cat(y, 1))
 
 
 class CBLinear(nn.Module):
-    """CBLinear 分支卷积模块。"""
+    """CBLinear 分支卷积模块。."""
 
     def __init__(self, c1: int, c2s: list[int], k: int = 1, s: int = 1, p: int | None = None, g: int = 1):
         """初始化 CBLinear 模块.
@@ -1011,12 +1011,12 @@ class CBLinear(nn.Module):
         self.conv = nn.Conv2d(c1, sum(c2s), k, s, autopad(k, p), groups=g, bias=True)
 
     def forward(self, x: torch.Tensor) -> list[torch.Tensor]:
-        """执行 CBLinear 层的前向传播。"""
+        """执行 CBLinear 层的前向传播。."""
         return self.conv(x).split(self.c2s, dim=1)
 
 
 class CBFuse(nn.Module):
-    """CBFuse 特征融合模块。"""
+    """CBFuse 特征融合模块。."""
 
     def __init__(self, idx: list[int]):
         """初始化 CBFuse 模块.
@@ -1028,7 +1028,7 @@ class CBFuse(nn.Module):
         self.idx = idx
 
     def forward(self, xs: list[torch.Tensor]) -> torch.Tensor:
-        """执行 CBFuse 层的前向传播。
+        """执行 CBFuse 层的前向传播。.
 
         参数：
             xs (列表[torch.Tensor]): 输入张量列表。
@@ -1042,10 +1042,10 @@ class CBFuse(nn.Module):
 
 
 class C3f(nn.Module):
-    """使用 3 个卷积层实现的快速 CSP 瓶颈模块。"""
+    """使用 3 个卷积层实现的快速 CSP 瓶颈模块。."""
 
     def __init__(self, c1: int, c2: int, n: int = 1, shortcut: bool = False, g: int = 1, e: float = 0.5):
-        """初始化包含 3 个卷积层的 CSP 瓶颈层。
+        """初始化包含 3 个卷积层的 CSP 瓶颈层。.
 
         参数：
             c1 (int): 输入通道数。
@@ -1063,14 +1063,14 @@ class C3f(nn.Module):
         self.m = nn.ModuleList(Bottleneck(c_, c_, shortcut, g, k=((3, 3), (3, 3)), e=1.0) for _ in range(n))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """执行 C3f 层的前向传播。"""
+        """执行 C3f 层的前向传播。."""
         y = [self.cv2(x), self.cv1(x)]
         y.extend(m(y[-1]) for m in self.m)
         return self.cv3(torch.cat(y, 1))
 
 
 class C3k2(C2f):
-    """使用 2 个卷积层实现的快速 CSP 瓶颈模块。"""
+    """使用 2 个卷积层实现的快速 CSP 瓶颈模块。."""
 
     def __init__(
         self,
@@ -1083,7 +1083,7 @@ class C3k2(C2f):
         g: int = 1,
         shortcut: bool = True,
     ):
-        """初始化 C3k2 模块。
+        """初始化 C3k2 模块。.
 
         参数：
             c1 (int): 输入通道数。
@@ -1110,10 +1110,10 @@ class C3k2(C2f):
 
 
 class C3k(C3):
-    """C3k 是一种 CSP 瓶颈模块，可自定义卷积核尺寸以提取神经网络特征。"""
+    """C3k 是一种 CSP 瓶颈模块，可自定义卷积核尺寸以提取神经网络特征。."""
 
     def __init__(self, c1: int, c2: int, n: int = 1, shortcut: bool = True, g: int = 1, e: float = 0.5, k: int = 3):
-        """初始化 C3k 模块。
+        """初始化 C3k 模块。.
 
         参数：
             c1 (int)：输入通道数量。
@@ -1131,7 +1131,7 @@ class C3k(C3):
 
 
 class RepVGGDW(torch.nn.Module):
-    """RepVGGDW 表示 RepVGG 架构中的深度可分离卷积模块。"""
+    """RepVGGDW 表示 RepVGG 架构中的深度可分离卷积模块。."""
 
     def __init__(self, ed: int) -> None:
         """初始化 RepVGGDW 模块.
@@ -1146,7 +1146,7 @@ class RepVGGDW(torch.nn.Module):
         self.act = nn.SiLU()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """执行 RepVGGDW 模块的前向传播。
+        """执行 RepVGGDW 模块的前向传播。.
 
         参数：
             x (torch.Tensor): 输入张量.
@@ -1157,7 +1157,7 @@ class RepVGGDW(torch.nn.Module):
         return self.act(self.conv(x) + self.conv1(x))
 
     def forward_fuse(self, x: torch.Tensor) -> torch.Tensor:
-        """执行融合后的 RepVGGDW 模块的前向传播。
+        """执行融合后的 RepVGGDW 模块的前向传播。.
 
         参数：
             x (torch.Tensor): 输入张量.
@@ -1169,7 +1169,7 @@ class RepVGGDW(torch.nn.Module):
 
     @torch.no_grad()
     def fuse(self):
-        """融合 RepVGGDW 模块中的卷积层。
+        """融合 RepVGGDW 模块中的卷积层。.
 
         此方法会融合卷积层，并相应更新权重和偏置。
         """
@@ -1196,7 +1196,7 @@ class RepVGGDW(torch.nn.Module):
 
 
 class CIB(nn.Module):
-    """紧凑型倒置模块（CIB）。
+    """紧凑型倒置模块（CIB）。.
 
     参数：
         c1 (int): 输入通道数.
@@ -1207,7 +1207,7 @@ class CIB(nn.Module):
     """
 
     def __init__(self, c1: int, c2: int, shortcut: bool = True, e: float = 0.5, lk: bool = False):
-        """初始化 CIB 模块。
+        """初始化 CIB 模块。.
 
         参数：
             c1 (int): 输入通道数。
@@ -1229,7 +1229,7 @@ class CIB(nn.Module):
         self.add = shortcut and c1 == c2
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """执行 CIB 模块的前向传播。
+        """执行 CIB 模块的前向传播。.
 
         参数：
             x (torch.Tensor): 输入张量.
@@ -1241,7 +1241,7 @@ class CIB(nn.Module):
 
 
 class C2fCIB(C2f):
-    """由 C2f 和 CIB 模块组成的卷积模块。
+    """由 C2f 和 CIB 模块组成的卷积模块。.
 
     参数：
         c1 (int): 输入通道数.
@@ -1272,7 +1272,7 @@ class C2fCIB(C2f):
 
 
 class Attention(nn.Module):
-    """对输入张量执行自注意力计算的 Attention 模块。
+    """对输入张量执行自注意力计算的 Attention 模块。.
 
     参数：
         dim (int): 输入张量的维度。
@@ -1292,7 +1292,7 @@ class Attention(nn.Module):
     format = None
 
     def __init__(self, dim: int, num_heads: int = 8, attn_ratio: float = 0.5):
-        """初始化多头注意力模块。
+        """初始化多头注意力模块。.
 
         参数：
             dim (int): 输入维度。
@@ -1311,7 +1311,7 @@ class Attention(nn.Module):
         self.pe = Conv(dim, dim, 3, 1, g=dim, act=False)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """执行 Attention 模块的前向传播。
+        """执行 Attention 模块的前向传播。.
 
         参数：
             x (torch.Tensor): 输入张量。
@@ -1337,7 +1337,7 @@ class Attention(nn.Module):
 
 
 class PSABlock(nn.Module):
-    """在神经网络中实现位置敏感注意力的 PSABlock 模块。
+    """在神经网络中实现位置敏感注意力的 PSABlock 模块。.
 
     此类封装了多头注意力和前馈神经网络层，并支持可选的残差连接。
 
@@ -1357,7 +1357,7 @@ class PSABlock(nn.Module):
     """
 
     def __init__(self, c: int, attn_ratio: float = 0.5, num_heads: int = 4, shortcut: bool = True) -> None:
-        """初始化 PSABlock。
+        """初始化 PSABlock。.
 
         参数：
             c (int): 输入和输出通道数。
@@ -1372,7 +1372,7 @@ class PSABlock(nn.Module):
         self.add = shortcut
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """执行 PSABlock 的前向传播。
+        """执行 PSABlock 的前向传播。.
 
         参数：
             x (torch.Tensor): 输入张量.
@@ -1386,7 +1386,7 @@ class PSABlock(nn.Module):
 
 
 class PSA(nn.Module):
-    """在神经网络中实现位置敏感注意力的 PSA 模块。
+    """在神经网络中实现位置敏感注意力的 PSA 模块。.
 
     此模块将位置敏感注意力和前馈网络应用于输入张量，以增强特征提取和处理能力。
 
@@ -1425,7 +1425,7 @@ class PSA(nn.Module):
         self.ffn = nn.Sequential(Conv(self.c, self.c * 2, 1), Conv(self.c * 2, self.c, 1, act=False))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """执行 PSA 模块的前向传播。
+        """执行 PSA 模块的前向传播。.
 
         参数：
             x (torch.Tensor): 输入张量.
@@ -1440,7 +1440,7 @@ class PSA(nn.Module):
 
 
 class C2PSA(nn.Module):
-    """带有注意力机制、用于增强特征提取和处理能力的 C2PSA 模块。
+    """带有注意力机制、用于增强特征提取和处理能力的 C2PSA 模块。.
 
     此模块通过注意力机制增强特征提取和处理能力，并包含一系列用于自注意力和前馈运算的 PSABlock 模块。
 
@@ -1480,7 +1480,7 @@ class C2PSA(nn.Module):
         self.m = nn.Sequential(*(PSABlock(self.c, attn_ratio=0.5, num_heads=max(self.c // 64, 1)) for _ in range(n)))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """通过一系列 PSA 模块处理输入张量。
+        """通过一系列 PSA 模块处理输入张量。.
 
         参数：
             x (torch.Tensor): 输入张量.
@@ -1494,7 +1494,7 @@ class C2PSA(nn.Module):
 
 
 class C2fPSA(C2f):
-    """使用 PSA 模块增强特征提取能力的 C2fPSA 模块。
+    """使用 PSA 模块增强特征提取能力的 C2fPSA 模块。.
 
     此类在 C2f 模块中加入 PSA 模块，以改进注意力机制和特征提取能力。
 
@@ -1532,7 +1532,7 @@ class C2fPSA(C2f):
 
 
 class SCDown(nn.Module):
-    """使用可分离卷积进行下采样的 SCDown 模块。
+    """使用可分离卷积进行下采样的 SCDown 模块。.
 
     此模块结合逐点卷积和深度卷积执行下采样，在保留通道信息的同时高效降低输入张量的空间维度。
 
@@ -1567,7 +1567,7 @@ class SCDown(nn.Module):
         self.cv2 = Conv(c2, c2, k=k, s=s, g=c2, act=False)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """对输入张量执行卷积和下采样。
+        """对输入张量执行卷积和下采样。.
 
         参数：
             x (torch.Tensor): 输入张量.
@@ -1579,7 +1579,7 @@ class SCDown(nn.Module):
 
 
 class TorchVision(nn.Module):
-    """用于加载任意 torchvision 模型的 TorchVision 模块。
+    """用于加载任意 torchvision 模型的 TorchVision 模块。.
 
     此类可以从 torchvision 库加载模型，可选择加载预训练权重，并通过截断或展开层来自定义模型。
 
@@ -1597,7 +1597,7 @@ class TorchVision(nn.Module):
     def __init__(
         self, model: str, weights: str = "DEFAULT", unwrap: bool = True, truncate: int = 2, split: bool = False
     ):
-        """从 torchvision 加载模型和权重。
+        """从 torchvision 加载模型和权重。.
 
         参数：
             模型 (str): 要加载的 torchvision 模型名称。
@@ -1624,7 +1624,7 @@ class TorchVision(nn.Module):
             self.m.head = self.m.heads = nn.Identity()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """执行模型的前向传播。
+        """执行模型的前向传播。.
 
         参数：
             x (torch.Tensor): 输入张量.
@@ -1641,10 +1641,9 @@ class TorchVision(nn.Module):
 
 
 class AAttn(nn.Module):
-    """为 YOLO 模型提供高效注意力机制的区域注意力模块。
+    """为 YOLO 模型提供高效注意力机制的区域注意力模块。.
 
-    此模块实现基于区域的注意力机制，以具有空间感知能力的方式处理输入特征，
-    因此特别适用于目标检测任务。
+    此模块实现基于区域的注意力机制，以具有空间感知能力的方式处理输入特征， 因此特别适用于目标检测任务。
 
     属性：
         area (int): 将特征图划分成的区域数量。
@@ -1666,7 +1665,7 @@ class AAttn(nn.Module):
     """
 
     def __init__(self, dim: int, num_heads: int, area: int = 1):
-        """初始化用于 YOLO 模型的区域注意力模块。
+        """初始化用于 YOLO 模型的区域注意力模块。.
 
         参数：
             dim (int): 隐藏通道数。
@@ -1685,13 +1684,13 @@ class AAttn(nn.Module):
         self.pe = Conv(all_head_dim, all_head_dim, 7, 1, 3, g=all_head_dim, act=False)
 
     def __setstate__(self, state):
-        """为旧检查点补充缺失的 all_head_dim 属性。"""
+        """为旧检查点补充缺失的 all_head_dim 属性。."""
         super().__setstate__(state)
         if not hasattr(self, "all_head_dim"):
             self.all_head_dim = self.head_dim * self.num_heads
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """通过区域注意力处理输入张量。
+        """通过区域注意力处理输入张量。.
 
         参数：
             x (torch.Tensor): 输入张量.
@@ -1730,10 +1729,9 @@ class AAttn(nn.Module):
 
 
 class ABlock(nn.Module):
-    """用于 YOLO 模型高效特征提取的区域注意力模块。
+    """用于 YOLO 模型高效特征提取的区域注意力模块。.
 
-    此模块将区域注意力机制与前馈网络结合，用于处理特征图。
-    它采用新颖的基于区域的注意力方式，在保持有效性的同时比传统自注意力更加高效。
+    此模块将区域注意力机制与前馈网络结合，用于处理特征图。 它采用新颖的基于区域的注意力方式，在保持有效性的同时比传统自注意力更加高效。
 
     属性：
         attn (AAttn): 用于处理空间特征的区域注意力模块。
@@ -1752,7 +1750,7 @@ class ABlock(nn.Module):
     """
 
     def __init__(self, dim: int, num_heads: int, mlp_ratio: float = 1.2, area: int = 1):
-        """初始化区域注意力模块。
+        """初始化区域注意力模块。.
 
         参数：
             dim (int): 输入通道数.
@@ -1770,7 +1768,7 @@ class ABlock(nn.Module):
 
     @staticmethod
     def _init_weights(m: nn.Module):
-        """使用截断正态分布初始化权重。
+        """使用截断正态分布初始化权重。.
 
         参数：
             m (nn.Module): 要初始化的模块。
@@ -1781,7 +1779,7 @@ class ABlock(nn.Module):
                 nn.init.constant_(m.bias, 0)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """执行 ABlock 的前向传播。
+        """执行 ABlock 的前向传播。.
 
         参数：
             x (torch.Tensor): 输入张量.
@@ -1794,10 +1792,9 @@ class ABlock(nn.Module):
 
 
 class A2C2f(nn.Module):
-    """使用区域注意力机制增强特征提取能力的 Area-Attention C2f 模块。
+    """使用区域注意力机制增强特征提取能力的 Area-Attention C2f 模块。.
 
-    此模块在 C2f 架构中加入区域注意力和 ABlock 层，以改进特征处理能力。
-    它同时支持区域注意力模式和标准卷积模式。
+    此模块在 C2f 架构中加入区域注意力和 ABlock 层，以改进特征处理能力。 它同时支持区域注意力模式和标准卷积模式。
 
     属性：
         cv1 (Conv): 将输入通道数减少为隐藏通道数的初始 1x1 卷积层。
@@ -1859,7 +1856,7 @@ class A2C2f(nn.Module):
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """执行 A2C2f 层的前向传播。
+        """执行 A2C2f 层的前向传播。.
 
         参数：
             x (torch.Tensor): 输入张量.
@@ -1876,10 +1873,10 @@ class A2C2f(nn.Module):
 
 
 class SwiGLUFFN(nn.Module):
-    """用于基于 Transformer 架构的 SwiGLU 前馈网络。"""
+    """用于基于 Transformer 架构的 SwiGLU 前馈网络。."""
 
     def __init__(self, gc: int, ec: int, e: int = 4) -> None:
-        """使用输入维度、输出维度和扩展因子初始化 SwiGLU FFN。
+        """使用输入维度、输出维度和扩展因子初始化 SwiGLU FFN。.
 
         参数：
             gc (int): 引导通道数。
@@ -1891,7 +1888,7 @@ class SwiGLUFFN(nn.Module):
         self.w3 = nn.Linear(e * ec // 2, ec)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """对输入特征执行 SwiGLU 变换。"""
+        """对输入特征执行 SwiGLU 变换。."""
         x12 = self.w12(x)
         x1, x2 = x12.chunk(2, dim=-1)
         hidden = F.silu(x1) * x2
@@ -1899,10 +1896,10 @@ class SwiGLUFFN(nn.Module):
 
 
 class Residual(nn.Module):
-    """神经网络模块的残差连接封装器。"""
+    """神经网络模块的残差连接封装器。."""
 
     def __init__(self, m: nn.Module) -> None:
-        """使用被封装模块初始化残差模块。
+        """使用被封装模块初始化残差模块。.
 
         参数：
             m (nn.Module): 要使用残差连接封装的模块。
@@ -1915,15 +1912,15 @@ class Residual(nn.Module):
         nn.init.zeros_(self.m.w3.weight)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """对输入特征应用残差连接。"""
+        """对输入特征应用残差连接。."""
         return x + self.m(x)
 
 
 class SAVPE(nn.Module):
-    """用于增强特征的空间感知视觉提示嵌入模块。"""
+    """用于增强特征的空间感知视觉提示嵌入模块。."""
 
     def __init__(self, ch: list[int], c3: int, embed: int):
-        """使用通道数、中间通道数和嵌入维度初始化 SAVPE 模块。
+        """使用通道数、中间通道数和嵌入维度初始化 SAVPE 模块。.
 
         参数：
             ch (列表[int]): 输入通道维度列表。
@@ -1950,7 +1947,7 @@ class SAVPE(nn.Module):
         self.cv6 = nn.Sequential(Conv(2 * self.c, self.c, 3), nn.Conv2d(self.c, self.c, 3, padding=1))
 
     def forward(self, x: list[torch.Tensor], vp: torch.Tensor) -> torch.Tensor:
-        """处理输入特征和视觉提示，生成增强后的嵌入。"""
+        """处理输入特征和视觉提示，生成增强后的嵌入。."""
         y = [self.cv2[i](xi) for i, xi in enumerate(x)]
         y = self.cv4(torch.cat(y, dim=1))
 
@@ -1979,10 +1976,10 @@ class SAVPE(nn.Module):
 
 
 class Proto26(Proto):
-    """用于分割模型的 Ultralytics YOLO26 掩码原型模块。"""
+    """用于分割模型的 Ultralytics YOLO26 掩码原型模块。."""
 
     def __init__(self, ch: tuple = (), c_: int = 256, c2: int = 32, nc: int = 80):
-        """使用指定数量的原型和掩码初始化 Ultralytics YOLO 掩码原型模块。
+        """使用指定数量的原型和掩码初始化 Ultralytics YOLO 掩码原型模块。.
 
         参数：
             ch (tuple): 主干网络特征图的通道数元组。
@@ -1996,7 +1993,7 @@ class Proto26(Proto):
         self.semseg = nn.Sequential(Conv(ch[0], c_, k=3), Conv(c_, c_, k=3), nn.Conv2d(c_, nc, 1))
 
     def forward(self, x: torch.Tensor, return_semantic: bool = True) -> torch.Tensor:
-        """融合多尺度特征图并生成掩码原型。"""
+        """融合多尺度特征图并生成掩码原型。."""
         feat = x[0]
         for i, f in enumerate(self.feat_refine):
             up_feat = f(x[i + 1])
@@ -2010,12 +2007,12 @@ class Proto26(Proto):
         return p
 
     def fuse(self):
-        """移除语义分割头，使模型可用于推理。"""
+        """移除语义分割头，使模型可用于推理。."""
         self.semseg = None
 
 
 class RealNVP(nn.Module):
-    """RealNVP：一种基于流的生成模型。
+    """RealNVP：一种基于流的生成模型。.
 
     参考：
         https://arxiv.org/abs/1605.08803
@@ -2024,12 +2021,12 @@ class RealNVP(nn.Module):
 
     @staticmethod
     def nets():
-        """获取单个可逆映射中的缩放模型。"""
+        """获取单个可逆映射中的缩放模型。."""
         return nn.Sequential(nn.Linear(2, 64), nn.SiLU(), nn.Linear(64, 64), nn.SiLU(), nn.Linear(64, 2), nn.Tanh())
 
     @staticmethod
     def nett():
-        """获取单个可逆映射中的平移模型。"""
+        """获取单个可逆映射中的平移模型。."""
         return nn.Sequential(nn.Linear(2, 64), nn.SiLU(), nn.Linear(64, 64), nn.SiLU(), nn.Linear(64, 2))
 
     def __init__(self):
@@ -2052,8 +2049,7 @@ class RealNVP(nn.Module):
                 nn.init.xavier_uniform_(m.weight, gain=0.01)
 
     def backward_p(self, x):
-        """将数据空间映射到潜空间，并计算雅可比矩阵的对数行列式。
-        """
+        """将数据空间映射到潜空间，并计算雅可比矩阵的对数行列式。."""
         log_det_jacob, z = x.new_zeros(x.shape[0]), x
         for i in reversed(range(len(self.t))):
             z_ = self.mask[i] * z
@@ -2064,7 +2060,7 @@ class RealNVP(nn.Module):
         return z, log_det_jacob
 
     def log_prob(self, x):
-        """计算给定数据空间样本的对数概率。"""
+        """计算给定数据空间样本的对数概率。."""
         if x.dtype == torch.float32 and self.s[0][0].weight.dtype != torch.float32:
             self.float()
         z, log_det = self.backward_p(x)

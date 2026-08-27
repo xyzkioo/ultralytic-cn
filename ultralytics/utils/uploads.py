@@ -1,5 +1,5 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
-"""Ultralytics 上传工具，沿用 downloads.py 的实现模式。"""
+"""Ultralytics 上传工具，沿用 downloads.py 的实现模式。."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from ultralytics.utils import LOGGER, TQDM
 
 
 class _ProgressReader:
-    """报告读取进度、用于监控上传过程的文件包装器。"""
+    """报告读取进度、用于监控上传过程的文件包装器。."""
 
     def __init__(self, file_path, pbar):
         self.file = open(file_path, "rb")  # noqa: SIM115  # 流式上传读取期间保持打开
@@ -19,18 +19,18 @@ class _ProgressReader:
         self._size = os.path.getsize(file_path)
 
     def read(self, size=-1):
-        """读取数据并更新进度条。"""
+        """读取数据并更新进度条。."""
         data = self.file.read(size)
         if data and self.pbar:
             self.pbar.update(len(data))
         return data
 
     def __len__(self):
-        """返回文件大小，用于设置 Content-Length 标头。"""
+        """返回文件大小，用于设置 Content-Length 标头。."""
         return self._size
 
     def close(self):
-        """关闭文件。"""
+        """关闭文件。."""
         self.file.close()
 
 
@@ -42,7 +42,7 @@ def safe_upload(
     timeout: int = 600,
     progress: bool = False,
 ) -> bool:
-    """将文件上传到 URL，支持失败重试和可选进度条。
+    """将文件上传到 URL，支持失败重试和可选进度条。.
 
     参数：
         file (str | Path): 要上传的文件路径。

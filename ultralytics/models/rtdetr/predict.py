@@ -9,10 +9,9 @@ from ultralytics.utils import ops
 
 
 class RTDETRPredictor(BasePredictor):
-    """继承 BasePredictor、用于生成预测结果的 RT-DETR（实时检测 Transformer）预测器。
+    """继承 BasePredictor、用于生成预测结果的 RT-DETR（实时检测 Transformer）预测器。.
 
-    此类利用 Vision Transformer 在保持高精度的同时提供实时对象检测，
-    支持高效混合编码和 IoU 感知查询选择等关键特性。
+    此类利用 Vision Transformer 在保持高精度的同时提供实时对象检测， 支持高效混合编码和 IoU 感知查询选择等关键特性。
 
     属性：
         imgsz (int): 用于推理的图像尺寸（必须为正方形并进行缩放填充）。
@@ -33,7 +32,7 @@ class RTDETRPredictor(BasePredictor):
     """
 
     def postprocess(self, preds, img, orig_imgs):
-        """后处理模型的原始预测结果，生成边界框和置信度分数。
+        """后处理模型的原始预测结果，生成边界框和置信度分数。.
 
         此方法根据 `self.args` 中指定的置信度和类别过滤检测结果。
         它将模型预测结果（已由解码头选出 top-k）转换为 Results 对象，并生成正确缩放的边界框。
@@ -67,7 +66,7 @@ class RTDETRPredictor(BasePredictor):
         return results
 
     def pre_transform(self, im):
-        """在将输入图像送入模型推理前执行预变换。
+        """在将输入图像送入模型推理前执行预变换。.
 
         输入图像会通过 letterbox 变换，以确保图像为正方形比例并进行缩放填充。
 

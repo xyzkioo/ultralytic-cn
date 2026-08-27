@@ -20,10 +20,9 @@ except ImportError:
 
 
 class TextModel(nn.Module):
-    """文本编码模型的抽象基类。
+    """文本编码模型的抽象基类。.
 
-    此类定义了视觉语言任务中文本编码模型的接口。子类必须实现 ``tokenize`` 和 ``encode_text`` 方法，
-    用于完成文本分词和文本编码。
+    此类定义了视觉语言任务中文本编码模型的接口。子类必须实现 ``tokenize`` 和 ``encode_text`` 方法， 用于完成文本分词和文本编码。
 
     方法：
         tokenize：将输入文本转换为模型可处理的词元。
@@ -31,23 +30,22 @@ class TextModel(nn.Module):
     """
 
     def __init__(self):
-        """初始化 TextModel 基类。"""
+        """初始化 TextModel 基类。."""
         super().__init__()
 
     @abstractmethod
     def tokenize(self, texts):
-        """将输入文本转换为模型处理所需的词元。"""
+        """将输入文本转换为模型处理所需的词元。."""
 
     @abstractmethod
     def encode_text(self, texts, dtype):
-        """将分词后的文本编码为归一化的特征向量。"""
+        """将分词后的文本编码为归一化的特征向量。."""
 
 
 class CLIP(TextModel):
-    """OpenAI CLIP（对比语言-图像预训练）文本编码器。
+    """OpenAI CLIP（对比语言-图像预训练）文本编码器。.
 
-    此类基于 OpenAI 的 CLIP 模型实现文本编码器，可将文本转换为特征向量，并使其与共享嵌入空间中的对应
-    图像特征保持对齐。
+    此类基于 OpenAI 的 CLIP 模型实现文本编码器，可将文本转换为特征向量，并使其与共享嵌入空间中的对应 图像特征保持对齐。
 
     属性：
         模型 (clip.model.CLIP)：已加载的 CLIP 模型。
@@ -68,7 +66,7 @@ class CLIP(TextModel):
     """
 
     def __init__(self, size: str, device: torch.device) -> None:
-        """初始化 CLIP 文本编码器。
+        """初始化 CLIP 文本编码器。.
 
         此类使用 OpenAI 的 CLIP 模型实现 TextModel 接口，用于文本编码。方法会加载指定尺寸的预训练 CLIP
         模型，并为文本编码任务完成准备工作。
@@ -84,7 +82,7 @@ class CLIP(TextModel):
         self.eval()
 
     def tokenize(self, texts: str | list[str], truncate: bool = True) -> torch.Tensor:
-        """将输入文本转换为 CLIP 词元。
+        """将输入文本转换为 CLIP 词元。.
 
         参数：
             texts (str | list[str])：要分词的单个文本或文本列表。
@@ -105,7 +103,7 @@ class CLIP(TextModel):
 
     @smart_inference_mode()
     def encode_text(self, texts: torch.Tensor, dtype: torch.dtype = torch.float32) -> torch.Tensor:
-        """将分词后的文本编码为归一化的特征向量。
+        """将分词后的文本编码为归一化的特征向量。.
 
         此方法通过 CLIP 模型处理分词后的文本输入，生成特征向量，然后将其归一化为单位长度。这些归一化向量
         可用于文本与图像的相似度比较。
@@ -130,7 +128,7 @@ class CLIP(TextModel):
 
     @smart_inference_mode()
     def encode_image(self, image: Image.Image | torch.Tensor, dtype: torch.dtype = torch.float32) -> torch.Tensor:
-        """将图像编码为归一化的特征向量。
+        """将图像编码为归一化的特征向量。.
 
         此方法通过 CLIP 模型处理图像输入，生成特征向量，然后将其归一化为单位长度。这些归一化向量可用于
         文本与图像的相似度比较。
@@ -161,10 +159,9 @@ class CLIP(TextModel):
 
 
 class MobileCLIP(TextModel):
-    """Apple MobileCLIP 文本编码器，用于高效的文本编码。
+    """Apple MobileCLIP 文本编码器，用于高效的文本编码。.
 
-    此类使用 Apple 的 MobileCLIP 模型实现 TextModel 接口，为视觉语言任务提供高效的文本编码能力；与标准
-    CLIP 模型相比，其计算开销更低。
+    此类使用 Apple 的 MobileCLIP 模型实现 TextModel 接口，为视觉语言任务提供高效的文本编码能力；与标准 CLIP 模型相比，其计算开销更低。
 
     属性：
         模型 (mobileclip.model.MobileCLIP)：已加载的 MobileCLIP 模型。
@@ -186,7 +183,7 @@ class MobileCLIP(TextModel):
     config_size_map = {"s0": "s0", "s1": "s1", "s2": "s2", "b": "b", "blt": "b"}
 
     def __init__(self, size: str, device: torch.device) -> None:
-        """初始化 MobileCLIP 文本编码器。
+        """初始化 MobileCLIP 文本编码器。.
 
         此类使用 Apple 的 MobileCLIP 模型实现 TextModel 接口，以高效完成文本编码。
 
@@ -215,7 +212,7 @@ class MobileCLIP(TextModel):
         self.eval()
 
     def tokenize(self, texts: list[str]) -> torch.Tensor:
-        """将输入文本转换为 MobileCLIP 词元。
+        """将输入文本转换为 MobileCLIP 词元。.
 
         参数：
             texts (list[str])：要分词的文本字符串列表。
@@ -231,7 +228,7 @@ class MobileCLIP(TextModel):
 
     @smart_inference_mode()
     def encode_text(self, texts: torch.Tensor, dtype: torch.dtype = torch.float32) -> torch.Tensor:
-        """将分词后的文本编码为归一化的特征向量。
+        """将分词后的文本编码为归一化的特征向量。.
 
         参数：
             texts (torch.Tensor)：分词后的文本输入。
@@ -253,10 +250,9 @@ class MobileCLIP(TextModel):
 
 
 class MobileCLIPTS(TextModel):
-    """加载 MobileCLIP 的 TorchScript 跟踪版本。
+    """加载 MobileCLIP 的 TorchScript 跟踪版本。.
 
-    此类使用 Apple 的 MobileCLIP 模型实现 TextModel 接口，并以 TorchScript 格式提供经过优化的推理能力，
-    从而高效完成视觉语言任务中的文本编码。
+    此类使用 Apple 的 MobileCLIP 模型实现 TextModel 接口，并以 TorchScript 格式提供经过优化的推理能力， 从而高效完成视觉语言任务中的文本编码。
 
     属性：
         encoder (torch.jit.ScriptModule)：已加载的 TorchScript MobileCLIP 文本编码器。
@@ -275,7 +271,7 @@ class MobileCLIPTS(TextModel):
     """
 
     def __init__(self, device: torch.device, weight: str = "mobileclip_blt.ts"):
-        """初始化 MobileCLIP TorchScript 文本编码器。
+        """初始化 MobileCLIP TorchScript 文本编码器。.
 
         此类使用 Apple 的 MobileCLIP 模型和 TorchScript 格式，以优化后的推理性能完成文本编码。
 
@@ -291,7 +287,7 @@ class MobileCLIPTS(TextModel):
         self.device = device
 
     def tokenize(self, texts: list[str], truncate: bool = True) -> torch.Tensor:
-        """将输入文本转换为 MobileCLIP 词元。
+        """将输入文本转换为 MobileCLIP 词元。.
 
         参数：
             texts (list[str])：要分词的文本字符串列表。
@@ -312,7 +308,7 @@ class MobileCLIPTS(TextModel):
 
     @smart_inference_mode()
     def encode_text(self, texts: torch.Tensor, dtype: torch.dtype = torch.float32) -> torch.Tensor:
-        """将分词后的文本编码为归一化的特征向量。
+        """将分词后的文本编码为归一化的特征向量。.
 
         参数：
             texts (torch.Tensor)：分词后的文本输入。
@@ -333,7 +329,7 @@ class MobileCLIPTS(TextModel):
 
 
 def build_text_model(variant: str, device: torch.device = None) -> TextModel:
-    """根据指定的变体构建文本编码模型。
+    """根据指定的变体构建文本编码模型。.
 
     参数：
         variant (str)：模型变体，格式为 ``"base:size"``，例如 ``"clip:ViT-B/32"`` 或 ``"mobileclip:s0"``。

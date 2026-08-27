@@ -1,5 +1,5 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
-"""预先下载共享测试资源，避免 pytest-xdist 下发生竞争条件。
+"""预先下载共享测试资源，避免 pytest-xdist 下发生竞争条件。.
 
 Run this script once before `pytest -n auto` to ensure all model weights,
 datasets, and solution assets are already cached locally. Each xdist worker
@@ -51,7 +51,7 @@ DATASETS = [
 
 
 def cache_weights(slow: bool = False) -> None:
-    """下载测试使用的全部模型权重。"""
+    """下载测试使用的全部模型权重。."""
     LOGGER.info("[cache] Downloading model weights ...")
     weights = COMMON_WEIGHTS + (SLOW_WEIGHTS if slow else [])
     for w in weights:
@@ -63,7 +63,7 @@ def cache_weights(slow: bool = False) -> None:
 
 
 def cache_datasets() -> None:
-    """下载并解压测试使用的全部数据集。"""
+    """下载并解压测试使用的全部数据集。."""
     LOGGER.info("[cache] Downloading datasets ...")
     for ds in DATASETS:
         if ds.startswith("imagenet"):
@@ -75,7 +75,7 @@ def cache_datasets() -> None:
 
 
 def cache_solution_assets() -> None:
-    """下载解决方案测试资源（视频、停车 JSON 等）。"""
+    """下载解决方案测试资源（视频、停车 JSON 等）。."""
     LOGGER.info("[cache] Downloading solution assets ...")
     cache_dir = WEIGHTS_DIR / "solution_assets"
     cache_dir.mkdir(parents=True, exist_ok=True)
@@ -87,7 +87,7 @@ def cache_solution_assets() -> None:
 
 
 def cache_clip_model() -> None:
-    """在 xdist worker 争用共享缓存文件之前下载 CLIP 文本编码器。"""
+    """在 xdist worker 争用共享缓存文件之前下载 CLIP 文本编码器。."""
     if IS_RASPBERRYPI or (checks.IS_PYTHON_3_8 and LINUX and ARM64):
         return
 
@@ -100,14 +100,14 @@ def cache_clip_model() -> None:
 
 
 def parse_args() -> bool:
-    """解析命令行参数。"""
+    """解析命令行参数。."""
     parser = ArgumentParser(description="Pre-download test assets.")
     parser.add_argument("--slow", action="store_true", help="Include assets used only by slow tests.")
     return parser.parse_args().slow
 
 
 def main() -> None:
-    """编排所有测试资源缓存的主函数。"""
+    """编排所有测试资源缓存的主函数。."""
     slow = parse_args()
     cache_weights(slow=slow)
     cache_datasets()

@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 
 def find_free_network_port() -> int:
-    """查找本地主机上的空闲端口。
+    """查找本地主机上的空闲端口。.
 
     在单节点训练中，如果不需要连接真实主节点但必须设置 `MASTER_PORT` 环境变量，该函数很有用。
 
@@ -46,7 +46,7 @@ def find_free_network_port() -> int:
 
 
 def generate_ddp_file(trainer: BaseTrainer) -> str:
-    """为多 GPU 训练生成 DDP（分布式数据并行）文件。
+    """为多 GPU 训练生成 DDP（分布式数据并行）文件。.
 
     此函数创建临时 Python 文件，以便在多个 GPU 之间执行分布式训练。该文件包含在分布式环境中初始化训练器所需的配置。
 
@@ -92,7 +92,7 @@ if __name__ == "__main__":
 
 
 def generate_ddp_command(trainer: BaseTrainer) -> tuple[list[str], str]:
-    """生成分布式训练命令。
+    """生成分布式训练命令。.
 
     参数：
         trainer (ultralytics.engine.trainer.BaseTrainer): 包含分布式训练配置的训练器。
@@ -122,7 +122,7 @@ def generate_ddp_command(trainer: BaseTrainer) -> tuple[list[str], str]:
 
 
 def ddp_cleanup(trainer: BaseTrainer, file: str) -> None:
-    """删除分布式数据并行（DDP）训练期间创建的临时文件。
+    """删除分布式数据并行（DDP）训练期间创建的临时文件。.
 
     此函数检查给定文件名是否包含训练器 ID，以判断它是否是 DDP 训练创建的临时文件；如果是，则将其删除。
 

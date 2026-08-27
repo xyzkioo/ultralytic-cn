@@ -11,7 +11,7 @@ from ultralytics.utils import DEFAULT_CFG, ops
 
 
 class SemanticSegmentationPredictor(BasePredictor):
-    """语义分割模型的预测器。
+    """语义分割模型的预测器。.
 
     此预测器处理模型输出，生成逐像素类别标签图。
 
@@ -23,7 +23,7 @@ class SemanticSegmentationPredictor(BasePredictor):
     """
 
     def __init__(self, cfg=DEFAULT_CFG, overrides=None, _callbacks=None):
-        """初始化 SemanticSegmentationPredictor。
+        """初始化 SemanticSegmentationPredictor。.
 
         参数：
             cfg (dict): 预测器配置。
@@ -35,11 +35,11 @@ class SemanticSegmentationPredictor(BasePredictor):
 
     @staticmethod
     def _class_map_dtype(num_classes: int) -> torch.dtype:
-        """返回适用于语义类别 ID 的最小整数数据类型。"""
+        """返回适用于语义类别 ID 的最小整数数据类型。."""
         return torch.uint8 if num_classes <= 256 else torch.int16 if num_classes <= 32768 else torch.int32
 
     def postprocess(self, preds, img, orig_imgs):
-        """将模型输出转换为语义分割结果。
+        """将模型输出转换为语义分割结果。.
 
         参数：
             preds (torch.Tensor | tuple): 模型输出 logits [B, nc, H, W] 或内置类别图 [B, H, W]。

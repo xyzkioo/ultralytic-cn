@@ -1,5 +1,5 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
-"""YOLO 模型的深度估计训练器。"""
+"""YOLO 模型的深度估计训练器。."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ from ultralytics.utils.plotting import plt_settings
 
 
 class DepthTrainer(DetectionTrainer):
-    """YOLO 深度估计模型的训练器。
+    """YOLO 深度估计模型的训练器。.
 
     多源训练（img_paths 列表）由基础 DetectionTrainer/BaseDataset 透明处理。
 
@@ -36,7 +36,7 @@ class DepthTrainer(DetectionTrainer):
         super().__init__(cfg, overrides, _callbacks)
 
     def get_model(self, cfg: str | None = None, weights: str | None = None, verbose: bool = True) -> DepthModel:
-        """返回使用给定配置和权重初始化的 DepthModel。"""
+        """返回使用给定配置和权重初始化的 DepthModel。."""
         model = DepthModel(
             cfg, ch=self.data.get("channels", 3), nc=self.data["nc"], verbose=verbose and RANK in {-1, 0}
         )
@@ -45,20 +45,20 @@ class DepthTrainer(DetectionTrainer):
         return model
 
     def preprocess_batch(self, batch: dict[str, Any]) -> dict[str, Any]:
-        """预处理批次：归一化图像，并将深度保持为 float32。"""
+        """预处理批次：归一化图像，并将深度保持为 float32。."""
         batch = super().preprocess_batch(batch)
         batch["depth"] = batch["depth"].float()
         return batch
 
     def get_validator(self) -> yolo.depth.DepthValidator:
-        """返回用于模型验证的 DepthValidator。"""
+        """返回用于模型验证的 DepthValidator。."""
         return yolo.depth.DepthValidator(
             self.test_loader, save_dir=self.save_dir, args=copy(self.args), _callbacks=self.callbacks
         )
 
     @plt_settings()
     def plot_training_labels(self) -> None:
-        """将训练集 GT 深度分布绘制到 ``labels.jpg``。
+        """将训练集 GT 深度分布绘制到 ``labels.jpg``。.
 
         这是检测/语义分割标签图的深度任务对应版本。继承的 DetectionTrainer 实现会拼接每张图像的
         ``bboxes``/``cls``（深度任务中全部为空）并传给 ``plot_labels``，导致归约操作报错。
@@ -126,7 +126,7 @@ class DepthTrainer(DetectionTrainer):
             self.on_plot(fname)
 
     def final_eval(self) -> None:
-        """执行标准最终评估，然后校准已保存的检查点。
+        """执行标准最终评估，然后校准已保存的检查点。.
 
         训练完成后，在验证集上拟合仅缩放的对数仿射参数（``cal_a``/``cal_b``），并写入 best.pt/last.pt，
         使模型输出经过指标尺度校准的深度。当设置 ``plots`` 时，还会写入

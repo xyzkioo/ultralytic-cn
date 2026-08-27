@@ -12,10 +12,9 @@ from .val import FastSAMValidator
 
 
 class FastSAM(Model):
-    """用于 Segment Anything 任务的 FastSAM 模型接口。
+    """用于 Segment Anything 任务的 FastSAM 模型接口。.
 
-    此类继承基础 Model 类，为 FastSAM（Fast Segment Anything Model）实现提供专用功能，
-    支持高效、准确的图像分割以及可选提示。
+    此类继承基础 Model 类，为 FastSAM（Fast Segment Anything Model）实现提供专用功能， 支持高效、准确的图像分割以及可选提示。
 
     属性：
         模型 (str): 预训练 FastSAM 模型文件路径。
@@ -36,7 +35,7 @@ class FastSAM(Model):
     """
 
     def __init__(self, model: str | Path = "FastSAM-x.pt"):
-        """使用指定的预训练权重初始化 FastSAM 模型。"""
+        """使用指定的预训练权重初始化 FastSAM 模型。."""
         if str(model) == "FastSAM.pt":
             model = "FastSAM-x.pt"
         assert Path(model).suffix not in {".yaml", ".yml"}, "FastSAM only supports pre-trained weights."
@@ -52,7 +51,7 @@ class FastSAM(Model):
         texts: list | None = None,
         **kwargs: Any,
     ):
-        """对图像或视频源执行分割预测。
+        """对图像或视频源执行分割预测。.
 
         支持使用边界框、点、标签和文本进行提示分割。此方法会打包这些提示，
         并将其传递给父类的 predict 方法处理。
@@ -74,5 +73,5 @@ class FastSAM(Model):
 
     @property
     def task_map(self) -> dict[str, dict[str, Any]]:
-        """返回将 segment 任务映射到对应预测器和验证器类的字典。"""
+        """返回将 segment 任务映射到对应预测器和验证器类的字典。."""
         return {"segment": {"predictor": FastSAMPredictor, "validator": FastSAMValidator}}

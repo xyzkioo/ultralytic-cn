@@ -25,7 +25,7 @@ CKPT_KWARGS = {"use_reentrant": False} if TORCH_1_11 else {}  # use_reentrant �
 
 
 class Conv2d_BN(torch.nn.Sequential):
-    """依次执行二维卷积和批归一化的序列容器。
+    """依次执行二维卷积和批归一化的序列容器。.
 
     此模块将二维卷积层与批归一化结合，为卷积神经网络提供常用构建块。批归一化的权重和偏置会初始化为特定值，以获得最佳训练性能。
 
@@ -52,7 +52,7 @@ class Conv2d_BN(torch.nn.Sequential):
         groups: int = 1,
         bn_weight_init: float = 1,
     ):
-        """初始化依次执行二维卷积和批归一化的序列容器。
+        """初始化依次执行二维卷积和批归一化的序列容器。.
 
         参数：
             a (int): 输入通道数.
@@ -73,7 +73,7 @@ class Conv2d_BN(torch.nn.Sequential):
 
 
 class PatchEmbed(nn.Module):
-    """将图像嵌入为图像块，并投影到指定嵌入维度。
+    """将图像嵌入为图像块，并投影到指定嵌入维度。.
 
     此模块使用一系列卷积层将输入图像转换为图像块嵌入，在降低空间维度的同时增加通道维度。
 
@@ -94,7 +94,7 @@ class PatchEmbed(nn.Module):
     """
 
     def __init__(self, in_chans: int, embed_dim: int, resolution: int, activation):
-        """初始化使用卷积层进行图像到图像块转换和投影的图像块嵌入模块。
+        """初始化使用卷积层进行图像到图像块转换和投影的图像块嵌入模块。.
 
         参数：
             in_chans (int): 输入通道数.
@@ -116,12 +116,12 @@ class PatchEmbed(nn.Module):
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """通过图像块嵌入序列处理输入张量，将图像转换为图像块嵌入。"""
+        """通过图像块嵌入序列处理输入张量，将图像转换为图像块嵌入。."""
         return self.seq(x)
 
 
 class MBConv(nn.Module):
-    """Mobile Inverted Bottleneck Conv（MBConv）层，是 EfficientNet 架构的一部分。
+    """Mobile Inverted Bottleneck Conv（MBConv）层，是 EfficientNet 架构的一部分。.
 
     此模块实现带扩展、深度卷积和投影阶段的移动倒置瓶颈卷积，并使用残差连接改善梯度流动。
 
@@ -147,7 +147,7 @@ class MBConv(nn.Module):
     """
 
     def __init__(self, in_chans: int, out_chans: int, expand_ratio: float, activation, drop_path: float):
-        """使用指定的输入/输出通道、扩展倍率和激活函数初始化 MBConv 层。
+        """使用指定的输入/输出通道、扩展倍率和激活函数初始化 MBConv 层。.
 
         参数：
             in_chans (int): 输入通道数.
@@ -175,7 +175,7 @@ class MBConv(nn.Module):
         self.drop_path = nn.Identity()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """执行 MBConv 前向传播，应用卷积和跳跃连接。"""
+        """执行 MBConv 前向传播，应用卷积和跳跃连接。."""
         shortcut = x
         x = self.conv1(x)
         x = self.act1(x)
@@ -188,7 +188,7 @@ class MBConv(nn.Module):
 
 
 class PatchMerging(nn.Module):
-    """合并特征图中的相邻图像块，并投影到新的维度。
+    """合并特征图中的相邻图像块，并投影到新的维度。.
 
     此类使用带批归一化的一系列卷积层执行图像块合并，融合空间信息并调整特征维度，在降低空间分辨率的同时可以增加通道维度。
 
@@ -211,7 +211,7 @@ class PatchMerging(nn.Module):
     """
 
     def __init__(self, input_resolution: tuple[int, int], dim: int, out_dim: int, activation):
-        """初始化用于合并和投影特征图中相邻图像块的 PatchMerging 模块。
+        """初始化用于合并和投影特征图中相邻图像块的 PatchMerging 模块。.
 
         参数：
             input_resolution (tuple[int, int]): 特征图的输入分辨率（高度、宽度）。
@@ -231,7 +231,7 @@ class PatchMerging(nn.Module):
         self.conv3 = Conv2d_BN(out_dim, out_dim, 1, 1, 0)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """对输入特征图应用图像块合并和维度投影。"""
+        """对输入特征图应用图像块合并和维度投影。."""
         if x.ndim == 3:
             H, W = self.input_resolution
             B = len(x)
@@ -248,7 +248,7 @@ class PatchMerging(nn.Module):
 
 
 class ConvLayer(nn.Module):
-    """包含多个 MobileNetV3 风格倒置瓶颈卷积（MBConv）的卷积层。
+    """包含多个 MobileNetV3 风格倒置瓶颈卷积（MBConv）的卷积层。.
 
     此层可选地对输出执行下采样，并支持在训练期间使用梯度检查点以节省内存。
 
@@ -280,7 +280,7 @@ class ConvLayer(nn.Module):
         out_dim: int | None = None,
         conv_expand_ratio: float = 4.0,
     ):
-        """使用给定维度和配置初始化 ConvLayer。
+        """使用给定维度和配置初始化 ConvLayer。.
 
         此层由多个 MobileNetV3 风格的倒置瓶颈卷积（MBConv）组成，并可选择对输出执行下采样。
 
@@ -323,14 +323,14 @@ class ConvLayer(nn.Module):
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """通过卷积层处理输入，应用 MBConv 块和可选下采样。"""
+        """通过卷积层处理输入，应用 MBConv 块和可选下采样。."""
         for blk in self.blocks:
             x = torch.utils.checkpoint.checkpoint(blk, x, **CKPT_KWARGS) if self.use_checkpoint else blk(x)
         return x if self.downsample is None else self.downsample(x)
 
 
 class MLP(nn.Module):
-    """用于 Transformer 架构的多层感知器（MLP）模块。
+    """用于 Transformer 架构的多层感知器（MLP）模块。.
 
     此模块执行层归一化、带中间激活函数的两个全连接层以及 dropout，通常用于处理 Transformer 架构中的令牌嵌入。
 
@@ -359,7 +359,7 @@ class MLP(nn.Module):
         activation=nn.GELU,
         drop: float = 0.0,
     ):
-        """使用可配置的输入、隐藏和输出维度初始化多层感知器。
+        """使用可配置的输入、隐藏和输出维度初始化多层感知器。.
 
         参数：
             in_features (int): 输入特征数量。
@@ -378,7 +378,7 @@ class MLP(nn.Module):
         self.drop = nn.Dropout(drop)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """对输入张量应用 MLP 操作：层归一化、全连接层、激活函数和 dropout。"""
+        """对输入张量应用 MLP 操作：层归一化、全连接层、激活函数和 dropout。."""
         x = self.norm(x)
         x = self.fc1(x)
         x = self.act(x)
@@ -388,7 +388,7 @@ class MLP(nn.Module):
 
 
 class Attention(torch.nn.Module):
-    """具有空间感知能力和可训练注意力偏置的多头注意力模块。
+    """具有空间感知能力和可训练注意力偏置的多头注意力模块。.
 
     此模块实现支持空间感知的多头注意力机制，根据空间分辨率应用注意力偏置，并为分辨率网格中每个唯一空间偏移提供可训练偏置。
 
@@ -423,7 +423,7 @@ class Attention(torch.nn.Module):
         attn_ratio: float = 4,
         resolution: tuple[int, int] = (14, 14),
     ):
-        """初始化具有空间感知能力的多头注意力模块。
+        """初始化具有空间感知能力的多头注意力模块。.
 
         此模块实现具有空间感知能力的多头注意力机制，根据空间分辨率应用注意力偏置。
         对于分辨率网格中空间位置之间的每个唯一偏移，都包含可训练的注意力偏置。
@@ -466,7 +466,7 @@ class Attention(torch.nn.Module):
 
     @torch.no_grad()
     def train(self, mode: bool = True):
-        """将模块设置为训练模式，并处理缓存注意力偏置的 'ab' 属性。"""
+        """将模块设置为训练模式，并处理缓存注意力偏置的 'ab' 属性。."""
         super().train(mode)
         if mode and hasattr(self, "ab"):
             del self.ab
@@ -475,7 +475,7 @@ class Attention(torch.nn.Module):
         return self
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """应用带空间感知和可训练注意力偏置的多头注意力。"""
+        """应用带空间感知和可训练注意力偏置的多头注意力。."""
         B, N, _ = x.shape  # B, N, C
 
         # 归一化
@@ -500,7 +500,7 @@ class Attention(torch.nn.Module):
 
 
 class TinyViTBlock(nn.Module):
-    """对输入应用自注意力和局部卷积的 TinyViT 块。
+    """对输入应用自注意力和局部卷积的 TinyViT 块。.
 
     此块是 TinyViT 架构的关键组件，将自注意力机制与局部卷积结合以高效处理输入特征，支持窗口注意力以提高计算效率，并包含残差连接。
 
@@ -535,7 +535,7 @@ class TinyViTBlock(nn.Module):
         local_conv_size: int = 3,
         activation=nn.GELU,
     ):
-        """初始化带自注意力和局部卷积的 TinyViT 块。
+        """初始化带自注意力和局部卷积的 TinyViT 块。.
 
         此块是 TinyViT 架构的关键组件，将自注意力机制与局部卷积结合，以高效处理输入特征。
 
@@ -576,7 +576,7 @@ class TinyViTBlock(nn.Module):
         self.local_conv = Conv2d_BN(dim, dim, ks=local_conv_size, stride=1, pad=pad, groups=dim)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """对输入张量应用自注意力、局部卷积和 MLP 操作。"""
+        """对输入张量应用自注意力、局部卷积和 MLP 操作。."""
         h, w = self.input_resolution
         b, hw, c = x.shape  # batch, 高度*宽度, 通道
         assert hw == h * w, "input feature has wrong size"
@@ -618,7 +618,7 @@ class TinyViTBlock(nn.Module):
         return x + self.drop_path(self.mlp(x))
 
     def extra_repr(self) -> str:
-        """返回 TinyViTBlock 参数的字符串表示。
+        """返回 TinyViTBlock 参数的字符串表示。.
 
         此方法返回包含 TinyViTBlock 关键信息的格式化字符串，包括维度、输入分辨率、注意力头数量、窗口尺寸和 MLP 比例。
 
@@ -637,7 +637,7 @@ class TinyViTBlock(nn.Module):
 
 
 class BasicLayer(nn.Module):
-    """TinyViT 架构中一个阶段的基础层。
+    """TinyViT 架构中一个阶段的基础层。.
 
     此类表示 TinyViT 模型中的单个层，由多个 TinyViT 块和可选下采样操作组成，负责处理整体架构中特定分辨率和维度的特征。
 
@@ -673,7 +673,7 @@ class BasicLayer(nn.Module):
         activation=nn.GELU,
         out_dim: int | None = None,
     ):
-        """初始化 TinyViT 架构中的 BasicLayer。
+        """初始化 TinyViT 架构中的 BasicLayer。.
 
         此层由多个 TinyViT 块和可选的下采样操作组成，用于处理 TinyViT 模型中特定分辨率和维度的特征图。
 
@@ -724,21 +724,20 @@ class BasicLayer(nn.Module):
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """通过 TinyViT 块和可选下采样处理输入。"""
+        """通过 TinyViT 块和可选下采样处理输入。."""
         for blk in self.blocks:
             x = torch.utils.checkpoint.checkpoint(blk, x, **CKPT_KWARGS) if self.use_checkpoint else blk(x)
         return x if self.downsample is None else self.downsample(x)
 
     def extra_repr(self) -> str:
-        """返回用于打印的层参数字符串。"""
+        """返回用于打印的层参数字符串。."""
         return f"dim={self.dim}, input_resolution={self.input_resolution}, depth={self.depth}"
 
 
 class TinyViT(nn.Module):
-    """TinyViT：用于高效图像分类和特征提取的紧凑视觉 Transformer 架构。
+    """TinyViT：用于高效图像分类和特征提取的紧凑视觉 Transformer 架构。.
 
-    此类实现 TinyViT 模型，结合视觉 Transformer 与卷积神经网络，以提升视觉任务的效率和性能。
-    模型采用层次化处理结构，包括图像块嵌入、多阶段注意力与卷积模块，以及特征细化颈部。
+    此类实现 TinyViT 模型，结合视觉 Transformer 与卷积神经网络，以提升视觉任务的效率和性能。 模型采用层次化处理结构，包括图像块嵌入、多阶段注意力与卷积模块，以及特征细化颈部。
 
     属性：
         img_size (int): 输入图像 尺寸.
@@ -778,7 +777,7 @@ class TinyViT(nn.Module):
         local_conv_size: int = 3,
         layer_lr_decay: float = 1.0,
     ):
-        """初始化 TinyViT 模型。
+        """初始化 TinyViT 模型。.
 
         此构造函数搭建 TinyViT 架构，包括图像块嵌入、多层注意力与卷积模块，以及分类头。
 
@@ -874,7 +873,7 @@ class TinyViT(nn.Module):
         )
 
     def set_layer_lr_decay(self, layer_lr_decay: float):
-        """根据深度为 TinyViT 模型设置逐层学习率衰减。"""
+        """根据深度为 TinyViT 模型设置逐层学习率衰减。."""
         decay_rate = layer_lr_decay
 
         # 层 -> 模块块（深度）
@@ -882,7 +881,7 @@ class TinyViT(nn.Module):
         lr_scales = [decay_rate ** (depth - i - 1) for i in range(depth)]
 
         def _set_lr_scale(m, scale):
-            """根据模块深度为模型中的每一层设置学习率缩放系数。"""
+            """根据模块深度为模型中的每一层设置学习率缩放系数。."""
             for p in m.parameters():
                 p.lr_scale = scale
 
@@ -902,7 +901,7 @@ class TinyViT(nn.Module):
             p.param_name = k
 
         def _check_lr_scale(m):
-            """检查模块参数中是否存在学习率缩放属性。"""
+            """检查模块参数中是否存在学习率缩放属性。."""
             for p in m.parameters():
                 assert hasattr(p, "lr_scale"), p.param_name
 
@@ -910,7 +909,7 @@ class TinyViT(nn.Module):
 
     @staticmethod
     def _init_weights(m):
-        """初始化 TinyViT 模型中线性层和归一化层的权重。"""
+        """初始化 TinyViT 模型中线性层和归一化层的权重。."""
         if isinstance(m, nn.Linear):
             # 注意：此初始化仅用于训练。
             # trunc_normal_(m.weight, std=.02)
@@ -922,11 +921,11 @@ class TinyViT(nn.Module):
 
     @torch.jit.ignore
     def no_weight_decay_keywords(self):
-        """返回不应使用权重衰减的参数关键字集合。"""
+        """返回不应使用权重衰减的参数关键字集合。."""
         return {"attention_biases"}
 
     def forward_features(self, x: torch.Tensor) -> torch.Tensor:
-        """通过特征提取层处理输入，并返回空间特征。"""
+        """通过特征提取层处理输入，并返回空间特征。."""
         x = self.patch_embed(x)  # 输入 x 的形状为 (N, C, H, W)
 
         x = self.layers[0](x)
@@ -941,11 +940,11 @@ class TinyViT(nn.Module):
         return self.neck(x)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """执行 TinyViT 模型前向传播，从输入图像中提取特征。"""
+        """执行 TinyViT 模型前向传播，从输入图像中提取特征。."""
         return self.forward_features(x)
 
     def set_imgsz(self, imgsz: list[int] | None = None):
-        """设置图像尺寸，使模型兼容不同大小的图像。"""
+        """设置图像尺寸，使模型兼容不同大小的图像。."""
         imgsz = imgsz if imgsz is not None else [1024, 1024]
         imgsz = [s // 4 for s in imgsz]
         self.patches_resolution = imgsz

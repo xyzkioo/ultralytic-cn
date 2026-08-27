@@ -25,10 +25,10 @@ _ORT_DTYPES = {
 
 
 class ONNXBackend(BaseBackend):
-    """支持可选 OpenCV DNN 的 Microsoft ONNX Runtime 推理后端。
+    """支持可选 OpenCV DNN 的 Microsoft ONNX Runtime 推理后端。.
 
-    使用带 CUDA/CoreML 执行提供程序的 Microsoft ONNX Runtime，或使用 OpenCV DNN 执行轻量级 CPU 推理，
-    加载并执行 ONNX 模型（.onnx 文件）。支持静态输入形状下用于优化 GPU 推理的 IO 绑定。
+    使用带 CUDA/CoreML 执行提供程序的 Microsoft ONNX Runtime，或使用 OpenCV DNN 执行轻量级 CPU 推理， 加载并执行 ONNX 模型（.onnx 文件）。支持静态输入形状下用于优化
+    GPU 推理的 IO 绑定。
     """
 
     def __init__(
@@ -39,7 +39,7 @@ class ONNXBackend(BaseBackend):
         format: str = "onnx",
         session_options: object | None = None,
     ):
-        """初始化 ONNX 后端。
+        """初始化 ONNX 后端。.
 
         参数：
             weight (str | Path): .onnx 模型文件路径。
@@ -54,7 +54,7 @@ class ONNXBackend(BaseBackend):
         super().__init__(weight, device, fp16)
 
     def load_model(self, weight: str | Path) -> None:
-        """使用 ONNX Runtime 或 OpenCV DNN 加载 ONNX 模型。
+        """使用 ONNX Runtime 或 OpenCV DNN 加载 ONNX 模型。.
 
         参数：
             weight (str | Path): .onnx 模型文件路径。
@@ -105,7 +105,7 @@ class ONNXBackend(BaseBackend):
                 ) from e
             self.output_names = [x.name for x in self.session.get_outputs()]
 
-                # 检查是否为动态形状
+            # 检查是否为动态形状
             self.dynamic = isinstance(self.session.get_outputs()[0].shape[0], str)
             self.fp16 = "float16" in self.session.get_inputs()[0].type
 
@@ -130,7 +130,7 @@ class ONNXBackend(BaseBackend):
     def forward(
         self, im: torch.Tensor | dict[str, torch.Tensor | np.ndarray]
     ) -> torch.Tensor | list[torch.Tensor] | np.ndarray:
-        """使用 IO 绑定（CUDA）或标准会话执行来运行 ONNX 推理。
+        """使用 IO 绑定（CUDA）或标准会话执行来运行 ONNX 推理。.
 
         参数：
             im (torch.Tensor | dict): 输入图像张量，格式为 BCHW 且归一化到 [0, 1]；也可以是字典映射
@@ -140,7 +140,7 @@ class ONNXBackend(BaseBackend):
             (torch.Tensor | 列表[torch.Tensor] | np.ndarray): 张量或 NumPy 数组形式的模型预测结果。
         """
         if self.format == "dnn":
-        # OpenCV DNN 后端
+            # OpenCV DNN 后端
             self.net.setInput(im.cpu().numpy())
             return self.net.forward()
 
@@ -167,14 +167,13 @@ class ONNXBackend(BaseBackend):
 
 
 class ONNXIMXBackend(ONNXBackend):
-    """用于 NXP i.MX 处理器的 ONNX IMX 推理后端。
+    """用于 NXP i.MX 处理器的 ONNX IMX 推理后端。.
 
-    扩展 `ONNXBackend`，支持面向 NXP i.MX 边缘设备的量化模型。
-    使用 MCT（Model Compression Toolkit）量化器和自定义 NMS 操作来优化推理。
+    扩展 `ONNXBackend`，支持面向 NXP i.MX 边缘设备的量化模型。 使用 MCT（Model Compression Toolkit）量化器和自定义 NMS 操作来优化推理。
     """
 
     def load_model(self, weight: str | Path) -> None:
-        """从 IMX 模型目录加载量化的 ONNX 模型。
+        """从 IMX 模型目录加载量化的 ONNX 模型。.
 
         参数：
             weight (str | Path): 包含 .onnx 文件的 IMX 模型目录路径。
@@ -199,7 +198,7 @@ class ONNXIMXBackend(ONNXBackend):
         self.apply_metadata(self.read_metadata(w))
 
     def forward(self, im: torch.Tensor) -> np.ndarray | list[np.ndarray] | tuple[np.ndarray, ...]:
-        """执行 IMX 推理，并针对检测、姿态和分割任务拼接对应输出。
+        """执行 IMX 推理，并针对检测、姿态和分割任务拼接对应输出。.
 
         参数：
             im (torch.Tensor): 输入图像 张量 in BCHW format, normalized to [0, 1].

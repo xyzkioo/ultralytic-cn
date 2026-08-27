@@ -15,7 +15,7 @@ from ultralytics.utils import LINUX, LOGGER, MACOS, RANK, WINDOWS
 
 
 class ConsoleLogger:
-    """捕获控制台输出，并批量流式写入文件、API 或自定义回调。
+    """捕获控制台输出，并批量流式写入文件、API 或自定义回调。.
 
     捕获 stdout/stderr 输出，通过智能去重和可配置的批量策略进行流式处理。
 
@@ -45,7 +45,7 @@ class ConsoleLogger:
     """
 
     def __init__(self, destination=None, batch_size=1, flush_interval=5.0, on_flush=None):
-        """初始化控制台日志记录器，并配置可选的批处理策略。
+        """初始化控制台日志记录器，并配置可选的批处理策略。.
 
         参数：
             destination (str | Path | None): API 地址（http/https）、本地文件路径，或 None。
@@ -84,7 +84,7 @@ class ConsoleLogger:
         self.progress_interval = 1.0
 
     def start_capture(self):
-        """开始捕获控制台输出，并重定向 stdout/stderr。
+        """开始捕获控制台输出，并重定向 stdout/stderr。.
 
         注意：
             在 DDP 训练中，仅 rank 0/-1 启用，以避免重复记录日志。
@@ -109,7 +109,7 @@ class ConsoleLogger:
             self.flush_thread.start()
 
     def stop_capture(self):
-        """停止捕获控制台输出，并刷新剩余缓冲区。"""
+        """停止捕获控制台输出，并刷新剩余缓冲区。."""
         if not self.active:
             return
 
@@ -129,7 +129,7 @@ class ConsoleLogger:
         self._flush_buffer()
 
     def _queue_log(self, text):
-        """对控制台文本去重、添加时间戳并加入队列。"""
+        """对控制台文本去重、添加时间戳并加入队列。."""
         if not self.active:
             return
 
@@ -178,14 +178,14 @@ class ConsoleLogger:
                 self._flush_buffer()
 
     def _flush_worker(self):
-        """定期刷新缓冲区的后台线程。"""
+        """定期刷新缓冲区的后台线程。."""
         while self.active:
             time.sleep(self.flush_interval)
             if self.active:
                 self._flush_buffer()
 
     def _flush_buffer(self):
-        """将缓冲区中的行刷新到目标位置和/或回调。"""
+        """将缓冲区中的行刷新到目标位置和/或回调。."""
         with self.buffer_lock:
             if not self.buffer:
                 return
@@ -209,7 +209,7 @@ class ConsoleLogger:
             self._write_destination(content)
 
     def _write_destination(self, content):
-        """将内容写入文件或 API 目标地址。"""
+        """将内容写入文件或 API 目标地址。."""
         try:
             if self.is_api:
                 import requests
@@ -224,45 +224,45 @@ class ConsoleLogger:
             print(f"Console logger write error: {e}", file=self.original_stderr)
 
     class _ConsoleCapture:
-        """轻量级 stdout/stderr 捕获器。"""
+        """轻量级 stdout/stderr 捕获器。."""
 
         __slots__ = ("callback", "original")
 
         def __init__(self, original, callback):
-            """初始化流包装器，将写入内容重定向到回调，同时保留原始流。"""
+            """初始化流包装器，将写入内容重定向到回调，同时保留原始流。."""
             self.original = original
             self.callback = callback
 
         def write(self, text):
-            """将文本写入原始流，并转发给捕获回调。"""
+            """将文本写入原始流，并转发给捕获回调。."""
             self.original.write(text)
             self.callback(text)
 
         def flush(self):
-            """刷新包装流，使缓冲输出在捕获期间及时传递。"""
+            """刷新包装流，使缓冲输出在捕获期间及时传递。."""
             self.original.flush()
 
         def isatty(self):
-            """将 isatty 检查委托给原始流。"""
+            """将 isatty 检查委托给原始流。."""
             return self.original.isatty()
 
     class _LogHandler(logging.Handler):
-        """轻量级日志处理器。"""
+        """轻量级日志处理器。."""
 
         __slots__ = ("callback",)
 
         def __init__(self, callback):
-            """初始化轻量级 logging.Handler，将日志记录转发给指定回调。"""
+            """初始化轻量级 logging.Handler，将日志记录转发给指定回调。."""
             super().__init__()
             self.callback = callback
 
         def emit(self, record):
-            """格式化 LogRecord 消息，并转发给捕获回调以统一流式记录日志。"""
+            """格式化 LogRecord 消息，并转发给捕获回调以统一流式记录日志。."""
             self.callback(self.format(record) + "\n")
 
 
 class _DriveInfo:
-    """解析由本地磁盘提供支持的已挂载存储路径。
+    """解析由本地磁盘提供支持的已挂载存储路径。.
 
     此辅助类将平台相关的磁盘发现逻辑与 SystemLogger 指标采集隔离。它优先使用快速的 psutil 挂载发现，仅在多个可见挂载点需要区分时才回退到操作系统原生命令。
 
@@ -274,7 +274,7 @@ class _DriveInfo:
 
     @staticmethod
     def mounts(psutil, all_drives=False):
-        """获取需要监控的已挂载路径。"""
+        """获取需要监控的已挂载路径。."""
         partitions = [p for p in psutil.disk_partitions(all=False) if p.mountpoint]
         if not all_drives:
             return [_DriveInfo._current_mount(partitions)]
@@ -300,13 +300,13 @@ class _DriveInfo:
 
     @staticmethod
     def _sort(mounts):
-        """对已挂载路径排序，将根路径置于首位，并排除 /boot、/boot/efi 等启动或固件分区。"""
+        """对已挂载路径排序，将根路径置于首位，并排除 /boot、/boot/efi 等启动或固件分区。."""
         mounts = {m for m in mounts if not (m + "/").startswith(("/boot/", "/efi/"))}
         return sorted(mounts, key=lambda mount: (mount != "/", mount))
 
     @staticmethod
     def _current_mount(partitions):
-        """获取当前工作目录所在的已挂载文件系统。"""
+        """获取当前工作目录所在的已挂载文件系统。."""
         try:
             cwd = Path.cwd().resolve()
         except OSError:
@@ -323,7 +323,7 @@ class _DriveInfo:
 
     @staticmethod
     def _macos_mounts(partitions):
-        """获取由物理磁盘支持且对用户可见的 macOS 挂载点。"""
+        """获取由物理磁盘支持且对用户可见的 macOS 挂载点。."""
         disk_info = plistlib.loads(subprocess.check_output(["diskutil", "list", "-plist", "physical"], timeout=5))
         physical_devices = set(disk_info.get("WholeDisks", []))
         for disk in disk_info.get("AllDisksAndPartitions", []):
@@ -354,7 +354,7 @@ class _DriveInfo:
 
     @staticmethod
     def _linux_mounts(_partitions):
-        """获取由物理块设备支持的 Linux 挂载点。"""
+        """获取由物理块设备支持的 Linux 挂载点。."""
         block_info = json.loads(
             subprocess.check_output(
                 ["lsblk", "--json", "--output", "NAME,TYPE,MOUNTPOINT,MOUNTPOINTS"], text=True, timeout=5
@@ -378,7 +378,7 @@ class _DriveInfo:
 
     @staticmethod
     def _windows_mounts(_partitions):
-        """获取 Windows 固定本地磁盘挂载点。"""
+        """获取 Windows 固定本地磁盘挂载点。."""
         output = subprocess.check_output(
             [
                 "powershell",
@@ -393,7 +393,7 @@ class _DriveInfo:
 
 
 class SystemLogger:
-    """记录用于训练监控的动态系统指标。
+    """记录用于训练监控的动态系统指标。.
 
     捕获实时系统指标，包括 CPU、内存、磁盘 I/O、网络 I/O 和 NVIDIA GPU 统计信息，用于训练性能监控与分析。
 
@@ -426,7 +426,7 @@ class SystemLogger:
     """
 
     def __init__(self, all_drives=False):
-        """初始化系统日志记录器。
+        """初始化系统日志记录器。.
 
         参数：
             all_drives (bool): 为 True 时监控所有已挂载磁盘；为 False 时仅监控当前磁盘。
@@ -445,7 +445,7 @@ class SystemLogger:
         self._prev_time = time.time()
 
     def _init_nvidia(self):
-        """使用 pynvml 初始化 NVIDIA GPU 监控。"""
+        """使用 pynvml 初始化 NVIDIA GPU 监控。."""
         if MACOS:
             return False
 
@@ -463,7 +463,7 @@ class SystemLogger:
             return False
 
     def get_metrics(self, rates=False):
-        """获取当前系统指标，包括 CPU、内存、磁盘、网络和 GPU 使用情况。
+        """获取当前系统指标，包括 CPU、内存、磁盘、网络和 GPU 使用情况。.
 
         收集完整的系统指标，包括 CPU 使用率、内存使用率、磁盘使用量、磁盘 I/O 统计、网络 I/O 统计和 GPU 指标（如果可用）。
 
@@ -576,7 +576,7 @@ class SystemLogger:
         return metrics
 
     def _get_nvidia_metrics(self):
-        """获取 NVIDIA GPU 指标，包括利用率、显存、温度和功耗。"""
+        """获取 NVIDIA GPU 指标，包括利用率、显存、温度和功耗。."""
         gpus = {}
         if not self.nvidia_initialized or not self.pynvml:
             return gpus

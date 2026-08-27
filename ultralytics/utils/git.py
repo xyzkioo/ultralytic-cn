@@ -8,10 +8,9 @@ from pathlib import Path
 
 
 class GitRepo:
-    """表示本地 Git 仓库，并提供分支、提交和远程仓库元数据。
+    """表示本地 Git 仓库，并提供分支、提交和远程仓库元数据。.
 
-    此类从给定路径向上查找 .git 条目来发现仓库根目录，解析实际的 .git 目录（包括 worktree），
-    并直接读取磁盘上的 Git 元数据，不调用 git 可执行文件，因此可在受限环境中工作。所有元数据属性
+    此类从给定路径向上查找 .git 条目来发现仓库根目录，解析实际的 .git 目录（包括 worktree）， 并直接读取磁盘上的 Git 元数据，不调用 git 可执行文件，因此可在受限环境中工作。所有元数据属性
     都采用延迟方式解析并缓存；如需刷新状态，请重新创建实例。
 
     属性：
@@ -38,7 +37,7 @@ class GitRepo:
     """
 
     def __init__(self, path: Path | None = None):
-        """从起始路径发现仓库根目录，并初始化 Git 仓库上下文。
+        """从起始路径发现仓库根目录，并初始化 Git 仓库上下文。.
 
         参数：
             路径 (Path, 可选): 用于定位仓库根目录的起始文件或目录路径。
@@ -49,12 +48,12 @@ class GitRepo:
 
     @staticmethod
     def _find_root(p: Path) -> Path | None:
-        """返回仓库根目录；如果不在仓库中则返回 None。"""
+        """返回仓库根目录；如果不在仓库中则返回 None。."""
         return next((d for d in [p, *list(p.parents)] if (d / ".git").exists()), None)
 
     @staticmethod
     def _gitdir(root: Path) -> Path | None:
-        """解析实际的 .git 目录（支持 worktree）。"""
+        """解析实际的 .git 目录（支持 worktree）。."""
         g = root / ".git"
         if g.is_dir():
             return g
@@ -66,7 +65,7 @@ class GitRepo:
 
     @staticmethod
     def _refdir(gitdir: Path | None) -> Path | None:
-        """解析包含 refs、对象和配置的目录。"""
+        """解析包含 refs、对象和配置的目录。."""
         p = gitdir / "commondir" if gitdir else None
         if s := GitRepo._read(p):
             d = Path(s)
@@ -75,16 +74,16 @@ class GitRepo:
 
     @staticmethod
     def _read(p: Path | None) -> str | None:
-        """如果文件存在，则读取并去除首尾空白。"""
+        """如果文件存在，则读取并去除首尾空白。."""
         return p.read_text(errors="ignore").strip() if p and p.exists() else None
 
     @cached_property
     def head(self) -> str | None:
-        """返回 HEAD 文件内容。"""
+        """返回 HEAD 文件内容。."""
         return self._read(self.gitdir / "HEAD" if self.gitdir else None)
 
     def _ref_commit(self, ref: str) -> str | None:
-        """返回引用对应的提交（支持 packed-refs）。"""
+        """返回引用对应的提交（支持 packed-refs）。."""
         rf = self.refdir / ref
         if s := self._read(rf):
             return s
@@ -100,7 +99,7 @@ class GitRepo:
         return None
 
     def _commit_subject(self, commit: str) -> str | None:
-        """从松散对象读取提交主题；找不到时返回 None。"""
+        """从松散对象读取提交主题；找不到时返回 None。."""
         obj = self.refdir / "objects" / commit[:2] / commit[2:]
         if not obj.exists():
             return None
@@ -115,12 +114,12 @@ class GitRepo:
 
     @property
     def is_repo(self) -> bool:
-        """如果当前位于 Git 仓库中则返回 True。"""
+        """如果当前位于 Git 仓库中则返回 True。."""
         return self.gitdir is not None
 
     @cached_property
     def branch(self) -> str | None:
-        """返回当前分支；如果无法确定则返回 None。"""
+        """返回当前分支；如果无法确定则返回 None。."""
         if not self.is_repo or not self.head or not self.head.startswith("ref: "):
             return None
         ref = self.head[5:].strip()
@@ -128,21 +127,21 @@ class GitRepo:
 
     @cached_property
     def commit(self) -> str | None:
-        """返回当前提交 SHA；如果无法确定则返回 None。"""
+        """返回当前提交 SHA；如果无法确定则返回 None。."""
         if not self.is_repo or not self.head:
             return None
         return self._ref_commit(self.head[5:].strip()) if self.head.startswith("ref: ") else self.head
 
     @cached_property
     def message(self) -> str | None:
-        """返回当前提交主题；如果无法确定则返回 None。"""
+        """返回当前提交主题；如果无法确定则返回 None。."""
         if not self.is_repo or not self.commit:
             return None
         return self._commit_subject(self.commit)
 
     @cached_property
     def origin(self) -> str | None:
-        """返回 origin 远程仓库 URL；如果不存在则返回 None。"""
+        """返回 origin 远程仓库 URL；如果不存在则返回 None。."""
         if not self.is_repo:
             return None
         cfg = self.refdir / "config"

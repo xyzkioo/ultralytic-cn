@@ -16,7 +16,7 @@ from ultralytics.utils.plotting import plot_images
 
 
 class ClassificationValidator(BaseValidator):
-    """继承 BaseValidator 的分类验证器，用于验证分类模型。
+    """继承 BaseValidator 的分类验证器，用于验证分类模型。.
 
     此验证器负责分类模型的验证流程，包括指标计算、混淆矩阵生成和结果可视化。
 
@@ -53,7 +53,7 @@ class ClassificationValidator(BaseValidator):
     """
 
     def __init__(self, dataloader=None, save_dir=None, args=None, _callbacks: dict | None = None) -> None:
-        """使用数据加载器、保存目录和其他参数初始化分类验证器。
+        """使用数据加载器、保存目录和其他参数初始化分类验证器。.
 
         参数：
             dataloader (torch.utils.data.DataLoader, 可选): 用于验证的数据加载器。
@@ -68,11 +68,11 @@ class ClassificationValidator(BaseValidator):
         self.metrics = ClassifyMetrics()
 
     def get_desc(self) -> str:
-        """返回汇总分类指标的格式化字符串。"""
+        """返回汇总分类指标的格式化字符串。."""
         return ("%22s" + "%11s" * 2) % ("classes", "top1_acc", "top5_acc")
 
     def init_metrics(self, model: torch.nn.Module) -> None:
-        """初始化混淆矩阵、类别名称以及预测结果和目标的跟踪容器。"""
+        """初始化混淆矩阵、类别名称以及预测结果和目标的跟踪容器。."""
         self.names = model.names
         self.nc = len(model.names)
         self.pred = []
@@ -80,14 +80,14 @@ class ClassificationValidator(BaseValidator):
         self.confusion_matrix = ConfusionMatrix(names=model.names, task="classify")
 
     def preprocess(self, batch: dict[str, Any]) -> dict[str, Any]:
-        """将输入批次移动到指定设备，并转换为合适的数据类型。"""
+        """将输入批次移动到指定设备，并转换为合适的数据类型。."""
         batch["img"] = batch["img"].to(self.device, non_blocking=self.device.type not in {"cpu", "mps"})
         batch["img"] = batch["img"].half() if self.args.quantize == 16 else batch["img"].float()
         batch["cls"] = batch["cls"].to(self.device, non_blocking=self.device.type not in {"cpu", "mps"})
         return batch
 
     def update_metrics(self, preds: torch.Tensor, batch: dict[str, Any]) -> None:
-        """使用模型预测结果和批次目标更新运行中的指标。
+        """使用模型预测结果和批次目标更新运行中的指标。.
 
         参数：
             preds (torch.Tensor): 模型预测结果，通常是每个类别的 logits 或概率。
@@ -102,7 +102,7 @@ class ClassificationValidator(BaseValidator):
         self.targets.append(batch["cls"].type(torch.int32).cpu())
 
     def finalize_metrics(self) -> None:
-        """完成指标统计，包括混淆矩阵和处理速度。
+        """完成指标统计，包括混淆矩阵和处理速度。.
 
         示例：
             >>> validator = ClassificationValidator()
@@ -123,16 +123,16 @@ class ClassificationValidator(BaseValidator):
         self.metrics.confusion_matrix = self.confusion_matrix
 
     def postprocess(self, preds: torch.Tensor | list[torch.Tensor] | tuple[torch.Tensor]) -> torch.Tensor:
-        """如果模型输出是列表或元组，则提取其中的主要预测结果。"""
+        """如果模型输出是列表或元组，则提取其中的主要预测结果。."""
         return preds[0] if isinstance(preds, (list, tuple)) else preds
 
     def get_stats(self) -> dict[str, float]:
-        """处理目标和预测结果，计算并返回指标字典。"""
+        """处理目标和预测结果，计算并返回指标字典。."""
         self.metrics.process(self.targets, self.pred)
         return self.metrics.results_dict
 
     def gather_stats(self) -> None:
-        """从所有 GPU 收集统计信息。"""
+        """从所有 GPU 收集统计信息。."""
         if RANK == 0:
             gathered_preds = [None] * dist.get_world_size()
             gathered_targets = [None] * dist.get_world_size()
@@ -145,11 +145,11 @@ class ClassificationValidator(BaseValidator):
             dist.gather_object(self.targets, None, dst=0)
 
     def build_dataset(self, img_path: str) -> ClassificationDataset:
-        """创建用于验证的 ClassificationDataset 实例。"""
+        """创建用于验证的 ClassificationDataset 实例。."""
         return ClassificationDataset(root=img_path, args=self.args, augment=False, prefix=self.args.split)
 
     def get_dataloader(self, dataset_path: Path | str, batch_size: int) -> torch.utils.data.DataLoader:
-        """构建并返回分类验证数据加载器。
+        """构建并返回分类验证数据加载器。.
 
         参数：
             dataset_path (str | Path): 数据集目录路径。
@@ -162,12 +162,12 @@ class ClassificationValidator(BaseValidator):
         return build_dataloader(dataset, batch_size, self.args.workers, rank=-1, device=self.device)
 
     def print_results(self) -> None:
-        """打印分类模型的评估指标。"""
+        """打印分类模型的评估指标。."""
         pf = "%22s" + "%11.3g" * len(self.metrics.keys)  # 打印格式
         LOGGER.info(pf % ("all", self.metrics.top1, self.metrics.top5))
 
     def plot_val_samples(self, batch: dict[str, Any], ni: int) -> None:
-        """绘制带有真实标签的验证图像样本。
+        """绘制带有真实标签的验证图像样本。.
 
         参数：
             batch (dict[str, Any]): 包含批次数据的字典，其中有 'img'（图像）和 'cls'（类别标签）。
@@ -187,7 +187,7 @@ class ClassificationValidator(BaseValidator):
         )
 
     def plot_predictions(self, batch: dict[str, Any], preds: torch.Tensor, ni: int) -> None:
-        """绘制带有预测类别标签的图像，并保存可视化结果。
+        """绘制带有预测类别标签的图像，并保存可视化结果。.
 
         参数：
             batch (dict[str, Any]): 包含图像和其他信息的批次数据。

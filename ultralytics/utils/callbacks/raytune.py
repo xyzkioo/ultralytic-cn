@@ -13,10 +13,9 @@ except (ImportError, AssertionError):
 
 
 def on_fit_epoch_end(trainer):
-    """Ray 会话处于活动状态时，在周期结束向 Ray Tune 报告训练指标。
+    """Ray 会话处于活动状态时，在周期结束向 Ray Tune 报告训练指标。.
 
-    从训练器对象获取指标，并将其与当前周期编号一起发送给 Ray Tune，以支持超参数优化。
-    仅在活动的 Ray Tune 会话中执行。
+    从训练器对象获取指标，并将其与当前周期编号一起发送给 Ray Tune，以支持超参数优化。 仅在活动的 Ray Tune 会话中执行。
 
     参数：
         trainer (ultralytics.engine.trainer.BaseTrainer): 包含指标和周期信息的 Ultralytics 训练器对象。

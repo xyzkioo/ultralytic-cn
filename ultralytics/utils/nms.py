@@ -27,7 +27,7 @@ def non_max_suppression(
     end2end: bool = False,
     return_idxs: bool = False,
 ):
-    """对预测结果执行非极大值抑制（NMS）。
+    """对预测结果执行非极大值抑制（NMS）。.
 
     根据置信度和 IoU 阈值过滤重叠边界框。支持多种检测格式，包括标准边界框、旋转边界框和掩码。
 
@@ -172,10 +172,9 @@ def non_max_suppression(
 
 
 class TorchNMS:
-    """针对 YOLO 优化的 Ultralytics 自定义 NMS 实现。
+    """针对 YOLO 优化的 Ultralytics 自定义 NMS 实现。.
 
-    此类提供对边界框执行非极大值抑制（NMS）的静态方法，包括标准 NMS、快速 NMS
-    以及适用于多类别场景的批量 NMS。
+    此类提供对边界框执行非极大值抑制（NMS）的静态方法，包括标准 NMS、快速 NMS 以及适用于多类别场景的批量 NMS。
 
     方法：
         fast_nms: 使用上三角矩阵运算的快速 NMS。
@@ -198,7 +197,7 @@ class TorchNMS:
         iou_func=box_iou,
         exit_early: bool = True,
     ) -> torch.Tensor:
-        """基于 https://arxiv.org/pdf/1904.02689、使用上三角矩阵运算的 Fast-NMS 实现。
+        """基于 https://arxiv.org/pdf/1904.02689、使用上三角矩阵运算的 Fast-NMS 实现。.
 
         参数：
             boxes (torch.Tensor): 形状为 (N, 4) 的 xyxy 格式边界框。
@@ -243,7 +242,7 @@ class TorchNMS:
 
     @staticmethod
     def nms(boxes: torch.Tensor, scores: torch.Tensor, iou_threshold: float) -> torch.Tensor:
-        """带提前终止的优化 NMS，与 torchvision 行为完全一致。
+        """带提前终止的优化 NMS，与 torchvision 行为完全一致。.
 
         参数：
             boxes (torch.Tensor): 形状为 (N, 4) 的 xyxy 格式边界框。
@@ -309,7 +308,7 @@ class TorchNMS:
         iou_threshold: float,
         use_fast_nms: bool = False,
     ) -> torch.Tensor:
-        """用于类别感知抑制的批量 NMS。
+        """用于类别感知抑制的批量 NMS。.
 
         参数：
             boxes (torch.Tensor): 形状为 (N, 4) 的 xyxy 格式边界框。

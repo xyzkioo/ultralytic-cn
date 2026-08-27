@@ -19,7 +19,7 @@ def auto_annotate(
     classes: list[int] | None = None,
     output_dir: str | Path | None = None,
 ) -> None:
-    """使用 YOLO 对象检测模型和 SAM 分割模型自动标注图像。
+    """使用 YOLO 对象检测模型和 SAM 分割模型自动标注图像。.
 
     此函数处理指定目录中的图像，使用 YOLO 模型检测对象，再使用 SAM 模型生成分割掩码，最后将标注以 YOLO 格式保存为文本文件。
 

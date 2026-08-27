@@ -15,15 +15,15 @@ from .tasks import load_checkpoint
 
 
 class FeatureHook:
-    """可序列化的前向钩子，将层输出保存到共享字典中。"""
+    """可序列化的前向钩子，将层输出保存到共享字典中。."""
 
     def __init__(self, feat_dict: dict, idx: int) -> None:
-        """使用共享特征字典和用于保存输出的层索引初始化钩子。"""
+        """使用共享特征字典和用于保存输出的层索引初始化钩子。."""
         self.feat_dict = feat_dict
         self.idx = idx
 
     def __call__(self, module: nn.Module, inputs: tuple, output) -> None:
-        """将层的前向输出按照索引保存到共享特征字典中。
+        """将层的前向输出按照索引保存到共享特征字典中。.
 
         neck 层的输出是张量，而 Detect 检测头的输出是元组或字典，因此不为其指定具体类型。
         """
@@ -31,10 +31,9 @@ class FeatureHook:
 
 
 class DistillationModel(nn.Module):
-    """YOLO 知识蒸馏模型。
+    """YOLO 知识蒸馏模型。.
 
-    此类封装教师模型和学生模型，用于知识蒸馏训练。函数通过前向钩子从两个模型中提取特征，
-    并据此计算蒸馏损失。
+    此类封装教师模型和学生模型，用于知识蒸馏训练。函数通过前向钩子从两个模型中提取特征， 并据此计算蒸馏损失。
 
     属性：
         teacher_model (nn.Module): 已冻结、用于提供特征的教师模型。
@@ -61,7 +60,7 @@ class DistillationModel(nn.Module):
     """
 
     def __init__(self, teacher_model: str | Path | nn.Module, student_model: nn.Module):
-        """使用教师模型、学生模型和特征提取钩子初始化蒸馏模型。
+        """使用教师模型、学生模型和特征提取钩子初始化蒸馏模型。.
 
         参数：
             teacher_model (str | Path | nn.Module): 教师模型检查点路径或模型模块。
@@ -115,7 +114,7 @@ class DistillationModel(nn.Module):
         self.projector = nn.ModuleList(projectors).to(device)
 
     def __getstate__(self):
-        """返回用于序列化的状态副本，不包含已捕获的特征或钩子句柄。
+        """返回用于序列化的状态副本，不包含已捕获的特征或钩子句柄。.
 
         这里会原地清空特征字典，而不是替换属性，因为已注册的 FeatureHook 共享这些字典对象；
         否则，对训练中途的模型执行 deepcopy 或 pickle 时，仍会访问钩子持有的张量，
@@ -129,14 +128,14 @@ class DistillationModel(nn.Module):
         return state
 
     def __setstate__(self, state):
-        """反序列化后清除过期特征和钩子，并重新注册前向钩子。"""
+        """反序列化后清除过期特征和钩子，并重新注册前向钩子。."""
         self.__dict__.update(state)
         self._teacher_feats = {}
         self._student_feats = {}
         self._register_feature_hooks()
 
     def _remove_feature_hooks(self) -> None:
-        """移除之前注册的所有特征捕获钩子。"""
+        """移除之前注册的所有特征捕获钩子。."""
         for handle in self._student_hooks:
             handle.remove()
         self._student_hooks.clear()
@@ -147,13 +146,13 @@ class DistillationModel(nn.Module):
 
     @staticmethod
     def _clear_feature_hooks(module: nn.Module) -> None:
-        """从模块的前向钩子中移除所有 FeatureHook 实例。"""
+        """从模块的前向钩子中移除所有 FeatureHook 实例。."""
         for handle_id, hook in list(module._forward_hooks.items()):
             if isinstance(hook, FeatureHook):
                 del module._forward_hooks[handle_id]
 
     def _register_feature_hooks(self) -> None:
-        """注册特征捕获钩子，并先移除过期的 FeatureHook 实例。"""
+        """注册特征捕获钩子，并先移除过期的 FeatureHook 实例。."""
         self._remove_feature_hooks()
         for idx in self.feats_idx:
             self._clear_feature_hooks(self.student_model.model[idx])
@@ -168,7 +167,7 @@ class DistillationModel(nn.Module):
 
     @staticmethod
     def get_distill_layers(model: nn.Module) -> list[int]:
-        """从模型的 Detect 检测头自动确定蒸馏特征层。
+        """从模型的 Detect 检测头自动确定蒸馏特征层。.
 
         返回 Detect 检测头的输入层索引，以及检测头自身的层索引。
         例如，YOLO26 -> [16, 19, 22, 23]，YOLOv8 -> [15, 18, 21, 22]。
@@ -179,7 +178,7 @@ class DistillationModel(nn.Module):
         raise ValueError("No Detect head found in model")
 
     def _freeze_teacher(self):
-        """在蒸馏过程中保持教师模型不变。"""
+        """在蒸馏过程中保持教师模型不变。."""
         if self.teacher_model is None:
             return
         self.teacher_model.eval()
@@ -188,24 +187,24 @@ class DistillationModel(nn.Module):
                 v.requires_grad = False
 
     def train(self, mode: bool = True):
-        """设置模型的训练模式，同时保持教师模型处于冻结的评估模式。"""
+        """设置模型的训练模式，同时保持教师模型处于冻结的评估模式。."""
         super().train(mode)
         self._freeze_teacher()
         return self
 
     def forward(self, x, *args, **kwargs):
-        """通过学生模型执行前向传播。"""
+        """通过学生模型执行前向传播。."""
         if isinstance(x, dict):  # 处理训练期间训练和验证使用批次字典的情况
             return self.loss(x, *args, **kwargs)
         return self.student_model.predict(x, *args, **kwargs)
 
     def fuse(self, verbose: bool = True, imgsz: int | list[int, int] = 640):
-        """融合并返回学生模型，同时移除仅用于训练的蒸馏包装器。"""
+        """融合并返回学生模型，同时移除仅用于训练的蒸馏包装器。."""
         self._remove_feature_hooks()
         return self.student_model.fuse(verbose=verbose, imgsz=imgsz)
 
     def loss(self, batch, preds=None):
-        """计算损失。
+        """计算损失。.
 
         参数：
             batch (dict): 用于计算损失的数据批次。
@@ -251,7 +250,7 @@ class DistillationModel(nn.Module):
     def loss_sl2(
         self, student_feat: torch.Tensor, teacher_feat: torch.Tensor, feat_idx: int, teacher_scores: tuple
     ) -> torch.Tensor:
-        """计算特征对的分数加权 L2 蒸馏损失。
+        """计算特征对的分数加权 L2 蒸馏损失。.
 
         参数：
             student_feat (torch.Tensor): 形状为 (N, C, H, W) 的学生特征张量。
@@ -272,34 +271,34 @@ class DistillationModel(nn.Module):
 
     @property
     def criterion(self):
-        """获取学生模型的损失函数。"""
+        """获取学生模型的损失函数。."""
         return self.student_model.criterion
 
     @criterion.setter
     def criterion(self, value) -> None:
-        """设置学生模型的损失函数。"""
+        """设置学生模型的损失函数。."""
         self.student_model.criterion = value
 
     def init_criterion(self):
-        """通过学生模型初始化损失函数。"""
+        """通过学生模型初始化损失函数。."""
         return self.student_model.init_criterion()
 
     @property
     def end2end(self):
-        """公开学生模型的端到端模式，供验证器或预测器控制。"""
+        """公开学生模型的端到端模式，供验证器或预测器控制。."""
         return getattr(self.student_model, "end2end", False)
 
     @end2end.setter
     def end2end(self, value):
-        """将端到端模式更新转发给学生模型。"""
+        """将端到端模式更新转发给学生模型。."""
         self.student_model.end2end = value
 
     def set_head_attr(self, **kwargs):
-        """将检测头属性更新（例如 max_det、agnostic_nms、end2end）转发给学生模型。"""
+        """将检测头属性更新（例如 max_det、agnostic_nms、end2end）转发给学生模型。."""
         self.student_model.set_head_attr(**kwargs)
 
     def decouple_outputs(self, preds, branch: str = "one2one"):
-        """解耦教师模型和学生模型的输出。
+        """解耦教师模型和学生模型的输出。.
 
         此方法处理 YOLO 模型的不同输出格式，包括训练或验证模式下的元组输出、
         带有 one2one/one2many 分支的字典输出，以及直接的张量输出。

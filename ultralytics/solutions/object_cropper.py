@@ -8,10 +8,9 @@ from ultralytics.utils.plotting import save_one_box
 
 
 class ObjectCropper(BaseSolution):
-    """管理实时视频流或图像中检测对象裁剪的类。
+    """管理实时视频流或图像中检测对象裁剪的类。.
 
-    此类继承 BaseSolution，并根据检测到的边界框裁剪对象。
-    裁剪后的图像会保存到指定目录，供后续分析或使用。
+    此类继承 BaseSolution，并根据检测到的边界框裁剪对象。 裁剪后的图像会保存到指定目录，供后续分析或使用。
 
     属性：
         crop_dir (str): 保存裁剪对象图像的目录。
@@ -30,7 +29,7 @@ class ObjectCropper(BaseSolution):
     """
 
     def __init__(self, **kwargs: Any) -> None:
-        """初始化 ObjectCropper 类，用于从检测到的边界框裁剪对象。
+        """初始化 ObjectCropper 类，用于从检测到的边界框裁剪对象。.
 
         参数：
             **kwargs (Any): 传递给父类并用于配置当前对象的关键字参数，包括：
@@ -48,7 +47,7 @@ class ObjectCropper(BaseSolution):
         self.conf = self.CFG["conf"]
 
     def process(self, im0) -> SolutionResults:
-        """从输入图像中裁剪检测对象，并将每个对象保存为独立图像。
+        """从输入图像中裁剪检测对象，并将每个对象保存为独立图像。.
 
         参数：
             im0 (np.ndarray): 包含检测对象的输入图像。

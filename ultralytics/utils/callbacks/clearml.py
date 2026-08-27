@@ -15,7 +15,7 @@ except (ImportError, AssertionError):
 
 
 def _log_debug_samples(files, title: str = "Debug Samples") -> None:
-    """将文件（图像）作为调试样本记录到 ClearML 任务中。
+    """将文件（图像）作为调试样本记录到 ClearML 任务中。.
 
     参数：
         文件 (列表[Path]): A 列表 of 文件 路径 in PosixPath format.
@@ -34,7 +34,7 @@ def _log_debug_samples(files, title: str = "Debug Samples") -> None:
 
 
 def _log_plot(title: str, plot_path: str) -> None:
-    """将图像作为绘图记录到 ClearML 的绘图区。
+    """将图像作为绘图记录到 ClearML 的绘图区。.
 
     参数：
         title (str): The title of the plot.
@@ -54,7 +54,7 @@ def _log_plot(title: str, plot_path: str) -> None:
 
 
 def on_pretrain_routine_start(trainer) -> None:
-    """在预训练流程开始时初始化并连接 ClearML 任务。"""
+    """在预训练流程开始时初始化并连接 ClearML 任务。."""
     try:
         if task := Task.current_task():
             # 警告：务必禁用 pytorch 和 matplotlib 的自动绑定！
@@ -83,7 +83,7 @@ def on_pretrain_routine_start(trainer) -> None:
 
 
 def on_train_epoch_end(trainer) -> None:
-    """记录第一个周期的调试样本，并报告当前训练进度。"""
+    """记录第一个周期的调试样本，并报告当前训练进度。."""
     if task := Task.current_task():
         # 仅记录第一个周期的调试样本
         if trainer.epoch == 1:
@@ -96,7 +96,7 @@ def on_train_epoch_end(trainer) -> None:
 
 
 def on_fit_epoch_end(trainer) -> None:
-    """在周期结束时向日志记录器报告模型信息和指标。"""
+    """在周期结束时向日志记录器报告模型信息和指标。."""
     if task := Task.current_task():
         # 报告周期耗时和验证指标
         task.get_logger().report_scalar(
@@ -113,14 +113,14 @@ def on_fit_epoch_end(trainer) -> None:
 
 
 def on_val_end(validator) -> None:
-    """记录验证结果，包括标签和预测结果。"""
+    """记录验证结果，包括标签和预测结果。."""
     if Task.current_task():
         # 记录验证标签和预测结果
         _log_debug_samples(sorted(validator.save_dir.glob("val*.jpg")), "Validation")
 
 
 def on_train_end(trainer) -> None:
-    """训练完成时记录最终模型和训练结果。"""
+    """训练完成时记录最终模型和训练结果。."""
     if task := Task.current_task():
         # 记录最终结果、混淆矩阵和 PR 曲线
         for f in [*trainer.plots.keys(), *trainer.validator.plots.keys()]:

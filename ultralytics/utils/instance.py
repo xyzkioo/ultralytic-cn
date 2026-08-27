@@ -13,10 +13,10 @@ from .ops import ltwh2xywh, ltwh2xyxy, resample_segments, xywh2ltwh, xywh2xyxy, 
 
 
 def _ntuple(n):
-    """创建一个函数，将输入转换为 n 元组；单个值会被重复填充。"""
+    """创建一个函数，将输入转换为 n 元组；单个值会被重复填充。."""
 
     def parse(x):
-        """解析输入并返回 n 元组；单个值会重复 n 次。"""
+        """解析输入并返回 n 元组；单个值会重复 n 次。."""
         return x if isinstance(x, abc.Iterable) else tuple(repeat(x, n))
 
     return parse
@@ -34,7 +34,7 @@ __all__ = ("Bboxes", "Instances")  # 元组或列表
 
 
 class Bboxes:
-    """用于处理多种格式边界框的类。
+    """用于处理多种格式边界框的类。.
 
     此类支持 'xyxy'、'xywh' 和 'ltwh' 等边界框格式，并提供格式转换、缩放和面积计算方法。边界框数据应以 NumPy 数组形式提供。
 
@@ -61,7 +61,7 @@ class Bboxes:
     """
 
     def __init__(self, bboxes: np.ndarray, format: str = "xyxy") -> None:
-        """使用指定格式的边界框数据初始化 Bboxes 类。
+        """使用指定格式的边界框数据初始化 Bboxes 类。.
 
         参数：
             bboxes (np.ndarray): 边界框数组，形状为 (N, 4) 或 (4,)。
@@ -75,7 +75,7 @@ class Bboxes:
         self.format = format
 
     def convert(self, format: str) -> None:
-        """将边界框从一种格式转换为另一种格式。
+        """将边界框从一种格式转换为另一种格式。.
 
         参数：
             format (str): 目标格式，可选 'xyxy'、'xywh' 或 'ltwh'。
@@ -93,7 +93,7 @@ class Bboxes:
         self.format = format
 
     def areas(self) -> np.ndarray:
-        """计算边界框面积。"""
+        """计算边界框面积。."""
         return (
             (self.bboxes[:, 2] - self.bboxes[:, 0]) * (self.bboxes[:, 3] - self.bboxes[:, 1])  # xyxy 格式
             if self.format == "xyxy"
@@ -101,7 +101,7 @@ class Bboxes:
         )
 
     def mul(self, scale: int | tuple | list) -> None:
-        """将边界框坐标乘以缩放因子。
+        """将边界框坐标乘以缩放因子。.
 
         参数：
             scale (int | tuple | 列表): 四个坐标的缩放因子；如果是整数，则将同一因子应用于所有坐标。
@@ -116,7 +116,7 @@ class Bboxes:
         self.bboxes[:, 3] *= scale[3]
 
     def add(self, offset: int | tuple | list) -> None:
-        """为边界框坐标添加偏移量。
+        """为边界框坐标添加偏移量。.
 
         参数：
             offset (int | tuple | 列表): 四个坐标的偏移量；如果是整数，则将同一偏移量应用于所有坐标。
@@ -131,12 +131,12 @@ class Bboxes:
         self.bboxes[:, 3] += offset[3]
 
     def __len__(self) -> int:
-        """返回边界框数量。"""
+        """返回边界框数量。."""
         return len(self.bboxes)
 
     @classmethod
     def concatenate(cls, boxes_list: list[Bboxes], axis: int = 0) -> Bboxes:
-        """将 Bboxes 对象列表拼接为单个 Bboxes 对象。
+        """将 Bboxes 对象列表拼接为单个 Bboxes 对象。.
 
         参数：
             boxes_list (列表[Bboxes]): 待拼接的 Bboxes 对象列表。
@@ -158,7 +158,7 @@ class Bboxes:
         return cls(np.concatenate([b.bboxes for b in boxes_list], axis=axis))
 
     def __getitem__(self, index: int | np.ndarray | slice) -> Bboxes:
-        """通过索引获取单个边界框或一组边界框。
+        """通过索引获取单个边界框或一组边界框。.
 
         参数：
             索引 (int | slice | np.ndarray): 用于选择目标边界框的索引、切片或布尔数组。
@@ -177,7 +177,7 @@ class Bboxes:
 
 
 class Instances:
-    """用于存储图像中检测对象的边界框、分割段和关键点的容器。
+    """用于存储图像中检测对象的边界框、分割段和关键点的容器。.
 
     此类为处理不同类型的对象标注提供统一接口，包括边界框、分割段和关键点，并支持缩放、归一化、裁剪和格式转换等操作。
 
@@ -217,7 +217,7 @@ class Instances:
         bbox_format: str = "xywh",
         normalized: bool = True,
     ) -> None:
-        """使用边界框、分割段和关键点初始化 Instances 对象。
+        """使用边界框、分割段和关键点初始化 Instances 对象。.
 
         参数：
             bboxes (np.ndarray): 边界框，形状为 (N, 4)。
@@ -232,7 +232,7 @@ class Instances:
         self.segments = segments if segments is not None else np.zeros((0, 0, 2), dtype=np.float32)
 
     def convert_bbox(self, format: str) -> None:
-        """转换边界框格式。
+        """转换边界框格式。.
 
         参数：
             format (str): 目标格式，可选 'xyxy'、'xywh' 或 'ltwh'。
@@ -241,11 +241,11 @@ class Instances:
 
     @property
     def bbox_areas(self) -> np.ndarray:
-        """计算边界框面积。"""
+        """计算边界框面积。."""
         return self._bboxes.areas()
 
     def scale(self, scale_w: float, scale_h: float, bbox_only: bool = False):
-        """按给定因子缩放坐标。
+        """按给定因子缩放坐标。.
 
         参数：
             scale_w (float): 宽度缩放因子。
@@ -262,7 +262,7 @@ class Instances:
             self.keypoints[..., 1] *= scale_h
 
     def denormalize(self, w: int, h: int) -> None:
-        """将归一化坐标转换为绝对坐标。
+        """将归一化坐标转换为绝对坐标。.
 
         参数：
             w (int): 图像宽度。
@@ -279,7 +279,7 @@ class Instances:
         self.normalized = False
 
     def normalize(self, w: int, h: int) -> None:
-        """将绝对坐标转换为归一化坐标。
+        """将绝对坐标转换为归一化坐标。.
 
         参数：
             w (int): 图像宽度。
@@ -296,7 +296,7 @@ class Instances:
         self.normalized = True
 
     def add_padding(self, padw: int, padh: int) -> None:
-        """为坐标添加填充。
+        """为坐标添加填充。.
 
         参数：
             padw (int): 水平填充宽度。
@@ -311,7 +311,7 @@ class Instances:
             self.keypoints[..., 1] += padh
 
     def __getitem__(self, index: int | np.ndarray | slice) -> Instances:
-        """通过索引获取单个实例或一组实例。
+        """通过索引获取单个实例或一组实例。.
 
         参数：
             索引 (int | slice | np.ndarray): 用于选择目标实例的索引、切片或布尔数组。
@@ -333,7 +333,7 @@ class Instances:
         )
 
     def flipud(self, h: int) -> None:
-        """垂直翻转坐标。
+        """垂直翻转坐标。.
 
         参数：
             h (int): 图像高度。
@@ -350,7 +350,7 @@ class Instances:
             self.keypoints[..., 1] = h - self.keypoints[..., 1]
 
     def fliplr(self, w: int) -> None:
-        """水平翻转坐标。
+        """水平翻转坐标。.
 
         参数：
             w (int): 图像宽度。
@@ -367,7 +367,7 @@ class Instances:
             self.keypoints[..., 0] = w - self.keypoints[..., 0]
 
     def clip(self, w: int, h: int, preserve_obb: bool = False) -> None:
-        """将坐标裁剪到图像边界内。
+        """将坐标裁剪到图像边界内。.
 
         参数：
             w (int): 图像宽度。
@@ -424,7 +424,7 @@ class Instances:
             self.keypoints[..., 1] = self.keypoints[..., 1].clip(0, h)
 
     def remove_zero_area_boxes(self) -> np.ndarray:
-        """移除面积为零的边界框；裁剪后部分边界框的宽度或高度可能变为零。
+        """移除面积为零的边界框；裁剪后部分边界框的宽度或高度可能变为零。.
 
         返回：
             (np.ndarray): 指示哪些边界框被保留的布尔数组。
@@ -439,7 +439,7 @@ class Instances:
         return good
 
     def update(self, bboxes: np.ndarray, segments: np.ndarray = None, keypoints: np.ndarray = None):
-        """更新实例变量。
+        """更新实例变量。.
 
         参数：
             bboxes (np.ndarray): 新的边界框。
@@ -453,12 +453,12 @@ class Instances:
             self.keypoints = keypoints
 
     def __len__(self) -> int:
-        """返回实例数量。"""
+        """返回实例数量。."""
         return len(self.bboxes)
 
     @classmethod
     def concatenate(cls, instances_list: list[Instances], axis=0) -> Instances:
-        """将 Instances 对象列表拼接为单个 Instances 对象。
+        """将 Instances 对象列表拼接为单个 Instances 对象。.
 
         参数：
             instances_list (列表[Instances]): 待拼接的 Instances 对象列表。
@@ -506,7 +506,7 @@ class Instances:
         return self._bboxes.bboxes
 
     def __repr__(self) -> str:
-        """返回 Instances 对象的字符串表示。"""
+        """返回 Instances 对象的字符串表示。."""
         # 将私有名称映射为公开名称，并包含直接属性
         attr_map = {"_bboxes": "bboxes"}
         parts = []

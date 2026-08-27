@@ -16,10 +16,10 @@ from .utils.stracks import parse_bboxes
 
 
 class FastSTrack(STrack):
-    """具有遮挡感知状态的 FastTracker 单对象轨迹。
+    """具有遮挡感知状态的 FastTracker 单对象轨迹。.
 
-    此类在 `STrack` 基础上增加近期卡尔曼均值的有界环形缓冲区和每条轨迹的遮挡记录。当邻近对象突然遮挡目标时，
-    历史缓冲区支持将卡尔曼状态回滚到遮挡前的帧。缓冲区使用固定大小的 `collections.deque`，因此无论轨迹持续多久，内存占用都保持有界。
+    此类在 `STrack` 基础上增加近期卡尔曼均值的有界环形缓冲区和每条轨迹的遮挡记录。当邻近对象突然遮挡目标时， 历史缓冲区支持将卡尔曼状态回滚到遮挡前的帧。缓冲区使用固定大小的
+    `collections.deque`，因此无论轨迹持续多久，内存占用都保持有界。
 
     属性：
         mean_history (collections.deque): 近期 ``(mean, covariance)`` 快照的有界环形缓冲区，最新快照位于末尾，最多保存 ``history_len`` 条。
@@ -39,7 +39,7 @@ class FastSTrack(STrack):
     """
 
     def __init__(self, xywh: np.ndarray, score: float, cls: Any, history_len: int = 16):
-        """初始化 FastSTrack。
+        """初始化 FastSTrack。.
 
         参数：
             xywh (np.ndarray): ``(x, y, w, h, idx)`` 或 ``(x, y, w, h, angle, idx)`` 格式的边界框。
@@ -56,12 +56,12 @@ class FastSTrack(STrack):
         self.was_recently_occluded = False
 
     def _push_history(self):
-        """将当前卡尔曼状态的 `(mean, covariance)` 副本追加到有界缓冲区。"""
+        """将当前卡尔曼状态的 `(mean, covariance)` 副本追加到有界缓冲区。."""
         if self.mean is not None:
             self.mean_history.append((self.mean.copy(), self.covariance.copy()))
 
     def activate(self, kalman_filter, frame_id: int):
-        """激活轨迹，并初始化其均值历史。
+        """激活轨迹，并初始化其均值历史。.
 
         参数：
             kalman_filter (KalmanFilterXYAH): 共享的卡尔曼滤波器实例。
@@ -71,7 +71,7 @@ class FastSTrack(STrack):
         self._push_history()
 
     def re_activate(self, new_track, frame_id: int, new_id: bool = False):
-        """重新激活此前丢失的轨迹，并清除所有过期的遮挡记录。
+        """重新激活此前丢失的轨迹，并清除所有过期的遮挡记录。.
 
         参数：
             new_track (FastSTrack): 用于恢复此轨迹的检测结果。
@@ -87,7 +87,7 @@ class FastSTrack(STrack):
         self._push_history()
 
     def update(self, new_track, frame_id: int):
-        """使用新匹配的检测结果更新轨迹。
+        """使用新匹配的检测结果更新轨迹。.
 
         参数：
             new_track (FastSTrack): 当前帧匹配到的检测结果。
@@ -98,7 +98,7 @@ class FastSTrack(STrack):
 
 
 class FASTTracker(BYTETracker):
-    """具有遮挡感知能力的 ByteTrack 风格多对象跟踪器。
+    """具有遮挡感知能力的 ByteTrack 风格多对象跟踪器。.
 
     Adapted from the reference implementation in the FastTracker paper (arXiv:2508.14370). FastTracker extends
     `BYTETracker` with lightweight mechanisms that reduce ID switches through crowd occlusions without sacrificing
@@ -143,7 +143,7 @@ class FASTTracker(BYTETracker):
     track_class = FastSTrack
 
     def __init__(self, args):
-        """使用从 ``args`` 读取的可调参数初始化 FastTracker。
+        """使用从 ``args`` 读取的可调参数初始化 FastTracker。.
 
         ``args`` 中缺失的 FastTracker 专用键会回退到合理默认值，因此也可以使用普通 ByteTrack 配置驱动 FastTracker。
 
@@ -166,7 +166,7 @@ class FASTTracker(BYTETracker):
         self._history_len = max(self.reset_velocity_offset_occ, self.reset_pos_offset_occ) + 4
 
     def init_track(self, results, img: np.ndarray | None = None) -> list[FastSTrack]:
-        """根据类似 ``Results`` 的对象构建 `FastSTrack` 实例。
+        """根据类似 ``Results`` 的对象构建 `FastSTrack` 实例。.
 
         参数：
             结果 (Any): Object exposing ``xywh`` (or ``xywhr``), ``conf``, and ``cls``.
@@ -185,7 +185,7 @@ class FASTTracker(BYTETracker):
         ]
 
     def _apply_match(self, track: STrack, det: STrack, activated: list[STrack], refind: list[STrack]) -> None:
-        """更新或重新激活轨迹，并在匹配成功后清除所有遮挡记录。"""
+        """更新或重新激活轨迹，并在匹配成功后清除所有遮挡记录。."""
         super()._apply_match(track, det, activated, refind)
         track.is_occluded = False
         track.not_matched = 0
@@ -200,7 +200,7 @@ class FASTTracker(BYTETracker):
         refind: list[STrack],
         lost: list[STrack],
     ) -> None:
-        """执行第二阶段匹配和遮挡处理（替代基类的标记丢失循环）。"""
+        """执行第二阶段匹配和遮挡处理（替代基类的标记丢失循环）。."""
         r_tracked_stracks = [strack_pool[i] for i in u_track if strack_pool[i].state == TrackState.Tracked]
         if r_tracked_stracks and detections_second:
             dists = matching.iou_distance(r_tracked_stracks, detections_second)
@@ -217,7 +217,7 @@ class FASTTracker(BYTETracker):
         activated: list[STrack],
         refind: list[STrack] | None = None,
     ) -> None:
-        """激活新轨迹，并抑制与当前活动轨迹高度重叠的检测结果。"""
+        """激活新轨迹，并抑制与当前活动轨迹高度重叠的检测结果。."""
         active_boxes = [t.xyxy for t in activated if t.is_activated]
         if refind:
             active_boxes.extend(t.xyxy for t in refind if t.is_activated)
@@ -241,7 +241,7 @@ class FASTTracker(BYTETracker):
             active_stack = np.concatenate([active_stack, det.xyxy[None, :]], axis=0)
 
     def _remove_stale_lost(self, removed: list[STrack]) -> None:
-        """移除丢失轨迹，并为最近发生遮挡的轨迹保留宽限期。"""
+        """移除丢失轨迹，并为最近发生遮挡的轨迹保留宽限期。."""
         for track in self.lost_stracks:
             recently_occluded = track.was_recently_occluded and (
                 self.frame_id - track.last_occluded_frame <= self.occ_reappear_window
@@ -251,14 +251,14 @@ class FASTTracker(BYTETracker):
                 removed.append(track)
 
     def _format_output(self) -> np.ndarray:
-        """仅输出当前帧更新过的轨迹，避免返回过期的 ``idx`` 值。"""
+        """仅输出当前帧更新过的轨迹，避免返回过期的 ``idx`` 值。."""
         return np.asarray(
             [x.result for x in self.tracked_stracks if x.is_activated and x.frame_id == self.frame_id],
             dtype=np.float32,
         )
 
     def _handle_occlusions(self, r_tracked, u_track, activated_stracks, lost_stracks):
-        """当活动邻近轨迹覆盖未匹配的跟踪轨迹时，将其标记为遮挡。
+        """当活动邻近轨迹覆盖未匹配的跟踪轨迹时，将其标记为遮挡。.
 
         对每条未匹配轨迹，计算其区域被任意当前活动轨迹覆盖的比例。如果覆盖比例超过 ``occ_cover_thresh``，
         则将轨迹标记为遮挡，并使用环形缓冲区历史回滚其 Kalman 状态（速度取 ``reset_velocity_offset_occ`` 帧前的值，

@@ -12,7 +12,7 @@ from ultralytics.utils import LOGGER, YAML
 
 
 def _check_atc() -> None:
-    """如果 CANN ATC 编译器不在 PATH 中，则抛出异常。"""
+    """如果 CANN ATC 编译器不在 PATH 中，则抛出异常。."""
     if not shutil.which("atc"):
         raise FileNotFoundError(
             "Ascend export requires the CANN toolkit 'atc' compiler, which was not found on PATH. Install CANN and "
@@ -31,7 +31,7 @@ def onnx2ascend(
     metadata: dict | None = None,
     prefix: str = "",
 ) -> str:
-    """使用 CANN ATC 编译器将 ONNX 模型转换为华为 Ascend 离线模型（.om）。
+    """使用 CANN ATC 编译器将 ONNX 模型转换为华为 Ascend 离线模型（.om）。.
 
     参数：
         onnx_file (str | Path): 输入 ONNX 模型路径。

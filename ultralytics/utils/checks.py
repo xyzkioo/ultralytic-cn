@@ -62,7 +62,7 @@ REMOTE_FILE_PREFIXES = ("https://", "http://", "rtsp://", "rtmp://", "tcp://", "
 
 
 def normalize_platform_uri(uri):
-    """将 Ultralytics Platform 网页 URL 重写为 ul:// URI，以便直接加载为数据或模型。
+    """将 Ultralytics Platform 网页 URL 重写为 ul:// URI，以便直接加载为数据或模型。.
 
     参数：
         uri (str | Path): 资源标识符，例如以 "/user/datasets/slug" 结尾的 Ultralytics Platform 网页 URL。
@@ -75,7 +75,7 @@ def normalize_platform_uri(uri):
 
 
 def resolve_platform_uri(uri, hard=True):
-    """通过 Ultralytics Platform 身份验证，将 ul:// URI 解析为签名 URL。
+    """通过 Ultralytics Platform 身份验证，将 ul:// URI 解析为签名 URL。.
 
     格式：
         ul://username/datasets/slug  -> 返回指向 NDJSON 文件的签名 URL
@@ -168,7 +168,7 @@ def resolve_platform_uri(uri, hard=True):
 
 
 def parse_requirements(file_path=ROOT.parent / "requirements.txt", package=""):
-    """解析 requirements.txt 文件，忽略以 '#' 开头的行以及 '#' 之后的所有文本。
+    """解析 requirements.txt 文件，忽略以 '#' 开头的行以及 '#' 之后的所有文本。.
 
     参数：
         file_path (Path): requirements.txt 文件的路径。
@@ -199,7 +199,7 @@ def parse_requirements(file_path=ROOT.parent / "requirements.txt", package=""):
 
 
 def get_distribution_name(import_name: str) -> str:
-    """获取指定导入名称对应的 pip 发行包名称（例如 'cv2' -> 'opencv-python-headless'）。"""
+    """获取指定导入名称对应的 pip 发行包名称（例如 'cv2' -> 'opencv-python-headless'）。."""
     for dist in metadata.distributions():
         top_level = (dist.read_text("top_level.txt") or "").split()
         if import_name in top_level:
@@ -209,10 +209,10 @@ def get_distribution_name(import_name: str) -> str:
 
 @functools.lru_cache
 def parse_version(version="0.0.0") -> tuple:
-    """将版本字符串转换为由发行版本段组成的整数元组，并忽略前缀和后缀。
+    """将版本字符串转换为由发行版本段组成的整数元组，并忽略前缀和后缀。.
 
-    此函数不遵循 PEP 440：会删除预发布、开发版、后发布和本地版本后缀，因此 '1.0rc1'、'1.0.post1' 和
-    '1.0+cu118' 都会与 '1.0' 比较为相同。如果需要精确的预发布版本排序，请使用 `packaging` 库。
+    此函数不遵循 PEP 440：会删除预发布、开发版、后发布和本地版本后缀，因此 '1.0rc1'、'1.0.post1' 和 '1.0+cu118' 都会与 '1.0' 比较为相同。如果需要精确的预发布版本排序，请使用
+    `packaging` 库。
 
     参数：
         version (str): 版本字符串，例如 '2.0.1+cpu'、'4.13.0.92' 或 'v2.1'。
@@ -229,7 +229,7 @@ def parse_version(version="0.0.0") -> tuple:
 
 
 def is_ascii(s) -> bool:
-    """检查字符串是否仅由 ASCII 字符组成。
+    """检查字符串是否仅由 ASCII 字符组成。.
 
     参数：
         s (str | 列表 | tuple | dict): 待检查的输入（所有输入都会转换为字符串后检查）。
@@ -241,7 +241,7 @@ def is_ascii(s) -> bool:
 
 
 def check_imgsz(imgsz, stride=32, min_dim=1, max_dim=2, floor=0):
-    """检查图像尺寸是否在每个维度上都是给定步长的倍数。
+    """检查图像尺寸是否在每个维度上都是给定步长的倍数。.
 
     如果图像尺寸不是步长的倍数，则将其调整为大于或等于给定 floor 值的最近步长倍数。
 
@@ -302,7 +302,7 @@ def check_imgsz(imgsz, stride=32, min_dim=1, max_dim=2, floor=0):
 
 @functools.lru_cache
 def check_uv():
-    """检查 uv 软件包管理器是否已安装且可以正常运行。"""
+    """检查 uv 软件包管理器是否已安装且可以正常运行。."""
     try:
         return subprocess.run(["uv", "-V"], capture_output=True, check=False).returncode == 0
     except FileNotFoundError:
@@ -318,7 +318,7 @@ def check_version(
     verbose: bool = False,
     msg: str = "",
 ) -> bool:
-    """检查当前版本是否满足指定版本或版本范围。
+    """检查当前版本是否满足指定版本或版本范围。.
 
     参数：
         current (str): 当前版本，或用于获取版本的包名称。
@@ -402,7 +402,7 @@ def check_version(
 
 
 def check_latest_pypi_version(package_name="ultralytics"):
-    """获取 PyPI 软件包的最新版本，但不下载或安装该软件包。
+    """获取 PyPI 软件包的最新版本，但不下载或安装该软件包。.
 
     参数：
         package_name (str): 要查询最新版本的软件包名称。
@@ -422,7 +422,7 @@ def check_latest_pypi_version(package_name="ultralytics"):
 
 
 def check_pip_update_available():
-    """检查 PyPI 上是否有更新版本的 ultralytics 软件包。
+    """检查 PyPI 上是否有更新版本的 ultralytics 软件包。.
 
     返回：
         (bool): 有可用更新时返回 True，否则返回 False。
@@ -446,7 +446,7 @@ def check_pip_update_available():
 @ThreadingLocked()
 @functools.lru_cache
 def check_font(font="Arial.ttf"):
-    """在本地查找字体；如果不存在，则下载到用户配置目录。
+    """在本地查找字体；如果不存在，则下载到用户配置目录。.
 
     参数：
         font (str): 字体路径或名称。
@@ -475,7 +475,7 @@ def check_font(font="Arial.ttf"):
 
 
 def check_python(minimum: str = "3.8.0", hard: bool = True, verbose: bool = False) -> bool:
-    """检查当前 Python 版本是否满足最低版本要求。
+    """检查当前 Python 版本是否满足最低版本要求。.
 
     参数：
         minimum (str): Python 要求的最低版本。
@@ -490,7 +490,7 @@ def check_python(minimum: str = "3.8.0", hard: bool = True, verbose: bool = Fals
 
 @TryExcept()
 def check_apt_requirements(requirements):
-    """检查 apt 软件包是否已安装，并安装缺失的软件包。
+    """检查 apt 软件包是否已安装，并安装缺失的软件包。.
 
     参数：
         requirements (列表[str]): 要检查并安装的 apt 软件包名称列表。
@@ -530,7 +530,7 @@ def check_apt_requirements(requirements):
 
 @TryExcept()
 def check_requirements(requirements=ROOT.parent / "requirements.txt", exclude=(), install=True, cmds="", constrain=()):
-    """检查已安装的依赖是否满足 Ultralytics YOLO 模型要求，并在必要时尝试自动更新。
+    """检查已安装的依赖是否满足 Ultralytics YOLO 模型要求，并在必要时尝试自动更新。.
 
     参数：
         requirements (Path | str | list[str|tuple] | tuple[str]): requirements.txt 文件路径、单个软件包依赖字符串、
@@ -594,7 +594,7 @@ def check_requirements(requirements=ROOT.parent / "requirements.txt", exclude=()
 
     @Retry(times=2, delay=1)
     def attempt_install(packages, commands, use_uv):
-        """如果 uv 可用则使用 uv 安装软件包，否则回退到 pip。"""
+        """如果 uv 可用则使用 uv 安装软件包，否则回退到 pip。."""
         if use_uv:
             # 使用 --python 明确指定当前解释器（虚拟环境或系统解释器）
             # 即使未设置 VIRTUAL_ENV 环境变量，也能确保安装到正确的解释器环境
@@ -649,7 +649,7 @@ def check_requirements(requirements=ROOT.parent / "requirements.txt", exclude=()
 
 
 def check_executorch_requirements():
-    """检查并安装 ExecuTorch 依赖，包括平台专用依赖。"""
+    """检查并安装 ExecuTorch 依赖，包括平台专用依赖。."""
     # BUG：arm64 Docker 中构建 executorch 需要 packaging>=22.0 https://github.com/pypa/setuptools/issues/4483
     if LINUX and ARM64 and IS_DOCKER:
         check_requirements("packaging>=22.0")
@@ -658,7 +658,7 @@ def check_executorch_requirements():
 
 
 def check_tensorrt(min_version: str = "7.0.0"):
-    """检查并安装 TensorRT 依赖，包括平台专用依赖。
+    """检查并安装 TensorRT 依赖，包括平台专用依赖。.
 
     参数：
         min_version (str): 支持的 TensorRT 最低版本（默认值为 "7.0.0"）。
@@ -669,10 +669,9 @@ def check_tensorrt(min_version: str = "7.0.0"):
 
 
 def check_torchvision():
-    """检查已安装的 PyTorch 和 Torchvision 版本，确保二者兼容。
+    """检查已安装的 PyTorch 和 Torchvision 版本，确保二者兼容。.
 
-    此函数会检查已安装的 PyTorch 和 Torchvision 版本，并根据以下兼容性表在版本不兼容时发出警告：
-    https://github.com/pytorch/vision#installation
+    此函数会检查已安装的 PyTorch 和 Torchvision 版本，并根据以下兼容性表在版本不兼容时发出警告： https://github.com/pytorch/vision#installation
     """
     compatibility_table = {
         "2.10": ["0.25"],
@@ -705,7 +704,7 @@ def check_torchvision():
 
 
 def check_suffix(file="yolo26n.pt", suffix=".pt", msg=""):
-    """检查文件是否具有可接受的后缀。
+    """检查文件是否具有可接受的后缀。.
 
     参数：
         file (str | 列表[str]): 待检查的文件或文件列表。
@@ -721,7 +720,7 @@ def check_suffix(file="yolo26n.pt", suffix=".pt", msg=""):
 
 
 def check_yolov5u_filename(file: str, verbose: bool = True) -> str:
-    """将旧版 YOLOv5 文件名替换为更新后的 YOLOv5u 文件名。
+    """将旧版 YOLOv5 文件名替换为更新后的 YOLOv5u 文件名。.
 
     参数：
         file (str): 待检查并可能更新的文件名。
@@ -748,7 +747,7 @@ def check_yolov5u_filename(file: str, verbose: bool = True) -> str:
 
 
 def check_model_file_from_stem(model: str = "yolo11n") -> str | Path:
-    """根据有效的模型主干名称返回模型文件名。
+    """根据有效的模型主干名称返回模型文件名。.
 
     参数：
         model (str): 待检查的模型主干名称。
@@ -763,7 +762,7 @@ def check_model_file_from_stem(model: str = "yolo11n") -> str | Path:
 
 
 def check_file(file, suffix="", download=True, download_dir=".", hard=True):
-    """搜索或下载文件（如果需要），检查后缀（如果提供），并返回文件路径。
+    """搜索或下载文件（如果需要），检查后缀（如果提供），并返回文件路径。.
 
     参数：
         file (str): 文件名称或路径、URL、Platform URI（ul://）或 GCS 路径（gs://）。
@@ -823,7 +822,7 @@ def check_file(file, suffix="", download=True, download_dir=".", hard=True):
 
 
 def check_yaml(file, suffix=(".yaml", ".yml"), hard=True):
-    """搜索或下载 YAML 文件（如果需要），检查后缀并返回路径。
+    """搜索或下载 YAML 文件（如果需要），检查后缀并返回路径。.
 
     参数：
         file (str | Path): 文件名称或路径。
@@ -837,7 +836,7 @@ def check_yaml(file, suffix=(".yaml", ".yml"), hard=True):
 
 
 def check_is_path_safe(basedir: Path | str, path: Path | str) -> bool:
-    """检查解析后的路径是否位于指定目录下，以防止路径穿越。
+    """检查解析后的路径是否位于指定目录下，以防止路径穿越。.
 
     参数：
         basedir (Path | str): 目标目录。
@@ -854,7 +853,7 @@ def check_is_path_safe(basedir: Path | str, path: Path | str) -> bool:
 
 @functools.lru_cache
 def check_imshow(warn=False):
-    """检查当前环境是否支持图像显示。
+    """检查当前环境是否支持图像显示。.
 
     参数：
         warn (bool): 如果环境不支持图像显示，是否发出警告。
@@ -878,7 +877,7 @@ def check_imshow(warn=False):
 
 
 def check_yolo(verbose=True, device=""):
-    """打印易于阅读的 YOLO 软件和硬件摘要。
+    """打印易于阅读的 YOLO 软件和硬件摘要。.
 
     参数：
         verbose (bool): 是否打印详细信息。
@@ -914,7 +913,7 @@ def check_yolo(verbose=True, device=""):
 
 
 def collect_system_info():
-    """收集并打印相关系统信息，包括操作系统、Python、内存、CPU 和 CUDA。
+    """收集并打印相关系统信息，包括操作系统、Python、内存、CPU 和 CUDA。.
 
     返回：
         (dict): 包含系统信息的字典。
@@ -974,10 +973,9 @@ def collect_system_info():
 
 
 def check_amp(model):
-    """检查 YOLO 模型的 PyTorch 自动混合精度（AMP）功能。
+    """检查 YOLO 模型的 PyTorch 自动混合精度（AMP）功能。.
 
-    如果检查失败，说明当前系统中的 AMP 存在异常，可能导致 NaN 损失或 mAP 为零的结果，
-    因此训练期间会禁用 AMP。
+    如果检查失败，说明当前系统中的 AMP 存在异常，可能导致 NaN 损失或 mAP 为零的结果， 因此训练期间会禁用 AMP。
 
     参数：
         model (torch.nn.Module): YOLO 模型实例。
@@ -1012,7 +1010,7 @@ def check_amp(model):
             return False
 
     def amp_allclose(m, im):
-        """比较 FP32 与 AMP 结果是否接近。"""
+        """比较 FP32 与 AMP 结果是否接近。."""
         batch = [im] * 8
         imgsz = max(256, int(model.stride.max() * 4))  # 最大步长为 P5-32 和 P6-64
         a = m(batch, imgsz=imgsz, device=device, verbose=False)[0].boxes.data  # FP32 推理
@@ -1050,7 +1048,7 @@ def check_amp(model):
 
 
 def check_multiple_install():
-    """检查是否存在多个 Ultralytics 安装。"""
+    """检查是否存在多个 Ultralytics 安装。."""
     import sys
 
     try:
@@ -1078,7 +1076,7 @@ def check_multiple_install():
 
 
 def print_args(args: dict | None = None, show_file=True, show_func=False):
-    """打印函数参数（可选的 args 字典）。
+    """打印函数参数（可选的 args 字典）。.
 
     参数：
         args (dict, 可选): 要打印的参数。
@@ -1087,7 +1085,7 @@ def print_args(args: dict | None = None, show_file=True, show_func=False):
     """
 
     def strip_auth(v):
-        """删除较长 URL 中可能包含的身份验证信息。"""
+        """删除较长 URL 中可能包含的身份验证信息。."""
         return clean_url(v) if (isinstance(v, str) and v.startswith("http") and len(v) > 100) else v
 
     x = inspect.currentframe().f_back  # 上一层栈帧
@@ -1104,7 +1102,7 @@ def print_args(args: dict | None = None, show_file=True, show_func=False):
 
 
 def cuda_device_count() -> int:
-    """获取当前环境中可用的 NVIDIA GPU 数量。
+    """获取当前环境中可用的 NVIDIA GPU 数量。.
 
     返回：
         (int): 可用 NVIDIA GPU 的数量。
@@ -1129,7 +1127,7 @@ def cuda_device_count() -> int:
 
 
 def cuda_is_available() -> bool:
-    """检查当前环境是否支持 CUDA。
+    """检查当前环境是否支持 CUDA。.
 
     返回：
         (bool): 存在一个或多个 NVIDIA GPU 时返回 True，否则返回 False。
@@ -1138,7 +1136,7 @@ def cuda_is_available() -> bool:
 
 
 def is_rockchip():
-    """检查当前环境是否运行在 Rockchip SoC 上。
+    """检查当前环境是否运行在 Rockchip SoC 上。.
 
     返回：
         (bool): 运行在 Rockchip SoC 上时返回 True，否则返回 False。
@@ -1157,7 +1155,7 @@ def is_rockchip():
 
 
 def is_intel():
-    """检查系统是否包含 Intel 硬件（CPU 或 GPU）。
+    """检查系统是否包含 Intel 硬件（CPU 或 GPU）。.
 
     返回：
         (bool): 检测到 Intel 硬件时返回 True，否则返回 False。
@@ -1177,7 +1175,7 @@ def is_intel():
 
 
 def is_sudo_available() -> bool:
-    """检查当前环境是否可以使用 sudo 命令。
+    """检查当前环境是否可以使用 sudo 命令。.
 
     返回：
         (bool): sudo 命令可用时返回 True，否则返回 False。

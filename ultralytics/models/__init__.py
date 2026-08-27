@@ -10,7 +10,7 @@ __all__ = "LLM", "NAS", "RTDETR", "SAM", "YOLO", "YOLOE", "FastSAM", "YOLOWorld"
 
 
 def __getattr__(name):
-    """延迟导入 SAM，避免标准 YOLO 导入加载可选的 torchvision 内部模块。"""
+    """延迟导入 SAM，避免标准 YOLO 导入加载可选的 torchvision 内部模块。."""
     if name == "SAM":
         # 为提高 ultralytics 导入速度，SAM 会加载依赖 torchvision 的可选模块。
         from .sam import SAM

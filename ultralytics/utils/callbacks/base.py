@@ -1,5 +1,5 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
-"""Ultralytics 训练、验证、预测和导出流程的基础回调函数。"""
+"""Ultralytics 训练、验证、预测和导出流程的基础回调函数。."""
 
 from collections import defaultdict
 from copy import deepcopy
@@ -8,112 +8,112 @@ from copy import deepcopy
 
 
 def on_pretrain_routine_start(trainer):
-    """在预训练流程开始时调用，此时尚未加载数据和设置模型。"""
+    """在预训练流程开始时调用，此时尚未加载数据和设置模型。."""
 
 
 def on_pretrain_routine_end(trainer):
-    """在预训练流程结束时调用，此时数据加载和模型设置已经完成。"""
+    """在预训练流程结束时调用，此时数据加载和模型设置已经完成。."""
 
 
 def on_train_start(trainer):
-    """训练开始时调用，此时第一个周期尚未开始。"""
+    """训练开始时调用，此时第一个周期尚未开始。."""
 
 
 def on_train_epoch_start(trainer):
-    """每个训练周期开始时调用，此时尚未开始遍历批次。"""
+    """每个训练周期开始时调用，此时尚未开始遍历批次。."""
 
 
 def on_train_batch_start(trainer):
-    """每个训练批次开始时调用，此时尚未执行前向传播。"""
+    """每个训练批次开始时调用，此时尚未执行前向传播。."""
 
 
 def optimizer_step(trainer):
-    """优化器执行更新步骤时调用。此回调保留给自定义集成，默认不会调用。"""
+    """优化器执行更新步骤时调用。此回调保留给自定义集成，默认不会调用。."""
 
 
 def on_before_zero_grad(trainer):
-    """梯度清零前调用。此回调保留给自定义集成，默认不会调用。"""
+    """梯度清零前调用。此回调保留给自定义集成，默认不会调用。."""
 
 
 def on_train_batch_end(trainer):
-    """每个训练批次结束时调用，此时已经完成反向传播。优化器更新可能因梯度累积而延后。"""
+    """每个训练批次结束时调用，此时已经完成反向传播。优化器更新可能因梯度累积而延后。."""
 
 
 def on_train_epoch_end(trainer):
-    """每个训练周期结束时调用，此时已完成所有批次，但尚未开始验证。"""
+    """每个训练周期结束时调用，此时已完成所有批次，但尚未开始验证。."""
 
 
 def on_fit_epoch_end(trainer):
-    """每个完整周期（训练 + 验证）结束时调用，此时已完成验证和所有必要的检查点保存。"""
+    """每个完整周期（训练 + 验证）结束时调用，此时已完成验证和所有必要的检查点保存。."""
 
 
 def on_model_save(trainer):
-    """模型检查点保存后调用。"""
+    """模型检查点保存后调用。."""
 
 
 def on_train_end(trainer):
-    """训练结束时调用，此时已经完成最佳模型的最终评估。"""
+    """训练结束时调用，此时已经完成最佳模型的最终评估。."""
 
 
 def on_params_update(trainer):
-    """模型参数更新后调用。此回调保留给自定义集成，默认不会调用。"""
+    """模型参数更新后调用。此回调保留给自定义集成，默认不会调用。."""
 
 
 def teardown(trainer):
-    """训练流程清理阶段调用。"""
+    """训练流程清理阶段调用。."""
 
 
 # 验证器回调 -----------------------------------------------------------------------------------------------------------
 
 
 def on_val_start(validator):
-    """验证开始时调用。"""
+    """验证开始时调用。."""
 
 
 def on_val_batch_start(validator):
-    """每个验证批次开始时调用。"""
+    """每个验证批次开始时调用。."""
 
 
 def on_val_batch_end(validator):
-    """每个验证批次结束时调用。"""
+    """每个验证批次结束时调用。."""
 
 
 def on_val_end(validator):
-    """验证结束时调用。"""
+    """验证结束时调用。."""
 
 
 # 预测器回调 -----------------------------------------------------------------------------------------------------------
 
 
 def on_predict_start(predictor):
-    """预测开始时调用。"""
+    """预测开始时调用。."""
 
 
 def on_predict_batch_start(predictor):
-    """每个预测批次开始时调用。"""
+    """每个预测批次开始时调用。."""
 
 
 def on_predict_batch_end(predictor):
-    """每个预测批次结束时调用。"""
+    """每个预测批次结束时调用。."""
 
 
 def on_predict_postprocess_end(predictor):
-    """预测后处理结束后调用。"""
+    """预测后处理结束后调用。."""
 
 
 def on_predict_end(predictor):
-    """预测结束时调用。"""
+    """预测结束时调用。."""
 
 
 # 导出器回调 -----------------------------------------------------------------------------------------------------------
 
 
 def on_export_start(exporter):
-    """模型导出开始时调用。"""
+    """模型导出开始时调用。."""
 
 
 def on_export_end(exporter):
-    """模型导出结束时调用。"""
+    """模型导出结束时调用。."""
 
 
 default_callbacks = {
@@ -150,7 +150,7 @@ default_callbacks = {
 
 
 def get_default_callbacks():
-    """获取 Ultralytics 训练、验证、预测和导出流程的默认回调。
+    """获取 Ultralytics 训练、验证、预测和导出流程的默认回调。.
 
     返回：
         (dict): 各类训练事件的默认回调字典。每个键表示训练流程中的一个事件，对应值是该事件发生时执行的
@@ -165,10 +165,10 @@ def get_default_callbacks():
 
 
 def add_integration_callbacks(instance):
-    """将集成回调添加到实例的回调字典中。
+    """将集成回调添加到实例的回调字典中。.
 
-    此函数为每个实例加载并添加分析回调。训练器实例还会接收 Platform，以及 ClearML、Comet、DVC、MLflow、
-    Neptune、Ray Tune、TensorBoard 和 Weights & Biases 的实验日志回调。
+    此函数为每个实例加载并添加分析回调。训练器实例还会接收 Platform，以及 ClearML、Comet、DVC、MLflow、 Neptune、Ray Tune、TensorBoard 和 Weights & Biases
+    的实验日志回调。
 
     参数：
         instance (Trainer | Predictor | Validator | Exporter): 要添加回调的对象实例。
