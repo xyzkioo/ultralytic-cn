@@ -21,7 +21,7 @@ RAY_SEARCH_ALG_REQUIREMENTS = {
 
 
 def _sanitize_tune_value(value: dict):
-    """将 NumPy 支持的 Tune 值转换为原生 Python 类型，以便 YAML 序列化。
+    """将 NumPy 支持的 Tune 值转换为原生 Python 类型，以便 YAML 序列化。.
 
     参数：
         value (dict): 要转换的值，可以是字典、列表、元组、NumPy 标量或 NumPy 数组。
@@ -43,7 +43,7 @@ def _sanitize_tune_value(value: dict):
 
 
 def _get_ray_search_alg_kind(search_alg):
-    """返回已知搜索器对象对应的规范化 Ray Tune 搜索算法类型。
+    """返回已知搜索器对象对应的规范化 Ray Tune 搜索算法类型。.
 
     参数：
         search_alg (str | ray.tune.search.Searcher): 要识别的搜索算法，可以是 None、字符串或 Ray Tune 搜索器对象。
@@ -69,7 +69,7 @@ def _get_ray_search_alg_kind(search_alg):
 
 
 def _validate_ax_search_space(space):
-    """验证 Tune 搜索空间是否可被 Ax 使用。
+    """验证 Tune 搜索空间是否可被 Ax 使用。.
 
     参数：
         space (dict): 要验证的超参数搜索空间。
@@ -88,7 +88,7 @@ def _validate_ax_search_space(space):
 
 
 def _create_ax_search(space, task):
-    """创建带已初始化实验的 Ax 搜索器。
+    """创建带已初始化实验的 Ax 搜索器。.
 
     参数：
         space (dict): 超参数搜索空间。
@@ -115,7 +115,7 @@ def _create_ax_search(space, task):
 
 
 def _convert_bohb_search_space(space):
-    """将 Tune 搜索空间转换为 BOHB 兼容的 ConfigSpace 和仅包含固定值的 Tune param_space。
+    """将 Tune 搜索空间转换为 BOHB 兼容的 ConfigSpace 和仅包含固定值的 Tune param_space。.
 
     参数：
         space (dict): 超参数搜索空间。
@@ -172,7 +172,7 @@ def _convert_bohb_search_space(space):
 
 
 def _create_bohb_search(space, task):
-    """使用兼容当前 ConfigSpace 版本的定义创建 BOHB 搜索器。
+    """使用兼容当前 ConfigSpace 版本的定义创建 BOHB 搜索器。.
 
     参数：
         space (dict): 超参数搜索空间。
@@ -192,7 +192,7 @@ def _create_bohb_search(space, task):
 
 
 def _create_nevergrad_search(task):
-    """使用默认优化器创建 Nevergrad 搜索器。
+    """使用默认优化器创建 Nevergrad 搜索器。.
 
     参数：
         task (str): 任务类型（例如 'detect'、'分割段'、'classify'）。
@@ -212,7 +212,7 @@ def _create_nevergrad_search(task):
 
 
 def _convert_zoopt_search_space(space):
-    """将 Tune 搜索空间转换为 ZOOpt 兼容的维度和仅包含固定值的 Tune param_space。
+    """将 Tune 搜索空间转换为 ZOOpt 兼容的维度和仅包含固定值的 Tune param_space。.
 
     参数：
         space (dict): 超参数搜索空间。
@@ -237,7 +237,7 @@ def _convert_zoopt_search_space(space):
 
 
 def _create_zoopt_search(space, task, iterations):
-    """使用所需预算和转换后的搜索空间创建 ZOOpt 搜索器。
+    """使用所需预算和转换后的搜索空间创建 ZOOpt 搜索器。.
 
     参数：
         space (dict): 超参数搜索空间。
@@ -260,7 +260,7 @@ def _create_zoopt_search(space, task, iterations):
 
 
 def _resolve_ray_search_alg(search_alg, task, space, iterations):
-    """解析搜索算法，并为已知 Ray Tune 搜索器规范化 Tune param_space。
+    """解析搜索算法，并为已知 Ray Tune 搜索器规范化 Tune param_space。.
 
     参数：
         search_alg (str | 对象 | None): 要使用的搜索算法，可以是字符串名称、已实例化的 Ray Tune 搜索器对象，或 None（使用默认行为）。
@@ -338,7 +338,7 @@ def run_ray_tune(
     search_alg=None,
     **train_args,
 ):
-    """使用 Ray Tune 执行超参数调优。
+    """使用 Ray Tune 执行超参数调优。.
 
     参数：
         model (YOLO): 用于执行调优的模型。
@@ -415,7 +415,7 @@ def run_ray_tune(
     base_name = train_args.get("name", "tune")
 
     def _tune(config):
-        """使用指定超参数训练 YOLO 模型并返回结果。"""
+        """使用指定超参数训练 YOLO 模型并返回结果。."""
         model_to_train = ray.get(model_in_store)  # 从 Ray 存储获取用于调参的模型
         model_to_train.trainer = None
         model_to_train.reset_callbacks()

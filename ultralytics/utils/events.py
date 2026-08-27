@@ -24,7 +24,7 @@ from ultralytics.utils.torch_utils import get_cpu_info, get_gpu_info, unwrap_mod
 
 
 def _post(url: str, data: dict, timeout: float = 5.0) -> None:
-    """发送一次性 JSON POST 请求。"""
+    """发送一次性 JSON POST 请求。."""
     try:
         body = json.dumps(data, separators=(",", ":")).encode()  # 紧凑 JSON
         req = Request(url, data=body, headers={"Content-Type": "application/json"})
@@ -34,7 +34,7 @@ def _post(url: str, data: dict, timeout: float = 5.0) -> None:
 
 
 def _arch(model):
-    """返回模型所基于的架构（例如 'yolo11n-seg'）；如果无法确定则返回 None。
+    """返回模型所基于的架构（例如 'yolo11n-seg'）；如果无法确定则返回 None。.
 
     配置会随检查点保存，因此微调模型可以报告其祖先架构，即使中间经过了多代模型派生。
     """
@@ -46,10 +46,9 @@ def _arch(model):
 
 
 class Events:
-    """收集并按速率限制发送匿名使用分析数据。
+    """收集并按速率限制发送匿名使用分析数据。.
 
-    当设置中启用同步、当前进程 rank 为 -1 或 0、未运行测试、环境在线，且安装来源为 pip 或官方 Ultralytics GitHub
-    仓库时，才会收集并发送事件。
+    当设置中启用同步、当前进程 rank 为 -1 或 0、未运行测试、环境在线，且安装来源为 pip 或官方 Ultralytics GitHub 仓库时，才会收集并发送事件。
 
     属性：
         url (str): 接收匿名事件的 Measurement Protocol 地址。
@@ -67,7 +66,7 @@ class Events:
     url = "https://www.google-analytics.com/mp/collect?measurement_id=G-X8NCJYTQXM&api_secret=QLQrATrNSwGRFRLE-cbHJw"
 
     def __init__(self) -> None:
-        """使用队列、速率限制器和环境元数据初始化 Events 实例。"""
+        """使用队列、速率限制器和环境元数据初始化 Events 实例。."""
         self.events = []  # 待发送事件
         self.rate_limit = 30.0  # 速率限制（秒）
         self.t = 0.0  # 上次发送时间戳（秒）
@@ -91,7 +90,7 @@ class Events:
         )
 
     def __call__(self, cfg, device=None, run=None) -> None:
-        """将事件加入队列，并在达到速率限制间隔后异步刷新队列。
+        """将事件加入队列，并在达到速率限制间隔后异步刷新队列。.
 
         参数：
             cfg (IterableSimpleNamespace): 包含模式和任务信息的配置对象。
@@ -203,12 +202,12 @@ events = Events()
 
 
 def on_train_end(trainer):
-    """最终指标可用后记录匿名训练事件。"""
+    """最终指标可用后记录匿名训练事件。."""
     events(trainer.args, trainer.device, trainer)
 
 
 def on_val_start(validator):
-    """记录匿名的独立验证事件。
+    """记录匿名的独立验证事件。.
 
     训练器的最终验证仍保留 mode=train，因此此处的判断可避免重复记录训练事件。
     """
@@ -217,12 +216,12 @@ def on_val_start(validator):
 
 
 def on_predict_end(predictor):
-    """逐图像速度可用后记录匿名预测事件。"""
+    """逐图像速度可用后记录匿名预测事件。."""
     events(predictor.args, predictor.device, predictor)
 
 
 def on_export_start(exporter):
-    """记录匿名导出事件。"""
+    """记录匿名导出事件。."""
     events(exporter.args, exporter.device)
 
 

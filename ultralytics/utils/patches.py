@@ -1,5 +1,5 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
-"""用于更新或扩展现有函数功能的猴子补丁。"""
+"""用于更新或扩展现有函数功能的猴子补丁。."""
 
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ _imshow = cv2.imshow  # copy to avoid recursion errors
 
 
 def imread(filename: str | Path, flags: int = cv2.IMREAD_COLOR) -> np.ndarray | None:
-    """从文件读取图像，并支持包含多语言字符的文件名。
+    """从文件读取图像，并支持包含多语言字符的文件名。.
 
     参数：
         filename (str | Path): 要读取的文件路径。
@@ -57,10 +57,10 @@ _pil_plugins_registered = False
 
 
 def image_open(filename, *args, **kwargs):
-    """使用 PIL 打开图像，并在首次失败时按需注册 HEIF 插件。
+    """使用 PIL 打开图像，并在首次失败时按需注册 HEIF 插件。.
 
-    此猴子补丁通过 pi-heif（轻量级、仅支持解码）为 PIL.Image.open 增加 HEIC/HEIF 支持，只有实际需要时才导入该包，
-    从而避免约 800 毫秒的启动开销。Pillow 12 及更高版本原生支持 AVIF，无需额外插件。
+    此猴子补丁通过 pi-heif（轻量级、仅支持解码）为 PIL.Image.open 增加 HEIC/HEIF 支持，只有实际需要时才导入该包， 从而避免约 800 毫秒的启动开销。Pillow 12 及更高版本原生支持
+    AVIF，无需额外插件。
 
     参数：
         filename (str): 图像文件路径。
@@ -90,7 +90,7 @@ Image.open = image_open  # apply patch
 
 
 def _imread_pil(filename: str, flags: int = cv2.IMREAD_COLOR) -> np.ndarray | None:
-    """使用 PIL 读取图像，作为 OpenCV 不支持格式的备用方案。
+    """使用 PIL 读取图像，作为 OpenCV 不支持格式的备用方案。.
 
     参数：
         filename (str): 要读取的文件路径。
@@ -109,10 +109,9 @@ def _imread_pil(filename: str, flags: int = cv2.IMREAD_COLOR) -> np.ndarray | No
 
 
 def imread_unicode(filename: str | Path, flags: int = cv2.IMREAD_COLOR) -> np.ndarray | None:
-    """读取图像并支持包含多语言字符的文件名，同时保持 cv2.imread 的原生行为。
+    """读取图像并支持包含多语言字符的文件名，同时保持 cv2.imread 的原生行为。.
 
-    此函数用于在 Windows 上替换 cv2.imread。与 `imread` 不同，它不会扩展灰度图维度，也不处理 TIFF、AVIF 或 HEIC
-    格式的备用读取。
+    此函数用于在 Windows 上替换 cv2.imread。与 `imread` 不同，它不会扩展灰度图维度，也不处理 TIFF、AVIF 或 HEIC 格式的备用读取。
 
     参数：
         filename (str | Path): 要读取的文件路径。
@@ -128,7 +127,7 @@ def imread_unicode(filename: str | Path, flags: int = cv2.IMREAD_COLOR) -> np.nd
 
 
 def imwrite(filename: str, img: np.ndarray, params: list[int] | None = None) -> bool:
-    """将图像写入文件，并支持包含多语言字符的文件名。
+    """将图像写入文件，并支持包含多语言字符的文件名。.
 
     参数：
         filename (str): 要写入的文件路径。
@@ -153,10 +152,9 @@ def imwrite(filename: str, img: np.ndarray, params: list[int] | None = None) -> 
 
 
 def imshow(winname: str, mat: np.ndarray) -> None:
-    """在指定窗口中显示图像，并支持包含多语言字符的窗口名称。
+    """在指定窗口中显示图像，并支持包含多语言字符的窗口名称。.
 
-    此函数封装了 OpenCV 的 imshow，用于在命名窗口中显示图像。它会先对多语言窗口名称进行适当编码，
-    以确保与 OpenCV 兼容。
+    此函数封装了 OpenCV 的 imshow，用于在命名窗口中显示图像。它会先对多语言窗口名称进行适当编码， 以确保与 OpenCV 兼容。
 
     参数：
         winname (str): 显示图像的窗口名称。如果已存在同名窗口，图像将在该窗口中显示。
@@ -176,7 +174,7 @@ _torch_save = torch.save
 
 
 def torch_load(*args, **kwargs):
-    """使用更新后的参数加载 PyTorch 模型，以避免警告。
+    """使用更新后的参数加载 PyTorch 模型，以避免警告。.
 
     此函数封装 torch.load，并为 PyTorch 1.13.0 及更高版本增加 `weights_only` 参数，以避免警告。
 
@@ -199,7 +197,7 @@ def torch_load(*args, **kwargs):
 
 
 def torch_save(*args, **kwargs):
-    """保存 PyTorch 对象，并通过重试机制提高稳定性。
+    """保存 PyTorch 对象，并通过重试机制提高稳定性。.
 
     此函数封装 torch.save。保存失败时最多重试 3 次，并采用指数退避，这些失败可能由设备刷新延迟或杀毒软件扫描造成。
 
@@ -222,7 +220,7 @@ def torch_save(*args, **kwargs):
 
 @contextmanager
 def arange_patch(dynamic: bool = False, quantize: int | str | None = None, fmt: str = ""):
-    """解决 ONNX 中 torch.arange 与 FP16 不兼容的问题。
+    """解决 ONNX 中 torch.arange 与 FP16 不兼容的问题。.
 
     https://github.com/pytorch/pytorch/issues/148041.
     """
@@ -230,7 +228,7 @@ def arange_patch(dynamic: bool = False, quantize: int | str | None = None, fmt: 
         func = torch.arange
 
         def arange(*args, dtype=None, **kwargs):
-            """封装 torch.arange，在创建张量后转换 dtype，而不是直接传入该参数。"""
+            """封装 torch.arange，在创建张量后转换 dtype，而不是直接传入该参数。."""
             return func(*args, **kwargs).to(dtype)  # 转换为目标 dtype，而不是直接传入 dtype
 
         torch.arange = arange  # patch
@@ -242,14 +240,14 @@ def arange_patch(dynamic: bool = False, quantize: int | str | None = None, fmt: 
 
 @contextmanager
 def onnx_export_patch():
-    """解决 PyTorch 2.9 及更高版本启用 Dynamo 时的 ONNX 导出问题。"""
+    """解决 PyTorch 2.9 及更高版本启用 Dynamo 时的 ONNX 导出问题。."""
     from ultralytics.utils.torch_utils import TORCH_2_9
 
     if TORCH_2_9:
         func = torch.onnx.export
 
         def torch_export(*args, **kwargs):
-            """禁用 Dynamo，将模型导出为 ONNX 格式，以确保兼容性。"""
+            """禁用 Dynamo，将模型导出为 ONNX 格式，以确保兼容性。."""
             return func(*args, **kwargs, dynamo=False)
 
         torch.onnx.export = torch_export  # patch
@@ -261,7 +259,7 @@ def onnx_export_patch():
 
 @contextmanager
 def override_configs(args, overrides: dict[str, Any] | None = None):
-    """临时覆盖 args 中配置项的上下文管理器。
+    """临时覆盖 args 中配置项的上下文管理器。.
 
     参数：
         args (IterableSimpleNamespace): 原始配置参数。

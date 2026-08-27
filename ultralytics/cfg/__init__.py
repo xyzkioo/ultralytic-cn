@@ -311,7 +311,7 @@ CFG_STR_KEYS = frozenset({"optimizer", "split", "copy_paste_mode", "auto_augment
 
 
 def cfg2dict(cfg: str | Path | dict | SimpleNamespace) -> dict:
-    """将配置对象转换为字典。
+    """将配置对象转换为字典。.
 
     参数：
         cfg (str | Path | dict | SimpleNamespace): 要转换的配置对象，可以是文件路径、字符串、字典或 SimpleNamespace 对象。
@@ -346,7 +346,7 @@ def cfg2dict(cfg: str | Path | dict | SimpleNamespace) -> dict:
 def get_cfg(
     cfg: str | Path | dict | SimpleNamespace = DEFAULT_CFG_DICT, overrides: dict | None = None
 ) -> SimpleNamespace:
-    """从文件或字典加载并合并配置数据，并应用可选的覆盖项。
+    """从文件或字典加载并合并配置数据，并应用可选的覆盖项。.
 
     参数：
         cfg (str | Path | dict | SimpleNamespace): 配置数据源，可以是文件路径、字典或 SimpleNamespace 对象。
@@ -389,10 +389,10 @@ def get_cfg(
 
 
 def check_cfg(cfg: dict, hard: bool = True) -> None:
-    """检查 Ultralytics 库配置参数的类型和值。
+    """检查 Ultralytics 库配置参数的类型和值。.
 
-    此函数验证配置参数的类型和值，在必要时进行转换以确保正确性，并检查 `CFG_FLOAT_KEYS`、
-    `CFG_FRACTION_KEYS`、`CFG_INT_KEYS` 和 `CFG_BOOL_KEYS` 等全局变量定义的键类型。
+    此函数验证配置参数的类型和值，在必要时进行转换以确保正确性，并检查 `CFG_FLOAT_KEYS`、 `CFG_FRACTION_KEYS`、`CFG_INT_KEYS` 和 `CFG_BOOL_KEYS`
+    等全局变量定义的键类型。
 
     参数：
         cfg (dict): 要验证的配置字典。
@@ -475,7 +475,9 @@ def check_cfg(cfg: dict, hard: bool = True) -> None:
                 if hard:
                     raise TypeError(f"'{k}={v}' is of invalid type {type(v).__name__}. '{k}' must be a str.")
                 cfg[k] = str(v)
-            elif k == "compile" and not isinstance(v, (bool, str)):  # False 表示关闭，True 表示使用默认值，也可以传入模式字符串
+            elif k == "compile" and not isinstance(
+                v, (bool, str)
+            ):  # False 表示关闭，True 表示使用默认值，也可以传入模式字符串
                 if hard:
                     raise TypeError(
                         f"'{k}={v}' is of invalid type {type(v).__name__}. "
@@ -495,7 +497,7 @@ def check_cfg(cfg: dict, hard: bool = True) -> None:
 
 
 def get_save_dir(args: SimpleNamespace, name: str | None = None) -> Path:
-    """根据参数或默认设置，返回用于保存输出结果的目录路径。
+    """根据参数或默认设置，返回用于保存输出结果的目录路径。.
 
     参数：
         args (SimpleNamespace): 包含 'project'、'name'、'task'、'mode' 和 'save_dir' 等配置的命名空间对象。
@@ -529,7 +531,7 @@ def get_save_dir(args: SimpleNamespace, name: str | None = None) -> Path:
 
 
 def _handle_deprecation(custom: dict) -> dict:
-    """处理已弃用的配置键，将其映射为当前配置键，并发出弃用警告。
+    """处理已弃用的配置键，将其映射为当前配置键，并发出弃用警告。.
 
     参数：
         custom (dict): 可能包含已弃用配置键的配置字典。
@@ -583,7 +585,7 @@ def _handle_deprecation(custom: dict) -> dict:
 def check_dict_alignment(
     base: dict, custom: dict, e: Exception | None = None, allowed_custom_keys: set | None = None
 ) -> None:
-    """检查自定义配置字典与基础配置字典的一致性，处理已弃用的配置键，并为不匹配的键提供错误信息。
+    """检查自定义配置字典与基础配置字典的一致性，处理已弃用的配置键，并为不匹配的键提供错误信息。.
 
     参数：
         base (dict): 包含有效配置键的基础配置字典。
@@ -626,7 +628,7 @@ def check_dict_alignment(
 
 
 def merge_equals_args(args: list[str]) -> list[str]:
-    """合并字符串列表中独立的 '=' 参数，并拼接被方括号拆开的参数片段。
+    """合并字符串列表中独立的 '=' 参数，并拼接被方括号拆开的参数片段。.
 
     此函数处理以下情况：
         1. ['arg', '=', 'val'] 合并为 ['arg=val']
@@ -684,7 +686,7 @@ def merge_equals_args(args: list[str]) -> list[str]:
 
 
 def handle_yolo_login(args: list[str]) -> None:
-    """使用 API 密钥登录 Ultralytics Platform，或删除已保存的密钥。"""
+    """使用 API 密钥登录 Ultralytics Platform，或删除已保存的密钥。."""
     if args[0] == "logout":
         SETTINGS["api_key"] = ""
         LOGGER.info("Logged out ✅. To log in again, use 'yolo login API_KEY'.")
@@ -715,10 +717,9 @@ def handle_yolo_login(args: list[str]) -> None:
 
 
 def handle_yolo_settings(args: list[str]) -> None:
-    """处理 YOLO settings 命令行界面（CLI）命令。
+    """处理 YOLO settings 命令行界面（CLI）命令。.
 
-    此函数处理 YOLO settings CLI 命令，例如重置设置或更新单个设置项。
-    执行与 YOLO 设置管理相关的命令行参数时应调用此函数。
+    此函数处理 YOLO settings CLI 命令，例如重置设置或更新单个设置项。 执行与 YOLO 设置管理相关的命令行参数时应调用此函数。
 
     参数：
         args (list[str]): 用于管理 YOLO 设置的命令行参数列表。
@@ -757,7 +758,7 @@ def handle_yolo_settings(args: list[str]) -> None:
 
 
 def handle_yolo_solutions(args: list[str]) -> None:
-    """解析 YOLO solutions 参数，并运行指定的计算机视觉解决方案流程。
+    """解析 YOLO solutions 参数，并运行指定的计算机视觉解决方案流程。.
 
     参数：
         args (列表[str]): 用于配置和运行 Ultralytics YOLO 解决方案的命令行参数。
@@ -867,7 +868,7 @@ def handle_yolo_solutions(args: list[str]) -> None:
 
 
 def parse_key_value_pair(pair: str = "key=value") -> tuple:
-    """将键值对字符串解析为独立的键和值。
+    """将键值对字符串解析为独立的键和值。.
 
     参数：
         pair (str): 包含键值对的字符串，格式为 "key=value"。
@@ -900,10 +901,9 @@ def parse_key_value_pair(pair: str = "key=value") -> tuple:
 
 
 def smart_value(v: str) -> Any:
-    """将值的字符串表示转换为合适的 Python 类型。
+    """将值的字符串表示转换为合适的 Python 类型。.
 
-    此函数会尝试将给定字符串转换为最合适的 Python 对象，支持转换为 None、bool、int、float
-    以及其他可以安全求值的类型。
+    此函数会尝试将给定字符串转换为最合适的 Python 对象，支持转换为 None、bool、int、float 以及其他可以安全求值的类型。
 
     参数：
         v (str): 待转换值的字符串表示。
@@ -948,10 +948,9 @@ def smart_value(v: str) -> Any:
 
 
 def entrypoint(debug: str = "") -> None:
-    """解析并执行命令行参数的 Ultralytics 入口函数。
+    """解析并执行命令行参数的 Ultralytics 入口函数。.
 
-    此函数是 Ultralytics CLI 的主要入口，负责解析命令行参数并执行相应任务，
-    例如训练、验证、预测和导出模型等。
+    此函数是 Ultralytics CLI 的主要入口，负责解析命令行参数并执行相应任务， 例如训练、验证、预测和导出模型等。
 
     参数：
         debug (str): 用于调试的、以空格分隔的命令行参数字符串。
@@ -1120,10 +1119,9 @@ def entrypoint(debug: str = "") -> None:
 
 # 特殊模式 ------------------------------------------------------------------------------------------------------------
 def copy_default_cfg() -> None:
-    """复制默认配置文件，并创建一个名称末尾带有 '_copy' 的新配置文件。
+    """复制默认配置文件，并创建一个名称末尾带有 '_copy' 的新配置文件。.
 
-    此函数复制现有的默认配置文件（DEFAULT_CFG_PATH），并将副本保存到当前工作目录，
-    文件名末尾添加 '_copy'。这为用户基于默认设置创建自定义配置文件提供了便利。
+    此函数复制现有的默认配置文件（DEFAULT_CFG_PATH），并将副本保存到当前工作目录， 文件名末尾添加 '_copy'。这为用户基于默认设置创建自定义配置文件提供了便利。
 
     示例：
         >>> copy_default_cfg()

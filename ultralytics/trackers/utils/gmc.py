@@ -11,10 +11,9 @@ from ultralytics.utils import LOGGER
 
 
 class GMC:
-    """用于视频帧跟踪和目标检测的通用运动补偿（GMC）类。
+    """用于视频帧跟踪和目标检测的通用运动补偿（GMC）类。.
 
-    此类提供基于 ORB、SIFT、ECC 和稀疏光流等多种跟踪算法进行跟踪和目标检测的方法，
-    同时支持缩小帧尺寸以提高计算效率。
+    此类提供基于 ORB、SIFT、ECC 和稀疏光流等多种跟踪算法进行跟踪和目标检测的方法， 同时支持缩小帧尺寸以提高计算效率。
 
     属性：
         method (str | None): 要使用的跟踪方法，可选 'orb'、'sift'、'ecc'、'sparseOptFlow' 或 None。
@@ -41,7 +40,7 @@ class GMC:
     """
 
     def __init__(self, method: str = "sparseOptFlow", downscale: int = 2) -> None:
-        """使用跟踪方法和缩小倍数初始化通用运动补偿（GMC）对象。
+        """使用跟踪方法和缩小倍数初始化通用运动补偿（GMC）对象。.
 
         参数：
             method (str): 要使用的跟踪方法，可选 'orb'、'sift'、'ecc'、'sparseOptFlow' 或 'none'。
@@ -89,7 +88,7 @@ class GMC:
         self.initializedFirstFrame = False
 
     def apply(self, raw_frame: np.ndarray, detections: list | None = None) -> np.ndarray:
-        """估计一帧图像的 2×3 运动补偿变换矩阵。
+        """估计一帧图像的 2×3 运动补偿变换矩阵。.
 
         参数：
             raw_frame (np.ndarray): 要处理的原始帧，形状为 (H, W, C)。
@@ -115,7 +114,7 @@ class GMC:
             return np.eye(2, 3)
 
     def apply_ecc(self, raw_frame: np.ndarray) -> np.ndarray:
-        """使用 ECC（增强相关系数）算法对原始帧执行运动补偿。
+        """使用 ECC（增强相关系数）算法对原始帧执行运动补偿。.
 
         参数：
             raw_frame (np.ndarray): 要处理的原始帧，形状为 (H, W, C)。
@@ -156,7 +155,7 @@ class GMC:
         return H
 
     def apply_features(self, raw_frame: np.ndarray, detections: list | None = None) -> np.ndarray:
-        """将 ORB 或 SIFT 等基于特征的方法应用于原始帧。
+        """将 ORB 或 SIFT 等基于特征的方法应用于原始帧。.
 
         参数：
             raw_frame (np.ndarray): 要处理的原始帧，形状为 (H, W, C)。
@@ -275,7 +274,7 @@ class GMC:
         return H
 
     def apply_sparseoptflow(self, raw_frame: np.ndarray) -> np.ndarray:
-        """将稀疏光流方法应用于原始帧。
+        """将稀疏光流方法应用于原始帧。.
 
         参数：
             raw_frame (np.ndarray): 要处理的原始帧，形状为 (H, W, C)。
@@ -334,7 +333,7 @@ class GMC:
         return H
 
     def reset_params(self) -> None:
-        """重置内部参数，包括上一帧、关键点和描述子。"""
+        """重置内部参数，包括上一帧、关键点和描述子。."""
         self.prevFrame = None
         self.prevKeyPoints = None
         self.prevDescriptors = None

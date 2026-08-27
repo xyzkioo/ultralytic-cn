@@ -2,7 +2,7 @@
 
 
 def adjust_bboxes_to_image_border(boxes, image_shape, threshold=20):
-    """当边界框靠近图像边缘时，将其调整到图像边界。
+    """当边界框靠近图像边缘时，将其调整到图像边界。.
 
     参数：
         boxes (torch.Tensor): 形状为 (N, 4) 的 xyxy 格式边界框。

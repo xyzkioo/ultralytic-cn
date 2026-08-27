@@ -14,15 +14,14 @@ from .base import BaseBackend
 
 
 class LiteRTBackend(BaseBackend):
-    """Google LiteRT（原 TensorFlow Lite）推理后端。
+    """Google LiteRT（原 TensorFlow Lite）推理后端。.
 
-    加载并执行通过 ai-edge-litert/litert-torch 导出的 LiteRT 模型（.tflite 文件）推理。
-    Ultralytics 导出模型保留浮点图输入输出（内部权重/激活值可能为 int8/int16）；同时通过在边界处执行反量化或量化，
-    处理图输入输出为 int8/int16 的全整型 .tflite 模型（旧版 onnx2tf 或第三方导出）。边界框和关键点坐标根据图像尺寸反归一化。
+    加载并执行通过 ai-edge-litert/litert-torch 导出的 LiteRT 模型（.tflite 文件）推理。 Ultralytics 导出模型保留浮点图输入输出（内部权重/激活值可能为
+    int8/int16）；同时通过在边界处执行反量化或量化， 处理图输入输出为 int8/int16 的全整型 .tflite 模型（旧版 onnx2tf 或第三方导出）。边界框和关键点坐标根据图像尺寸反归一化。
     """
 
     def load_model(self, weight: str | Path) -> None:
-        """从 .tflite 文件加载 LiteRT 模型。
+        """从 .tflite 文件加载 LiteRT 模型。.
 
         参数：
             weight (str | Path): .tflite 模型文件路径（元数据嵌入为 metadata.json 条目）。
@@ -44,7 +43,7 @@ class LiteRTBackend(BaseBackend):
         self.apply_metadata(self.read_metadata(tflite_file))
 
     def forward(self, im: torch.Tensor) -> list[np.ndarray]:
-        """使用 LiteRT 解释器执行推理。
+        """使用 LiteRT 解释器执行推理。.
 
         边界框和姿态关键点坐标导出时归一化到 [0, 1]（使 INT8 量化保留类别分数精度），
         然后在此处根据输入图像尺寸反归一化，与 TensorFlow Lite 后端保持一致。

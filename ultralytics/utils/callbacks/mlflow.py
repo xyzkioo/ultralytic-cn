@@ -1,6 +1,6 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 """
-Ultralytics YOLO 的 MLflow 日志记录。
+Ultralytics YOLO 的 MLflow 日志记录。.
 
 此模块为 Ultralytics YOLO 启用 MLflow 日志记录，用于记录指标、参数和模型产物。
 使用前应指定跟踪 URI，也可以通过环境变量自定义日志记录行为。
@@ -37,15 +37,14 @@ except (ImportError, AssertionError):
 
 
 def sanitize_dict(x: dict) -> dict:
-    """清理字典键，移除括号并将值转换为浮点数。"""
+    """清理字典键，移除括号并将值转换为浮点数。."""
     return {k.replace("(", "").replace(")", ""): float(v) for k, v in x.items()}
 
 
 def on_pretrain_routine_end(trainer):
-    """在预训练流程结束时将训练参数记录到 MLflow。
+    """在预训练流程结束时将训练参数记录到 MLflow。.
 
-    此函数根据环境变量和训练器参数设置 MLflow 日志记录，包括跟踪 URI、实验名称和运行名称；
-    如果尚未存在活动运行，则启动 MLflow 运行，最后记录训练器参数。
+    此函数根据环境变量和训练器参数设置 MLflow 日志记录，包括跟踪 URI、实验名称和运行名称； 如果尚未存在活动运行，则启动 MLflow 运行，最后记录训练器参数。
 
     参数：
         trainer (ultralytics.engine.trainer.BaseTrainer): 包含待记录参数和配置的训练对象。
@@ -98,7 +97,7 @@ def on_pretrain_routine_end(trainer):
 
 
 def _log_metrics(trainer, metrics):
-    """将指标记录到 MLflow；失败时禁用本次运行的跟踪，避免使训练崩溃。"""
+    """将指标记录到 MLflow；失败时禁用本次运行的跟踪，避免使训练崩溃。."""
     try:
         mlflow.log_metrics(metrics=metrics, step=trainer.epoch)
     except Exception as e:
@@ -107,7 +106,7 @@ def _log_metrics(trainer, metrics):
 
 
 def on_train_epoch_end(trainer):
-    """在每个训练周期结束时将训练指标记录到 MLflow。"""
+    """在每个训练周期结束时将训练指标记录到 MLflow。."""
     if mlflow and getattr(trainer, "_mlflow_active", False):
         _log_metrics(
             trainer,
@@ -119,13 +118,13 @@ def on_train_epoch_end(trainer):
 
 
 def on_fit_epoch_end(trainer):
-    """在每个拟合周期结束时将训练指标记录到 MLflow。"""
+    """在每个拟合周期结束时将训练指标记录到 MLflow。."""
     if mlflow and getattr(trainer, "_mlflow_active", False):
         _log_metrics(trainer, sanitize_dict(trainer.metrics))
 
 
 def on_train_end(trainer):
-    """在训练结束时记录模型工件，并关闭此回调打开的任意运行。"""
+    """在训练结束时记录模型工件，并关闭此回调打开的任意运行。."""
     if not mlflow:
         return
     if getattr(trainer, "_mlflow_active", False):

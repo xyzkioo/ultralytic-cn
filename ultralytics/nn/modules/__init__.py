@@ -1,6 +1,6 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 """
-Ultralytics 神经网络模块。
+Ultralytics 神经网络模块。.
 
 此模块提供 Ultralytics 模型使用的各种神经网络组件，包括卷积块、注意力机制、Transformer 组件以及检测/分割头。
 

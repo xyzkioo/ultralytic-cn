@@ -13,7 +13,7 @@ from ultralytics.utils import DEFAULT_CFG, ops
 
 
 class ClassificationPredictor(BasePredictor):
-    """继承 BasePredictor、用于根据分类模型生成预测结果的类。
+    """继承 BasePredictor、用于根据分类模型生成预测结果的类。.
 
     此预测器处理分类模型的专用需求，包括图像预处理和预测结果后处理，以生成分类结果。
 
@@ -36,7 +36,7 @@ class ClassificationPredictor(BasePredictor):
     """
 
     def __init__(self, cfg=DEFAULT_CFG, overrides=None, _callbacks: dict | None = None):
-        """使用指定配置初始化 ClassificationPredictor，并将任务设置为 'classify'。
+        """使用指定配置初始化 ClassificationPredictor，并将任务设置为 'classify'。.
 
         此构造函数初始化用于分类任务的 ClassificationPredictor 实例。无论输入配置如何，
         它都会确保任务设置为 'classify'。
@@ -50,7 +50,7 @@ class ClassificationPredictor(BasePredictor):
         self.args.task = "classify"
 
     def setup_source(self, source):
-        """设置输入源、推理模式和分类变换。"""
+        """设置输入源、推理模式和分类变换。."""
         super().setup_source(source)
         transforms = getattr(self.model.model, "transforms", None)  # YAML 构建模型和旧版检查点中可能不存在
         size = getattr(transforms.transforms[0], "size", max(self.imgsz)) if transforms is not None else None
@@ -59,7 +59,7 @@ class ClassificationPredictor(BasePredictor):
         )
 
     def preprocess(self, img):
-        """将输入图像转换为模型兼容的张量格式，并执行适当的归一化。"""
+        """将输入图像转换为模型兼容的张量格式，并执行适当的归一化。."""
         if not isinstance(img, torch.Tensor):
             img = torch.stack(
                 [self.transforms(Image.fromarray(cv2.cvtColor(im, cv2.COLOR_BGR2RGB))) for im in img], dim=0
@@ -69,7 +69,7 @@ class ClassificationPredictor(BasePredictor):
         return img
 
     def postprocess(self, preds, img, orig_imgs):
-        """将预测结果处理为包含分类概率的 Results 对象。
+        """将预测结果处理为包含分类概率的 Results 对象。.
 
         参数：
             preds (torch.Tensor): 模型输出的原始预测结果。

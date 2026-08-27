@@ -15,7 +15,7 @@ from ultralytics.utils import YAML
 
 
 def _read_proto_map(file: Path, path: tuple[int, ...]) -> dict:
-    """读取嵌套字段路径中的 protobuf ``map<string, string>``，无需导入对应格式的框架。
+    """读取嵌套字段路径中的 protobuf ``map<string, string>``，无需导入对应格式的框架。.
 
     参数：
         file (Path): protobuf 文件路径，例如 ONNX 或 CoreML 模型。
@@ -27,11 +27,11 @@ def _read_proto_map(file: Path, path: tuple[int, ...]) -> dict:
     import mmap
 
     def fields(buf):
-        """遍历消息中的每个长度分隔字段，并跳过 varint 字段，返回 ``(编号, payload)``。"""
+        """遍历消息中的每个长度分隔字段，并跳过 varint 字段，返回 ``(编号, payload)``。."""
         i = 0
 
         def varint():
-            """解码当前偏移处的 base-128 varint。"""
+            """解码当前偏移处的 base-128 varint。."""
             nonlocal i
             v = shift = 0
             while buf[i] & 0x80:
@@ -58,7 +58,7 @@ def _read_proto_map(file: Path, path: tuple[int, ...]) -> dict:
 
 
 class BaseBackend(ABC):
-    """所有推理后端的基类。
+    """所有推理后端的基类。.
 
     此抽象类定义所有推理后端必须实现的接口，并提供模型加载、元数据处理和设备管理等通用功能。
 
@@ -80,7 +80,7 @@ class BaseBackend(ABC):
     """
 
     def __init__(self, weight: str | torch.nn.Module, device: torch.device | str, fp16: bool = False):
-        """使用通用属性初始化基础后端并加载模型。
+        """使用通用属性初始化基础后端并加载模型。.
 
         参数：
             weight (str | torch.nn.Module): 模型权重文件路径或 PyTorch 模块实例。
@@ -104,7 +104,7 @@ class BaseBackend(ABC):
 
     @abstractmethod
     def load_model(self, weight: str | torch.nn.Module) -> None:
-        """从权重文件或模块实例加载模型。
+        """从权重文件或模块实例加载模型。.
 
         参数：
             weight (str | torch.nn.Module): 模型权重文件路径或 PyTorch 模块。
@@ -113,7 +113,7 @@ class BaseBackend(ABC):
 
     @abstractmethod
     def forward(self, im: torch.Tensor) -> Any:
-        """对输入图像张量执行推理。
+        """对输入图像张量执行推理。.
 
         参数：
             im (torch.Tensor): BCHW 格式的输入图像张量，已归一化到 [0, 1]。
@@ -124,13 +124,12 @@ class BaseBackend(ABC):
         raise NotImplementedError
 
     def __call__(self, *args, **kwargs) -> Any:
-        """允许直接调用后端实例执行推理，并将参数转发给 `forward` 方法。
-        """
+        """允许直接调用后端实例执行推理，并将参数转发给 `forward` 方法。."""
         return self.forward(*args, **kwargs)
 
     @staticmethod
     def engine_header(file: str | Path) -> tuple[int, dict]:
-        """读取 Ultralytics ``.engine`` 导出文件写在序列化引擎之前的元数据头。
+        """读取 Ultralytics ``.engine`` 导出文件写在序列化引擎之前的元数据头。.
 
         参数：
             file (str | Path): TensorRT 引擎文件路径。
@@ -148,7 +147,7 @@ class BaseBackend(ABC):
 
     @staticmethod
     def read_metadata(file: str | Path) -> dict:
-        """从导出文件中读取 Ultralytics 元数据，无需加载导出文件或导入对应框架。
+        """从导出文件中读取 Ultralytics 元数据，无需加载导出文件或导入对应框架。.
 
         单文件格式会将元数据嵌入带长度前缀的 JSON 头（``.engine``）、ZIP 条目（``.torchscript``、``.tflite``）
         或 protobuf 字符串映射条目（``.onnx``、``.mlpackage``）中；其他格式会在导出文件旁边或内部写入 ``metadata.yaml``。
@@ -185,7 +184,7 @@ class BaseBackend(ABC):
             return {}
 
     def apply_metadata(self, metadata: dict | None) -> None:
-        """处理模型元数据，并将其应用到后端属性。
+        """处理模型元数据，并将其应用到后端属性。.
 
         此方法会转换常见元数据字段（例如 stride、batch 和 names）的类型，并将它们设置为实例属性；
         同时根据导出参数解析端到端 NMS 和动态形状设置。

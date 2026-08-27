@@ -15,10 +15,9 @@ from .base import BaseBackend
 
 
 class PyTorchBackend(BaseBackend):
-    """用于原生模型执行的 PyTorch 推理后端。
+    """用于原生模型执行的 PyTorch 推理后端。.
 
-    加载并执行原生 PyTorch 模型（.pt 检查点文件）或预加载的 nn.Module 实例推理。
-    支持模型层融合、FP16 精度和 NVIDIA Jetson 兼容性。
+    加载并执行原生 PyTorch 模型（.pt 检查点文件）或预加载的 nn.Module 实例推理。 支持模型层融合、FP16 精度和 NVIDIA Jetson 兼容性。
     """
 
     def __init__(
@@ -29,7 +28,7 @@ class PyTorchBackend(BaseBackend):
         fuse: bool = True,
         verbose: bool = True,
     ):
-        """初始化 PyTorch 后端。
+        """初始化 PyTorch 后端。.
 
         参数：
             weight (str | Path | nn.Module): .pt 模型文件路径或预加载的 nn.Module 实例。
@@ -43,7 +42,7 @@ class PyTorchBackend(BaseBackend):
         super().__init__(weight, device, fp16)
 
     def load_model(self, weight: str | torch.nn.Module) -> None:
-        """从检查点文件或 nn.Module 实例加载 PyTorch 模型。
+        """从检查点文件或 nn.Module 实例加载 PyTorch 模型。.
 
         参数：
             weight (str | torch.nn.Module): .pt 检查点路径或预加载的模块。
@@ -77,7 +76,7 @@ class PyTorchBackend(BaseBackend):
     def forward(
         self, im: torch.Tensor, augment: bool = False, embed: list | None = None, **kwargs: Any
     ) -> torch.Tensor | list[torch.Tensor]:
-        """执行原生 PyTorch 推理，并支持增强和嵌入提取。
+        """执行原生 PyTorch 推理，并支持增强和嵌入提取。.
 
         参数：
             im (torch.Tensor): 输入图像 张量 in BCHW format, normalized to [0, 1].
@@ -94,14 +93,14 @@ class PyTorchBackend(BaseBackend):
 
 
 class TorchScriptBackend(BaseBackend):
-    """用于执行序列化模型的 PyTorch TorchScript 推理后端。
+    """用于执行序列化模型的 PyTorch TorchScript 推理后端。.
 
-    加载并执行通过 torch.jit.trace 创建的 TorchScript 模型（.torchscript 文件）推理，或
-    torch.jit.script. Supports FP16 precision and embedded metadata extraction.
+    加载并执行通过 torch.jit.trace 创建的 TorchScript 模型（.torchscript 文件）推理，或 torch.jit.script. Supports FP16 precision and
+    embedded metadata extraction.
     """
 
     def __init__(self, weight: str | Path, device: torch.device, fp16: bool = False):
-        """初始化 TorchScript 后端。
+        """初始化 TorchScript 后端。.
 
         参数：
             weight (str | Path): .torchscript 模型文件路径。
@@ -111,7 +110,7 @@ class TorchScriptBackend(BaseBackend):
         super().__init__(weight, device, fp16)
 
     def load_model(self, weight: str) -> None:
-        """从 .torchscript 文件加载 TorchScript 模型，并读取可选的嵌入元数据。
+        """从 .torchscript 文件加载 TorchScript 模型，并读取可选的嵌入元数据。.
 
         参数：
             weight (str): .torchscript 模型文件的路径。
@@ -124,7 +123,7 @@ class TorchScriptBackend(BaseBackend):
         self.apply_metadata(self.read_metadata(weight))
 
     def forward(self, im: torch.Tensor) -> torch.Tensor | list[torch.Tensor]:
-        """执行 TorchScript 推理。
+        """执行 TorchScript 推理。.
 
         参数：
             im (torch.Tensor): 输入图像 张量 in BCHW format, normalized to [0, 1].

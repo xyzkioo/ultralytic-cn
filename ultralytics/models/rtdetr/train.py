@@ -12,10 +12,9 @@ from .val import RTDETRDataset, RTDETRValidator
 
 
 class RTDETRTrainer(DetectionTrainer):
-    """百度开发的 RT-DETR 模型实时对象检测训练器。
+    """百度开发的 RT-DETR 模型实时对象检测训练器。.
 
-    此类继承 YOLO 的 DetectionTrainer，以适配 RT-DETR 的专用特性和架构。
-    该模型利用 Vision Transformer，并具备 IoU 感知查询选择和可调节推理速度等能力。
+    此类继承 YOLO 的 DetectionTrainer，以适配 RT-DETR 的专用特性和架构。 该模型利用 Vision Transformer，并具备 IoU 感知查询选择和可调节推理速度等能力。
 
     属性：
         loss_names (tuple): 损失分量名称，来自损失函数返回的损失字典。
@@ -41,7 +40,7 @@ class RTDETRTrainer(DetectionTrainer):
     """
 
     def get_model(self, cfg: dict | None = None, weights: str | None = None, verbose: bool = True):
-        """初始化并返回用于对象检测任务的 RT-DETR 模型。
+        """初始化并返回用于对象检测任务的 RT-DETR 模型。.
 
         参数：
             cfg (dict, 可选): 模型配置。
@@ -59,7 +58,7 @@ class RTDETRTrainer(DetectionTrainer):
         return model
 
     def build_dataset(self, img_path: str, mode: str = "val", batch: int | None = None):
-        """构建并返回用于训练或验证的 RT-DETR 数据集。
+        """构建并返回用于训练或验证的 RT-DETR 数据集。.
 
         参数：
             img_path (str): 包含图像的文件夹路径。
@@ -85,5 +84,5 @@ class RTDETRTrainer(DetectionTrainer):
         )
 
     def get_validator(self):
-        """返回适用于 RT-DETR 模型验证的 RTDETRValidator。"""
+        """返回适用于 RT-DETR 模型验证的 RTDETRValidator。."""
         return RTDETRValidator(self.test_loader, save_dir=self.save_dir, args=copy(self.args))

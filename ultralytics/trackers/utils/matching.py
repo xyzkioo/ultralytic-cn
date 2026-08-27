@@ -16,7 +16,7 @@ except (ImportError, AssertionError, AttributeError):
 
 
 def linear_assignment(cost_matrix: np.ndarray, thresh: float, use_lap: bool = True):
-    """使用 lap.lapjv 或内置 NumPy 求解器执行线性分配。
+    """使用 lap.lapjv 或内置 NumPy 求解器执行线性分配。.
 
     参数：
         cost_matrix (np.ndarray): 包含分配代价的矩阵，形状为 (N, M)。
@@ -59,7 +59,7 @@ def linear_assignment(cost_matrix: np.ndarray, thresh: float, use_lap: bool = Tr
 
 
 def iou_distance(atracks: list, btracks: list) -> np.ndarray:
-    """根据跟踪对象之间的交并比（IoU）计算代价。
+    """根据跟踪对象之间的交并比（IoU）计算代价。.
 
     参数：
         atracks (列表[STrack] | 列表[np.ndarray]): 跟踪对象 'a' 或边界框列表。
@@ -98,7 +98,7 @@ def iou_distance(atracks: list, btracks: list) -> np.ndarray:
 
 
 def embedding_distance(tracks: list, detections: list) -> np.ndarray:
-    """根据嵌入计算跟踪对象与检测对象之间的余弦距离。
+    """根据嵌入计算跟踪对象与检测对象之间的余弦距离。.
 
     参数：
         tracks (列表[BOTrack]): 跟踪对象列表，每个对象包含嵌入特征。
@@ -140,7 +140,7 @@ def embedding_distance(tracks: list, detections: list) -> np.ndarray:
 
 
 def fuse_score(cost_matrix: np.ndarray, detections: list) -> np.ndarray:
-    """融合代价矩阵和检测分数，生成单一代价矩阵。
+    """融合代价矩阵和检测分数，生成单一代价矩阵。.
 
     参数：
         cost_matrix (np.ndarray): 包含分配代价的矩阵，形状为 (N, M)。

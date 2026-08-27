@@ -13,7 +13,7 @@ from ultralytics.utils.torch_utils import unwrap_model
 
 
 class WorldTrainerFromScratch(WorldTrainer):
-    """继承 WorldTrainer 的训练器，用于在开放集数据集上从头训练 World 模型。
+    """继承 WorldTrainer 的训练器，用于在开放集数据集上从头训练 World 模型。.
 
     此训练器专门处理混合数据集，包括目标检测数据集和 grounding 数据集，支持训练具备视觉语言能力的 YOLO-World 模型。
 
@@ -54,7 +54,7 @@ class WorldTrainerFromScratch(WorldTrainer):
     """
 
     def __init__(self, cfg=DEFAULT_CFG, overrides=None, _callbacks: dict | None = None):
-        """初始化 WorldTrainerFromScratch 对象。
+        """初始化 WorldTrainerFromScratch 对象。.
 
         此方法从头初始化 YOLO-World 模型训练器，支持包含目标检测数据集和 grounding 数据集的混合数据集，以实现视觉语言能力。
 
@@ -68,7 +68,7 @@ class WorldTrainerFromScratch(WorldTrainer):
         super().__init__(cfg, overrides, _callbacks)
 
     def build_dataset(self, img_path, mode="train", batch=None):
-        """构建用于训练或验证的 YOLO 数据集。
+        """构建用于训练或验证的 YOLO 数据集。.
 
         此方法根据模式和输入路径构建合适的数据集，同时处理标准 YOLO 数据集和不同格式的 grounding 数据集。
 
@@ -102,7 +102,7 @@ class WorldTrainerFromScratch(WorldTrainer):
 
     @staticmethod
     def check_data_config(data: dict | str | Path) -> dict:
-        """从 YAML 文件或字典检查并加载数据配置。
+        """从 YAML 文件或字典检查并加载数据配置。.
 
         参数：
             data (dict | str | Path): 数据配置，可以是字典或 YAML 文件路径。
@@ -118,7 +118,7 @@ class WorldTrainerFromScratch(WorldTrainer):
         return data
 
     def get_dataset(self):
-        """从数据字典获取训练和验证路径。
+        """从数据字典获取训练和验证路径。.
 
         处理数据配置，提取训练和验证数据集路径，同时处理 YOLO 检测数据集和 grounding 数据集。
 
@@ -176,10 +176,10 @@ class WorldTrainerFromScratch(WorldTrainer):
         return final_data
 
     def plot_training_labels(self):
-        """跳过 YOLO-World 训练的标签绘图。"""
+        """跳过 YOLO-World 训练的标签绘图。."""
 
     def final_eval(self):
-        """执行 YOLO-World 模型的最终评估和验证。
+        """执行 YOLO-World 模型的最终评估和验证。.
 
         在运行评估前，为验证器配置适当的数据集和数据划分信息。
 

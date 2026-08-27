@@ -2,7 +2,7 @@
 
 # Copyright (c) Meta Platforms, Inc. and affiliates. All Rights Reserved
 
-"""提供用于组合视觉骨干网络和语言骨干网络的工具。"""
+"""提供用于组合视觉骨干网络和语言骨干网络的工具。."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ from .necks import Sam3DualViTDetNeck
 
 
 class SAM3VLBackbone(nn.Module):
-    """此骨干网络在不进行融合的情况下组合视觉骨干网络和语言骨干网络，因此更接近于同时管理两个骨干网络的便捷封装器。
+    """此骨干网络在不进行融合的情况下组合视觉骨干网络和语言骨干网络，因此更接近于同时管理两个骨干网络的便捷封装器。.
 
     它增加了激活检查点和编译功能的支持。
     """
@@ -30,7 +30,7 @@ class SAM3VLBackbone(nn.Module):
         act_ckpt_whole_language_backbone: bool = False,
         scalp=0,
     ):
-        """初始化骨干网络组合器。
+        """初始化骨干网络组合器。.
 
         参数：
             visual (Sam3DualViTDetNeck): 要使用的视觉骨干网络。
@@ -55,7 +55,7 @@ class SAM3VLBackbone(nn.Module):
         input_boxes: torch.Tensor = None,
         additional_text: list[str] | None = None,
     ):
-        """执行骨干网络组合器的前向传播。
+        """执行骨干网络组合器的前向传播。.
 
         参数：
             samples (torch.Tensor): 输入图像。
@@ -73,7 +73,7 @@ class SAM3VLBackbone(nn.Module):
         return output
 
     def forward_image(self, samples: torch.Tensor):
-        """执行视觉骨干网络前向传播，并获取 SAM3 和 SAM2 特征。"""
+        """执行视觉骨干网络前向传播，并获取 SAM3 和 SAM2 特征。."""
         # 通过骨干网络前向传播
         sam3_features, sam3_pos, sam2_features, sam2_pos = self.vision_backbone.forward(samples)
         if self.scalp > 0:
@@ -107,7 +107,7 @@ class SAM3VLBackbone(nn.Module):
         }
 
     def forward_image_sam2(self, samples: torch.Tensor):
-        """执行视觉骨干网络前向传播，仅获取 SAM2 特征。"""
+        """执行视觉骨干网络前向传播，仅获取 SAM2 特征。."""
         xs = self.vision_backbone.trunk(samples)
         x = xs[-1]  # simpleFPN
 
@@ -128,7 +128,7 @@ class SAM3VLBackbone(nn.Module):
         }
 
     def forward_text(self, captions, input_boxes=None, additional_text=None):
-        """执行文本编码器的前向传播。"""
+        """执行文本编码器的前向传播。."""
         output = {}
 
         # 通过文本编码器前向传播
@@ -155,6 +155,6 @@ class SAM3VLBackbone(nn.Module):
         return output
 
     def set_imgsz(self, imgsz: list[int] | None = None):
-        """设置视觉骨干网络的图像尺寸。"""
+        """设置视觉骨干网络的图像尺寸。."""
         imgsz = imgsz if imgsz is not None else [1008, 1008]
         self.vision_backbone.set_imgsz(imgsz)

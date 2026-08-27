@@ -13,10 +13,9 @@ from ultralytics.utils.ops import linear_sum_assignment, xywh2xyxy, xyxy2xywh
 
 
 class HungarianMatcher(nn.Module):
-    """实现 HungarianMatcher，用于在预测结果和真实标注之间进行最优分配。
+    """实现 HungarianMatcher，用于在预测结果和真实标注之间进行最优分配。.
 
-    HungarianMatcher 使用考虑分类分数、边界框坐标以及可选掩码预测结果的成本函数，在预测边界框和真实边界框之间执行
-    最优二分图匹配。该匹配器用于 DETR 等端到端目标检测模型。
+    HungarianMatcher 使用考虑分类分数、边界框坐标以及可选掩码预测结果的成本函数，在预测边界框和真实边界框之间执行 最优二分图匹配。该匹配器用于 DETR 等端到端目标检测模型。
 
     属性：
         cost_gain (dict[str, float]): 'class'、'bbox'、'giou'、'mask' 和 'dice' 成本组件的系数字典。
@@ -52,7 +51,7 @@ class HungarianMatcher(nn.Module):
         alpha: float = 0.25,
         gamma: float = 2.0,
     ):
-        """初始化 HungarianMatcher，用于在预测边界框和真实边界框之间执行最优分配。
+        """初始化 HungarianMatcher，用于在预测边界框和真实边界框之间执行最优分配。.
 
         参数：
             cost_gain (dict[str, float], 可选): 不同匹配成本组件的系数字典，应包含 'class'、'bbox'、'giou'、'mask' 和 'dice' 键。
@@ -82,7 +81,7 @@ class HungarianMatcher(nn.Module):
         masks: torch.Tensor | None = None,
         gt_mask: list[torch.Tensor] | None = None,
     ) -> list[tuple[torch.Tensor, torch.Tensor]]:
-        """使用匈牙利算法在预测结果和真实标注之间计算最优分配。
+        """使用匈牙利算法在预测结果和真实标注之间计算最优分配。.
 
         此方法根据分类分数、边界框坐标和可选的掩码预测结果计算匹配成本，然后在预测结果和真实标注之间寻找最优二分图分配。
 
@@ -141,7 +140,7 @@ class HungarianMatcher(nn.Module):
 
         C = C.view(bs, nq, -1).cpu()
         indices = [linear_sum_assignment(c[i]) for i, c in enumerate(C.split(gt_groups, -1))]
-        gt_groups = torch.as_tensor([0, *gt_groups[:-1]]).cumsum_(0)  #（查询索引、真实标注索引）
+        gt_groups = torch.as_tensor([0, *gt_groups[:-1]]).cumsum_(0)  # （查询索引、真实标注索引）
         return [
             (torch.tensor(i, dtype=torch.long), torch.tensor(j, dtype=torch.long) + gt_groups[k])
             for k, (i, j) in enumerate(indices)
@@ -188,10 +187,9 @@ def get_cdn_group(
     box_noise_scale: float = 1.0,
     training: bool = False,
 ) -> tuple[torch.Tensor | None, torch.Tensor | None, torch.Tensor | None, dict[str, Any] | None]:
-    """根据真实标注生成包含正负样本的对比去噪训练组。
+    """根据真实标注生成包含正负样本的对比去噪训练组。.
 
-    此函数通过向真实边界框和类别标签添加噪声，为对比去噪训练创建去噪查询。
-    它同时生成正样本和负样本，以提升模型的鲁棒性。
+    此函数通过向真实边界框和类别标签添加噪声，为对比去噪训练创建去噪查询。 它同时生成正样本和负样本，以提升模型的鲁棒性。
 
     参数：
         batch (dict[str, Any]): 批次字典，包含 'cls'（形状为 (num_gts,) 的 torch.Tensor）、'bboxes'

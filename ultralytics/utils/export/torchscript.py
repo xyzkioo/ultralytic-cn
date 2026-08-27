@@ -17,7 +17,7 @@ def torch2torchscript(
     metadata: dict | None = None,
     prefix: str = "",
 ) -> str:
-    """将 PyTorch 模型导出为 TorchScript 格式。
+    """将 PyTorch 模型导出为 TorchScript 格式。.
 
     参数：
         model (torch.nn.Module): 要导出的 PyTorch 模型（可能已使用 NMS 包装）。

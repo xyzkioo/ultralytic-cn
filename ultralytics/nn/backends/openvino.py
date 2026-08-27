@@ -15,14 +15,13 @@ from .base import BaseBackend
 
 
 class OpenVINOBackend(BaseBackend):
-    """用于 Intel 硬件加速的 Intel OpenVINO 推理后端。
+    """用于 Intel 硬件加速的 Intel OpenVINO 推理后端。.
 
-    使用 Intel OpenVINO IR 模型（*_openvino_model/ 目录）加载并运行推理。
-    支持自动设备选择和 Intel 专用设备指定。
+    使用 Intel OpenVINO IR 模型（*_openvino_model/ 目录）加载并运行推理。 支持自动设备选择和 Intel 专用设备指定。
     """
 
     def load_model(self, weight: str | Path) -> None:
-        """从 .xml/.bin 文件对或模型目录加载 Intel OpenVINO IR 模型。
+        """从 .xml/.bin 文件对或模型目录加载 Intel OpenVINO IR 模型。.
 
         参数：
             weight (str | Path): .xml 文件路径，或包含 OpenVINO 模型文件的目录。
@@ -93,7 +92,7 @@ class OpenVINOBackend(BaseBackend):
         self.ov = ov
 
     def forward(self, im: torch.Tensor) -> list[np.ndarray]:
-        """执行 Intel OpenVINO 推理。
+        """执行 Intel OpenVINO 推理。.
 
         参数：
             im (torch.Tensor): 输入图像 张量 in BCHW format, normalized to [0, 1].
@@ -115,7 +114,7 @@ class OpenVINOBackend(BaseBackend):
             results = [None] * n
 
             def callback(request, userdata):
-                """将异步推理结果存储到预分配结果列表的指定索引处。"""
+                """将异步推理结果存储到预分配结果列表的指定索引处。."""
                 results[userdata] = request.results
 
             async_queue = self.ov.AsyncInferQueue(self.ov_compiled_model)

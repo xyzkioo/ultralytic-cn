@@ -26,10 +26,9 @@ except (ImportError, AssertionError, TypeError):
 
 
 def _log_images(path: Path, prefix: str = "") -> None:
-    """使用 DVCLive 记录指定路径中的图像，并支持可选前缀。
+    """使用 DVCLive 记录指定路径中的图像，并支持可选前缀。.
 
-    此函数会将给定路径中的图像记录到 DVCLive，并按批次组织图像，以便在界面中使用滑块查看。
-    函数会从图像文件名中提取批次信息，并据此重新组织路径。
+    此函数会将给定路径中的图像记录到 DVCLive，并按批次组织图像，以便在界面中使用滑块查看。 函数会从图像文件名中提取批次信息，并据此重新组织路径。
 
     参数：
         path (Path): 要记录的图像文件路径。
@@ -52,7 +51,7 @@ def _log_images(path: Path, prefix: str = "") -> None:
 
 
 def _log_plots(plots: dict, prefix: str = "") -> None:
-    """如果绘图图像尚未处理，则记录它们以展示训练进度。
+    """如果绘图图像尚未处理，则记录它们以展示训练进度。.
 
     参数：
         plots (dict): 包含绘图信息和时间戳的字典。
@@ -66,7 +65,7 @@ def _log_plots(plots: dict, prefix: str = "") -> None:
 
 
 def _log_confusion_matrix(validator) -> None:
-    """使用 DVCLive 记录验证器中的混淆矩阵。
+    """使用 DVCLive 记录验证器中的混淆矩阵。.
 
     此函数处理验证器对象中的混淆矩阵，并将矩阵转换为目标标签和预测标签列表后记录到 DVCLive。
 
@@ -90,7 +89,7 @@ def _log_confusion_matrix(validator) -> None:
 
 
 def on_pretrain_routine_start(trainer) -> None:
-    """在预训练流程期间初始化用于训练元数据的 DVCLive 日志记录器。"""
+    """在预训练流程期间初始化用于训练元数据的 DVCLive 日志记录器。."""
     try:
         global live
         live = dvclive.Live(save_dvc_exp=True, cache_images=True)
@@ -100,27 +99,26 @@ def on_pretrain_routine_start(trainer) -> None:
 
 
 def on_pretrain_routine_end(trainer) -> None:
-    """在预训练流程结束时记录与训练过程相关的绘图。"""
+    """在预训练流程结束时记录与训练过程相关的绘图。."""
     _log_plots(trainer.plots, "train")
 
 
 def on_train_start(trainer) -> None:
-    """如果 DVCLive 日志处于启用状态，则记录训练参数。"""
+    """如果 DVCLive 日志处于启用状态，则记录训练参数。."""
     if live:
         live.log_params(trainer.args)
 
 
 def on_train_epoch_start(trainer) -> None:
-    """在每个训练周期开始时将全局变量 _training_epoch 设置为 True。"""
+    """在每个训练周期开始时将全局变量 _training_epoch 设置为 True。."""
     global _training_epoch
     _training_epoch = True
 
 
 def on_fit_epoch_end(trainer) -> None:
-    """在每个 fit 周期结束时记录训练指标和模型信息，并推进到下一步。
+    """在每个 fit 周期结束时记录训练指标和模型信息，并推进到下一步。.
 
-    此函数会在每个 fit 训练周期结束时调用，记录各种指标，包括训练损失项、验证指标和学习率。
-    在第一个周期，它还会记录模型信息。此外，它会记录训练和验证绘图，并推进 DVCLive 步数计数器。
+    此函数会在每个 fit 训练周期结束时调用，记录各种指标，包括训练损失项、验证指标和学习率。 在第一个周期，它还会记录模型信息。此外，它会记录训练和验证绘图，并推进 DVCLive 步数计数器。
 
     参数：
         trainer (BaseTrainer): 包含训练状态、指标和绘图的训练器对象。
@@ -149,10 +147,9 @@ def on_fit_epoch_end(trainer) -> None:
 
 
 def on_train_end(trainer) -> None:
-    """在训练结束时记录最佳指标、绘图和混淆矩阵。
+    """在训练结束时记录最佳指标、绘图和混淆矩阵。.
 
-    如果 DVCLive 日志处于启用状态，此函数会在训练过程结束时调用，以记录最终指标、可视化结果和模型资源。
-    它会保存最佳模型性能指标、训练绘图、验证绘图和混淆矩阵，供后续分析使用。
+    如果 DVCLive 日志处于启用状态，此函数会在训练过程结束时调用，以记录最终指标、可视化结果和模型资源。 它会保存最佳模型性能指标、训练绘图、验证绘图和混淆矩阵，供后续分析使用。
 
     参数：
         trainer (BaseTrainer): 包含训练状态、指标和验证结果的训练器对象。

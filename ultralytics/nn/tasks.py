@@ -115,7 +115,7 @@ from ultralytics.utils.torch_utils import (
 
 
 class BaseModel(torch.nn.Module):
-    """Ultralytics YOLO 系列所有模型的基类。
+    """Ultralytics YOLO 系列所有模型的基类。.
 
     此类为 YOLO 模型提供通用功能，包括前向传播处理、模型融合、信息显示和权重加载。
 
@@ -139,7 +139,7 @@ class BaseModel(torch.nn.Module):
     """
 
     def forward(self, x, *args, **kwargs):
-        """执行模型的训练或推理前向传播。
+        """执行模型的训练或推理前向传播。.
 
         如果 x 是字典，则计算并返回训练损失；否则返回推理预测结果。
 
@@ -156,7 +156,7 @@ class BaseModel(torch.nn.Module):
         return self.predict(x, *args, **kwargs)
 
     def predict(self, x, profile=False, augment=False, embed=None):
-        """执行网络前向传播。
+        """执行网络前向传播。.
 
         参数：
             x (torch.Tensor)：模型的输入张量。
@@ -172,7 +172,7 @@ class BaseModel(torch.nn.Module):
         return self._predict_once(x, profile, embed)
 
     def _predict_once(self, x, profile=False, embed=None):
-        """执行网络前向传播。
+        """执行网络前向传播。.
 
         参数：
             x (torch.Tensor)：模型的输入张量。
@@ -193,13 +193,15 @@ class BaseModel(torch.nn.Module):
             x = m(x)  # 执行前向传播
             y.append(x if m.i in self.save else None)  # 保存输出
             if m.i in embed:
-                embeddings.append(torch.nn.functional.adaptive_avg_pool2d(x, (1, 1)).squeeze(-1).squeeze(-1))  # 展平特征
+                embeddings.append(
+                    torch.nn.functional.adaptive_avg_pool2d(x, (1, 1)).squeeze(-1).squeeze(-1)
+                )  # 展平特征
                 if m.i == max_idx:
                     return torch.unbind(torch.cat(embeddings, 1), dim=0)
         return x
 
     def _predict_augment(self, x):
-        """对输入图像 x 执行数据增强，并返回增强后的推理结果。"""
+        """对输入图像 x 执行数据增强，并返回增强后的推理结果。."""
         LOGGER.warning(
             f"{self.__class__.__name__} does not support 'augment=True' prediction. "
             f"Reverting to single-scale prediction."
@@ -207,7 +209,7 @@ class BaseModel(torch.nn.Module):
         return self._predict_once(x)
 
     def _profile_one_layer(self, m, x, dt):
-        """统计模型单层在给定输入上的计算耗时和 FLOPs。
+        """统计模型单层在给定输入上的计算耗时和 FLOPs。.
 
         参数：
             m (torch.nn.Module)：要统计的层。
@@ -233,7 +235,7 @@ class BaseModel(torch.nn.Module):
             LOGGER.info(f"{sum(dt):10.2f} {'-':>10s} {'-':>10s}  Total")
 
     def fuse(self, verbose=True, imgsz=640):
-        """融合 Conv/ConvTranspose 与 BatchNorm 层，并重新参数化 RepConv/RepVGGDW 以提高效率。
+        """融合 Conv/ConvTranspose 与 BatchNorm 层，并重新参数化 RepConv/RepVGGDW 以提高效率。.
 
         参数：
             verbose (bool)：是否在融合后打印模型信息。
@@ -267,7 +269,7 @@ class BaseModel(torch.nn.Module):
         return self
 
     def is_fused(self, thresh=10):
-        """检查模型中的归一化层数量是否低于指定阈值。
+        """检查模型中的归一化层数量是否低于指定阈值。.
 
         参数：
             thresh (int, 可选)：归一化层数量阈值。
@@ -279,7 +281,7 @@ class BaseModel(torch.nn.Module):
         return sum(isinstance(v, bn) for v in self.modules()) < thresh  # 模型中的 BatchNorm 层数量是否小于 thresh
 
     def info(self, detailed=False, verbose=True, imgsz=640):
-        """打印模型信息。
+        """打印模型信息。.
 
         参数：
             detailed (bool)：为 True 时打印模型详细信息。
@@ -289,7 +291,7 @@ class BaseModel(torch.nn.Module):
         return model_info(self, detailed=detailed, verbose=verbose, imgsz=imgsz)
 
     def _apply(self, fn):
-        """将函数应用于模型中的所有张量，包括 Detect 检测头的步长和锚框等属性。
+        """将函数应用于模型中的所有张量，包括 Detect 检测头的步长和锚框等属性。.
 
         参数：
             fn (function)：要应用于模型的函数。
@@ -299,16 +301,14 @@ class BaseModel(torch.nn.Module):
         """
         super()._apply(fn)
         m = self.model[-1]  # Detect()
-        if isinstance(
-            m, Detect
-        ):  # 包含所有检测子类，例如 Segment、Pose、OBB、WorldDetect、YOLOEDetect、YOLOESegment
+        if isinstance(m, Detect):  # 包含所有检测子类，例如 Segment、Pose、OBB、WorldDetect、YOLOEDetect、YOLOESegment
             m.stride = fn(m.stride)
             m.anchors = fn(m.anchors)
             m.strides = fn(m.strides)
         return self
 
     def load(self, weights, verbose=True):
-        """将权重加载到模型中。
+        """将权重加载到模型中。.
 
         参数：
             weights (dict | torch.nn.Module)：要加载的预训练权重。
@@ -337,7 +337,7 @@ class BaseModel(torch.nn.Module):
             LOGGER.info(f"Transferred {len_updated_csd}/{len(self.model.state_dict())} items from pretrained weights")
 
     def _remap_cls_by_names(self, csd: dict[str, torch.Tensor], src_model: torch.nn.Module, verbose: bool = True):
-        """根据类别名称，将预训练分类头的行重新映射到当前类别顺序。
+        """根据类别名称，将预训练分类头的行重新映射到当前类别顺序。.
 
         当目标类别名称与源类别名称匹配时（忽略大小写并去除首尾空格），将预训练分类层中的对应行复制到当前
         模型的 state_dict 中。该功能适用于跨数据集微调：即使类别数量不同（例如 Objects365 与 COCO），或
@@ -398,7 +398,7 @@ class BaseModel(torch.nn.Module):
         return remapped
 
     def loss(self, batch, preds=None):
-        """计算损失。
+        """计算损失。.
 
         参数：
             batch (dict)：用于计算损失的批次数据。
@@ -412,12 +412,12 @@ class BaseModel(torch.nn.Module):
         return self.criterion(preds, batch)
 
     def init_criterion(self):
-        """初始化 BaseModel 的损失函数。"""
+        """初始化 BaseModel 的损失函数。."""
         raise NotImplementedError("compute_loss() needs to be implemented by task heads")
 
 
 def _initialize_yolo_model(model, cfg, ch, nc, verbose):
-    """根据 YAML 配置初始化 YOLO 模型的通用属性。"""
+    """根据 YAML 配置初始化 YOLO 模型的通用属性。."""
     model.yaml = cfg if isinstance(cfg, dict) else yaml_model_load(cfg)  # 配置字典
     if model.yaml["backbone"][0][2] == "Silence":
         LOGGER.warning(
@@ -436,7 +436,7 @@ def _initialize_yolo_model(model, cfg, ch, nc, verbose):
 
 
 class DetectionModel(BaseModel):
-    """YOLO 目标检测模型。
+    """YOLO 目标检测模型。.
 
     此类实现 YOLO 检测架构，负责目标检测任务的模型初始化、前向传播、增强推理和损失计算。
 
@@ -463,7 +463,7 @@ class DetectionModel(BaseModel):
     """
 
     def __init__(self, cfg="yolo26n.yaml", ch=3, nc=None, verbose=True):
-        """使用给定配置和参数初始化 YOLO 检测模型。
+        """使用给定配置和参数初始化 YOLO 检测模型。.
 
         参数：
             cfg (str | dict)：模型配置文件路径或配置字典。
@@ -481,7 +481,7 @@ class DetectionModel(BaseModel):
             m.inplace = self.inplace
 
             def _forward(x):
-                """执行模型的前向传播，并根据不同 Detect 子类进行相应处理。"""
+                """执行模型的前向传播，并根据不同 Detect 子类进行相应处理。."""
                 output = self.forward(x)
                 if self.end2end:
                     output = output["one2many"]
@@ -504,16 +504,16 @@ class DetectionModel(BaseModel):
 
     @property
     def end2end(self):
-        """返回模型是否使用无需 NMS 的端到端检测。"""
+        """返回模型是否使用无需 NMS 的端到端检测。."""
         return getattr(self.model[-1], "end2end", False)
 
     @end2end.setter
     def end2end(self, value):
-        """覆盖端到端检测模式。"""
+        """覆盖端到端检测模式。."""
         self.set_head_attr(end2end=value)
 
     def set_head_attr(self, **kwargs):
-        """设置模型检测头（最后一层）的属性。
+        """设置模型检测头（最后一层）的属性。.
 
         参数：
             **kwargs (Any)：表示待设置属性的任意关键字参数。
@@ -526,7 +526,7 @@ class DetectionModel(BaseModel):
             setattr(head, k, v)
 
     def _predict_augment(self, x):
-        """对输入图像 x 执行增强，并返回增强推理结果和训练输出。
+        """对输入图像 x 执行增强，并返回增强推理结果和训练输出。.
 
         参数：
             x (torch.Tensor)：输入图像张量。
@@ -551,7 +551,7 @@ class DetectionModel(BaseModel):
 
     @staticmethod
     def _descale_pred(p, flips, scale, img_size, dim=1):
-        """对增强推理后的预测结果进行反缩放（逆操作）。
+        """对增强推理后的预测结果进行反缩放（逆操作）。.
 
         参数：
             p (torch.Tensor)：预测结果张量。
@@ -572,7 +572,7 @@ class DetectionModel(BaseModel):
         return torch.cat((x, y, wh, cls), dim)
 
     def _clip_augmented(self, y):
-        """裁剪 YOLO 增强推理结果的尾部。
+        """裁剪 YOLO 增强推理结果的尾部。.
 
         参数：
             y (list[torch.Tensor])：检测张量列表。
@@ -590,12 +590,12 @@ class DetectionModel(BaseModel):
         return y
 
     def init_criterion(self):
-        """初始化 DetectionModel 的损失函数。"""
+        """初始化 DetectionModel 的损失函数。."""
         return E2ELoss(self) if getattr(self, "end2end", False) else v8DetectionLoss(self)
 
 
 class OBBModel(DetectionModel):
-    """YOLO 有向边界框（OBB）模型。
+    """YOLO 有向边界框（OBB）模型。.
 
     此类扩展 DetectionModel，用于处理有向边界框检测任务，并为旋转目标检测提供专用的损失计算。
 
@@ -610,7 +610,7 @@ class OBBModel(DetectionModel):
     """
 
     def __init__(self, cfg="yolo26n-obb.yaml", ch=3, nc=None, verbose=True):
-        """使用给定配置和参数初始化 YOLO OBB 模型。
+        """使用给定配置和参数初始化 YOLO OBB 模型。.
 
         参数：
             cfg (str | dict)：模型配置文件路径或配置字典。
@@ -621,12 +621,12 @@ class OBBModel(DetectionModel):
         super().__init__(cfg=cfg, ch=ch, nc=nc, verbose=verbose)
 
     def init_criterion(self):
-        """初始化模型的损失函数。"""
+        """初始化模型的损失函数。."""
         return E2ELoss(self, v8OBBLoss) if getattr(self, "end2end", False) else v8OBBLoss(self)
 
 
 class SegmentationModel(DetectionModel):
-    """YOLO 实例分割模型。
+    """YOLO 实例分割模型。.
 
     此类扩展 DetectionModel，用于处理实例分割任务，并为像素级目标检测和分割提供专用的损失计算。
 
@@ -641,7 +641,7 @@ class SegmentationModel(DetectionModel):
     """
 
     def __init__(self, cfg="yolo26n-seg.yaml", ch=3, nc=None, verbose=True):
-        """使用给定配置和参数初始化 Ultralytics YOLO 分割模型。
+        """使用给定配置和参数初始化 Ultralytics YOLO 分割模型。.
 
         参数：
             cfg (str | dict)：模型配置文件路径或配置字典。
@@ -652,12 +652,12 @@ class SegmentationModel(DetectionModel):
         super().__init__(cfg=cfg, ch=ch, nc=nc, verbose=verbose)
 
     def init_criterion(self):
-        """初始化 SegmentationModel 的损失函数。"""
+        """初始化 SegmentationModel 的损失函数。."""
         return E2ELoss(self, v8SegmentationLoss) if getattr(self, "end2end", False) else v8SegmentationLoss(self)
 
 
 class SemanticSegmentationModel(BaseModel):
-    """YOLO 语义分割模型。
+    """YOLO 语义分割模型。.
 
     此类实现生成逐像素类别预测结果的语义分割模型。与 SegmentationModel（实例分割）不同，此模型不会生成边界框。
 
@@ -671,7 +671,7 @@ class SemanticSegmentationModel(BaseModel):
     """
 
     def __init__(self, cfg="yolo26n-sem.yaml", ch=3, nc=None, verbose=True):
-        """初始化 YOLO 语义分割模型。
+        """初始化 YOLO 语义分割模型。.
 
         参数：
             cfg (str | dict)：模型配置文件路径或配置字典。
@@ -714,11 +714,11 @@ class SemanticSegmentationModel(BaseModel):
             LOGGER.info("")
 
     def init_criterion(self):
-        """初始化语义分割的损失函数。"""
+        """初始化语义分割的损失函数。."""
         return SemanticSegmentationLoss(self)
 
     def _apply(self, fn):
-        """将函数应用于模型中的所有张量。"""
+        """将函数应用于模型中的所有张量。."""
         super()._apply(fn)
         m = self.model[-1]
         if isinstance(m, SemanticSegment):
@@ -727,7 +727,7 @@ class SemanticSegmentationModel(BaseModel):
 
 
 class PoseModel(DetectionModel):
-    """YOLO 姿态估计模型。
+    """YOLO 姿态估计模型。.
 
     此类扩展 DetectionModel，用于处理人体姿态估计任务，并为关键点检测和姿态估计提供专用的损失计算。
 
@@ -745,7 +745,7 @@ class PoseModel(DetectionModel):
     """
 
     def __init__(self, cfg="yolo26n-pose.yaml", ch=3, nc=None, data_kpt_shape=(None, None), verbose=True):
-        """初始化 Ultralytics YOLO Pose 模型。
+        """初始化 Ultralytics YOLO Pose 模型。.
 
         参数：
             cfg (str | dict)：模型配置文件路径或配置字典。
@@ -762,16 +762,15 @@ class PoseModel(DetectionModel):
         super().__init__(cfg=cfg, ch=ch, nc=nc, verbose=verbose)
 
     def init_criterion(self):
-        """初始化 PoseModel 的损失函数。"""
+        """初始化 PoseModel 的损失函数。."""
         loss = PoseLoss26 if isinstance(self.model[-1], Pose26) else v8PoseLoss
         return E2ELoss(self, loss) if self.end2end else loss(self)
 
 
 class DepthModel(DetectionModel):
-    """YOLO 单目深度估计模型。
+    """YOLO 单目深度估计模型。.
 
-    此类扩展 DetectionModel，用于单目深度估计，使用 YOLO 主干网络和 FPN，并搭配 DPT 风格的稠密深度解码头。
-    该实现将 Depth Anything 方法适配到 YOLO 架构中。
+    此类扩展 DetectionModel，用于单目深度估计，使用 YOLO 主干网络和 FPN，并搭配 DPT 风格的稠密深度解码头。 该实现将 Depth Anything 方法适配到 YOLO 架构中。
 
     示例：
         >>> model = DepthModel("yolo26n-depth.yaml", ch=3)
@@ -779,16 +778,16 @@ class DepthModel(DetectionModel):
     """
 
     def __init__(self, cfg="yolo26n-depth.yaml", ch=3, nc=None, verbose=True):
-        """初始化 YOLO Depth 模型。"""
+        """初始化 YOLO Depth 模型。."""
         super().__init__(cfg=cfg, ch=ch, nc=nc, verbose=verbose)
 
     def init_criterion(self):
-        """初始化深度估计损失函数。"""
+        """初始化深度估计损失函数。."""
         return DepthLoss26(self)
 
 
 class ClassificationModel(BaseModel):
-    """YOLO 图像分类模型。
+    """YOLO 图像分类模型。.
 
     此类实现用于图像分类任务的 YOLO 分类架构，并提供模型初始化、配置和输出重塑功能。
 
@@ -811,7 +810,7 @@ class ClassificationModel(BaseModel):
     """
 
     def __init__(self, cfg="yolo26n-cls.yaml", ch=3, nc=None, verbose=True):
-        """使用 YAML、通道数、类别数量和详细输出标志初始化 ClassificationModel。
+        """使用 YAML、通道数、类别数量和详细输出标志初始化 ClassificationModel。.
 
         参数：
             cfg (str | dict)：模型配置文件路径或配置字典。
@@ -823,7 +822,7 @@ class ClassificationModel(BaseModel):
         self._from_yaml(cfg, ch, nc, verbose)
 
     def _from_yaml(self, cfg, ch, nc, verbose):
-        """设置 Ultralytics YOLO 模型配置并定义模型架构。
+        """设置 Ultralytics YOLO 模型配置并定义模型架构。.
 
         参数：
             cfg (str | dict)：模型配置文件路径或配置字典。
@@ -847,7 +846,7 @@ class ClassificationModel(BaseModel):
 
     @staticmethod
     def reshape_outputs(model, nc):
-        """在需要时将 TorchVision 分类模型调整为 `nc` 个类别。
+        """在需要时将 TorchVision 分类模型调整为 `nc` 个类别。.
 
         参数：
             model (torch.nn.Module)：待更新的模型。
@@ -874,15 +873,14 @@ class ClassificationModel(BaseModel):
                     )
 
     def init_criterion(self):
-        """初始化 ClassificationModel 的损失函数。"""
+        """初始化 ClassificationModel 的损失函数。."""
         return v8ClassificationLoss()
 
 
 class RTDETRDetectionModel(DetectionModel):
-    """RTDETR（基于 Transformer 的实时检测与跟踪）检测模型类。
+    """RTDETR（基于 Transformer 的实时检测与跟踪）检测模型类。.
 
-    此类负责构建 RTDETR 架构、定义损失函数，并支持训练和推理流程。RTDETR 是一种目标检测与跟踪模型，
-    继承自 DetectionModel 基类。
+    此类负责构建 RTDETR 架构、定义损失函数，并支持训练和推理流程。RTDETR 是一种目标检测与跟踪模型， 继承自 DetectionModel 基类。
 
     属性：
         nc (int)：检测类别数量。
@@ -901,7 +899,7 @@ class RTDETRDetectionModel(DetectionModel):
     """
 
     def __init__(self, cfg="rtdetr-l.yaml", ch=3, nc=None, verbose=True):
-        """初始化 RTDETRDetectionModel。
+        """初始化 RTDETRDetectionModel。.
 
         参数：
             cfg (str | dict)：配置文件名或路径。
@@ -912,7 +910,7 @@ class RTDETRDetectionModel(DetectionModel):
         super().__init__(cfg=cfg, ch=ch, nc=nc, verbose=verbose)
 
     def _remap_cls_by_names(self, csd: dict[str, torch.Tensor], src_model: torch.nn.Module, verbose: bool = True):
-        """根据类别名称重新映射 RT-DETR 解码器分类头中的行。
+        """根据类别名称重新映射 RT-DETR 解码器分类头中的行。.
 
         此方法覆盖 BaseModel 中针对 YOLO 的实现：RT-DETR 的分类张量位于 RTDETRDecoder 内部的
         `score_head` 和 `class_embed` 下，而不是 `Detect.cv3`。这些张量都按类别逐行存储，包括仅在训练时使用的
@@ -961,7 +959,7 @@ class RTDETRDetectionModel(DetectionModel):
         return remapped
 
     def _apply(self, fn):
-        """将函数应用于模型中的所有张量，包括解码器锚框和有效性掩码。
+        """将函数应用于模型中的所有张量，包括解码器锚框和有效性掩码。.
 
         参数：
             fn (function)：要应用于模型的函数。
@@ -976,13 +974,13 @@ class RTDETRDetectionModel(DetectionModel):
         return self
 
     def init_criterion(self):
-        """初始化 RTDETRDetectionModel 的损失函数。"""
+        """初始化 RTDETRDetectionModel 的损失函数。."""
         from ultralytics.models.utils.loss import RTDETRDetectionLoss
 
         return RTDETRDetectionLoss(nc=self.nc, use_vfl=True)
 
     def loss(self, batch, preds=None):
-        """计算给定批次数据的损失。
+        """计算给定批次数据的损失。.
 
         参数：
             batch (dict)：包含图像和标签数据的字典。
@@ -1030,7 +1028,7 @@ class RTDETRDetectionModel(DetectionModel):
         }
 
     def predict(self, x, profile=False, batch=None, augment=False, embed=None):
-        """执行模型的前向传播。
+        """执行模型的前向传播。.
 
         参数：
             x (torch.Tensor)：输入张量。
@@ -1053,7 +1051,9 @@ class RTDETRDetectionModel(DetectionModel):
             x = m(x)  # 执行前向传播
             y.append(x if m.i in self.save else None)  # 保存输出
             if m.i in embed:
-                embeddings.append(torch.nn.functional.adaptive_avg_pool2d(x, (1, 1)).squeeze(-1).squeeze(-1))  # 展平特征
+                embeddings.append(
+                    torch.nn.functional.adaptive_avg_pool2d(x, (1, 1)).squeeze(-1).squeeze(-1)
+                )  # 展平特征
                 if m.i == max_idx:
                     return torch.unbind(torch.cat(embeddings, 1), dim=0)
         head = self.model[-1]
@@ -1062,7 +1062,7 @@ class RTDETRDetectionModel(DetectionModel):
 
 
 class WorldModel(DetectionModel):
-    """YOLOv8 World 模型。
+    """YOLOv8 World 模型。.
 
     此类实现用于开放词汇目标检测的 YOLOv8 World 模型，支持通过文本指定类别，并集成 CLIP 模型实现零样本检测。
 
@@ -1085,7 +1085,7 @@ class WorldModel(DetectionModel):
     """
 
     def __init__(self, cfg="yolov8s-world.yaml", ch=3, nc=None, verbose=True):
-        """使用给定配置和参数初始化 YOLOv8 World 模型。
+        """使用给定配置和参数初始化 YOLOv8 World 模型。.
 
         参数：
             cfg (str | dict)：模型配置文件路径或配置字典。
@@ -1098,7 +1098,7 @@ class WorldModel(DetectionModel):
         super().__init__(cfg=cfg, ch=ch, nc=nc, verbose=verbose)
 
     def set_classes(self, text, batch=80, cache_clip_model=True):
-        """预先设置类别，使模型无需 CLIP 模型即可执行离线推理。
+        """预先设置类别，使模型无需 CLIP 模型即可执行离线推理。.
 
         参数：
             text (list[str])：类别名称列表。
@@ -1109,7 +1109,7 @@ class WorldModel(DetectionModel):
         self.model[-1].nc = len(text)
 
     def get_text_pe(self, text, batch=80, cache_clip_model=True):
-        """使用 CLIP 模型获取文本位置嵌入。
+        """使用 CLIP 模型获取文本位置嵌入。.
 
         参数：
             text (list[str])：类别名称列表。
@@ -1132,7 +1132,7 @@ class WorldModel(DetectionModel):
         return txt_feats.reshape(-1, len(text), txt_feats.shape[-1])
 
     def predict(self, x, profile=False, txt_feats=None, augment=False, embed=None):
-        """执行模型的前向传播。
+        """执行模型的前向传播。.
 
         参数：
             x (torch.Tensor)：输入张量。
@@ -1167,13 +1167,15 @@ class WorldModel(DetectionModel):
 
             y.append(x if m.i in self.save else None)  # 保存 输出
             if m.i in embed:
-                embeddings.append(torch.nn.functional.adaptive_avg_pool2d(x, (1, 1)).squeeze(-1).squeeze(-1))  # 展平特征
+                embeddings.append(
+                    torch.nn.functional.adaptive_avg_pool2d(x, (1, 1)).squeeze(-1).squeeze(-1)
+                )  # 展平特征
                 if m.i == max_idx:
                     return torch.unbind(torch.cat(embeddings, 1), dim=0)
         return x
 
     def loss(self, batch, preds=None):
-        """计算损失。
+        """计算损失。.
 
         参数：
             batch (dict)：用于计算损失的批次数据。
@@ -1188,7 +1190,7 @@ class WorldModel(DetectionModel):
 
 
 class YOLOEModel(DetectionModel):
-    """YOLOE 目标检测模型。
+    """YOLOE 目标检测模型。.
 
     此类实现 YOLOE 架构，支持使用文本提示和视觉提示进行高效目标检测，并支持有提示和无提示两种推理模式。
 
@@ -1214,7 +1216,7 @@ class YOLOEModel(DetectionModel):
     """
 
     def __init__(self, cfg="yoloe-v8s.yaml", ch=3, nc=None, verbose=True):
-        """使用给定配置和参数初始化 YOLOE 模型。
+        """使用给定配置和参数初始化 YOLOE 模型。.
 
         参数：
             cfg (str | dict)：模型配置文件路径或配置字典。
@@ -1227,7 +1229,7 @@ class YOLOEModel(DetectionModel):
 
     @smart_inference_mode()
     def get_text_pe(self, text, batch=80, cache_clip_model=False, without_reprta=False):
-        """使用 CLIP 模型获取文本位置嵌入。
+        """使用 CLIP 模型获取文本位置嵌入。.
 
         参数：
             text (list[str])：类别名称列表。
@@ -1265,7 +1267,7 @@ class YOLOEModel(DetectionModel):
 
     @smart_inference_mode()
     def get_visual_pe(self, img, visual):
-        """获取视觉位置嵌入。
+        """获取视觉位置嵌入。.
 
         参数：
             img (torch.Tensor)：输入图像张量。
@@ -1277,7 +1279,7 @@ class YOLOEModel(DetectionModel):
         return self(img, vpe=visual, return_vpe=True)
 
     def set_vocab(self, vocab, names):
-        """为无提示模型设置词汇表。
+        """为无提示模型设置词汇表。.
 
         参数：
             vocab (nn.ModuleList)：词汇表模块列表。
@@ -1309,7 +1311,7 @@ class YOLOEModel(DetectionModel):
         self.names = names
 
     def get_vocab(self, names):
-        """从模型中获取融合后的词汇表层。
+        """从模型中获取融合后的词汇表层。.
 
         参数：
             names (list[str])：类别名称列表。
@@ -1336,7 +1338,7 @@ class YOLOEModel(DetectionModel):
         return vocab
 
     def set_classes(self, names, embeddings):
-        """预先设置类别，使模型无需 CLIP 模型即可执行离线推理。
+        """预先设置类别，使模型无需 CLIP 模型即可执行离线推理。.
 
         参数：
             names (list[str])：类别名称列表。
@@ -1351,7 +1353,7 @@ class YOLOEModel(DetectionModel):
         self.model[-1].nc = len(names)
 
     def get_cls_pe(self, tpe, vpe):
-        """获取类别位置嵌入。
+        """获取类别位置嵌入。.
 
         参数：
             tpe (torch.Tensor | None)：文本位置嵌入。
@@ -1372,7 +1374,7 @@ class YOLOEModel(DetectionModel):
         return torch.cat(all_pe, dim=1)
 
     def predict(self, x, profile=False, tpe=None, augment=False, embed=None, vpe=None, return_vpe=False):
-        """执行模型的前向传播。
+        """执行模型的前向传播。.
 
         参数：
             x (torch.Tensor)：输入张量。
@@ -1409,13 +1411,15 @@ class YOLOEModel(DetectionModel):
 
             y.append(x if m.i in self.save else None)  # 保存 输出
             if m.i in embed:
-                embeddings.append(torch.nn.functional.adaptive_avg_pool2d(x, (1, 1)).squeeze(-1).squeeze(-1))  # 展平特征
+                embeddings.append(
+                    torch.nn.functional.adaptive_avg_pool2d(x, (1, 1)).squeeze(-1).squeeze(-1)
+                )  # 展平特征
                 if m.i == max_idx:
                     return torch.unbind(torch.cat(embeddings, 1), dim=0)
         return x
 
     def loss(self, batch, preds=None):
-        """计算损失。
+        """计算损失。.
 
         参数：
             batch (dict)：用于计算损失的批次数据。
@@ -1440,7 +1444,7 @@ class YOLOEModel(DetectionModel):
 
 
 class YOLOESegModel(YOLOEModel, SegmentationModel):
-    """YOLOE 实例分割模型。
+    """YOLOE 实例分割模型。.
 
     此类扩展 YOLOEModel，用于处理带文本和视觉提示的实例分割任务，并为像素级目标检测和分割提供专用的损失计算。
 
@@ -1455,7 +1459,7 @@ class YOLOESegModel(YOLOEModel, SegmentationModel):
     """
 
     def __init__(self, cfg="yoloe-v8s-seg.yaml", ch=3, nc=None, verbose=True):
-        """使用给定配置和参数初始化 YOLOE 分割模型。
+        """使用给定配置和参数初始化 YOLOE 分割模型。.
 
         参数：
             cfg (str | dict)：模型配置文件路径或配置字典。
@@ -1466,7 +1470,7 @@ class YOLOESegModel(YOLOEModel, SegmentationModel):
         super().__init__(cfg=cfg, ch=ch, nc=nc, verbose=verbose)
 
     def loss(self, batch, preds=None):
-        """计算损失。
+        """计算损失。.
 
         参数：
             batch (dict)：用于计算损失的批次数据。
@@ -1486,7 +1490,7 @@ class YOLOESegModel(YOLOEModel, SegmentationModel):
 
 
 class Ensemble(torch.nn.ModuleList):
-    """模型集成容器。
+    """模型集成容器。.
 
     此类允许组合多个 YOLO 模型，并通过模型平均或其他集成方法提升性能。
 
@@ -1503,11 +1507,11 @@ class Ensemble(torch.nn.ModuleList):
     """
 
     def __init__(self):
-        """初始化模型集成。"""
+        """初始化模型集成。."""
         super().__init__()
 
     def forward(self, x, augment=False, profile=False):
-        """执行集成前向传播，并拼接所有模型的预测结果。
+        """执行集成前向传播，并拼接所有模型的预测结果。.
 
         参数：
             x (torch.Tensor)：输入张量。
@@ -1530,10 +1534,9 @@ class Ensemble(torch.nn.ModuleList):
 
 @contextlib.contextmanager
 def temporary_modules(modules=None, attributes=None):
-    """临时添加或修改 Python 模块缓存（`sys.modules`）的上下文管理器。
+    """临时添加或修改 Python 模块缓存（`sys.modules`）的上下文管理器。.
 
-    此函数可在运行时修改模块路径，适用于代码重构场景：模块已从一个位置移动到另一个位置，但仍需支持旧的导入路径
-    以保持向后兼容。
+    此函数可在运行时修改模块路径，适用于代码重构场景：模块已从一个位置移动到另一个位置，但仍需支持旧的导入路径 以保持向后兼容。
 
     参数：
         modules (dict，可选)：旧模块路径到新模块路径的映射字典。
@@ -1575,33 +1578,28 @@ def temporary_modules(modules=None, attributes=None):
 
 
 class _SafeLoad:
-    """可选的受限检查点加载器：仅重建已知模型类（`weights_only=True` 配合允许列表），并在不使用 `eval()` 的情况下构建模型。
+    """可选的受限检查点加载器：仅重建已知模型类（`weights_only=True` 配合允许列表），并在不使用 `eval()` 的情况下构建模型。.
 
-    可通过进程级环境变量 `ULTRALYTICS_SAFE_LOAD` 或单次调用参数
-    `torch_safe_load(..., safe_only=True)` 启用。默认加载方式（未启用标志时）保持不变。
-    受限加载注册的全局对象会在当前进程中持续有效，因此也会应用于之后执行的其他
-    `torch.load(weights_only=True)` 调用。
+    可通过进程级环境变量 `ULTRALYTICS_SAFE_LOAD` 或单次调用参数 `torch_safe_load(..., safe_only=True)` 启用。默认加载方式（未启用标志时）保持不变。
+    受限加载注册的全局对象会在当前进程中持续有效，因此也会应用于之后执行的其他 `torch.load(weights_only=True)` 调用。
     """
 
     # 受限加载需要 torch 2.6+，因为需要检查点全局对象扫描和 `(obj, "module.Name")` 允许列表别名。
     # 在较旧版本的 torch 中，受限加载会降级为标准加载。
     SUPPORTED = hasattr(torch.serialization, "get_unsafe_globals_in_checkpoint")
     _registry = None  # {"module.Name": 允许列表条目}，每个进程只构建一次
-    _lock = (
-        threading.Lock()
-    )  # add_safe_globals 会重新绑定进程级设置；_build() 全程持锁，避免导入期间执行加载
+    _lock = threading.Lock()  # add_safe_globals 会重新绑定进程级设置；_build() 全程持锁，避免导入期间执行加载
     _local = threading.local()  # 线程局部标志，表示当前线程正在执行 weights_only 加载
 
     @classmethod
     def restricted(cls):
-        """判断模型构建是否应使用不调用 eval() 的已知层路径（环境变量或正在进行的加载）。"""
+        """判断模型构建是否应使用不调用 eval() 的已知层路径（环境变量或正在进行的加载）。."""
         return cls.SUPPORTED and (SAFE_LOAD or getattr(cls._local, "active", False))
 
     @classmethod
     @contextlib.contextmanager
     def loading(cls, weight):
-        """使用 `weights_only=True` 加载：注册检查点所需的全局对象，并将当前线程标记为受限模式，
-        使进入模型构建（parse_model）的检查点同样使用不调用 eval() 的已知层路径。
+        """使用 `weights_only=True` 加载：注册检查点所需的全局对象，并将当前线程标记为受限模式， 使进入模型构建（parse_model）的检查点同样使用不调用 eval() 的已知层路径。.
 
         全局对象通过 `add_safe_globals` 注册，并在当前进程的整个生命周期内有效，而不是按单次加载设置作用域。
         这是因为 `safe_globals()` 上下文管理器退出时会从进程级集合中移除条目；并发加载时，一个线程退出可能会删除
@@ -1634,7 +1632,7 @@ class _SafeLoad:
 
     @staticmethod
     def activation(act):
-        """在不使用 `eval()` 的情况下，将模型 YAML 中的 `activation` 配置解析为 `torch.nn` 模块实例。
+        """在不使用 `eval()` 的情况下，将模型 YAML 中的 `activation` 配置解析为 `torch.nn` 模块实例。.
 
         仅接受文档规定的 `[torch.]nn.<Class>(字面量参数)` 形式（例如 `nn.SiLU()`、
         `torch.nn.LeakyReLU(0.1)`），并拒绝其他形式。
@@ -1664,9 +1662,8 @@ class _SafeLoad:
 
     @classmethod
     def _build(cls):
-        """自动发现 `torch.nn` 和 Ultralytics 模型系列中的 `nn.Module` 子类。
-        对每个可访问到这些类的命名空间路径进行注册（包括将 `block.RealNVP` 重新导出为
-        `head.RealNVP` 的情况），并加入旧版别名。
+        """自动发现 `torch.nn` 和 Ultralytics 模型系列中的 `nn.Module` 子类。 对每个可访问到这些类的命名空间路径进行注册（包括将 `block.RealNVP` 重新导出为
+        `head.RealNVP` 的情况），并加入旧版别名。.
 
         返回：
             (dict): `torch.serialization.add_safe_globals` 所需的条目，包括类和 `(obj, "module.Name")` 别名，
@@ -1739,10 +1736,9 @@ class _SafeLoad:
 
 
 def torch_safe_load(weight, safe_only=None):
-    """使用 torch.load() 加载 PyTorch 模型。
+    """使用 torch.load() 加载 PyTorch 模型。.
 
-    如果出现 ModuleNotFoundError，则捕获该错误、记录警告，并通过 check_requirements() 尝试安装缺失模块。
-    安装完成后再次使用 torch.load() 尝试加载模型。
+    如果出现 ModuleNotFoundError，则捕获该错误、记录警告，并通过 check_requirements() 尝试安装缺失模块。 安装完成后再次使用 torch.load() 尝试加载模型。
 
     参数：
         weight (str | Path): PyTorch 模型文件路径。
@@ -1883,7 +1879,7 @@ def torch_safe_load(weight, safe_only=None):
 
 
 def load_checkpoint(weight, device=None, inplace=True, fuse=False):
-    """加载单个模型权重。
+    """加载单个模型权重。.
 
     参数：
         weight (str | Path): 模型权重路径。
@@ -1930,7 +1926,7 @@ def load_checkpoint(weight, device=None, inplace=True, fuse=False):
 
 
 def parse_model(d, ch, verbose=True):
-    """将 YOLO model.yaml 字典解析为 PyTorch 模型。
+    """将 YOLO model.yaml 字典解析为 PyTorch 模型。.
 
     参数：
         d (dict): 模型字典。
@@ -2141,7 +2137,7 @@ def parse_model(d, ch, verbose=True):
 
 
 def yaml_model_load(path):
-    """从 YAML 文件加载 YOLO 模型。
+    """从 YAML 文件加载 YOLO 模型。.
 
     参数：
         path (str | Path): YAML 文件路径。
@@ -2164,7 +2160,7 @@ def yaml_model_load(path):
 
 
 def guess_model_scale(model_path):
-    """从模型路径中提取模型规模对应的尺寸字符 n、s、m、l 或 x。
+    """从模型路径中提取模型规模对应的尺寸字符 n、s、m、l 或 x。.
 
     参数：
         model_path (str | Path): YOLO 模型 YAML 文件路径。
@@ -2179,7 +2175,7 @@ def guess_model_scale(model_path):
 
 
 def guess_model_task(model):
-    """根据 PyTorch 模型的架构或配置推断其任务类型。
+    """根据 PyTorch 模型的架构或配置推断其任务类型。.
 
     参数：
         model (torch.nn.Module | dict | str | Path): PyTorch 模型、模型配置字典或模型文件路径。
@@ -2189,7 +2185,7 @@ def guess_model_task(model):
     """
 
     def cfg2task(cfg):
-        """根据 YAML 字典推断任务类型。"""
+        """根据 YAML 字典推断任务类型。."""
         m = cfg["head"][-1][-2].lower()  # 输出 module 名称
         if m in {"classify", "classifier", "cls", "fc"}:
             return "classify"

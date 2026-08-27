@@ -1,6 +1,6 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 """
-检查模型在数据集测试集或验证集划分上的准确率。
+检查模型在数据集测试集或验证集划分上的准确率。.
 
 用法：
     $ yolo mode=val model=yolo26n.pt data=coco8.yaml imgsz=640
@@ -56,7 +56,7 @@ from ultralytics.utils.torch_utils import (
 
 
 class BaseValidator:
-    """用于创建验证器的基类。
+    """用于创建验证器的基类。.
 
     此类为验证流程提供基础，负责模型评估、指标计算和结果可视化。
 
@@ -105,7 +105,7 @@ class BaseValidator:
     """
 
     def __init__(self, dataloader=None, save_dir=None, args=None, _callbacks: dict | None = None):
-        """初始化 BaseValidator 实例。
+        """初始化 BaseValidator 实例。.
 
         参数：
             dataloader (torch.utils.data.DataLoader，可选)：用于验证的数据加载器。
@@ -113,8 +113,6 @@ class BaseValidator:
             args (SimpleNamespace，可选)：验证器配置。
             _callbacks (dict，可选)：用于保存各种回调函数的字典。
         """
-        import torchvision  # noqa（在此处导入，避免将 torchvision 导入时间计入后处理耗时）
-
         self.args = get_cfg(overrides=args)
         self.dataloader = dataloader
         self.stride = None
@@ -142,7 +140,7 @@ class BaseValidator:
 
     @smart_inference_mode()
     def __call__(self, trainer=None, model=None):
-        """执行验证流程，在数据加载器上运行推理并计算性能指标。
+        """执行验证流程，在数据加载器上运行推理并计算性能指标。.
 
         参数：
             trainer (object，可选)：包含待验证模型的训练器对象。
@@ -316,7 +314,7 @@ class BaseValidator:
     def match_predictions(
         self, pred_classes: torch.Tensor, true_classes: torch.Tensor, iou: torch.Tensor, use_scipy: bool = False
     ) -> torch.Tensor:
-        """使用 IoU 将预测结果与真实目标匹配。
+        """使用 IoU 将预测结果与真实目标匹配。.
 
         参数：
             pred_classes (torch.Tensor)：预测类别索引，形状为 ``(N,)``。
@@ -353,69 +351,69 @@ class BaseValidator:
         return torch.from_numpy(correct)
 
     def add_callback(self, event: str, callback):
-        """将给定回调添加到指定事件。"""
+        """将给定回调添加到指定事件。."""
         self.callbacks[event].append(callback)
 
     def run_callbacks(self, event: str):
-        """运行指定事件对应的所有回调。"""
+        """运行指定事件对应的所有回调。."""
         for callback in self.callbacks.get(event, []):
             callback(self)
 
     def get_dataloader(self, dataset_path, batch_size):
-        """根据数据集路径和批次大小获取数据加载器。"""
+        """根据数据集路径和批次大小获取数据加载器。."""
         raise NotImplementedError("get_dataloader function not implemented for this validator")
 
     def build_dataset(self, img_path):
-        """根据图像路径构建数据集。"""
+        """根据图像路径构建数据集。."""
         raise NotImplementedError("build_dataset function not implemented in validator")
 
     def preprocess(self, batch):
-        """预处理输入批次。"""
+        """预处理输入批次。."""
         return batch
 
     def postprocess(self, preds):
-        """对预测结果执行后处理。"""
+        """对预测结果执行后处理。."""
         return preds
 
     def init_metrics(self, model):
-        """初始化 YOLO 模型的性能指标。"""
+        """初始化 YOLO 模型的性能指标。."""
 
     def update_metrics(self, preds, batch):
-        """根据预测结果和批次更新指标。"""
+        """根据预测结果和批次更新指标。."""
 
     def finalize_metrics(self):
-        """完成指标计算并返回所有指标。"""
+        """完成指标计算并返回所有指标。."""
 
     def get_stats(self):
-        """返回模型的性能统计信息。"""
+        """返回模型的性能统计信息。."""
         return {}
 
     def gather_stats(self):
-        """在 DDP 训练期间将所有 GPU 的统计信息汇总到 GPU 0。"""
+        """在 DDP 训练期间将所有 GPU 的统计信息汇总到 GPU 0。."""
 
     def print_results(self):
-        """输出模型的预测结果。"""
+        """输出模型的预测结果。."""
 
     def get_desc(self):
-        """获取 YOLO 模型的描述信息。"""
+        """获取 YOLO 模型的描述信息。."""
 
     @property
     def metric_keys(self):
-        """返回 YOLO 训练和验证使用的指标键。"""
+        """返回 YOLO 训练和验证使用的指标键。."""
         return []
 
     def on_plot(self, name, data=None):
-        """根据唯一路径注册用于可视化和日志记录的图像。"""
+        """根据唯一路径注册用于可视化和日志记录的图像。."""
         self.plots[Path(name)] = {"data": data, "timestamp": time.time()}
 
     def plot_val_samples(self, batch, ni):
-        """绘制验证期间的样本。"""
+        """绘制验证期间的样本。."""
 
     def plot_predictions(self, batch, preds, ni):
-        """在批次图像上绘制 YOLO 模型的预测结果。"""
+        """在批次图像上绘制 YOLO 模型的预测结果。."""
 
     def pred_to_json(self, preds, batch):
-        """将预测结果转换为 JSON 格式。"""
+        """将预测结果转换为 JSON 格式。."""
 
     def eval_json(self, stats):
-        """评估 JSON 格式的预测统计信息并返回结果。"""
+        """评估 JSON 格式的预测统计信息并返回结果。."""
