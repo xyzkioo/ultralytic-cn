@@ -562,7 +562,7 @@ class Tuner:
                 best_save_dirs = current_best_save_dirs
             elif cleanup:
                 for s in save_dir:
-                            shutil.rmtree(s, ignore_errors=True)  # 删除迭代目录，以减少存储空间占用
+                    shutil.rmtree(s, ignore_errors=True)  # 删除迭代目录，以减少存储空间占用
                 best_save_dirs = current_best_save_dirs
 
             # 绘制调优结果

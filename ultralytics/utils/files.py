@@ -132,7 +132,7 @@ def increment_path(path: str | Path, exist_ok: bool = False, sep: str = "-", mkd
         ...     results = Path(tmp) / "results.txt"
         ...     results.touch()
         ...     increment_path(results).name
-            'results-2.txt'
+        'results-2.txt'
     """
     path = Path(path)  # 与操作系统无关
     if path.exists() and not exist_ok:

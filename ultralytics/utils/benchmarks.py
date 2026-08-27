@@ -107,8 +107,8 @@ def benchmark(
     device = select_device(device, verbose=False)
     if isinstance(model, (str, Path)):
         model = YOLO(model)
-        data = data or TASK2DATA[model.task]  # 任务对应的数据集，例如 task=detect 时为 coco8.yaml
-        key = TASK2METRIC[model.task]  # 任务对应的指标，例如 task=detect 时为 指标/mAP50-95(B)
+    data = data or TASK2DATA[model.task]  # 任务对应的数据集，例如 task=detect 时为 coco8.yaml
+    key = TASK2METRIC[model.task]  # 任务对应的指标，例如 task=detect 时为 metrics/mAP50-95(B)
 
     y = []
     t0 = time.time()

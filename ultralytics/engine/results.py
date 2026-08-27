@@ -1202,7 +1202,7 @@ class Keypoints(BaseTensor):
         >>> import torch
         >>> from ultralytics.engine.results import Keypoints
         >>> keypoints_data = torch.rand(1, 17, 3)  # 1 detection, 17 keypoints, (x, y, conf)
-            >>> orig_shape = (480, 640)  # 原始图像形状（高度、宽度）
+        >>> orig_shape = (480, 640)  # 原始图像形状（高度、宽度）
         >>> keypoints = Keypoints(keypoints_data, orig_shape)
         >>> print(keypoints.xy.shape)  # 访问 xy 坐标
         >>> print(keypoints.conf)  # Access confidence values

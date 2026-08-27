@@ -720,7 +720,7 @@ def empty_like(x):
     return torch.empty_like(x, dtype=x.dtype) if isinstance(x, torch.Tensor) else np.empty_like(x, dtype=x.dtype)
 
 
-    _assignment_solver = None  # 首次调用时确定：优先使用已安装的 SciPy 求解器，否则使用 NumPy 回退实现
+_assignment_solver = None  # 首次调用时确定：优先使用已安装的 SciPy 求解器，否则使用 NumPy 回退实现
 
 
 def linear_sum_assignment(cost_matrix):

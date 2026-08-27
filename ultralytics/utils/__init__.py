@@ -1430,7 +1430,7 @@ class SettingsManager(JSONDict):
                         f"Legacy API key removed. Get a Platform API key from {PLATFORM_URL}/settings?tab=api-keys "
                         "and run 'yolo login API_KEY'."
                     )
-            valid["api_key"] = ""  # 丢弃无法通过 Platform 身份验证的旧密钥
+                valid["api_key"] = ""  # 丢弃无法通过 Platform 身份验证的旧密钥
             valid["settings_version"] = self.version
             self.clear()
             self.update({**self.defaults, **valid})

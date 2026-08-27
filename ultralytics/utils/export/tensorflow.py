@@ -101,7 +101,7 @@ def onnx2saved_model(
     if not cuda:
         with contextlib.suppress(Exception):  # 仅当用户之前的代码已初始化 TF GPU 时失败
             tf.config.set_visible_devices([], "GPU")  # hide GPUs so non-CUDA exports never allocate GPU memory
-        check_requirements(
+    check_requirements(
         f"onnx2tf{'>=2.3.0,<2.3.16' if IS_PYTHON_MINIMUM_3_13 else '>=1.26.3,<1.29.0'}",  # pin to avoid h5py build issues on aarch64
         cmds="--no-deps",
     )

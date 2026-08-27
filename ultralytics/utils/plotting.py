@@ -108,8 +108,8 @@ class Colors:
     示例：
         >>> from ultralytics.utils.plotting import Colors
         >>> colors = Colors()
-            >>> colors(5, True)  # 返回 BGR 格式：(221, 111, 255)
-            >>> colors(5, False)  # 返回 RGB 格式：(255, 111, 221)
+        >>> colors(5, True)  # 返回 BGR 格式：(221, 111, 255)
+        >>> colors(5, False)  # 返回 RGB 格式：(255, 111, 221)
     """
 
     def __init__(self):
@@ -330,7 +330,7 @@ class Annotator:
             )
             self.im = im if input_is_tensor or im.flags.writeable else im.copy()
             self.tf = max(self.lw - 1, 1)  # font thickness
-        self.sf = self.lw / 3  # 字体缩放比例
+            self.sf = self.lw / 3  # 字体缩放比例
         # Pose
         self.skeleton = [
             [16, 14],
@@ -1349,7 +1349,7 @@ def class_activation_map(
             s = raw[1][-1].transpose(1, 2)  # 最后一个解码器层，形状为 (B, nc, queries)
         else:  # Classify (B, nc), SemanticSegment (B, nc, h, w), Depth (B, 1, h, w)
             s = raw
-    scores.append(s.reshape(*s.shape[:2], -1))  # 类别 logits，（B，nc，预测结果）
+        scores.append(s.reshape(*s.shape[:2], -1))  # 类别 logits，形状为 (B, nc, predictions)
 
     head = model.model.model[-1]  # AutoBackend -> PyTorch 模型 -> 检测头
     head.shape = head.shapes = None  # 重建锚框缓存，其中的推理张量会破坏自动求导图

@@ -152,7 +152,7 @@ def test_select_device(monkeypatch):
         assert str(torch_utils.select_device("1", verbose=False)) == "cuda:1"
         with pytest.raises(ValueError):
             torch_utils.select_device("3", verbose=False)
-    assert os.environ.get("CUDA_VISIBLE_DEVICES") is None  # 从未写入 CUDA_VISIBLE_DEVICES
+        assert os.environ.get("CUDA_VISIBLE_DEVICES") is None  # 从未写入 CUDA_VISIBLE_DEVICES
     assert set_calls == [1, 1]  # 显式单 GPU 请求会为无索引的 'cuda' 操作设置默认设备
     assert str(torch_utils.select_device("0,1", verbose=False)) == "cuda:0"
     assert set_calls == [1, 1]  # 多 GPU 请求绝不移动当前设备；DDP rank 会在 _setup_ddp 中绑定各自设备
