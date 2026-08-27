@@ -17,7 +17,7 @@ from ultralytics.utils import YAML
 
 
 class _QuietHandler(SimpleHTTPRequestHandler):
-    """提供转换器测试夹具，且不将请求写入测试日志。"""
+    """提供转换器测试夹具，且不将请求写入测试日志。."""
 
     def log_message(self, _format, *args):
         pass
@@ -54,7 +54,7 @@ def _write_manifest(path, base_url, *, missing_depth=False, depth_scale=None):
 
 @pytest.fixture
 def depth_server(tmp_path):
-    """通过 HTTP 提供成对的图像和深度测试夹具。"""
+    """通过 HTTP 提供成对的图像和深度测试夹具。."""
     source = tmp_path / "source"
     source.mkdir()
     depth = np.arange(12, dtype=np.float32).reshape(3, 4)
@@ -74,7 +74,7 @@ def depth_server(tmp_path):
 
 
 def test_convert_depth_ndjson_downloads_image_target_pairs(tmp_path, depth_server):
-    """使用匹配的索引文件名和默认比例，将深度目标下载到图像旁边。"""
+    """使用匹配的索引文件名和默认比例，将深度目标下载到图像旁边。."""
     base_url, depth = depth_server
     manifest = tmp_path / "depth.ndjson"
     _write_manifest(manifest, base_url)
@@ -95,7 +95,7 @@ def test_convert_depth_ndjson_downloads_image_target_pairs(tmp_path, depth_serve
 
 
 def test_convert_depth_ndjson_preserves_scale(tmp_path, depth_server):
-    """将数据集级 PNG 比例复制到生成的训练 YAML 中。"""
+    """将数据集级 PNG 比例复制到生成的训练 YAML 中。."""
     base_url, _ = depth_server
     manifest = tmp_path / "depth.ndjson"
     _write_manifest(manifest, base_url, depth_scale=256)
@@ -106,7 +106,7 @@ def test_convert_depth_ndjson_preserves_scale(tmp_path, depth_server):
 
 
 def test_convert_depth_ndjson_reuses_existing_conversion(tmp_path, depth_server, monkeypatch):
-    """复用完整的深度转换结果，并在完成标记失效时重新转换。"""
+    """复用完整的深度转换结果，并在完成标记失效时重新转换。."""
     base_url, _ = depth_server
     manifest = tmp_path / "depth.ndjson"
     _write_manifest(manifest, base_url)
@@ -126,7 +126,7 @@ def test_convert_depth_ndjson_reuses_existing_conversion(tmp_path, depth_server,
 
 
 def test_convert_depth_ndjson_removes_incomplete_pair(tmp_path, depth_server):
-    """深度目标下载失败时，使深度转换失败且不留下对应的图像文件。"""
+    """深度目标下载失败时，使深度转换失败且不留下对应的图像文件。."""
     base_url, _ = depth_server
     manifest = tmp_path / "incomplete.ndjson"
     _write_manifest(manifest, base_url, missing_depth=True)
@@ -141,7 +141,7 @@ def test_convert_depth_ndjson_removes_incomplete_pair(tmp_path, depth_server):
 
 
 def test_convert_depth_ndjson_rejects_missing_url(tmp_path):
-    """在发起下载前拒绝缺失的深度 URL。"""
+    """在发起下载前拒绝缺失的深度 URL。."""
     manifest = tmp_path / "invalid.ndjson"
     records = [
         {"type": "dataset", "task": "depth"},
@@ -160,7 +160,7 @@ def test_convert_depth_ndjson_rejects_missing_url(tmp_path):
 
 
 def test_convert_ndjson_preserves_non_depth_auto_split(tmp_path, depth_server):
-    """保持非深度任务现有的确定性自动划分行为。"""
+    """保持非深度任务现有的确定性自动划分行为。."""
     base_url, _ = depth_server
     records = [
         {"type": "dataset", "task": "detect", "class_names": {"0": "object"}},

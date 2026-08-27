@@ -1,12 +1,12 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
-"""激活函数模块。"""
+"""激活函数模块。."""
 
 import torch
 from torch import nn
 
 
 class AGLU(nn.Module):
-    """AGLU 统一激活函数模块。
+    """AGLU 统一激活函数模块。.
 
     此类基于 AGLU（自适应门控线性单元）方法，实现了一个带可学习参数的激活函数。
 
@@ -31,14 +31,14 @@ class AGLU(nn.Module):
     """
 
     def __init__(self, device=None, dtype=None) -> None:
-        """使用可学习参数初始化统一激活函数。"""
+        """使用可学习参数初始化统一激活函数。."""
         super().__init__()
         self.act = nn.Softplus(beta=-1.0)
         self.lambd = nn.Parameter(nn.init.uniform_(torch.empty(1, device=device, dtype=dtype)))  # lambda 参数
         self.kappa = nn.Parameter(nn.init.uniform_(torch.empty(1, device=device, dtype=dtype)))  # kappa 参数
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """应用自适应门控线性单元（AGLU）激活函数。
+        """应用自适应门控线性单元（AGLU）激活函数。.
 
         此前向方法使用可学习的 lambda 和 kappa 参数实现 AGLU 激活函数，通过变换自适应地组合线性和非线性
         分量。

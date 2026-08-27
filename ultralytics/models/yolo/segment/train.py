@@ -11,7 +11,7 @@ from ultralytics.utils import DEFAULT_CFG, RANK
 
 
 class SegmentationTrainer(yolo.detect.DetectionTrainer):
-    """继承 DetectionTrainer、用于训练分割模型的训练器类。
+    """继承 DetectionTrainer、用于训练分割模型的训练器类。.
 
     此训练器专门处理分割任务，在检测训练器基础上扩展模型初始化、验证和可视化等分割专用功能。
 
@@ -39,7 +39,7 @@ class SegmentationTrainer(yolo.detect.DetectionTrainer):
         super().__init__(cfg, overrides, _callbacks)
 
     def get_model(self, cfg: dict | str | None = None, weights: str | Path | None = None, verbose: bool = True):
-        """使用指定配置和权重初始化并返回 SegmentationModel。
+        """使用指定配置和权重初始化并返回 SegmentationModel。.
 
         参数：
             cfg (dict | str, 可选): Model 配置. Can be a 字典, a 路径 to a YAML 文件, or None.
@@ -63,7 +63,7 @@ class SegmentationTrainer(yolo.detect.DetectionTrainer):
         return model
 
     def get_validator(self):
-        """返回用于验证 YOLO 模型的 SegmentationValidator 实例。"""
+        """返回用于验证 YOLO 模型的 SegmentationValidator 实例。."""
         return yolo.segment.SegmentationValidator(
             self.test_loader, save_dir=self.save_dir, args=copy(self.args), _callbacks=self.callbacks
         )

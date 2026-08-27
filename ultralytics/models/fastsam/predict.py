@@ -15,11 +15,9 @@ from .utils import adjust_bboxes_to_image_border
 
 
 class FastSAMPredictor(SegmentationPredictor):
-    """专用于快速 SAM（Segment Anything Model）分割预测任务的 FastSAMPredictor。
+    """专用于快速 SAM（Segment Anything Model）分割预测任务的 FastSAMPredictor。.
 
-    此类继承 SegmentationPredictor，针对快速 SAM 定制预测流程。
-    它调整后处理步骤以加入掩码预测和非极大值抑制，同时进行性能优化。
-    针对单类别分割任务进行了优化。
+    此类继承 SegmentationPredictor，针对快速 SAM 定制预测流程。 它调整后处理步骤以加入掩码预测和非极大值抑制，同时进行性能优化。 针对单类别分割任务进行了优化。
 
     属性：
         prompts (dict): 包含分割提示信息的字典（边界框、点、标签和文本）。
@@ -33,7 +31,7 @@ class FastSAMPredictor(SegmentationPredictor):
     """
 
     def __init__(self, cfg=DEFAULT_CFG, overrides=None, _callbacks: dict | None = None):
-        """使用配置和回调初始化 FastSAMPredictor。
+        """使用配置和回调初始化 FastSAMPredictor。.
 
         此方法初始化专用于 Fast SAM（Segment Anything Model）分割任务的预测器。
         预测器继承 SegmentationPredictor，并为掩码预测和非极大值抑制提供自定义后处理。
@@ -48,7 +46,7 @@ class FastSAMPredictor(SegmentationPredictor):
         self.prompts = {}
 
     def postprocess(self, preds, img, orig_imgs):
-        """对 FastSAM 预测结果应用后处理，并处理提示。
+        """对 FastSAM 预测结果应用后处理，并处理提示。.
 
         参数：
             preds (列表[torch.Tensor]): 模型输出的原始预测结果。
@@ -75,7 +73,7 @@ class FastSAMPredictor(SegmentationPredictor):
         return self.prompt(results, bboxes=bboxes, points=points, labels=labels, texts=texts)
 
     def prompt(self, results, bboxes=None, points=None, labels=None, texts=None):
-        """根据边界框、点和文本提示等线索执行图像分割推理。
+        """根据边界框、点和文本提示等线索执行图像分割推理。.
 
         参数：
             results (Results | 列表[Results]): FastSAM 模型在未应用任何提示时生成的原始推理结果。
@@ -151,7 +149,7 @@ class FastSAMPredictor(SegmentationPredictor):
         return prompt_results
 
     def _clip_inference(self, images, texts):
-        """执行 CLIP 推理，计算图像与文本提示之间的相似度。
+        """执行 CLIP 推理，计算图像与文本提示之间的相似度。.
 
         参数：
             images (列表[PIL.Image]): 源图像列表，每个元素应为 RGB 通道顺序的 PIL.Image 对象。
@@ -170,5 +168,5 @@ class FastSAMPredictor(SegmentationPredictor):
         return text_features @ image_features.T  # (M, N)
 
     def set_prompts(self, prompts):
-        """设置推理期间使用的提示。"""
+        """设置推理期间使用的提示。."""
         self.prompts = prompts

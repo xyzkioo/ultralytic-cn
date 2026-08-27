@@ -1,5 +1,5 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
-"""在 PyTorch 中估算 YOLO 最佳批量大小的函数，使其使用可用 GPU 内存的一定比例。"""
+"""在 PyTorch 中估算 YOLO 最佳批量大小的函数，使其使用可用 GPU 内存的一定比例。."""
 
 from __future__ import annotations
 
@@ -20,7 +20,7 @@ def check_train_batch_size(
     max_num_obj: int = 1,
     dataset_size: int = 0,
 ) -> int:
-    """使用 autobatch() 函数计算 YOLO 训练的最佳批量大小。
+    """使用 autobatch() 函数计算 YOLO 训练的最佳批量大小。.
 
     参数：
         model (torch.nn.Module): 用于检查批量大小的 YOLO 模型。
@@ -58,7 +58,7 @@ def autobatch(
     max_num_obj: int = 1,
     dataset_size: int = 0,
 ) -> int:
-    """自动估算 YOLO 的最佳批量大小，使其使用可用 GPU 内存的一定比例。
+    """自动估算 YOLO 的最佳批量大小，使其使用可用 GPU 内存的一定比例。.
 
     参数：
         model (torch.nn.Module): 用于计算批量大小的 YOLO 模型。

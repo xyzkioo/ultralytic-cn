@@ -15,14 +15,13 @@ from .base import BaseBackend
 
 
 class CoreMLBackend(BaseBackend):
-    """用于 Apple 硬件的 CoreML 推理后端。
+    """用于 Apple 硬件的 CoreML 推理后端。.
 
-    使用 coremltools 库加载并执行 CoreML 模型（.mlpackage 文件）推理。
-    支持静态和动态输入形状，并处理包含 NMS 的模型输出。
+    使用 coremltools 库加载并执行 CoreML 模型（.mlpackage 文件）推理。 支持静态和动态输入形状，并处理包含 NMS 的模型输出。
     """
 
     def load_model(self, weight: str | Path) -> None:
-        """从 .mlpackage 文件加载 CoreML 模型。
+        """从 .mlpackage 文件加载 CoreML 模型。.
 
         参数：
             weight (str | Path): .mlpackage 模型文件的路径。
@@ -48,7 +47,7 @@ class CoreMLBackend(BaseBackend):
         self.apply_metadata(meta)
 
     def forward(self, im: torch.Tensor) -> np.ndarray | list[np.ndarray]:
-        """执行 CoreML 推理，并自动处理输入格式。
+        """执行 CoreML 推理，并自动处理输入格式。.
 
         参数：
             im (torch.Tensor): 输入图像张量，格式为 BHWC（由 AutoBackend 从 BCHW 转换而来）。

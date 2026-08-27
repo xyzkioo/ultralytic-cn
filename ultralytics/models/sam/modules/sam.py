@@ -23,7 +23,7 @@ NO_OBJ_SCORE = -1024.0
 
 
 class SAMModel(nn.Module):
-    """用于目标分割任务的 Segment Anything Model（SAM）。
+    """用于目标分割任务的 Segment Anything Model（SAM）。.
 
     此类结合图像编码器、提示编码器和掩码解码器，根据图像和输入提示预测对象掩码。
 
@@ -59,7 +59,7 @@ class SAMModel(nn.Module):
         pixel_mean: list[float] = (123.675, 116.28, 103.53),
         pixel_std: list[float] = (58.395, 57.12, 57.375),
     ) -> None:
-        """初始化 SAMModel 类，根据图像和输入提示预测对象掩码。
+        """初始化 SAMModel 类，根据图像和输入提示预测对象掩码。.
 
         参数：
             image_encoder (ImageEncoderViT): 将图像编码为图像嵌入的 backbone。
@@ -79,7 +79,7 @@ class SAMModel(nn.Module):
         self.register_buffer("pixel_std", torch.Tensor(pixel_std).view(-1, 1, 1), False)
 
     def set_imgsz(self, imgsz):
-        """设置图像尺寸，使模型兼容不同大小的图像。"""
+        """设置图像尺寸，使模型兼容不同大小的图像。."""
         if hasattr(self.image_encoder, "set_imgsz"):
             self.image_encoder.set_imgsz(imgsz)
         self.prompt_encoder.input_image_size = imgsz
@@ -88,7 +88,7 @@ class SAMModel(nn.Module):
 
 
 class SAM2Model(torch.nn.Module):
-    """具有基于内存的视频对象分割能力的 Segment Anything Model 2（SAM2Model）。
+    """具有基于内存的视频对象分割能力的 Segment Anything Model 2（SAM2Model）。.
 
     此类扩展 SAM 的功能以处理视频序列，并引入内存机制保持时间一致性、高效跟踪跨帧对象。
 
@@ -189,7 +189,7 @@ class SAM2Model(torch.nn.Module):
         sam_mask_decoder_extra_args=None,
         compile_image_encoder: bool = False,
     ):
-        """初始化用于基于内存跟踪的视频对象分割 SAM2Model。
+        """初始化用于基于内存跟踪的视频对象分割 SAM2Model。.
 
         参数：
             image_encoder (nn.Module): 用于提取图像特征的视觉编码器。
@@ -324,18 +324,18 @@ class SAM2Model(torch.nn.Module):
 
     @property
     def device(self):
-        """返回存储模型参数的设备。"""
+        """返回存储模型参数的设备。."""
         return next(self.parameters()).device
 
     def forward(self, *args, **kwargs):
-        """处理图像和提示输入，在视频序列中生成对象掩码和分数。"""
+        """处理图像和提示输入，在视频序列中生成对象掩码和分数。."""
         raise NotImplementedError(
             "Please use the corresponding methods in SAM2VideoPredictor for inference."
             "See notebooks/video_predictor_example.ipynb for an example."
         )
 
     def _build_sam_heads(self):
-        """构建用于图像分割任务的 SAM 风格提示编码器和掩码解码器。"""
+        """构建用于图像分割任务的 SAM 风格提示编码器和掩码解码器。."""
         self.sam_prompt_embed_dim = self.hidden_dim
         self.sam_image_embedding_size = self.image_size // self.backbone_stride
 
@@ -389,7 +389,7 @@ class SAM2Model(torch.nn.Module):
         high_res_features=None,
         multimask_output=False,
     ):
-        """通过 SAM 提示编码器和掩码头执行前向传播。
+        """通过 SAM 提示编码器和掩码头执行前向传播。.
 
         此方法处理图像特征和可选的点/掩码输入，以生成对象掩码和分数。
 
@@ -526,7 +526,7 @@ class SAM2Model(torch.nn.Module):
         )
 
     def _use_mask_as_output(self, mask_inputs, backbone_features=None, high_res_features=None):
-        """将掩码输入直接作为输出，跳过 SAM 编码器和解码器。"""
+        """将掩码输入直接作为输出，跳过 SAM 编码器和解码器。."""
         # 对负/正像素使用 -10/+10 作为 logits（经过 sigmoid 后的概率非常接近 0/1）。
         out_scale, out_bias = 20.0, -10.0  # sigmoid(-10.0)=4.5398e-05
         mask_inputs_float = mask_inputs.float()
@@ -572,7 +572,7 @@ class SAM2Model(torch.nn.Module):
         )
 
     def forward_image(self, img_batch: torch.Tensor):
-        """通过编码器处理图像批次，为 SAM 模型提取多层特征。"""
+        """通过编码器处理图像批次，为 SAM 模型提取多层特征。."""
         backbone_out = self.image_encoder(img_batch)
         if self.use_high_res_features_in_sam:
             # 预先计算 SAM 解码器中的第 0、1 层投影特征，
@@ -582,7 +582,7 @@ class SAM2Model(torch.nn.Module):
         return backbone_out
 
     def _prepare_backbone_features(self, backbone_out, batch=1):
-        """准备并展平图像 backbone 的视觉特征输出，以便进一步处理。"""
+        """准备并展平图像 backbone 的视觉特征输出，以便进一步处理。."""
         if batch > 1:  # 存在多个提示时扩展特征
             backbone_out = {
                 **backbone_out,
@@ -612,7 +612,7 @@ class SAM2Model(torch.nn.Module):
         num_frames,
         track_in_reverse=False,  # 按反向时间顺序跟踪（用于演示）
     ):
-        """将当前帧视觉特征与历史内存融合，准备经过内存条件化的特征。"""
+        """将当前帧视觉特征与历史内存融合，准备经过内存条件化的特征。."""
         B = current_vision_feats[-1].size(1)  # 当前帧的批次大小
         C = self.hidden_dim
         H, W = feat_sizes[-1]  # top-level (lowest-resolution) 特征 尺寸
@@ -772,7 +772,7 @@ class SAM2Model(torch.nn.Module):
         object_score_logits,
         is_mask_from_pts,
     ):
-        """将帧特征和掩码编码为视频分割使用的新内存表示。"""
+        """将帧特征和掩码编码为视频分割使用的新内存表示。."""
         B = current_vision_feats[-1].size(1)  # 当前帧的批次大小
         C = self.hidden_dim
         H, W = feat_sizes[-1]  # top-level (lowest-resolution) 特征 尺寸
@@ -820,7 +820,7 @@ class SAM2Model(torch.nn.Module):
         track_in_reverse,
         prev_sam_mask_logits,
     ):
-        """根据当前帧输入执行单步跟踪，更新对象掩码和内存特征。"""
+        """根据当前帧输入执行单步跟踪，更新对象掩码和内存特征。."""
         # SAM 头使用的高分辨率特征图，重塑 (HW)BC => BCHW
         if len(current_vision_feats) > 1:
             high_res_features = [
@@ -874,7 +874,7 @@ class SAM2Model(torch.nn.Module):
         object_score_logits,
         current_out,
     ):
-        """对预测掩码运行内存编码器，将其编码为供未来帧使用的新内存特征。"""
+        """对预测掩码运行内存编码器，将其编码为供未来帧使用的新内存特征。."""
         if run_mem_encoder and self.num_maskmem > 0:
             maskmem_features, maskmem_pos_enc = self._encode_new_memory(
                 current_vision_feats=current_vision_feats,
@@ -908,7 +908,7 @@ class SAM2Model(torch.nn.Module):
         # 之前预测的 SAM 掩码 logits（演示中可与新点击一起输入）。
         prev_sam_mask_logits=None,
     ):
-        """执行单步跟踪，根据当前帧输入更新目标掩码和记忆特征。"""
+        """执行单步跟踪，根据当前帧输入更新目标掩码和记忆特征。."""
         sam_outputs, _, _ = self._track_step(
             frame_idx,
             is_init_cond_frame,
@@ -948,7 +948,7 @@ class SAM2Model(torch.nn.Module):
         return current_out
 
     def _use_multimask(self, is_init_cond_frame, point_inputs):
-        """根据配置和输入确定 SAM 头是否使用多掩码输出。"""
+        """根据配置和输入确定 SAM 头是否使用多掩码输出。."""
         num_pts = 0 if point_inputs is None else point_inputs["point_labels"].size(1)
         return (
             self.multimask_output_in_sam
@@ -958,7 +958,7 @@ class SAM2Model(torch.nn.Module):
 
     @staticmethod
     def _apply_non_overlapping_constraints(pred_masks):
-        """对掩码应用非重叠约束，在每个位置保留分数最高的对象。"""
+        """对掩码应用非重叠约束，在每个位置保留分数最高的对象。."""
         batch_size = pred_masks.shape[0]
         if batch_size == 1:
             return pred_masks
@@ -975,11 +975,11 @@ class SAM2Model(torch.nn.Module):
         return pred_masks
 
     def set_binarize(self, binarize=False):
-        """为 VideoPredictor 设置二值化选项。"""
+        """为 VideoPredictor 设置二值化选项。."""
         self.binarize_mask_from_pts_for_mem_enc = binarize
 
     def set_imgsz(self, imgsz):
-        """设置图像尺寸，使模型兼容不同大小的图像。"""
+        """设置图像尺寸，使模型兼容不同大小的图像。."""
         if hasattr(self.image_encoder, "set_imgsz"):
             self.image_encoder.set_imgsz(imgsz)
         self.image_size = imgsz[0]
@@ -994,7 +994,7 @@ class SAM2Model(torch.nn.Module):
 
 
 class SAM3Model(SAM2Model):
-    """具有基于内存的视频对象分割能力的 Segment Anything Model 3（SAM3Model）。"""
+    """具有基于内存的视频对象分割能力的 Segment Anything Model 3（SAM3Model）。."""
 
     def __init__(
         self,
@@ -1034,7 +1034,7 @@ class SAM3Model(SAM2Model):
         sam_mask_decoder_extra_args=None,
         compile_image_encoder: bool = False,
     ):
-        """初始化具有基于内存的视频对象分割能力的 SAM3Model。"""
+        """初始化具有基于内存的视频对象分割能力的 SAM3Model。."""
         super().__init__(
             image_encoder,
             memory_attention,
@@ -1092,7 +1092,7 @@ class SAM3Model(SAM2Model):
         )
 
     def forward_image(self, img_batch: torch.Tensor):
-        """通过编码器处理图像批次，为 SAM 模型提取多层特征。"""
+        """通过编码器处理图像批次，为 SAM 模型提取多层特征。."""
         backbone_out = self.image_encoder.forward_image_sam2(img_batch)
         if self.use_high_res_features_in_sam:
             # 预先在 SAM 解码器中计算第 0、1 层投影特征，
@@ -1102,13 +1102,13 @@ class SAM3Model(SAM2Model):
         return backbone_out
 
     def set_imgsz(self, imgsz: tuple[int, int]):
-        """设置模型和掩码下采样器的图像尺寸。"""
+        """设置模型和掩码下采样器的图像尺寸。."""
         super().set_imgsz(imgsz)
         self.memory_encoder.mask_downsampler.interpol_size = [size // 14 * 16 for size in imgsz]
 
     @staticmethod
     def _suppress_shrinked_masks(pred_masks, new_pred_masks, shrink_threshold=0.3):
-        """抑制应用逐像素非重叠约束后面积缩小的掩码。"""
+        """抑制应用逐像素非重叠约束后面积缩小的掩码。."""
         area_before = (pred_masks > 0).sum(dim=(-1, -2))
         area_after = (new_pred_masks > 0).sum(dim=(-1, -2))
         area_before = torch.clamp(area_before, min=1.0)
@@ -1119,7 +1119,7 @@ class SAM3Model(SAM2Model):
         return pred_masks_after
 
     def _suppress_object_pw_area_shrinkage(self, pred_masks):
-        """抑制应用逐像素非重叠约束后面积缩小的掩码。
+        """抑制应用逐像素非重叠约束后面积缩小的掩码。.
 
         注意，最终输出仍可能存在重叠。
         """

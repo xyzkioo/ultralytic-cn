@@ -14,7 +14,7 @@ from ultralytics.utils.checks import check_imshow
 
 
 class ParkingPtsSelection:
-    """使用基于 Tkinter 的界面在图像上选择和管理停车区域点的类。
+    """使用基于 Tkinter 的界面在图像上选择和管理停车区域点的类。.
 
     此类用于上传图像、选择停车区域的顶点，并将所选顶点保存到 JSON 文件。它使用 Tkinter 构建图形用户界面。
 
@@ -48,7 +48,7 @@ class ParkingPtsSelection:
     """
 
     def __init__(self) -> None:
-        """初始化 ParkingPtsSelection 类，并设置停车区域点选择所需的界面和属性。"""
+        """初始化 ParkingPtsSelection 类，并设置停车区域点选择所需的界面和属性。."""
         try:  # 检查是否安装了 tkinter
             import tkinter as tk
             from tkinter import filedialog, messagebox
@@ -100,14 +100,14 @@ class ParkingPtsSelection:
         self.master.mainloop()
 
     def initialize_properties(self) -> None:
-        """初始化图像、画布、边界框和尺寸等属性。"""
+        """初始化图像、画布、边界框和尺寸等属性。."""
         self.image = self.canvas_image = None
         self.rg_data, self.current_box = [], []
         self.imgw = self.imgh = 0
         self.canvas_max_width, self.canvas_max_height = 1280, 720
 
     def upload_image(self) -> None:
-        """将图像上传并显示到画布上，并调整大小以适应指定尺寸。"""
+        """将图像上传并显示到画布上，并调整大小以适应指定尺寸。."""
         from PIL import Image, ImageTk  # 局部导入，因为 ImageTk 需要 tkinter 包
 
         file = self.filedialog.askopenfilename(filetypes=[("Image Files", "*.png *.jpg *.jpeg")])
@@ -133,7 +133,7 @@ class ParkingPtsSelection:
         self.rg_data.clear(), self.current_box.clear()
 
     def on_canvas_click(self, event) -> None:
-        """处理鼠标点击，在画布上添加边界框点。"""
+        """处理鼠标点击，在画布上添加边界框点。."""
         self.current_box.append((event.x, event.y))
         self.canvas.create_oval(event.x - 3, event.y - 3, event.x + 3, event.y + 3, fill="red")
         if len(self.current_box) == 4:
@@ -142,12 +142,12 @@ class ParkingPtsSelection:
             self.current_box.clear()
 
     def draw_box(self, box: list[tuple[int, int]]) -> None:
-        """使用给定坐标在画布上绘制边界框。"""
+        """使用给定坐标在画布上绘制边界框。."""
         for i in range(4):
             self.canvas.create_line(box[i], box[(i + 1) % 4], fill="blue", width=2)
 
     def remove_last_bounding_box(self) -> None:
-        """从列表中移除最后一个边界框，并重绘画布。"""
+        """从列表中移除最后一个边界框，并重绘画布。."""
         if not self.rg_data:
             self.messagebox.showwarning("Warning", "No bounding boxes to remove.")
             return
@@ -155,14 +155,14 @@ class ParkingPtsSelection:
         self.redraw_canvas()
 
     def redraw_canvas(self) -> None:
-        """使用图像和所有边界框重绘画布。"""
+        """使用图像和所有边界框重绘画布。."""
         self.canvas.delete("all")
         self.canvas.create_image(0, 0, anchor=self.tk.NW, image=self.canvas_image)
         for box in self.rg_data:
             self.draw_box(box)
 
     def save_to_json(self) -> None:
-        """将所选停车区域点及其缩放后的坐标保存到 JSON 文件。"""
+        """将所选停车区域点及其缩放后的坐标保存到 JSON 文件。."""
         scale_w, scale_h = self.imgw / self.canvas.winfo_width(), self.imgh / self.canvas.winfo_height()
         data = [{"points": [(int(x * scale_w), int(y * scale_h)) for x, y in box]} for box in self.rg_data]
 
@@ -176,7 +176,7 @@ class ParkingPtsSelection:
 
 
 class ParkingManagement(BaseSolution):
-    """使用 YOLO 模型实时监控和可视化停车位占用情况与可用情况。
+    """使用 YOLO 模型实时监控和可视化停车位占用情况与可用情况。.
 
     此类扩展 BaseSolution，提供停车场管理功能，包括检测已占用车位、可视化停车区域以及显示占用统计信息。
 
@@ -199,7 +199,7 @@ class ParkingManagement(BaseSolution):
     """
 
     def __init__(self, **kwargs: Any) -> None:
-        """使用 YOLO 模型和可视化设置初始化停车场管理系统。"""
+        """使用 YOLO 模型和可视化设置初始化停车场管理系统。."""
         super().__init__(**kwargs)
 
         self.json_file = self.CFG["json_file"]  # 加载停车区域 JSON 数据
@@ -217,7 +217,7 @@ class ParkingManagement(BaseSolution):
         self.dc = (255, 0, 189)  # 每个边界框的中心点颜色
 
     def process(self, im0: np.ndarray) -> SolutionResults:
-        """处理输入图像，执行停车场管理和可视化。
+        """处理输入图像，执行停车场管理和可视化。.
 
         此函数分析输入图像、提取跟踪结果，并确定 JSON 文件中定义的停车区域占用状态。
         它会在图像上标注已占用和可用停车位，并更新停车信息。
@@ -256,7 +256,7 @@ class ParkingManagement(BaseSolution):
             if region_occupied:
                 occupied_slots += 1
                 available_slots -= 1
-        # 绘制区域
+            # 绘制区域
             cv2.polylines(
                 im0, [region_polygon], isClosed=True, color=self.occ if region_occupied else self.arc, thickness=2
             )

@@ -72,7 +72,7 @@ Example:
 
 
 class BasePredictor:
-    """用于创建预测器的基类。
+    """用于创建预测器的基类。.
 
     此类为预测功能提供基础，在各种输入来源上负责模型设置、推理和结果处理。
 
@@ -119,7 +119,7 @@ class BasePredictor:
         overrides: dict[str, Any] | None = None,
         _callbacks: dict | None = None,
     ):
-        """初始化 BasePredictor 基类。
+        """初始化 BasePredictor 基类。.
 
         参数：
             cfg (str | Path | dict | SimpleNamespace)：配置文件路径或配置字典。
@@ -157,7 +157,7 @@ class BasePredictor:
         callbacks.add_integration_callbacks(self)
 
     def preprocess(self, im: torch.Tensor | list[np.ndarray]) -> torch.Tensor:
-        """在推理前准备输入图像。
+        """在推理前准备输入图像。.
 
         参数：
             im (torch.Tensor | list[np.ndarray])：输入图像。张量形状为 ``(N, 3, H, W)``，列表形状为 ``[(H, W, 3) x N]``。
@@ -181,7 +181,7 @@ class BasePredictor:
         return im
 
     def inference(self, im: torch.Tensor, *args, **kwargs):
-        """使用指定的模型和参数对给定图像执行推理。"""
+        """使用指定的模型和参数对给定图像执行推理。."""
         skip = self.source_type.tensor or self.args.augment or self.args.embed  # 激活图不支持这些模式
         if self.args.visualize and getattr(self.model, "base_model", True) and not skip:
             return class_activation_map(
@@ -197,7 +197,7 @@ class BasePredictor:
         return self.model(im, *args, augment=self.args.augment, embed=self.args.embed, **kwargs)
 
     def pre_transform(self, im: list[np.ndarray]) -> list[np.ndarray]:
-        """在推理前对输入图像执行预变换。
+        """在推理前对输入图像执行预变换。.
 
         参数：
             im (list[np.ndarray])：图像列表，形状为 ``[(H, W, 3) x N]``。
@@ -216,11 +216,11 @@ class BasePredictor:
         return [letterbox(image=x) for x in im]
 
     def postprocess(self, preds, img, orig_imgs):
-        """对一张图像的预测结果执行后处理并返回结果。"""
+        """对一张图像的预测结果执行后处理并返回结果。."""
         return preds
 
     def __call__(self, source=None, model=None, stream: bool = False, *args, **kwargs):
-        """对图像或数据流执行推理。
+        """对图像或数据流执行推理。.
 
         参数：
             source (str | Path | list[str] | list[Path] | list[np.ndarray] | np.ndarray | torch.Tensor，可选)：
@@ -240,7 +240,7 @@ class BasePredictor:
             return list(self.stream_inference(source, model, *args, **kwargs))  # 将多个 Results 合并为列表
 
     def predict_cli(self, source=None, model=None):
-        """通过命令行接口（CLI）执行预测。
+        """通过命令行接口（CLI）执行预测。.
 
         此函数用于通过 CLI 执行预测。它会设置输入来源和模型，然后以流式方式处理输入。通过消耗生成器而不
         保存结果，此方法可以确保输出不会在内存中累积。
@@ -259,7 +259,7 @@ class BasePredictor:
             pass
 
     def setup_source(self, source, stride: int | None = None):
-        """设置输入来源和推理模式。
+        """设置输入来源和推理模式。.
 
         参数：
             source (str | Path | list[str] | list[Path] | list[np.ndarray] | np.ndarray | torch.Tensor)：用于推理的数据来源。
@@ -288,7 +288,7 @@ class BasePredictor:
 
     @smart_inference_mode()
     def stream_inference(self, source=None, model=None, *args, **kwargs):
-        """对输入来源执行流式推理，并将结果保存到文件。
+        """对输入来源执行流式推理，并将结果保存到文件。.
 
         参数：
             source (str | Path | list[str] | list[Path] | list[np.ndarray] | np.ndarray | torch.Tensor，可选)：
@@ -409,7 +409,7 @@ class BasePredictor:
         self.run_callbacks("on_predict_end")
 
     def setup_model(self, model, verbose: bool = True):
-        """使用给定参数初始化 YOLO 模型，并将其设置为评估模式。
+        """使用给定参数初始化 YOLO 模型，并将其设置为评估模式。.
 
         参数：
             model (str | Path | torch.nn.Module)：要加载或使用的模型。
@@ -449,7 +449,7 @@ class BasePredictor:
         self.model = attempt_compile(self.model, device=self.device, mode=self.args.compile)
 
     def write_results(self, i: int, p: Path, im: torch.Tensor, s: list[str]) -> str:
-        """将推理结果写入文件或目录。
+        """将推理结果写入文件或目录。.
 
         参数：
             i (int)：当前图像在批次中的索引。
@@ -498,7 +498,7 @@ class BasePredictor:
         return string
 
     def save_predicted_images(self, save_path: Path, frame: int = 0):
-        """将视频预测结果保存为 mp4/avi 文件，或将图像保存为 jpg 文件。
+        """将视频预测结果保存为 mp4/avi 文件，或将图像保存为 jpg 文件。.
 
         参数：
             save_path (Path)：结果保存路径。
@@ -531,7 +531,7 @@ class BasePredictor:
             cv2.imwrite(str(save_path.with_suffix(".jpg")), im)  # 保存为 JPG 以获得最佳兼容性
 
     def show(self, p: str = ""):
-        """在窗口中显示图像。"""
+        """在窗口中显示图像。."""
         im = self.plotted_img
         if platform.system() in {"Linux", "Windows"} and p not in self.windows:  # macOS 会自动缩放
             self.windows.append(p)
@@ -549,14 +549,16 @@ class BasePredictor:
             except Exception:
                 cv2.resizeWindow(name, w, h)
         cv2.imshow(p, im)
-        if cv2.waitKey(300 if self.dataset.mode == "image" else 1) & 0xFF == ord("q"):  # 图像等待 300 毫秒，否则等待 1 毫秒
+        if cv2.waitKey(300 if self.dataset.mode == "image" else 1) & 0xFF == ord(
+            "q"
+        ):  # 图像等待 300 毫秒，否则等待 1 毫秒
             raise StopIteration
 
     def run_callbacks(self, event: str):
-        """运行指定事件对应的所有已注册回调。"""
+        """运行指定事件对应的所有已注册回调。."""
         for callback in self.callbacks.get(event, []):
             callback(self)
 
     def add_callback(self, event: str, func: Callable):
-        """为指定事件添加回调函数。"""
+        """为指定事件添加回调函数。."""
         self.callbacks[event].append(func)

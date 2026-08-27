@@ -10,7 +10,7 @@ import torch.nn.functional as F
 
 
 def select_closest_cond_frames(frame_idx: int, cond_frame_outputs: dict[int, Any], max_cond_frame_num: int):
-    """选择距离给定帧索引最近的条件帧。
+    """选择距离给定帧索引最近的条件帧。.
 
     参数：
         frame_idx (int): 当前帧索引。
@@ -62,7 +62,7 @@ def select_closest_cond_frames(frame_idx: int, cond_frame_outputs: dict[int, Any
 
 
 def get_1d_sine_pe(pos_inds: torch.Tensor, dim: int, temperature: float = 10000):
-    """为给定位置和维度生成一维正弦位置嵌入。
+    """为给定位置和维度生成一维正弦位置嵌入。.
 
     参数：
         pos_inds (torch.Tensor): 用于生成嵌入的位置索引。
@@ -88,7 +88,7 @@ def get_1d_sine_pe(pos_inds: torch.Tensor, dim: int, temperature: float = 10000)
 
 
 def init_t_xy(end_x: int, end_y: int, scale: float = 1.0, offset: int = 0):
-    """为指定维度的网格初始化一维和二维坐标张量。
+    """为指定维度的网格初始化一维和二维坐标张量。.
 
     此函数为尺寸为 end_x × end_y 的网格创建坐标张量，生成线性索引张量以及对应的 x、y 坐标张量。
 
@@ -116,7 +116,7 @@ def init_t_xy(end_x: int, end_y: int, scale: float = 1.0, offset: int = 0):
 
 
 def compute_axial_cis(dim: int, end_x: int, end_y: int, theta: float = 10000.0, scale_pos: float = 1.0):
-    """为网格中的二维空间位置计算轴向复指数位置编码。
+    """为网格中的二维空间位置计算轴向复指数位置编码。.
 
     此函数使用 x、y 维度各自的频率分量，为二维空间位置网格生成复指数位置编码。
 
@@ -148,7 +148,7 @@ def compute_axial_cis(dim: int, end_x: int, end_y: int, theta: float = 10000.0, 
 
 
 def reshape_for_broadcast(freqs_cis: torch.Tensor, x: torch.Tensor):
-    """调整频率张量形状，使其可以与输入张量进行广播。
+    """调整频率张量形状，使其可以与输入张量进行广播。.
 
     调整频率张量形状，确保其维度可与输入张量广播。此函数通常用于位置编码操作。
 
@@ -175,7 +175,7 @@ def apply_rotary_enc(
     freqs_cis: torch.Tensor,
     repeat_freqs_k: bool = False,
 ):
-    """对查询和键张量应用旋转位置编码。
+    """对查询和键张量应用旋转位置编码。.
 
     此函数使用复数频率分量对查询和键张量应用旋转位置编码（RoPE）。RoPE 是一种将相对位置信息注入自注意力机制的技术。
 
@@ -217,7 +217,7 @@ def apply_rotary_enc(
 
 
 def window_partition(x: torch.Tensor, window_size: int):
-    """将输入张量划分为不重叠窗口，并在需要时添加填充。
+    """将输入张量划分为不重叠窗口，并在需要时添加填充。.
 
     参数：
         x (torch.Tensor): 输入张量，形状为 (B, H, W, C)。
@@ -247,7 +247,7 @@ def window_partition(x: torch.Tensor, window_size: int):
 
 
 def window_unpartition(windows: torch.Tensor, window_size: int, pad_hw: tuple[int, int], hw: tuple[int, int]):
-    """将窗口序列还原为原始序列，并移除填充。
+    """将窗口序列还原为原始序列，并移除填充。.
 
     此函数反转窗口划分过程，从窗口分段重建原始输入，并移除窗口划分过程中添加的所有填充。
 
@@ -281,7 +281,7 @@ def window_unpartition(windows: torch.Tensor, window_size: int, pad_hw: tuple[in
 
 
 def get_rel_pos(q_size: int, k_size: int, rel_pos: torch.Tensor) -> torch.Tensor:
-    """根据查询和键的尺寸提取相对位置嵌入。
+    """根据查询和键的尺寸提取相对位置嵌入。.
 
     参数：
         q_size (int): 查询尺寸。
@@ -327,7 +327,7 @@ def add_decomposed_rel_pos(
     q_size: tuple[int, int],
     k_size: tuple[int, int],
 ) -> torch.Tensor:
-    """将分解的相对位置嵌入添加到注意力图中。
+    """将分解的相对位置嵌入添加到注意力图中。.
 
     此函数按照 MVITv2 论文中的方法计算并应用分解的相对位置嵌入，通过加入查询位置与键位置之间的空间关系增强注意力机制。
 
@@ -381,8 +381,7 @@ def get_abs_pos(
     retain_cls_token: bool = False,
     tiling: bool = False,
 ) -> torch.Tensor:
-    """计算绝对位置嵌入；必要时调整嵌入尺寸，并移除 cls_token 维度以适配目标尺寸。
-    原始嵌入。
+    """计算绝对位置嵌入；必要时调整嵌入尺寸，并移除 cls_token 维度以适配目标尺寸。 原始嵌入。.
 
     参数：
         abs_pos (torch.Tensor): 绝对位置嵌入，形状为 (1, num_position, C)。
@@ -448,7 +447,7 @@ def concat_rel_pos(
     rescale: bool = False,
     relative_coords: torch.Tensor = None,
 ) -> tuple[torch.Tensor, torch.Tensor]:
-    """将相对位置系数拼接到 q 和 k 张量，使 qk^T 有效包含相对位置偏置。
+    """将相对位置系数拼接到 q 和 k 张量，使 qk^T 有效包含相对位置偏置。.
 
     参数：
         q (torch.Tensor): 查询张量，形状为 (B, L_q, C)。

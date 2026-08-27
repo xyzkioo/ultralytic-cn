@@ -23,7 +23,7 @@ from ultralytics.utils.tal import make_anchors
 
 
 def tf_wrapper(model: torch.nn.Module) -> torch.nn.Module:
-    """用于 TensorFlow 导出兼容性的包装器（TensorFlow 专用处理现在位于 head 模块）。"""
+    """用于 TensorFlow 导出兼容性的包装器（TensorFlow 专用处理现在位于 head 模块）。."""
     for m in model.modules():
         if not isinstance(m, Detect):
             continue
@@ -36,7 +36,7 @@ def tf_wrapper(model: torch.nn.Module) -> torch.nn.Module:
 
 
 def _tf_decode_boxes(self, x: dict[str, torch.Tensor]) -> torch.Tensor:
-    """为 TensorFlow 导出解码边界框。"""
+    """为 TensorFlow 导出解码边界框。."""
     shape = x["feats"][0].shape  # BCHW
     boxes = x["boxes"]
     if self.format != "imx" and (self.dynamic or self.shape != shape):
@@ -50,7 +50,7 @@ def _tf_decode_boxes(self, x: dict[str, torch.Tensor]) -> torch.Tensor:
 
 
 def _tf_kpts_decode(self, kpts: torch.Tensor, is_pose26: bool = False) -> torch.Tensor:
-    """为 TensorFlow 导出解码关键点。"""
+    """为 TensorFlow 导出解码关键点。."""
     ndim = self.kpt_shape[1]
     bs = kpts.shape[0]
     # 预先计算归一化因子，以提高数值稳定性
@@ -73,7 +73,7 @@ def onnx2saved_model(
     cuda: bool = False,
     prefix: str = "",
 ):
-    """使用 onnx2tf 将 ONNX 模型转换为 TensorFlow SavedModel 格式。
+    """使用 onnx2tf 将 ONNX 模型转换为 TensorFlow SavedModel 格式。.
 
     参数：
         onnx_file (str): ONNX 文件路径。
@@ -102,9 +102,9 @@ def onnx2saved_model(
         with contextlib.suppress(Exception):  # 仅当用户之前的代码已初始化 TF GPU 时失败
             tf.config.set_visible_devices([], "GPU")  # hide GPUs so non-CUDA exports never allocate GPU memory
         check_requirements(
-        f"onnx2tf{'>=2.3.0,<2.3.16' if IS_PYTHON_MINIMUM_3_13 else '>=1.26.3,<1.29.0'}",  # pin to avoid h5py build issues on aarch64
-        cmds="--no-deps",
-    )
+            f"onnx2tf{'>=2.3.0,<2.3.16' if IS_PYTHON_MINIMUM_3_13 else '>=1.26.3,<1.29.0'}",  # pin to avoid h5py build issues on aarch64
+            cmds="--no-deps",
+        )
     check_requirements(
         (
             f"tf_keras{'>2.19.0' if IS_PYTHON_MINIMUM_3_13 else '<=2.19.0'}",  # required by 'onnx2tf' package
@@ -153,7 +153,7 @@ def onnx2saved_model(
         import struct
 
         def float32_to_bfloat16(fval):
-            """将 float32 转换为 bfloat16（截断尾数的低 16 位）。"""
+            """将 float32 转换为 bfloat16（截断尾数的低 16 位）。."""
             ival = struct.unpack("=I", struct.pack("=f", fval))[0]
             return ival >> 16
 
@@ -203,7 +203,7 @@ def onnx2saved_model(
 
 
 def keras2pb(keras_model, output_file: Path | str, prefix: str = "") -> str:
-    """将 Keras 模型转换为 TensorFlow GraphDef（.pb）格式。
+    """将 Keras 模型转换为 TensorFlow GraphDef（.pb）格式。.
 
     参数：
         keras_model (keras.Model): 要转换为冻结图格式的 Keras 模型。
@@ -232,7 +232,7 @@ def keras2pb(keras_model, output_file: Path | str, prefix: str = "") -> str:
 
 
 def tflite2edgetpu(tflite_file: str | Path, output_dir: str | Path, prefix: str = "") -> str:
-    """使用 Edge TPU 编译器将 TensorFlow Lite 模型转换为 Edge TPU 格式。
+    """使用 Edge TPU 编译器将 TensorFlow Lite 模型转换为 Edge TPU 格式。.
 
     参数：
         tflite_file (str | Path): 输入 TensorFlow Lite（.tflite）模型文件的路径。
@@ -290,7 +290,7 @@ def tflite2edgetpu(tflite_file: str | Path, output_dir: str | Path, prefix: str 
 
 
 def gd_outputs(gd):
-    """返回 TensorFlow GraphDef 模型的输出节点名称。"""
+    """返回 TensorFlow GraphDef 模型的输出节点名称。."""
     name_list, input_list = [], []
     for node in gd.node:  # tensorflow.core.framework.node_def_pb2.NodeDef
         name_list.append(node.name)

@@ -33,14 +33,14 @@ if CUDA_IS_AVAILABLE:
 
 
 def test_checks():
-    """使用 torch 的 CUDA 函数验证 CUDA 设置。"""
+    """使用 torch 的 CUDA 函数验证 CUDA 设置。."""
     assert torch.cuda.is_available() == CUDA_IS_AVAILABLE
     assert torch.cuda.device_count() == CUDA_DEVICE_COUNT
 
 
 @pytest.mark.skipif(not DEVICES, reason="No CUDA devices available")
 def test_amp():
-    """测试 AMP 训练检查。"""
+    """测试 AMP 训练检查。."""
     model = YOLO("yolo26n.pt").model.to(f"cuda:{DEVICES[0]}")
     assert check_amp(model)
 
@@ -58,7 +58,7 @@ def test_amp():
     ],
 )
 def test_export_onnx_matrix(task, dynamic, batch, simplify, nms):
-    """使用各种配置和参数测试 YOLO 导出为 ONNX 格式。"""
+    """使用各种配置和参数测试 YOLO 导出为 ONNX 格式。."""
     file = YOLO(TASK2MODEL[task]).export(
         format="onnx",
         imgsz=32,
@@ -86,7 +86,7 @@ def test_export_onnx_matrix(task, dynamic, batch, simplify, nms):
     + [("detect", False, 8, 2)],  # exercise TensorRT 7-10 implicit INT8 quantization on GPU CI
 )
 def test_export_engine_matrix(task, dynamic, quantize, batch):
-    """使用各种配置测试 YOLO 模型导出为 TensorRT 格式，并运行推理。"""
+    """使用各种配置测试 YOLO 模型导出为 TensorRT 格式，并运行推理。."""
     check_tensorrt()
     import tensorrt as trt
 
@@ -120,7 +120,7 @@ def test_export_engine_matrix(task, dynamic, quantize, batch):
 @pytest.mark.skipif(not DEVICES, reason="No CUDA devices available")
 @pytest.mark.parametrize("nc", [1, 3])
 def test_semantic_loss_all_ignore_amp(nc):
-    """当 sum() 在大 fp16 logits 上溢出为 inf 时，全 ignore 防护仍必须保持有限值（AMP 走 GPU 路径）。"""
+    """当 sum() 在大 fp16 logits 上溢出为 inf 时，全 ignore 防护仍必须保持有限值（AMP 走 GPU 路径）。."""
     from ultralytics.cfg import get_cfg
     from ultralytics.nn.tasks import SemanticSegmentationModel
     from ultralytics.utils.loss import SemanticSegmentationLoss
@@ -138,7 +138,7 @@ def test_semantic_loss_all_ignore_amp(nc):
 @pytest.mark.skipif(not DEVICES, reason="No CUDA devices available")
 @pytest.mark.skipif(IS_JETSON, reason="Edge devices not intended for training")
 def test_train():
-    """使用可用的 CUDA 设备在最小数据集上测试模型训练。"""
+    """使用可用的 CUDA 设备在最小数据集上测试模型训练。."""
     device = tuple(DEVICES) if len(DEVICES) > 1 else DEVICES[0]
     expected = parse_device(device)  # canonical torch indices, e.g. physical ids translate under external CVD
     visible = os.environ.get("CUDA_VISIBLE_DEVICES")
@@ -156,10 +156,9 @@ def test_train():
 @pytest.mark.skipif(not DEVICES or max(DEVICES) == 0, reason="requires an idle CUDA device with nonzero index")
 @pytest.mark.skipif(IS_JETSON, reason="Edge devices not intended for training")
 def test_train_cold_process_nonzero_device():
-    """在 CUDA 冷启动状态下的新进程中使用非零 GPU 索引训练，复现真实 CLI 使用场景。
+    """在 CUDA 冷启动状态下的新进程中使用非零 GPU 索引训练，复现真实 CLI 使用场景。.
 
-    已预热的 pytest 进程已经初始化 CUDA，因此只有不设置 CUDA_VISIBLE_DEVICES 的子进程，才能复现生产
-    Pod（例如 Ultralytics Platform）中的冷启动设备选择。
+    已预热的 pytest 进程已经初始化 CUDA，因此只有不设置 CUDA_VISIBLE_DEVICES 的子进程，才能复现生产 Pod（例如 Ultralytics Platform）中的冷启动设备选择。
     """
     import subprocess
 
@@ -171,7 +170,7 @@ def test_train_cold_process_nonzero_device():
 @pytest.mark.slow
 @pytest.mark.skipif(not DEVICES, reason="No CUDA devices available")
 def test_predict_multiple_devices():
-    """验证模型在 CPU 和 CUDA 设备上的预测一致性。"""
+    """验证模型在 CPU 和 CUDA 设备上的预测一致性。."""
     model = YOLO("yolo26n.pt")
 
     # 测试 CPU
@@ -202,7 +201,7 @@ def test_predict_multiple_devices():
 
 @pytest.mark.skipif(not DEVICES, reason="No CUDA devices available")
 def test_track_exported_model():
-    """在 GPU 上使用导出模型进行跟踪；导出后端会以单个 Tensor 返回原始预测结果。"""
+    """在 GPU 上使用导出模型进行跟踪；导出后端会以单个 Tensor 返回原始预测结果。."""
     file = YOLO(MODEL).export(format="torchscript", imgsz=160, device=DEVICES[0])
     results = YOLO(file).track(SOURCE, imgsz=160, device=DEVICES[0])
     assert len(results[0].boxes)
@@ -211,7 +210,7 @@ def test_track_exported_model():
 
 @pytest.mark.skipif(not DEVICES, reason="No CUDA devices available")
 def test_autobatch():
-    """使用 autobatch 工具检查 YOLO 模型训练的最佳批次大小。"""
+    """使用 autobatch 工具检查 YOLO 模型训练的最佳批次大小。."""
     from ultralytics.utils.autobatch import check_train_batch_size
 
     check_train_batch_size(YOLO(MODEL).model.to(f"cuda:{DEVICES[0]}"), imgsz=64, amp=True)
@@ -220,7 +219,7 @@ def test_autobatch():
 @pytest.mark.slow
 @pytest.mark.skipif(not DEVICES, reason="No CUDA devices available")
 def test_utils_benchmarks(isolated_model):
-    """分析 YOLO 模型性能，用于基准测试。"""
+    """分析 YOLO 模型性能，用于基准测试。."""
     from ultralytics.utils.benchmarks import ProfileModels
 
     # 预先导出动态引擎模型，用于动态推理
@@ -239,7 +238,7 @@ def test_utils_benchmarks(isolated_model):
 @pytest.mark.slow
 @pytest.mark.skipif(not DEVICES, reason="No CUDA devices available")
 def test_predict_sam():
-    """使用不同提示测试 SAM 模型预测。"""
+    """使用不同提示测试 SAM 模型预测。."""
     from ultralytics import SAM
     from ultralytics.models.sam import Predictor as SAMPredictor
 

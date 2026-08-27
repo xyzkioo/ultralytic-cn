@@ -10,7 +10,7 @@ from ultralytics.utils import DEFAULT_CFG, ops
 
 
 class OBBPredictor(DetectionPredictor):
-    """继承 DetectionPredictor、用于根据定向边界框（OBB）模型生成预测结果的类。
+    """继承 DetectionPredictor、用于根据定向边界框（OBB）模型生成预测结果的类。.
 
     此预测器处理定向边界框检测任务，处理图像并返回包含旋转边界框的结果。
 
@@ -27,7 +27,7 @@ class OBBPredictor(DetectionPredictor):
     """
 
     def __init__(self, cfg=DEFAULT_CFG, overrides=None, _callbacks: dict | None = None):
-        """使用可选模型和数据配置覆盖项初始化 OBBPredictor。
+        """使用可选模型和数据配置覆盖项初始化 OBBPredictor。.
 
         参数：
             cfg (dict, 可选): 预测器默认配置。
@@ -38,7 +38,7 @@ class OBBPredictor(DetectionPredictor):
         self.args.task = "obb"
 
     def construct_result(self, pred, img, orig_img, img_path):
-        """根据预测结果构建结果对象。
+        """根据预测结果构建结果对象。.
 
         参数：
             pred (torch.Tensor): 预测边界框、分数和旋转角度，形状为 (N, 7)，最后一维为

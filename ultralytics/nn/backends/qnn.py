@@ -13,15 +13,14 @@ from .base import BaseBackend
 
 
 class QNNBackend(BaseBackend):
-    """用于 Snapdragon 硬件的 Qualcomm QNN 推理后端。
+    """用于 Snapdragon 硬件的 Qualcomm QNN 推理后端。.
 
-    使用 ONNX Runtime 和 QNN 执行提供程序插件（`onnxruntime-qnn`）加载并运行 Ultralytics QNN 导出生成的
-    QNN 上下文二进制文件（`*_qnn.onnx`）。推理通过 HTP（NPU）后端运行在 Qualcomm Snapdragon 设备上，
-    包括 Android、Snapdragon Windows 和 Qualcomm Linux 开发板。
+    使用 ONNX Runtime 和 QNN 执行提供程序插件（`onnxruntime-qnn`）加载并运行 Ultralytics QNN 导出生成的 QNN 上下文二进制文件（`*_qnn.onnx`）。推理通过
+    HTP（NPU）后端运行在 Qualcomm Snapdragon 设备上， 包括 Android、Snapdragon Windows 和 Qualcomm Linux 开发板。
     """
 
     def load_model(self, weight: str | Path) -> None:
-        """使用 ONNX Runtime 的 QNN 执行提供程序插件加载 QNN context-binary 模型。
+        """使用 ONNX Runtime 的 QNN 执行提供程序插件加载 QNN context-binary 模型。.
 
         参数：
             weight (str | Path): `*_qnn.onnx` 文件路径。
@@ -63,7 +62,7 @@ class QNNBackend(BaseBackend):
         self.apply_metadata(self.read_metadata(onnx_file))
 
     def forward(self, im: torch.Tensor) -> list:
-        """在 Qualcomm QNN 运行时上执行推理。
+        """在 Qualcomm QNN 运行时上执行推理。.
 
         参数：
             im (torch.Tensor): 输入图像 张量 in BCHW format, normalized to [0, 1].

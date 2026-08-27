@@ -22,12 +22,12 @@ from ultralytics.utils.torch_utils import unwrap_model
 
 
 def test_func(*args, **kwargs):
-    """测试用于验证回调注册的回调函数桩。"""
+    """测试用于验证回调注册的回调函数桩。."""
     print("callback test passed")
 
 
 def test_export(monkeypatch, tmp_path):
-    """通过添加回调并验证其执行情况，测试模型导出功能。"""
+    """通过添加回调并验证其执行情况，测试模型导出功能。."""
     monkeypatch.chdir(tmp_path)
     exporter = Exporter()
     exporter.add_callback("on_export_start", test_func)
@@ -78,7 +78,7 @@ def test_export(monkeypatch, tmp_path):
 )
 @pytest.mark.skipif(IS_RASPBERRYPI, reason="Edge devices not intended for training")
 def test_task(trainer_cls, validator_cls, predictor_cls, data, model, weights):
-    """测试 YOLO 在各种任务上的训练、验证和预测。"""
+    """测试 YOLO 在各种任务上的训练、验证和预测。."""
     overrides = {
         "data": data,
         "model": model,
@@ -127,7 +127,7 @@ def test_task(trainer_cls, validator_cls, predictor_cls, data, model, weights):
 
 @pytest.mark.parametrize("task,weight,data", TASK_MODEL_DATA)
 def test_resume_incomplete(task, weight, data, tmp_path):
-    """测试从不完整的检查点恢复训练。"""
+    """测试从不完整的检查点恢复训练。."""
     train_args = {
         "data": data,
         "epochs": 2,
@@ -162,7 +162,7 @@ def test_resume_incomplete(task, weight, data, tmp_path):
 
 
 def test_distill_resume(tmp_path: Path):
-    """测试从不完整的检查点恢复知识蒸馏。"""
+    """测试从不完整的检查点恢复知识蒸馏。."""
     overrides = {
         "data": "coco8.yaml",
         "model": "yolo26n.yaml",
@@ -205,7 +205,7 @@ def test_distill_resume(tmp_path: Path):
 
 
 def test_distill_grayscale(tmp_path: Path):
-    """测试在单通道数据集上的知识蒸馏（https://github.com/ultralytics/ultralytics/issues/25066）。"""
+    """测试在单通道数据集上的知识蒸馏（https://github.com/ultralytics/ultralytics/issues/25066）。."""
     teacher = DetectionModel("yolo26n.yaml", ch=3, nc=80, verbose=False)
     teacher_path = tmp_path / "teacher.pt"
     torch.save({"model": teacher}, teacher_path)
@@ -225,7 +225,7 @@ def test_distill_grayscale(tmp_path: Path):
     ],
 )
 def test_load_checkpoint_state_dict_rejected(ckpt, tmp_path):
-    """测试 state_dict 检查点会清晰地抛出 TypeError，而不是难以理解的 AttributeError/KeyError。"""
+    """测试 state_dict 检查点会清晰地抛出 TypeError，而不是难以理解的 AttributeError/KeyError。."""
     weight = tmp_path / "bad.pt"
     torch.save(ckpt, weight)
     with pytest.raises(TypeError, match="supported Ultralytics checkpoint format"):
@@ -233,11 +233,11 @@ def test_load_checkpoint_state_dict_rejected(ckpt, tmp_path):
 
 
 def test_nan_recovery():
-    """测试训练期间的 NaN 损失检测和恢复。"""
+    """测试训练期间的 NaN 损失检测和恢复。."""
     nan_injected = [False]
 
     def inject_nan(trainer):
-        """在批次处理期间向损失注入 NaN，以测试恢复机制。"""
+        """在批次处理期间向损失注入 NaN，以测试恢复机制。."""
         if trainer.epoch == 1 and trainer.tloss is not None and not nan_injected[0]:
             trainer.tloss[next(iter(trainer.tloss))] *= float("nan")
             nan_injected[0] = True
@@ -250,10 +250,10 @@ def test_nan_recovery():
 
 
 def test_checkpoint_fp16_overflow():
-    """测试权重溢出 fp16 的有限模型仍会被保存为检查点（并进行截断），而不会被跳过。"""
+    """测试权重溢出 fp16 的有限模型仍会被保存为检查点（并进行截断），而不会被跳过。."""
 
     def inflate_ema(trainer):
-        """将一个 EMA 权重推到 fp16 最大值（65504）以上，使其 fp16 快照原本会变成 Inf。"""
+        """将一个 EMA 权重推到 fp16 最大值（65504）以上，使其 fp16 快照原本会变成 Inf。."""
         if trainer.ema is not None:
             next(iter(trainer.ema.ema.parameters())).data.flatten()[0] = 1.0e5
 
@@ -274,10 +274,10 @@ def test_checkpoint_fp16_overflow():
 
 
 def test_checkpoint_nonfinite_ema_resync():
-    """测试有限模型中的非有限 EMA 会重新同步而不是被跳过，使运行仍能生成检查点。"""
+    """测试有限模型中的非有限 EMA 会重新同步而不是被跳过，使运行仍能生成检查点。."""
 
     def poison_ema(trainer):
-        """让实时 fp32 EMA 真正变为非有限值，同时保持模型有限（有限损失运行中的持久 NaN）。"""
+        """让实时 fp32 EMA 真正变为非有限值，同时保持模型有限（有限损失运行中的持久 NaN）。."""
         if trainer.ema is not None:
             next(iter(trainer.ema.ema.parameters())).data.flatten()[0] = float("inf")
 
@@ -293,10 +293,10 @@ def test_checkpoint_nonfinite_ema_resync():
 
 
 def test_checkpoint_nonfinite_ema_and_model_sanitized():
-    """测试 EMA 和模型中的非有限张量会被清理而不是跳过，使运行仍能生成检查点。"""
+    """测试 EMA 和模型中的非有限张量会被清理而不是跳过，使运行仍能生成检查点。."""
 
     def poison_ema_and_model(trainer):
-        """强制实时 EMA 和模型中的第一个参数都变为非有限值（有限损失运行中的持久 NaN）。"""
+        """强制实时 EMA 和模型中的第一个参数都变为非有限值（有限损失运行中的持久 NaN）。."""
         if trainer.ema is not None:
             next(iter(trainer.ema.ema.parameters())).data.flatten()[0] = float("inf")
             next(iter(unwrap_model(trainer.model).parameters())).data.flatten()[0] = float("nan")
@@ -318,7 +318,7 @@ def test_checkpoint_nonfinite_ema_and_model_sanitized():
 )
 @pytest.mark.skipif(IS_RASPBERRYPI, reason="Edge devices not intended for training")
 def test_train_reuses_loaded_checkpoint_model(monkeypatch, kwargs, uses_weights):
-    """测试训练会复用已加载的检查点配置，同时遵守 pretrained 参数。"""
+    """测试训练会复用已加载的检查点配置，同时遵守 pretrained 参数。."""
     model = YOLO("yolo26n.yaml")
     model.ckpt = {"checkpoint": True}
     model.ckpt_path = "/tmp/fake.pt"
@@ -360,7 +360,7 @@ def test_train_reuses_loaded_checkpoint_model(monkeypatch, kwargs, uses_weights)
 
 
 def test_train_multi_custom_trainer_metrics_and_failure_keys(monkeypatch, tmp_path):
-    """测试自定义多数据集运行会保留内存指标和唯一失败键。"""
+    """测试自定义多数据集运行会保留内存指标和唯一失败键。."""
     model = YOLO(MODEL)
     calls = 0
 
@@ -393,7 +393,7 @@ def test_train_multi_custom_trainer_metrics_and_failure_keys(monkeypatch, tmp_pa
 
 @pytest.mark.parametrize("pretrained,uses_weights", [(True, True), (False, False), (MODEL, True)])
 def test_setup_model_respects_pretrained_arg_for_pt_models(monkeypatch, pretrained, uses_weights):
-    """测试 .pt 模型会使用检查点配置，同时遵守 pretrained 参数。"""
+    """测试 .pt 模型会使用检查点配置，同时遵守 pretrained 参数。."""
     captured = {}
     checkpoint_model = SimpleNamespace(yaml={"nc": 80})
     trainer = object.__new__(BaseTrainer)

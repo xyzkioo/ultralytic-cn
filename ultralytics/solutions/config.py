@@ -10,10 +10,10 @@ import cv2
 
 @dataclass
 class SolutionConfig:
-    """管理 Ultralytics Vision AI 解决方案配置参数的类。
+    """管理 Ultralytics Vision AI 解决方案配置参数的类。.
 
-    SolutionConfig 是所有 Ultralytics 解决方案模块的集中配置容器，参见
-    https://docs.ultralytics.com/solutions#solutions。它使用 Python `dataclass`，使参数定义清晰、类型安全且易于维护。
+    SolutionConfig 是所有 Ultralytics 解决方案模块的集中配置容器，参见 https://docs.ultralytics.com/solutions#solutions。它使用 Python
+    `dataclass`，使参数定义清晰、类型安全且易于维护。
 
     属性：
         source (str, 可选): 输入源路径（视频、RTSP 等），仅可与 Solutions CLI 一起使用。
@@ -98,7 +98,7 @@ class SolutionConfig:
     data: str = "images"
 
     def update(self, **kwargs: Any):
-        """使用关键字参数提供的新值更新配置参数。"""
+        """使用关键字参数提供的新值更新配置参数。."""
         if "half" in kwargs:  # 已弃用的别名，转发到 quantize
             from ultralytics.utils import deprecation_warn
 

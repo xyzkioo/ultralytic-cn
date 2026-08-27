@@ -29,14 +29,14 @@ _executor = ThreadPoolExecutor(max_workers=10)
 
 
 def slugify(text):
-    """将文本转换为 URL 安全的 slug（例如 'My Project 1' -> 'my-project-1'）。"""
+    """将文本转换为 URL 安全的 slug（例如 'My Project 1' -> 'my-project-1'）。."""
     if not text:
         return text
     return re.sub(r"-+", "-", re.sub(r"[^a-z0-9\s-]", "", str(text).lower()).replace(" ", "-")).strip("-")[:128]
 
 
 def _interp_plot(plot, n=101):
-    """将绘图曲线数据插值到 n 个点，以减少存储大小。"""
+    """将绘图曲线数据插值到 n 个点，以减少存储大小。."""
     import numpy as np
 
     if not plot.get("x") or not plot.get("y"):
@@ -64,7 +64,7 @@ def _interp_plot(plot, n=101):
 
 
 def _validation_payload(image_metrics, sample_limit=5_000, extremes_limit=100):
-    """返回精确的 F1 极值和均匀排序的样本，用于相关性分析。"""
+    """返回精确的 F1 极值和均匀排序的样本，用于相关性分析。."""
     ranked = sorted(image_metrics.items(), key=lambda item: (item[1]["f1"], item[0]))
     if len(ranked) > sample_limit:
         sample = [ranked[round(i * (len(ranked) - 1) / (sample_limit - 1))] for i in range(sample_limit)]
@@ -83,7 +83,7 @@ def _validation_payload(image_metrics, sample_limit=5_000, extremes_limit=100):
 
 
 def _sanitize_json_value(value):
-    """将负无穷、正无穷和 NaN 浮点数替换为 None，确保 requests JSON 编码成功。"""
+    """将负无穷、正无穷和 NaN 浮点数替换为 None，确保 requests JSON 编码成功。."""
     if isinstance(value, dict):
         return {k: _sanitize_json_value(v) for k, v in value.items()}
     if isinstance(value, (list, tuple)):
@@ -94,7 +94,7 @@ def _sanitize_json_value(value):
 
 
 def _send(event, data, project, name, model_id=None, retry=2, timeout=30):
-    """使用重试逻辑向 Platform 地址发送事件。"""
+    """使用重试逻辑向 Platform 地址发送事件。."""
     if not _api_key:
         return None
     import requests  # scoped as slow import
@@ -155,7 +155,7 @@ def _handle_control_response(trainer, ctx, response):
 
 
 def _upload_model(model_path, project, name, progress=False, retry=1, model_id=None, run_id=None):
-    """将模型检查点发布到配置的 Platform 存储位置。"""
+    """将模型检查点发布到配置的 Platform 存储位置。."""
     from ultralytics.utils.uploads import safe_upload
 
     if not _api_key:
@@ -216,7 +216,7 @@ def _upload_model(model_path, project, name, progress=False, retry=1, model_id=N
 
 
 def _get_environment_info():
-    """使用现有 Ultralytics 工具收集完整的环境信息。"""
+    """使用现有 Ultralytics 工具收集完整的环境信息。."""
     import shutil
 
     import psutil
@@ -269,7 +269,7 @@ def _get_environment_info():
 
 
 def _get_project_name(trainer):
-    """从训练器参数获取转换为 slug 的项目和名称。"""
+    """从训练器参数获取转换为 slug 的项目和名称。."""
     raw = str(trainer.args.project)
     parts = raw.split("/", 1)
     project = f"{parts[0]}/{slugify(parts[1].replace('/', '-'))}" if len(parts) == 2 else slugify(raw)
@@ -277,7 +277,7 @@ def _get_project_name(trainer):
 
 
 def on_pretrain_routine_start(trainer):
-    """在训练开始时初始化 Platform 日志。"""
+    """在训练开始时初始化 Platform 日志。."""
     global _api_key
     if TESTS_RUNNING or not trainer.args.project:
         return
@@ -304,7 +304,7 @@ def on_pretrain_routine_start(trainer):
 
     # 创建将控制台输出发送到 Platform 的回调。
     def send_console_output(content, line_count, chunk_id):
-        """将批量控制台输出发送到 Platform webhook。"""
+        """将批量控制台输出发送到 Platform webhook。."""
         _executor.submit(
             _send,
             "console_output",
@@ -365,7 +365,7 @@ def on_pretrain_routine_end(trainer):
 
 
 def on_fit_epoch_end(trainer):
-    """在周期结束时记录训练和系统指标。"""
+    """在周期结束时记录训练和系统指标。."""
     ctx = getattr(trainer, "platform", None)
     if not ctx:
         return
@@ -413,7 +413,7 @@ def on_fit_epoch_end(trainer):
         payload["modelInfo"] = model_info
 
     def _send_and_check_cancel():
-        """发送 epoch_end，并检查响应中是否要求取消（在后台线程运行）。"""
+        """发送 epoch_end，并检查响应中是否要求取消（在后台线程运行）。."""
         response = _send("epoch_end", payload, project, name, ctx["model_id"], retry=1)
         _handle_control_response(trainer, ctx, response)
 
@@ -421,7 +421,7 @@ def on_fit_epoch_end(trainer):
 
 
 def on_model_save(trainer):
-    """上传模型检查点（速率限制为每 15 分钟一次）。"""
+    """上传模型检查点（速率限制为每 15 分钟一次）。."""
     ctx = getattr(trainer, "platform", None)
     if not ctx:
         return
@@ -443,7 +443,7 @@ def on_model_save(trainer):
 
 
 def on_train_end(trainer):
-    """记录最终训练结果，并将最佳模型上传到 Platform。"""
+    """记录最终训练结果，并将最佳模型上传到 Platform。."""
     ctx = getattr(trainer, "platform", None)  # 仅由 on_pretrain_routine_start 设置，没有 API 密钥时为空
     if not ctx:
         return

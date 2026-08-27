@@ -1,5 +1,5 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
-"""对 `yolo` CLI 进行蒙特卡洛模糊测试，以发现有限测试矩阵之外的缺陷。
+"""对 `yolo` CLI 进行蒙特卡洛模糊测试，以发现有限测试矩阵之外的缺陷。.
 
 在子进程中运行随机化或变异后的 `yolo` 命令，并对每个结果进行分类（通过、预期的配置错误、
 环境跳过、网络抖动、挂起、崩溃、疑似缺陷）；通过重放命令确认疑似缺陷，并为每个分片输出
@@ -237,7 +237,7 @@ NETWORK_MARKERS = (  # 仅匹配特定的下载/网络特征；本地源也可�
 
 
 def load_universe():
-    """延迟从 ultralytics 软件包导入参数全集（为 `report` 保持在模块作用域之外）。"""
+    """延迟从 ultralytics 软件包导入参数全集（为 `report` 保持在模块作用域之外）。."""
     from ultralytics.cfg import (
         CFG_BOOL_KEYS,
         CFG_FLOAT_KEYS,
@@ -266,7 +266,7 @@ def load_universe():
 
 
 def precache_assets(uni):
-    """将测试语料权重和数据集下载到共享缓存中（已存在时不执行任何操作）。"""
+    """将测试语料权重和数据集下载到共享缓存中（已存在时不执行任何操作）。."""
     from ultralytics.data.utils import check_cls_dataset, check_det_dataset
     from ultralytics.utils import WEIGHTS_DIR
     from ultralytics.utils.downloads import attempt_download_asset
@@ -284,10 +284,9 @@ def precache_assets(uni):
 
 
 def prepare_models(uni):
-    """根据缓存的测试语料权重，创建模型试验所需的损坏模型文件和格式错误模型文件。
+    """根据缓存的测试语料权重，创建模型试验所需的损坏模型文件和格式错误模型文件。.
 
-    其他试验会固定 `model`，因此即使损坏或格式错误的检查点是软件包遥测中的主要错误来源，
-    检查点加载仍未经过模糊测试。此处的每个文件都是不受支持的输入。
+    其他试验会固定 `model`，因此即使损坏或格式错误的检查点是软件包遥测中的主要错误来源， 检查点加载仍未经过模糊测试。此处的每个文件都是不受支持的输入。
     """
     from ultralytics.utils import ASSETS, WEIGHTS_DIR
     from ultralytics.utils.downloads import attempt_download_asset
@@ -310,7 +309,7 @@ def prepare_models(uni):
 
 
 def prepare_datasets(uni):
-    """创建数据集试验使用的合成检测数据集，每种变异对应一个目录。"""
+    """创建数据集试验使用的合成检测数据集，每种变异对应一个目录。."""
     from ultralytics.utils import WEIGHTS_DIR
 
     root = WEIGHTS_DIR.parent / "fuzz-datasets"
@@ -318,10 +317,9 @@ def prepare_datasets(uni):
 
 
 def make_dataset(root, mutation):
-    """在 root 下构建一个合成检测数据集，并返回其 YAML 文件路径。
+    """在 root 下构建一个合成检测数据集，并返回其 YAML 文件路径。.
 
-    数据集完全在磁盘上生成，不需要下载；整个数据池只有几 KB 的 64 像素图像，而精选语料有数 MB。
-    每种变异都会复现用户实际遇到的一种故障特征。
+    数据集完全在磁盘上生成，不需要下载；整个数据池只有几 KB 的 64 像素图像，而精选语料有数 MB。 每种变异都会复现用户实际遇到的一种故障特征。
     """
     from PIL import Image
 
@@ -369,7 +367,7 @@ def make_dataset(root, mutation):
 
 
 def prepare_sources(uni):
-    """创建预测和跟踪试验使用的有效及格式错误媒体源，并将其缓存。"""
+    """创建预测和跟踪试验使用的有效及格式错误媒体源，并将其缓存。."""
     from ultralytics.utils import ASSETS, ASSETS_URL, WEIGHTS_DIR
     from ultralytics.utils.downloads import safe_download
 
@@ -406,12 +404,12 @@ def prepare_sources(uni):
 
 
 def strip_defaults(pairs, defaults):
-    """删除值等于软件包默认值的 k=v 参数：argv 只保留发生变化的参数。"""
+    """删除值等于软件包默认值的 k=v 参数：argv 只保留发生变化的参数。."""
     return [a for a in pairs if a.partition("=")[2].lower() != str(defaults.get(a.partition("=")[0])).lower()]
 
 
 def build_corpus(uni):
-    """构建已知正确的种子语料：覆盖每个任务和模式，并设置受限的快速参数及明确的本地源。"""
+    """构建已知正确的种子语料：覆盖每个任务和模式，并设置受限的快速参数及明确的本地源。."""
     corpus = []
     for task in uni["tasks"]:
         # 裸权重名称可保持问题复现命令的可移植性；它们会在预缓存的 weights_dir 中解析
@@ -440,7 +438,7 @@ def build_corpus(uni):
 
 
 def sample_trial(rng, uni, corpus, personality):
-    """从一种变异策略中使用规范参数采样一次试验。"""
+    """从一种变异策略中使用规范参数采样一次试验。."""
     weights = PERSONALITIES[personality]
     mode = rng.choices(MODES, weights=[weights[m] for m in MODES])[0]
     strategies = [(s, w) for s, w in STRATEGY_WEIGHTS if mode in STRATEGY_MODES.get(s, MODES)]
@@ -453,7 +451,7 @@ def sample_trial(rng, uni, corpus, personality):
     validity = {}  # key -> 其有效值是否受支持：移除的参数不产生影响，重复参数以后者为准
 
     def mutate(pairs, valid=True):
-        """将非默认的 k=v 参数追加到 argv，并记录这些参数键已发生变异。"""
+        """将非默认的 k=v 参数追加到 argv，并记录这些参数键已发生变异。."""
         for a in pairs:
             key, _, value = a.partition("=")
             argv[2:] = [x for x in argv[2:] if x.partition("=")[0] != key]  # 后一个值优先；argv[:2] 是模式/任务
@@ -465,13 +463,13 @@ def sample_trial(rng, uni, corpus, personality):
             validity[key] = valid or not changed  # 被移除的默认值参数仍会留下受支持的有效值
 
     def mutate_boundary():
-        """在安全范围内改变一个成本敏感参数，同时遵守基础条目固定的参数族下限。"""
+        """在安全范围内改变一个成本敏感参数，同时遵守基础条目固定的参数族下限。."""
         pool = [b for b in SAFE_BOUNDARIES[mode] if b.partition("=")[0] not in base.get("pinned", ())]
         if pool:
             mutate([rng.choice(pool)])
 
     def mutate_combos(max_groups=4):
-        """组合兼容的模式专用参数组，且不重复使用参数键。"""
+        """组合兼容的模式专用参数组，且不重复使用参数键。."""
         options = [c.split() for m, c in COMBO_POOL if m == mode]
         rng.shuffle(options)
         task_options = [c.split() for m, task, c in TASK_COMBO_POOL if m == mode and task == base["task"]]
@@ -525,7 +523,7 @@ def sample_trial(rng, uni, corpus, personality):
 
 
 def probe_supported(key, value):
-    """记录在受限模糊测试语料上会退化的有效探测值范围下限。"""
+    """记录在受限模糊测试语料上会退化的有效探测值范围下限。."""
     if key == "fraction":  # 低于 0.25 时，4 张图像的 coco8 训练划分会选不到任何图像
         return float(value) >= 0.25
     if key == "mask_ratio":  # 掩码下采样比例必须保持在受限训练图像尺寸范围内
@@ -534,7 +532,7 @@ def probe_supported(key, value):
 
 
 def sample_mutation(rng, uni, chaos=False):
-    """选择一个可模糊测试的参数键、探测值，以及该值是否属于该键文档声明的有效值。"""
+    """选择一个可模糊测试的参数键、探测值，以及该值是否属于该键文档声明的有效值。."""
     family = rng.choices(["enum", "fraction", "int", "bool", "float"], weights=[4, 2, 2, 1, 1])[0]
     if family == "enum":
         key = rng.choice(uni["enum_keys"])
@@ -556,12 +554,10 @@ def sample_mutation(rng, uni, chaos=False):
 
 
 def malformed_tokens(rng):
-    """按用户实际误输 `yolo` 命令的方式，构建词法层面格式错误的 CLI 标记。
+    """按用户实际误输 `yolo` 命令的方式，构建词法层面格式错误的 CLI 标记。.
 
-    仅改变值不会产生格式错误的 *标记*，因此参数解析器只会看到包含已知键的规范 `k=v` 对。
-    此处每个变异核都对应软件包自身遥测中的真实特征；按用户数量统计，`ultralytics.cfg:entrypoint`
-    是主要错误入口之一。所有这些输入都应在 cfg 层干净地抛出 SyntaxError 或 ValueError；
-    如果错误出现在更深层，则说明验证存在缺口。
+    仅改变值不会产生格式错误的 *标记*，因此参数解析器只会看到包含已知键的规范 `k=v` 对。 此处每个变异核都对应软件包自身遥测中的真实特征；按用户数量统计，`ultralytics.cfg:entrypoint`
+    是主要错误入口之一。所有这些输入都应在 cfg 层干净地抛出 SyntaxError 或 ValueError； 如果错误出现在更深层，则说明验证存在缺口。
     """
     key = rng.choice(["data", "epochs", "imgsz", "conf", "model", "source"])
     return rng.choice(
@@ -580,7 +576,7 @@ def malformed_tokens(rng):
 
 
 def run_trial(trial, timeout=None):
-    """在隔离的临时工作目录中执行一次试验；输出写入每次试验独立的 `project=`，资源保持共享。"""
+    """在隔离的临时工作目录中执行一次试验；输出写入每次试验独立的 `project=`，资源保持共享。."""
     mode = trial["mode"]
     timeout = (timeout or MODE_TIMEOUTS[mode]) * TIMEOUT_SCALE
     workdir = Path(tempfile.mkdtemp(prefix="fuzz-trial-"))
@@ -629,7 +625,7 @@ def run_trial(trial, timeout=None):
 
 
 def parse_traceback(stderr):
-    """将 stderr 中最后一个回溯块解析为（异常类型，[以 path:function 表示的 ultralytics 调用帧]）。"""
+    """将 stderr 中最后一个回溯块解析为（异常类型，[以 path:function 表示的 ultralytics 调用帧]）。."""
     blocks = stderr.split("Traceback (most recent call last):")
     if len(blocks) < 2:
         return None, []
@@ -649,7 +645,7 @@ def parse_traceback(stderr):
 
 
 def make_signature(exc, frames, mode, task):
-    """构建稳定的去重签名：异常类型 + 最深层 ultralytics 调用帧 + 其调用方（不含行号）。"""
+    """构建稳定的去重签名：异常类型 + 最深层 ultralytics 调用帧 + 其调用方（不含行号）。."""
     deepest = frames[-1] if frames else f"{mode}:{task}"
     caller = frames[-2] if len(frames) > 1 else ""
     human = f"{exc or 'Unknown'} in {deepest}"
@@ -657,7 +653,7 @@ def make_signature(exc, frames, mode, task):
 
 
 def classify(trial, rc, stderr):
-    """将一次试验结果分类为 pass/expected/env-skip/flake/timeout/crash/bug-candidate。"""
+    """将一次试验结果分类为 pass/expected/env-skip/flake/timeout/crash/bug-candidate。."""
     if rc == 0:
         return "pass", None, None
     if rc == "timeout":
@@ -682,7 +678,7 @@ def classify(trial, rc, stderr):
         or (exc == "AssertionError" and "RTDETR export requires opset>=16" in stderr)
         # 两个数据集验证层都会汇总为 RuntimeError，因此最深调用帧是包装器，而不是 data/utils.py：
         # get_dataset 会重新抛出 YAML 错误，get_labels 会在标签缓存存在后报告每个文件的原因
-        #（首次未缓存的试验则会从 cache_labels 抛出 ValueError）。仅对故意提供不受支持数据集的试验豁免：
+        # （首次未缓存的试验则会从 cache_labels 抛出 ValueError）。仅对故意提供不受支持数据集的试验豁免：
         # 受支持数据集在此处失败，或格式错误的数据集在其他位置失败，仍然需要报告。
         or (
             exc == "RuntimeError"
@@ -699,20 +695,19 @@ def classify(trial, rc, stderr):
 
 
 def stderr_tail(stderr, lines=30):
-    """返回 stderr 中最后几行有意义的内容，用于日志和 issue 正文。"""
+    """返回 stderr 中最后几行有意义的内容，用于日志和 issue 正文。."""
     return "\n".join(stderr.strip().splitlines()[-lines:])
 
 
 def command_hash(argv):
-    """返回一条精确命令的稳定短哈希，用于在单次运行内及跨运行去重抽样结果。"""
+    """返回一条精确命令的稳定短哈希，用于在单次运行内及跨运行去重抽样结果。."""
     return hashlib.sha256("\x00".join(argv).encode()).hexdigest()[:16]
 
 
 def read_history(path, max_age_days):
-    """加载之前运行生成的 `hash day` 行，并丢弃早于 max_age_days 的条目。
+    """加载之前运行生成的 `hash day` 行，并丢弃早于 max_age_days 的条目。.
 
-    过期机制能让探索结果真实反映回归问题：仓库变化很快，一周前通过的命令并不能说明今天的代码没有问题。
-    逐条使记录过期可以形成滚动窗口，而不是一次性断崖式清除；每天淘汰最旧的一天，约每周重新尝试每条命令，
+    过期机制能让探索结果真实反映回归问题：仓库变化很快，一周前通过的命令并不能说明今天的代码没有问题。 逐条使记录过期可以形成滚动窗口，而不是一次性断崖式清除；每天淘汰最旧的一天，约每周重新尝试每条命令，
     从而避免永久排除导致已覆盖区域的回归问题永远不会再次采样。
     """
     if not path or not Path(path).exists():
@@ -723,7 +718,7 @@ def read_history(path, max_age_days):
 
 
 def write_history(path, history, new_keys):
-    """保存本次运行新探索的哈希，并标记为当天的日期，以便后续运行使其自然过期。"""
+    """保存本次运行新探索的哈希，并标记为当天的日期，以便后续运行使其自然过期。."""
     if path:
         today = int(time.time() // 86400)
         Path(path).parent.mkdir(parents=True, exist_ok=True)
@@ -731,7 +726,7 @@ def write_history(path, history, new_keys):
 
 
 def cmd_fuzz(args):
-    """运行限额模糊测试循环，并为报告任务写入试验 JSONL 和发现结果 JSON。"""
+    """运行限额模糊测试循环，并为报告任务写入试验 JSONL 和发现结果 JSON。."""
     uni = load_universe()
     log = uni["logger"]
     rng = random.Random(args.seed)
@@ -760,7 +755,7 @@ def cmd_fuzz(args):
         tier = "T2" if outcome == "bug-candidate" and not trial.get("valid_input", True) else "T1"
 
         def finding():
-            """根据本次出现的新试验、结果和回溯信息构建发现记录。"""
+            """根据本次出现的新试验、结果和回溯信息构建发现记录。."""
             return {
                 "signature": sig,
                 "title": human,
@@ -863,7 +858,7 @@ def cmd_fuzz(args):
 
 
 def cmd_repro(args):
-    """通过分类器多次重放一条精确命令，并打印判定结果。"""
+    """通过分类器多次重放一条精确命令，并打印判定结果。."""
     uni = load_universe()
     log = uni["logger"]
     argv = shlex.split(args.command)
@@ -871,7 +866,7 @@ def cmd_repro(args):
         argv = argv[1:]
 
     def portable(arg):
-        """将 issue 命令中的运行器本地绝对模型、源和数据路径重新映射到本机副本。"""
+        """将 issue 命令中的运行器本地绝对模型、源和数据路径重新映射到本机副本。."""
         k, _, v = arg.partition("=")
         if k in {"model", "source", "data"} and ("/" in v or "\\" in v) and not Path(v).exists():
             from ultralytics.utils import ASSETS, WEIGHTS_DIR
@@ -910,7 +905,7 @@ def cmd_repro(args):
 
 
 def gh(*cli_args, dry_run=False):
-    """运行一条 `gh` CLI 命令并返回标准输出（dry_run 时改为打印命令）。"""
+    """运行一条 `gh` CLI 命令并返回标准输出（dry_run 时改为打印命令）。."""
     if dry_run:
         print(f"[dry-run] gh {' '.join(cli_args)}")
         return ""
@@ -918,7 +913,7 @@ def gh(*cli_args, dry_run=False):
 
 
 def cmd_report(args):
-    """汇总分片发现，根据签名与现有 issue 去重，并且最多创建 --max-issues 个 issue。"""
+    """汇总分片发现，根据签名与现有 issue 去重，并且最多创建 --max-issues 个 issue。."""
     in_dir = Path(args.in_dir)
     shards = [json.loads(p.read_text()) for p in sorted(in_dir.glob("findings-*.json"))]
     if not shards:
@@ -987,7 +982,7 @@ def cmd_report(args):
                 existing.setdefault(sig, umbrella)  # 相同特征的独立 issue 优先
 
     def only_umbrella(s):
-        """当某个签名仅作为 T2 总括条目存在时返回 True，此时再次发现 T1 结果仍应创建独立 issue。"""
+        """当某个签名仅作为 T2 总括条目存在时返回 True，此时再次发现 T1 结果仍应创建独立 issue。."""
         return umbrella and s in existing and existing[s]["number"] == umbrella["number"]
 
     new_t1 = [f for s, f in findings.items() if f["tier"] == "T1" and (s not in existing or only_umbrella(s))]
@@ -1094,7 +1089,7 @@ def cmd_report(args):
 
 
 def issue_body(f, run_url):
-    """为一个已确认的 T1 发现格式化 GitHub issue 正文。"""
+    """为一个已确认的 T1 发现格式化 GitHub issue 正文。."""
     env = "\n".join(f"{k}: {v}" for k, v in f["environment"].items())
     return f"""Automated fuzzing found a reproducible failure (confirmed 2/2 runs).
 
@@ -1126,7 +1121,7 @@ def issue_body(f, run_url):
 
 
 def main():
-    """解析参数，并分发到 fuzz/repro/report 子命令。"""
+    """解析参数，并分发到 fuzz/repro/report 子命令。."""
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="cmd", required=True)
 

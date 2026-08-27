@@ -7,7 +7,7 @@ from ultralytics.utils.plotting import colors
 
 
 class VisionEye(BaseSolution):
-    """管理图像或视频流中对象检测和视觉映射的类。
+    """管理图像或视频流中对象检测和视觉映射的类。.
 
     此类扩展 BaseSolution，提供检测对象、映射视觉点以及使用边界框和标签标注结果的功能。
 
@@ -25,7 +25,7 @@ class VisionEye(BaseSolution):
     """
 
     def __init__(self, **kwargs: Any) -> None:
-        """初始化 VisionEye 类，用于检测对象并应用视觉映射。
+        """初始化 VisionEye 类，用于检测对象并应用视觉映射。.
 
         参数：
             **kwargs (Any): 传递给父类并用于配置 vision_point 的关键字参数。
@@ -35,7 +35,7 @@ class VisionEye(BaseSolution):
         self.vision_point = self.CFG["vision_point"]
 
     def process(self, im0) -> SolutionResults:
-        """在输入图像上执行对象检测、视觉映射和标注。
+        """在输入图像上执行对象检测、视觉映射和标注。.
 
         参数：
             im0 (np.ndarray): 用于检测和标注的输入图像。

@@ -15,7 +15,7 @@ from .utils.stracks import joint_stracks, merge_track_pools, multi_gmc, parse_bb
 
 
 class STrack(BaseTrack):
-    """使用卡尔曼滤波进行状态估计的单对象跟踪表示。
+    """使用卡尔曼滤波进行状态估计的单对象跟踪表示。.
 
     此类负责保存单条轨迹的全部信息，并基于 Kalman 滤波器执行状态更新和预测。
 
@@ -52,7 +52,7 @@ class STrack(BaseTrack):
     shared_kalman = KalmanFilterXYAH()
 
     def __init__(self, xywh: np.ndarray, score: float, cls: Any):
-        """初始化新的 STrack 实例。
+        """初始化新的 STrack 实例。.
 
         参数：
             xywh (np.ndarray): `(x, y, w, h, idx)` 或 `(x, y, w, h, angle, idx)` 格式的边界框，其中 (x, y) 为中心点，
@@ -75,7 +75,7 @@ class STrack(BaseTrack):
         self.angle = xywh[4] if len(xywh) == 6 else None
 
     def predict(self):
-        """使用卡尔曼滤波预测对象的下一状态（均值和协方差）。"""
+        """使用卡尔曼滤波预测对象的下一状态（均值和协方差）。."""
         mean_state = self.mean.copy()
         if self.state != TrackState.Tracked:
             mean_state[7] = 0
@@ -83,7 +83,7 @@ class STrack(BaseTrack):
 
     @staticmethod
     def multi_predict(stracks: list[STrack]):
-        """使用卡尔曼滤波对提供的 STrack 实例列表执行多对象状态预测。"""
+        """使用卡尔曼滤波对提供的 STrack 实例列表执行多对象状态预测。."""
         if not stracks:
             return
         multi_mean = np.asarray([st.mean for st in stracks])
@@ -97,7 +97,7 @@ class STrack(BaseTrack):
             stracks[i].covariance = cov
 
     def activate(self, kalman_filter: KalmanFilterXYAH, frame_id: int):
-        """使用提供的卡尔曼滤波器激活新的轨迹，并初始化其状态和协方差。"""
+        """使用提供的卡尔曼滤波器激活新的轨迹，并初始化其状态和协方差。."""
         self.kalman_filter = kalman_filter
         self.track_id = self.next_id()
         self.mean, self.covariance = self.kalman_filter.initiate(self.convert_coords(self._tlwh))
@@ -110,7 +110,7 @@ class STrack(BaseTrack):
         self.start_frame = frame_id
 
     def re_activate(self, new_track: STrack, frame_id: int, new_id: bool = False):
-        """使用新的检测数据重新激活此前丢失的轨迹，并更新其状态和属性。"""
+        """使用新的检测数据重新激活此前丢失的轨迹，并更新其状态和属性。."""
         self.mean, self.covariance = self.kalman_filter.update(
             self.mean, self.covariance, self.convert_coords(new_track.tlwh)
         )
@@ -126,7 +126,7 @@ class STrack(BaseTrack):
         self.idx = new_track.idx
 
     def update(self, new_track: STrack, frame_id: int):
-        """更新匹配轨迹的状态。
+        """更新匹配轨迹的状态。.
 
         参数：
             new_track (STrack): The new track containing updated information.
@@ -155,12 +155,12 @@ class STrack(BaseTrack):
         self.idx = new_track.idx
 
     def convert_coords(self, tlwh: np.ndarray) -> np.ndarray:
-        """将边界框的左上角-宽度-高度格式转换为 x-y-宽高比-高度格式。"""
+        """将边界框的左上角-宽度-高度格式转换为 x-y-宽高比-高度格式。."""
         return self.tlwh_to_xyah(tlwh)
 
     @property
     def tlwh(self) -> np.ndarray:
-        """根据当前状态估计获取左上角-宽度-高度格式的边界框。"""
+        """根据当前状态估计获取左上角-宽度-高度格式的边界框。."""
         if self.mean is None:
             return self._tlwh.copy()
         ret = self.mean[:4].copy()
@@ -170,14 +170,14 @@ class STrack(BaseTrack):
 
     @property
     def xyxy(self) -> np.ndarray:
-        """将边界框从 (左上角 x, 左上角 y, 宽度, 高度) 转换为 (最小 x, 最小 y, 最大 x, 最大 y) 格式。"""
+        """将边界框从 (左上角 x, 左上角 y, 宽度, 高度) 转换为 (最小 x, 最小 y, 最大 x, 最大 y) 格式。."""
         ret = self.tlwh  # 已经是新的数组，可以安全修改
         ret[2:] += ret[:2]
         return ret
 
     @staticmethod
     def tlwh_to_xyah(tlwh: np.ndarray) -> np.ndarray:
-        """将边界框从 tlwh 格式转换为中心 x、中心 y、宽高比、高度（xyah）格式。"""
+        """将边界框从 tlwh 格式转换为中心 x、中心 y、宽高比、高度（xyah）格式。."""
         ret = np.asarray(tlwh).copy()
         ret[:2] += ret[2:] / 2
         ret[2] /= ret[3]
@@ -185,14 +185,14 @@ class STrack(BaseTrack):
 
     @property
     def xywh(self) -> np.ndarray:
-        """以 (中心 x, 中心 y, 宽度, 高度) 格式获取当前边界框位置。"""
+        """以 (中心 x, 中心 y, 宽度, 高度) 格式获取当前边界框位置。."""
         ret = np.asarray(self.tlwh).copy()
         ret[:2] += ret[2:] / 2
         return ret
 
     @property
     def xywha(self) -> np.ndarray:
-        """以 (中心 x, 中心 y, 宽度, 高度, angle) 格式获取位置；缺少 angle 时发出警告。"""
+        """以 (中心 x, 中心 y, 宽度, 高度, angle) 格式获取位置；缺少 angle 时发出警告。."""
         if self.angle is None:
             LOGGER.warning("`angle` attr not found, returning `xywh` instead.")
             return self.xywh
@@ -200,21 +200,20 @@ class STrack(BaseTrack):
 
     @property
     def result(self) -> list[float]:
-        """以适当的边界框格式获取当前跟踪结果。"""
+        """以适当的边界框格式获取当前跟踪结果。."""
         coords = self.xyxy if self.angle is None else self.xywha
         return [*coords.tolist(), self.track_id, self.score, self.cls, self.idx]
 
     def __repr__(self) -> str:
-        """返回 STrack 对象的字符串表示，包括起始帧、结束帧和跟踪 ID。"""
+        """返回 STrack 对象的字符串表示，包括起始帧、结束帧和跟踪 ID。."""
         return f"OT_{self.track_id}_({self.start_frame}-{self.end_frame})"
 
 
 class BYTETracker:
-    """BYTETracker：基于 YOLO 构建的对象检测与跟踪算法。
+    """BYTETracker：基于 YOLO 构建的对象检测与跟踪算法。.
 
-    此类封装检测对象轨迹的初始化、更新和管理功能，
-    in a video sequence. It maintains the state of tracked, lost, and removed tracks over frames, utilizes Kalman
-    通过滤波预测对象的新位置，并执行数据关联。
+    此类封装检测对象轨迹的初始化、更新和管理功能， in a video sequence. It maintains the state of tracked, lost, and removed tracks over
+    frames, utilizes Kalman 通过滤波预测对象的新位置，并执行数据关联。
 
     属性：
         tracked_stracks (列表[STrack]): List of successfully activated tracks.
@@ -247,7 +246,7 @@ class BYTETracker:
     track_class = STrack
 
     def __init__(self, args):
-        """初始化用于对象跟踪的 BYTETracker 实例。
+        """初始化用于对象跟踪的 BYTETracker 实例。.
 
         参数：
             args (Namespace): Command-line arguments containing tracking 参数.
@@ -263,7 +262,7 @@ class BYTETracker:
         self.reset_id()
 
     def update(self, results, img: np.ndarray | None = None, feats: np.ndarray | None = None, **kwargs) -> np.ndarray:
-        """使用新的检测结果更新跟踪器，并返回当前跟踪对象列表。"""
+        """使用新的检测结果更新跟踪器，并返回当前跟踪对象列表。."""
         self.frame_id += 1
         activated_stracks = []
         refind_stracks = []
@@ -299,7 +298,7 @@ class BYTETracker:
         return self._format_output()
 
     def _split_detections(self, results: Any) -> tuple[Any, Any, np.ndarray, np.ndarray]:
-        """将检测结果拆分为高置信度和低置信度子集，并丢弃退化边界框。
+        """将检测结果拆分为高置信度和低置信度子集，并丢弃退化边界框。.
 
         参数：
             结果 (Any): Results-like 对象 with ``conf`` and ``xywh``/``xywhr`` attributes supporting boolean
@@ -317,7 +316,7 @@ class BYTETracker:
         return results[remain_inds], results[inds_low], remain_inds, inds_low
 
     def _input_for(self, img: np.ndarray | None, feats: np.ndarray | None, mask: np.ndarray) -> Any:
-        """返回 ``init_track`` 所需的每个检测结果辅助输入。
+        """返回 ``init_track`` 所需的每个检测结果辅助输入。.
 
         当提供 ``feats`` 时，会根据检测掩码对其切片。使用原生（``model="auto"``）ReID 编码器的跟踪器在缺少特征时
         （例如用户提供检测结果）会获得 None，因此 ``init_track`` 会回退到无编码路径，而不是将 BGR 帧传入自动编码器。
@@ -338,7 +337,7 @@ class BYTETracker:
         return img
 
     def _split_tracked(self) -> tuple[list[STrack], list[STrack]]:
-        """将 ``self.tracked_stracks`` 分为已确认和未确认列表。
+        """将 ``self.tracked_stracks`` 分为已确认和未确认列表。.
 
         返回：
             (tuple[列表[STrack], 列表[STrack]]): ``(unconfirmed, tracked)`` where ``unconfirmed`` holds tracks whose
@@ -352,7 +351,7 @@ class BYTETracker:
     def _pre_first_associate(
         self, strack_pool: list[STrack], unconfirmed: list[STrack], img: np.ndarray | None, results_high: Any
     ) -> None:
-        """在卡尔曼预测后、第一阶段分配前调用的钩子。默认行为：如果可用则使用 GMC。"""
+        """在卡尔曼预测后、第一阶段分配前调用的钩子。默认行为：如果可用则使用 GMC。."""
         if hasattr(self, "gmc") and self.gmc.method is not None and img is not None:
             try:
                 warp = self.gmc.apply(img, results_high.xyxy)
@@ -365,7 +364,7 @@ class BYTETracker:
     def _first_association(
         self, strack_pool: list[STrack], detections: list[STrack], activated: list[STrack], refind: list[STrack]
     ) -> tuple[list[int], list[int]]:
-        """在轨迹池和高分检测结果之间执行第一阶段匹配。
+        """在轨迹池和高分检测结果之间执行第一阶段匹配。.
 
         返回：
             (tuple[列表[int], 列表[int]]): 未匹配轨迹索引和未匹配检测索引。
@@ -384,7 +383,7 @@ class BYTETracker:
         activated: list[STrack],
         refind: list[STrack],
     ) -> tuple[list[int], list[int]]:
-        """在第一阶段匹配结束后、第二阶段匹配开始前执行的钩子。
+        """在第一阶段匹配结束后、第二阶段匹配开始前执行的钩子。.
 
         返回：
             (tuple[列表[int], 列表[int]]): 可能已修改的未匹配轨迹索引和检测索引。
@@ -399,12 +398,12 @@ class BYTETracker:
         activated: list[STrack],
         refind: list[STrack],
     ) -> None:
-        """应用匹配阶段返回的 (track, detection) 配对列表。"""
+        """应用匹配阶段返回的 (track, detection) 配对列表。."""
         for itracked, idet in matches:
             self._apply_match(pool[itracked], detections[idet], activated, refind)
 
     def _apply_match(self, track: STrack, det: STrack, activated: list[STrack], refind: list[STrack]) -> None:
-        """使用匹配的检测结果更新或重新激活单条轨迹。"""
+        """使用匹配的检测结果更新或重新激活单条轨迹。."""
         if track.state == TrackState.Tracked:
             track.update(det, self.frame_id)
             activated.append(track)
@@ -421,7 +420,7 @@ class BYTETracker:
         refind: list[STrack],
         lost: list[STrack],
     ) -> None:
-        """在剩余跟踪轨迹和低分检测结果之间执行第二阶段匹配。"""
+        """在剩余跟踪轨迹和低分检测结果之间执行第二阶段匹配。."""
         r_tracked_stracks = [strack_pool[i] for i in u_track if strack_pool[i].state == TrackState.Tracked]
         if r_tracked_stracks and detections_second:
             # 按设计仅使用 IoU（ByteTrack 论文第 3.2 节）：融合低分会使代价超过 0.5 阈值
@@ -445,7 +444,7 @@ class BYTETracker:
         activated: list[STrack],
         removed: list[STrack],
     ) -> tuple[list[int], list[STrack]]:
-        """将未确认轨迹与剩余的高分检测结果进行匹配。
+        """将未确认轨迹与剩余的高分检测结果进行匹配。.
 
         返回：
             (tuple[列表[int], 列表[STrack]]): Unmatched detection 索引 after association, and the filtered detection
@@ -472,7 +471,7 @@ class BYTETracker:
         activated: list[STrack],
         refind: list[STrack] | None = None,
     ) -> None:
-        """根据通过所有匹配阶段的检测结果激活新轨迹。"""
+        """根据通过所有匹配阶段的检测结果激活新轨迹。."""
         for inew in u_detection:
             track = detections[inew]
             if track.score < self.args.new_track_thresh:
@@ -481,45 +480,45 @@ class BYTETracker:
             activated.append(track)
 
     def _remove_stale_lost(self, removed: list[STrack]) -> None:
-        """移除丢失时间超过允许最大帧数的轨迹。"""
+        """移除丢失时间超过允许最大帧数的轨迹。."""
         for track in self.lost_stracks:
             if self.frame_id - track.end_frame > self.max_frames_lost:
                 track.mark_removed()
                 removed.append(track)
 
     def _format_output(self) -> np.ndarray:
-        """将当前跟踪对象格式化为输出数组。"""
+        """将当前跟踪对象格式化为输出数组。."""
         return np.asarray([x.result for x in self.tracked_stracks if x.is_activated], dtype=np.float32)
 
     def get_kalmanfilter(self) -> KalmanFilterXYAH:
-        """返回使用 KalmanFilterXYAH 跟踪边界框的卡尔曼滤波器对象。"""
+        """返回使用 KalmanFilterXYAH 跟踪边界框的卡尔曼滤波器对象。."""
         return KalmanFilterXYAH()
 
     def init_track(self, results, img: np.ndarray | None = None) -> list[STrack]:
-        """使用给定的检测结果、分数和类别标签初始化对象跟踪，并创建 STrack 实例。"""
+        """使用给定的检测结果、分数和类别标签初始化对象跟踪，并创建 STrack 实例。."""
         if len(results) == 0:
             return []
         bboxes = parse_bboxes(results)
         return [self.track_class(xywh, s, c) for (xywh, s, c) in zip(bboxes, results.conf, results.cls)]
 
     def get_dists(self, tracks: list[STrack], detections: list[STrack]) -> np.ndarray:
-        """使用 IoU 计算轨迹与检测结果之间的距离，并可选择融合分数。"""
+        """使用 IoU 计算轨迹与检测结果之间的距离，并可选择融合分数。."""
         dists = matching.iou_distance(tracks, detections)
         if self.args.fuse_score:
             dists = matching.fuse_score(dists, detections)
         return dists
 
     def multi_predict(self, tracks: list[STrack]):
-        """使用卡尔曼滤波预测多条轨迹的下一状态。"""
+        """使用卡尔曼滤波预测多条轨迹的下一状态。."""
         STrack.multi_predict(tracks)
 
     @staticmethod
     def reset_id():
-        """重置 STrack 实例的 ID 计数器，确保不同跟踪会话中的跟踪 ID 唯一。"""
+        """重置 STrack 实例的 ID 计数器，确保不同跟踪会话中的跟踪 ID 唯一。."""
         STrack.reset_id()
 
     def reset(self):
-        """清除所有跟踪中、丢失和已移除的轨迹，并重新初始化卡尔曼滤波器，从而重置跟踪器。"""
+        """清除所有跟踪中、丢失和已移除的轨迹，并重新初始化卡尔曼滤波器，从而重置跟踪器。."""
         self.tracked_stracks = []
         self.lost_stracks = []
         self.removed_stracks = []
