@@ -7,7 +7,7 @@ from ultralytics.utils.plotting import colors
 
 
 class QueueManager(BaseSolution):
-    """根据对象跟踪结果管理实时视频流中的队列计数。
+    """根据对象跟踪结果管理实时视频流中的队列计数。.
 
     此类扩展 BaseSolution，提供在视频帧指定区域内跟踪和统计对象的功能。
 
@@ -36,7 +36,7 @@ class QueueManager(BaseSolution):
     """
 
     def __init__(self, **kwargs: Any) -> None:
-        """使用视频流中跟踪和统计对象所需的参数初始化 QueueManager。"""
+        """使用视频流中跟踪和统计对象所需的参数初始化 QueueManager。."""
         super().__init__(**kwargs)
         self.initialize_region()
         self.counts = 0  # 队列计数信息
@@ -44,7 +44,7 @@ class QueueManager(BaseSolution):
         self.region_length = len(self.region)  # 保存区域长度供后续使用
 
     def process(self, im0) -> SolutionResults:
-        """处理单帧视频图像以管理队列。
+        """处理单帧视频图像以管理队列。.
 
         参数：
             im0 (np.ndarray): 要处理的输入图像，通常是视频流中的一帧。

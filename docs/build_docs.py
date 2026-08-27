@@ -1,5 +1,5 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
-"""使用 Zensical 准备并验证完整的文档目录。"""
+"""使用 Zensical 准备并验证完整的文档目录。."""
 
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ SITE = DOCS.parent / "site"
 
 
 def prepare_docs_markdown():
-    """准备用于验证的 Markdown 文档。"""
+    """准备用于验证的 Markdown 文档。."""
     LOGGER.info("Removing existing build artifacts")
     shutil.rmtree(SITE, ignore_errors=True)
     shutil.rmtree(DOCS / "repos", ignore_errors=True)
@@ -42,7 +42,7 @@ def prepare_docs_markdown():
 
 
 def update_markdown_files(md_filepath: Path):
-    """创建或更新 Markdown 文件，并确保文件包含前置元数据。"""
+    """创建或更新 Markdown 文件，并确保文件包含前置元数据。."""
     if md_filepath.exists():
         content = md_filepath.read_text().strip()
 
@@ -82,15 +82,15 @@ def update_markdown_files(md_filepath: Path):
 
 
 def render_jinja_macros() -> None:
-    """在使用 Zensical 验证前，渲染 Markdown 文件中的 MiniJinja 宏。"""
+    """在使用 Zensical 验证前，渲染 Markdown 文件中的 MiniJinja 宏。."""
     mkdocs_yml = DOCS.parent / "mkdocs.yml"
     default_yaml = DOCS.parent / "ultralytics" / "cfg" / "default.yaml"
 
     class SafeFallbackLoader(yaml.SafeLoader):
-        """能够平稳跳过未知配置标签的 SafeLoader。"""
+        """能够平稳跳过未知配置标签的 SafeLoader。."""
 
     def _ignore_unknown(loader, tag_suffix, node):
-        """平稳处理尚未注册的 YAML 标签。"""
+        """平稳处理尚未注册的 YAML 标签。."""
         if isinstance(node, yaml.ScalarNode):
             return loader.construct_scalar(node)
         if isinstance(node, yaml.SequenceNode):
@@ -102,7 +102,7 @@ def render_jinja_macros() -> None:
     SafeFallbackLoader.add_multi_constructor("", _ignore_unknown)
 
     def load_yaml(path: Path, *, safe_loader: yaml.Loader = yaml.SafeLoader) -> dict:
-        """安全加载 YAML；文件不存在时返回空字典。"""
+        """安全加载 YAML；文件不存在时返回空字典。."""
         if not path.exists():
             return {}
         with open(path, encoding="utf-8") as f:
@@ -124,7 +124,7 @@ def render_jinja_macros() -> None:
     )
 
     def indent_filter(value: str, width: int = 4, first: bool = False, blank: bool = False) -> str:
-        """模拟 Jinja 的 indent 过滤器，以保持宏的兼容性。"""
+        """模拟 Jinja 的 indent 过滤器，以保持宏的兼容性。."""
         prefix = " " * int(width)
         result = []
         for i, line in enumerate(str(value).splitlines(keepends=True)):
@@ -179,7 +179,7 @@ def render_jinja_macros() -> None:
 
 
 def backup_docs_sources() -> tuple[Path, list[tuple[Path, Path]]]:
-    """创建文档源文件的临时备份，以便构建后完整恢复。"""
+    """创建文档源文件的临时备份，以便构建后完整恢复。."""
     backup_root = Path(tempfile.mkdtemp(prefix="docs_backup_", dir=str(DOCS.parent)))
     sources = [DOCS / "en", DOCS / "macros"]
     copied: list[tuple[Path, Path]] = []
@@ -193,7 +193,7 @@ def backup_docs_sources() -> tuple[Path, list[tuple[Path, Path]]]:
 
 
 def restore_docs_sources(backup_root: Path, backups: list[tuple[Path, Path]]):
-    """从临时备份恢复文档源文件。"""
+    """从临时备份恢复文档源文件。."""
     for src, dst in backups:
         shutil.rmtree(src, ignore_errors=True)
         if dst.exists():
@@ -202,7 +202,7 @@ def restore_docs_sources(backup_root: Path, backups: list[tuple[Path, Path]]):
 
 
 def main():
-    """准备并验证完整的文档目录。"""
+    """准备并验证完整的文档目录。."""
     if not shutil.which("zensical"):
         raise SystemExit('zensical is not installed. Install it with: uv pip install -e ".[dev]"')
 
@@ -211,7 +211,7 @@ def main():
     restored = False
 
     def restore_all():
-        """构建步骤完成后，从备份恢复文档源文件。"""
+        """构建步骤完成后，从备份恢复文档源文件。."""
         nonlocal restored
         if backup_root:
             LOGGER.info("Restoring docs directory from backup")

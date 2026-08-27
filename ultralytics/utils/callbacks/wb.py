@@ -16,7 +16,7 @@ except (ImportError, AssertionError):
 
 
 def _custom_table(x, y, classes, title="Precision Recall Curve", x_title="Recall", y_title="Precision"):
-    """创建并记录自定义指标可视化表。
+    """创建并记录自定义指标可视化表。.
 
     此函数制作自定义指标可视化，模拟默认 wandb 精确率-召回率曲线的行为，同时提供更强的定制能力，可用于监控模型在不同类别上的性能。
 
@@ -58,7 +58,7 @@ def _plot_curve(
     num_x=100,
     only_mean=False,
 ):
-    """记录指标曲线可视化。
+    """记录指标曲线可视化。.
 
     此函数根据输入数据生成指标曲线并记录到 wandb。根据 'only_mean' 标志，曲线可以表示聚合数据（均值）或单个类别数据。
 
@@ -100,7 +100,7 @@ def _plot_curve(
 
 
 def _log_plots(plots, step):
-    """如果绘图尚未记录，则在指定步骤将其记录到 WandB。
+    """如果绘图尚未记录，则在指定步骤将其记录到 WandB。.
 
     此函数将输入字典中的每个绘图与之前处理过的绘图进行比较，并在指定步骤将新增或更新的绘图记录到 WandB。
 
@@ -119,7 +119,7 @@ def _log_plots(plots, step):
 
 
 def on_pretrain_routine_start(trainer):
-    """如果 wandb 模块存在，则初始化并启动 wandb 项目。"""
+    """如果 wandb 模块存在，则初始化并启动 wandb 项目。."""
     if not wb.run:
         from datetime import datetime
         from pathlib import Path
@@ -140,7 +140,7 @@ def on_pretrain_routine_start(trainer):
 
 
 def on_fit_epoch_end(trainer):
-    """在周期结束时记录训练指标和模型信息。"""
+    """在周期结束时记录训练指标和模型信息。."""
     _log_plots(trainer.plots, step=trainer.epoch + 1)
     _log_plots(trainer.validator.plots, step=trainer.epoch + 1)
     if trainer.epoch == 0:
@@ -149,7 +149,7 @@ def on_fit_epoch_end(trainer):
 
 
 def on_train_epoch_end(trainer):
-    """在每个训练周期结束时记录指标并保存图像。"""
+    """在每个训练周期结束时记录指标并保存图像。."""
     wb.run.log(trainer.label_loss_items(trainer.tloss, prefix="train"), step=trainer.epoch + 1)
     wb.run.log(trainer.lr, step=trainer.epoch + 1)
     if trainer.epoch == 1:
@@ -157,7 +157,7 @@ def on_train_epoch_end(trainer):
 
 
 def on_train_end(trainer):
-    """将最佳模型保存为工件，并在训练结束时记录最终绘图。"""
+    """将最佳模型保存为工件，并在训练结束时记录最终绘图。."""
     _log_plots(trainer.validator.plots, step=trainer.epoch + 1)
     _log_plots(trainer.plots, step=trainer.epoch + 1)
     art = wb.Artifact(type="model", name=f"run_{wb.run.id}_model")

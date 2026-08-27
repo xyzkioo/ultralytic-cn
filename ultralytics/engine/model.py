@@ -30,10 +30,9 @@ from ultralytics.utils.torch_utils import unwrap_model
 
 
 class Model(torch.nn.Module):
-    """实现 YOLO 模型的基类，为不同模型类型统一 API。
+    """实现 YOLO 模型的基类，为不同模型类型统一 API。.
 
-    此类为 YOLO 模型的训练、验证、预测、导出和基准测试等操作提供通用接口，同时支持从本地文件或 Triton Server
-    加载的不同类型模型。
+    此类为 YOLO 模型的训练、验证、预测、导出和基准测试等操作提供通用接口，同时支持从本地文件或 Triton Server 加载的不同类型模型。
 
     属性：
         callbacks (dict)：模型运行期间各类事件的回调函数字典。
@@ -85,7 +84,7 @@ class Model(torch.nn.Module):
         task: str | None = None,
         verbose: bool = False,
     ) -> None:
-        """初始化 YOLO 模型类的新实例。
+        """初始化 YOLO 模型类的新实例。.
 
         此构造函数根据提供的模型路径或名称设置模型，支持本地文件和 Triton Server 模型等不同模型来源，
         并初始化模型的关键属性，为训练、预测和导出等操作做好准备。
@@ -139,7 +138,7 @@ class Model(torch.nn.Module):
         stream: bool = False,
         **kwargs: Any,
     ) -> Iterator[Results | torch.Tensor] | list[Results] | list[torch.Tensor]:
-        """predict 方法的别名，使模型实例可以直接调用并执行预测。
+        """Predict 方法的别名，使模型实例可以直接调用并执行预测。.
 
         此方法允许直接调用模型实例并传入必要参数，从而简化预测过程。
 
@@ -163,7 +162,7 @@ class Model(torch.nn.Module):
 
     @staticmethod
     def is_triton_model(model: str) -> bool:
-        """检查给定模型字符串是否为 Triton Server URL。
+        """检查给定模型字符串是否为 Triton Server URL。.
 
         此静态方法使用 urllib.parse.urlsplit() 解析模型字符串，判断其是否表示有效的 Triton Server URL。
 
@@ -185,7 +184,7 @@ class Model(torch.nn.Module):
         return url.netloc and url.path and url.scheme in {"http", "grpc"}
 
     def _new(self, cfg: str, task=None, model=None, verbose=False) -> None:
-        """初始化新模型，并根据模型定义推断任务类型。
+        """初始化新模型，并根据模型定义推断任务类型。.
 
         此方法根据给定配置文件创建新的模型实例，加载模型配置，在未指定任务类型时进行推断，
         并使用任务映射中的对应类初始化模型。
@@ -217,7 +216,7 @@ class Model(torch.nn.Module):
         self.model_name = cfg
 
     def _load(self, weights: str, task=None) -> None:
-        """从检查点文件加载模型，或根据权重文件初始化模型。
+        """从检查点文件加载模型，或根据权重文件初始化模型。.
 
         此方法支持从 .pt 检查点文件或其他格式的权重文件加载模型，并根据加载的权重设置模型、任务和相关属性。
 
@@ -253,7 +252,7 @@ class Model(torch.nn.Module):
         self.model_name = weights
 
     def _check_is_pytorch_model(self) -> None:
-        """检查模型是否为 PyTorch 模型；如果不是则抛出 TypeError。
+        """检查模型是否为 PyTorch 模型；如果不是则抛出 TypeError。.
 
         此方法验证模型是否为 PyTorch 模块或 .pt 文件，确保需要 PyTorch 模型的操作只作用于兼容的模型类型。
 
@@ -278,7 +277,7 @@ class Model(torch.nn.Module):
             )
 
     def reset_weights(self) -> Model:
-        """将模型权重重置为初始状态。
+        """将模型权重重置为初始状态。.
 
         此方法遍历模型中的所有模块，如果模块具有 `reset_parameters` 方法，则重置其参数；同时确保所有参数的
         `requires_grad` 为 True，使其可以在训练期间更新。
@@ -302,7 +301,7 @@ class Model(torch.nn.Module):
         return self
 
     def load(self, weights: str | Path = "yolo26n.pt") -> Model:
-        """将指定权重文件中的参数加载到模型中。
+        """将指定权重文件中的参数加载到模型中。.
 
         此方法支持从文件或权重对象直接加载权重，并按名称和形状匹配参数后传递到模型。
 
@@ -328,7 +327,7 @@ class Model(torch.nn.Module):
         return self
 
     def save(self, filename: str | Path = "saved_model.pt") -> None:
-        """将当前模型状态保存到文件。
+        """将当前模型状态保存到文件。.
 
         此方法将模型检查点（ckpt）导出到指定文件名，并包含日期、Ultralytics 版本、许可证信息和文档链接等元数据。
 
@@ -358,7 +357,7 @@ class Model(torch.nn.Module):
         torch.save({**self.ckpt, **updates}, filename)
 
     def info(self, detailed: bool = False, verbose: bool = True, imgsz: int | list[int, int] = 640):
-        """显示模型信息。
+        """显示模型信息。.
 
         此方法根据传入参数提供模型概览或详细信息，并可控制输出的详细程度。
 
@@ -380,7 +379,7 @@ class Model(torch.nn.Module):
         return self.model.info(detailed=detailed, verbose=verbose, imgsz=imgsz)
 
     def fuse(self, verbose: bool = True, imgsz: int | list[int, int] = 640) -> Model:
-        """融合模型中的 Conv2d 和 BatchNorm2d 层，以优化推理。
+        """融合模型中的 Conv2d 和 BatchNorm2d 层，以优化推理。.
 
         此方法遍历模型模块，将连续的 Conv2d 和 BatchNorm2d 层融合为单层。通过减少前向传播所需的操作数量和
         内存访问次数，这种融合可以显著提升推理速度。
@@ -408,7 +407,7 @@ class Model(torch.nn.Module):
         stream: bool = False,
         **kwargs: Any,
     ) -> Iterator[torch.Tensor] | list[torch.Tensor]:
-        """根据提供的图像源生成图像嵌入。
+        """根据提供的图像源生成图像嵌入。.
 
         此方法封装 `predict()` 方法，返回图像源的特征嵌入。默认从模型倒数第二层提取嵌入，
         可在 `kwargs` 中传入 `embed=[layer_index]` 选择指定层。
@@ -448,7 +447,7 @@ class Model(torch.nn.Module):
         predictor=None,
         **kwargs: Any,
     ) -> Iterator[Results | torch.Tensor] | list[Results] | list[torch.Tensor]:
-        """使用 YOLO 模型对给定图像源执行预测。
+        """使用 YOLO 模型对给定图像源执行预测。.
 
         此方法支持通过关键字参数进行各种配置，也支持使用自定义预测器或默认预测器处理不同类型的图像源，
         并可以流式模式运行。
@@ -521,7 +520,7 @@ class Model(torch.nn.Module):
         persist: bool = False,
         **kwargs: Any,
     ) -> list[Results]:
-        """使用已注册的跟踪器对指定输入源执行目标跟踪。
+        """使用已注册的跟踪器对指定输入源执行目标跟踪。.
 
         此方法使用模型预测器和可选的已注册跟踪器执行目标跟踪，支持文件路径、视频流等不同输入源，并可通过关键字
         参数进行自定义。每次调用都会注册或刷新跟踪回调，因此后续设置的 `persist` 参数也会生效。
@@ -560,7 +559,7 @@ class Model(torch.nn.Module):
         validator=None,
         **kwargs: Any,
     ):
-        """使用指定数据集和验证配置验证模型。
+        """使用指定数据集和验证配置验证模型。.
 
         此方法支持通过各种设置自定义验证过程，也支持使用自定义验证器或默认验证方式。方法会合并默认配置、
         方法默认参数和用户提供的参数，以配置验证过程。
@@ -590,7 +589,7 @@ class Model(torch.nn.Module):
         return validator.metrics
 
     def calibrate(self, data=None, **kwargs: Any):
-        """在小型带标注数据集上拟合仅缩放的深度校准（仅适用于 depth 任务）。
+        """在小型带标注数据集上拟合仅缩放的深度校准（仅适用于 depth 任务）。.
 
         方法先执行一次验证，再通过 :func:`fit_calibration_selective` 根据真实深度拟合全局对数仿射变换
         ``d' = exp(a·log d + b)``，采用与训练器自动校准相同的“仅在有帮助时校准”策略（根据留出集 δ1 选择恒等
@@ -630,7 +629,7 @@ class Model(torch.nn.Module):
         return res["a"], res["b"]
 
     def benchmark(self, data=None, format="", verbose=False, **kwargs: Any):
-        """在不同导出格式上测试模型性能。
+        """在不同导出格式上测试模型性能。.
 
         此方法评估模型在 ONNX、TorchScript 等不同导出格式下的性能，并使用 ultralytics.utils.benchmarks 模块
         中的 benchmark 函数。基准测试配置由默认配置值、模型参数、方法默认参数和用户提供的其他关键字参数共同决定。
@@ -685,7 +684,7 @@ class Model(torch.nn.Module):
         self,
         **kwargs: Any,
     ) -> str:
-        """将模型导出为适合部署的其他格式。
+        """将模型导出为适合部署的其他格式。.
 
         此方法将模型导出为 ONNX、TorchScript 等多种格式，用于部署，并使用 Exporter 类执行导出过程，
         同时合并模型覆盖参数、方法默认参数和用户提供的其他参数。
@@ -741,7 +740,7 @@ class Model(torch.nn.Module):
         trainer=None,
         **kwargs: Any,
     ):
-        """使用指定的数据集和训练配置训练模型。
+        """使用指定的数据集和训练配置训练模型。.
 
         此方法支持通过多种设置自定义训练过程，也支持使用自定义训练器或默认训练方式；同时处理从检查点恢复训练、
         训练后更新模型和配置、检查 pip 更新，以及合并默认配置、方法默认参数和用户提供参数等场景。
@@ -841,7 +840,7 @@ class Model(torch.nn.Module):
         *args: Any,
         **kwargs: Any,
     ):
-        """对模型执行超参数调优，并可选择使用 Ray Tune。
+        """对模型执行超参数调优，并可选择使用 Ray Tune。.
 
         此方法支持两种超参数调优方式：Ray Tune 或自定义调优方式。启用 Ray Tune 时，调用
         ultralytics.utils.tuner 模块中的 run_ray_tune 函数；否则使用内部 Tuner 类。方法会合并默认参数、覆盖参数
@@ -881,7 +880,7 @@ class Model(torch.nn.Module):
             return Tuner(args=args, _callbacks=self.callbacks)(iterations=iterations)
 
     def _apply(self, fn) -> Model:
-        """将函数应用于模型参数、缓冲区和张量。
+        """将函数应用于模型参数、缓冲区和张量。.
 
         此方法扩展父类的 _apply 方法，额外重置预测器并更新模型覆盖参数中的设备。通常用于将模型移动到其他设备
         或更改模型精度等操作。
@@ -907,7 +906,7 @@ class Model(torch.nn.Module):
 
     @property
     def names(self) -> dict[int, str]:
-        """获取已加载模型关联的类别名称。
+        """获取已加载模型关联的类别名称。.
 
         如果模型中定义了类别名称，此属性会返回这些名称，并使用 ultralytics.nn.autobackend 模块中的
         check_class_names 函数检查其有效性。如果预测器尚未初始化，则会先设置预测器再获取类别名称。
@@ -935,7 +934,7 @@ class Model(torch.nn.Module):
 
     @property
     def device(self) -> torch.device:
-        """获取模型参数所在的设备。
+        """获取模型参数所在的设备。.
 
         此属性确定模型参数当前存储的设备（CPU 或 GPU），仅适用于 torch.nn.Module 实例。
 
@@ -954,7 +953,7 @@ class Model(torch.nn.Module):
 
     @property
     def transforms(self):
-        """获取应用于已加载模型输入数据的变换。
+        """获取应用于已加载模型输入数据的变换。.
 
         如果模型中定义了变换，此属性会返回这些变换。变换通常包括调整大小、归一化和数据增强等预处理步骤，
         这些步骤会在输入数据送入模型前执行。
@@ -973,7 +972,7 @@ class Model(torch.nn.Module):
         return self.model.transforms if hasattr(self.model, "transforms") else None
 
     def add_callback(self, event: str, func) -> None:
-        """为指定事件添加回调函数。
+        """为指定事件添加回调函数。.
 
         此方法用于注册自定义回调函数，在训练或推理等模型操作的特定事件发生时触发。回调可以扩展并自定义模型
         生命周期各阶段的行为。
@@ -992,7 +991,7 @@ class Model(torch.nn.Module):
         self.callbacks[event].append(func)
 
     def clear_callback(self, event: str) -> None:
-        """清除指定事件注册的所有回调函数。
+        """清除指定事件注册的所有回调函数。.
 
         此方法移除与给定事件关联的所有自定义回调和默认回调，并将该事件的回调列表重置为空列表。
 
@@ -1013,7 +1012,7 @@ class Model(torch.nn.Module):
         self.callbacks[event] = []
 
     def reset_callbacks(self) -> None:
-        """将所有回调重置为默认函数。
+        """将所有回调重置为默认函数。.
 
         此方法恢复所有事件的默认回调函数，并移除之前添加的自定义回调。它遍历 callbacks.default_callbacks 中的
         默认事件，将当前回调替换为默认回调。模型生命周期中的 on_train_start、on_epoch_end 等事件的预定义回调
@@ -1032,7 +1031,7 @@ class Model(torch.nn.Module):
 
     @staticmethod
     def _reset_ckpt_args(args: dict[str, Any]) -> dict[str, Any]:
-        """加载 PyTorch 模型检查点时重置指定参数。
+        """加载 PyTorch 模型检查点时重置指定参数。.
 
         此方法筛选输入参数字典，仅保留模型加载所需的一组关键参数，丢弃不必要或可能冲突的设置。
 
@@ -1052,7 +1051,7 @@ class Model(torch.nn.Module):
         return {k: v for k, v in args.items() if k in include}
 
     def _smart_load(self, key: str):
-        """根据模型任务智能加载对应模块。
+        """根据模型任务智能加载对应模块。.
 
         此方法根据模型当前任务和给定键动态选择并返回正确的模块（模型、训练器、验证器或预测器），并通过
         task_map 字典确定指定任务需要加载的模块。
@@ -1080,7 +1079,7 @@ class Model(torch.nn.Module):
 
     @property
     def task_map(self) -> dict:
-        """提供模型任务到不同模式对应类的映射。
+        """提供模型任务到不同模式对应类的映射。.
 
         此属性返回一个字典，将每个受支持的任务（例如 detect、segment、semantic、classify）映射到嵌套字典。
         嵌套字典包含不同运行模式（model、trainer、validator、predictor）及其对应的类实现。
@@ -1100,7 +1099,7 @@ class Model(torch.nn.Module):
         raise NotImplementedError("Please provide task map for your model!")
 
     def eval(self):
-        """将模型设置为评估模式。
+        """将模型设置为评估模式。.
 
         此方法将模型切换到评估模式，影响 Dropout 和批归一化等在训练与评估期间行为不同的层。评估模式下，
         这些层使用运行统计量而不是计算批次统计量，并禁用 Dropout 层。
@@ -1117,7 +1116,7 @@ class Model(torch.nn.Module):
         return self
 
     def __getattr__(self, name):
-        """允许通过 Model 类直接访问底层模型的属性。
+        """允许通过 Model 类直接访问底层模型的属性。.
 
         此方法允许通过 Model 实例直接访问底层模型属性。它首先检查请求的属性是否为 'model'；如果是，则从模块
         字典中返回模型，否则将属性查找委托给底层模型。

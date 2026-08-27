@@ -15,7 +15,7 @@ __all__ = ("RTDETRValidator",)  # 元组或列表
 
 
 class RTDETRDataset(YOLODataset):
-    """继承基础 YOLODataset 的实时检测 Transformer（RT-DETR）数据集类。
+    """继承基础 YOLODataset 的实时检测 Transformer（RT-DETR）数据集类。.
 
     此专用数据集类用于 RT-DETR 对象检测模型，并针对实时检测和跟踪任务进行优化。
 
@@ -37,7 +37,7 @@ class RTDETRDataset(YOLODataset):
     """
 
     def __init__(self, *args, data=None, **kwargs):
-        """通过继承 YOLODataset 类初始化 RTDETRDataset。
+        """通过继承 YOLODataset 类初始化 RTDETRDataset。.
 
         此构造函数在 YOLODataset 功能基础上，设置专门针对 RT-DETR（实时检测 Transformer）模型优化的数据集。
 
@@ -49,7 +49,7 @@ class RTDETRDataset(YOLODataset):
         super().__init__(*args, data=data, **kwargs)
 
     def load_image(self, i, rect_mode=False):
-        """从数据集索引 'i' 加载一张图像。
+        """从数据集索引 'i' 加载一张图像。.
 
         参数：
             i (int): 要加载的图像索引。
@@ -69,7 +69,7 @@ class RTDETRDataset(YOLODataset):
 
 
 class RTDETRValidator(DetectionValidator):
-    """继承 DetectionValidator、为 RT-DETR（实时 DETR）对象检测模型提供专用验证能力的 RTDETRValidator。
+    """继承 DetectionValidator、为 RT-DETR（实时 DETR）对象检测模型提供专用验证能力的 RTDETRValidator。.
 
     此类支持构建 RTDETR 专用验证数据集，对后处理应用置信度阈值，并相应更新评估指标。
 
@@ -93,7 +93,7 @@ class RTDETRValidator(DetectionValidator):
     """
 
     def build_dataset(self, img_path, mode="val", batch=None):
-        """构建 RTDETR 数据集。
+        """构建 RTDETR 数据集。.
 
         参数：
             img_path (str): 包含图像的文件夹路径。
@@ -118,13 +118,13 @@ class RTDETRValidator(DetectionValidator):
         )
 
     def scale_preds(self, predn: dict[str, torch.Tensor], pbatch: dict[str, Any]) -> dict[str, torch.Tensor]:
-        """返回未改变的预测结果，因为 RT-DETR 会在后处理中处理缩放。"""
+        """返回未改变的预测结果，因为 RT-DETR 会在后处理中处理缩放。."""
         return predn
 
     def postprocess(
         self, preds: torch.Tensor | list[torch.Tensor] | tuple[torch.Tensor]
     ) -> list[dict[str, torch.Tensor]]:
-        """对预测输出应用后处理。
+        """对预测输出应用后处理。.
 
         Top-k 选择已在解码头内部完成。此方法将归一化 xywh 坐标转换为像素 xyxy 格式。
 
@@ -152,7 +152,7 @@ class RTDETRValidator(DetectionValidator):
         ]
 
     def pred_to_json(self, predn: dict[str, torch.Tensor], pbatch: dict[str, Any]) -> None:
-        """将 YOLO 预测结果序列化为 COCO JSON 格式。
+        """将 YOLO 预测结果序列化为 COCO JSON 格式。.
 
         参数：
             predn (dict[str, torch.Tensor]): 预测字典，包含 'bboxes'、'conf' 和 'cls' 键，分别对应边界框坐标、

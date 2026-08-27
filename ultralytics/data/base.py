@@ -21,7 +21,7 @@ from ultralytics.utils.patches import imread
 
 
 class BaseDataset(Dataset):
-    """用于加载和处理图像数据的基础数据集类。
+    """用于加载和处理图像数据的基础数据集类。.
 
     此类提供加载图像、缓存图像以及为目标检测任务准备训练和推理数据的核心功能。
 
@@ -68,10 +68,10 @@ class BaseDataset(Dataset):
     """
 
     class _ImageCache:
-        """将图像存储在连续数组中，以保留工作进程之间的写时复制共享。"""
+        """将图像存储在连续数组中，以保留工作进程之间的写时复制共享。."""
 
         def __init__(self, images: list[np.ndarray]):
-            """将图像及其布局打包为连续的 NumPy 数组。"""
+            """将图像及其布局打包为连续的 NumPy 数组。."""
             self.shapes = np.array([im.shape for im in images])
             self.dtypes = np.array([im.dtype.str for im in images])
             self.offsets = np.concatenate(([0], np.cumsum([im.nbytes for im in images])))
@@ -81,7 +81,7 @@ class BaseDataset(Dataset):
                 images[i] = None
 
         def __getitem__(self, i: int) -> np.ndarray:
-            """根据索引返回图像视图。"""
+            """根据索引返回图像视图。."""
             i = range(len(self.shapes))[i]
             return self.buffer[self.offsets[i] : self.offsets[i + 1]].view(self.dtypes[i]).reshape(self.shapes[i])
 
@@ -102,7 +102,7 @@ class BaseDataset(Dataset):
         fraction: float = 1.0,
         channels: int = 3,
     ):
-        """使用给定配置和选项初始化 BaseDataset。
+        """使用给定配置和选项初始化 BaseDataset。.
 
         参数：
             img_path (str | 列表[str]): 包含图像的文件夹路径，或图像路径列表。
@@ -152,8 +152,7 @@ class BaseDataset(Dataset):
         if self.cache == "ram" and self.check_cache_ram():
             if hyp.deterministic:
                 LOGGER.warning(
-                        "cache='ram' 可能产生非确定性的训练结果。"
-                        "如果磁盘空间允许，可使用 cache='disk' 作为确定性替代方案。"
+                    "cache='ram' 可能产生非确定性的训练结果。如果磁盘空间允许，可使用 cache='disk' 作为确定性替代方案。"
                 )
             self.cache_images()
         elif self.cache == "disk" and self.check_cache_disk():
@@ -163,7 +162,7 @@ class BaseDataset(Dataset):
         self.transforms = self.build_transforms(hyp=hyp)
 
     def get_img_files(self, img_path: str | list[str]) -> list[str]:
-        """从指定路径读取图像文件。
+        """从指定路径读取图像文件。.
 
         参数：
             img_path (str | 列表[str]): 图像目录或文件的路径，或由这些路径组成的列表。
@@ -185,7 +184,9 @@ class BaseDataset(Dataset):
                     with open(p, encoding="utf-8") as t:
                         t = t.read().strip().splitlines()
                         parent = str(p.parent) + os.sep
-                        f += [x.replace("./", parent, 1) if x.startswith("./") else x for x in t]  # 将本地路径转换为全局路径
+                        f += [
+                            x.replace("./", parent, 1) if x.startswith("./") else x for x in t
+                        ]  # 将本地路径转换为全局路径
                         # F += [p.parent / x.lstrip(os.sep) for x in t]  # 从本地路径转换为全局路径（pathlib）
                 else:
                     raise FileNotFoundError(f"{self.prefix}{p} does not exist")
@@ -200,7 +201,7 @@ class BaseDataset(Dataset):
         return im_files
 
     def update_labels(self, include_class: list[int] | None) -> None:
-        """更新标签，仅保留指定类别。
+        """更新标签，仅保留指定类别。.
 
         参数：
             include_class (列表[int], 可选): 要包含的类别列表。为 None 时包含所有类别。
@@ -225,7 +226,7 @@ class BaseDataset(Dataset):
     def load_image(
         self, i: int, rect_mode: bool = True, resize_short: bool = False
     ) -> tuple[np.ndarray, tuple[int, int], tuple[int, int]]:
-        """从数据集索引 'i' 加载图像。
+        """从数据集索引 'i' 加载图像。.
 
         参数：
             i (int): 要加载的图像索引。
@@ -292,7 +293,7 @@ class BaseDataset(Dataset):
         return self.ims[i], self.im_hw0[i], self.im_hw[i]
 
     def cache_images(self) -> None:
-        """将图像缓存到内存或磁盘，以加快训练速度。"""
+        """将图像缓存到内存或磁盘，以加快训练速度。."""
         b, gb = 0, 1 << 30  # 缓存图像的字节数，每 GB 对应的字节数
         fcn, storage = (self.cache_images_to_disk, "Disk") if self.cache == "disk" else (self.load_image, "RAM")
         with ThreadPool(NUM_THREADS) as pool:
@@ -310,7 +311,7 @@ class BaseDataset(Dataset):
             self.ims = self._ImageCache(self.ims)
 
     def cache_images_to_disk(self, i: int) -> None:
-        """将图像保存为 *.npy 文件，以加快加载速度。"""
+        """将图像保存为 *.npy 文件，以加快加载速度。."""
         f = self.npy_files[i]
         if not f.exists():
             try:
@@ -320,7 +321,7 @@ class BaseDataset(Dataset):
                 LOGGER.warning(f"{self.prefix}WARNING ⚠️ Failed to cache image {f}: {e}")
 
     def check_cache_disk(self, safety_margin: float = 0.5) -> bool:
-        """检查磁盘空间是否足够缓存图像。
+        """检查磁盘空间是否足够缓存图像。.
 
         参数：
             safety_margin (float): Safety margin factor for disk space calculation.
@@ -355,7 +356,7 @@ class BaseDataset(Dataset):
         return True
 
     def check_cache_ram(self, safety_margin: float = 1.0) -> bool:
-        """检查内存是否足够缓存图像。
+        """检查内存是否足够缓存图像。.
 
         参数：
             safety_margin (float): Safety margin factor for RAM calculation.
@@ -380,7 +381,7 @@ class BaseDataset(Dataset):
         return True
 
     def set_rectangle(self) -> None:
-        """按宽高比对图像排序，并为矩形训练设置批次形状。"""
+        """按宽高比对图像排序，并为矩形训练设置批次形状。."""
         bi = np.floor(np.arange(self.ni) / self.batch_size).astype(int)  # batch 索引
         nb = bi[-1] + 1  # 批次数量
 
@@ -405,11 +406,11 @@ class BaseDataset(Dataset):
         self.batch = bi  # 图像的批次索引
 
     def __getitem__(self, index: int) -> dict[str, Any]:
-        """返回给定索引对应的变换后标签信息。"""
+        """返回给定索引对应的变换后标签信息。."""
         return self.transforms(self.get_image_and_label(index))
 
     def get_image_and_label(self, index: int) -> dict[str, Any]:
-        """获取并返回数据集中的标签信息。
+        """获取并返回数据集中的标签信息。.
 
         参数：
             索引 (int): Index of 图像 to retrieve.
@@ -429,15 +430,15 @@ class BaseDataset(Dataset):
         return self.update_labels_info(label)
 
     def __len__(self) -> int:
-        """返回数据集标签列表的长度。"""
+        """返回数据集标签列表的长度。."""
         return len(self.labels)
 
     def update_labels_info(self, label: dict[str, Any]) -> dict[str, Any]:
-        """在此处自定义标签格式。"""
+        """在此处自定义标签格式。."""
         return label
 
     def build_transforms(self, hyp: dict[str, Any] | None = None):
-        """用户可以在此处自定义数据增强。
+        """用户可以在此处自定义数据增强。.
 
         示例：
             >>> if self.augment:
@@ -450,7 +451,7 @@ class BaseDataset(Dataset):
         raise NotImplementedError
 
     def get_labels(self) -> list[dict[str, Any]]:
-        """用户可以在此处自定义自己的格式。
+        """用户可以在此处自定义自己的格式。.
 
         示例：
             确保输出是包含以下键的字典：

@@ -15,14 +15,13 @@ from .base import BaseBackend
 
 
 class TensorRTBackend(BaseBackend):
-    """用于 GPU 加速部署的 NVIDIA TensorRT 推理后端。
+    """用于 GPU 加速部署的 NVIDIA TensorRT 推理后端。.
 
-    使用 NVIDIA TensorRT 序列化引擎（.engine 文件）加载并运行推理。
-    支持 TensorRT 7-9 和 TensorRT 10/11 API、动态输入形状、FP16 精度以及 DLA 核心卸载。
+    使用 NVIDIA TensorRT 序列化引擎（.engine 文件）加载并运行推理。 支持 TensorRT 7-9 和 TensorRT 10/11 API、动态输入形状、FP16 精度以及 DLA 核心卸载。
     """
 
     def load_model(self, weight: str | Path) -> None:
-        """从序列化的 .engine 文件加载 NVIDIA TensorRT 引擎。
+        """从序列化的 .engine 文件加载 NVIDIA TensorRT 引擎。.
 
         参数：
             weight (str | Path): .engine 文件路径，可包含嵌入元数据。
@@ -108,7 +107,7 @@ class TensorRTBackend(BaseBackend):
         self.model = engine
 
     def forward(self, im: torch.Tensor) -> list[torch.Tensor]:
-        """执行 NVIDIA TensorRT 推理，并处理动态形状。
+        """执行 NVIDIA TensorRT 推理，并处理动态形状。.
 
         参数：
             im (torch.Tensor): CUDA 设备上的输入图像张量，格式为 BCHW。

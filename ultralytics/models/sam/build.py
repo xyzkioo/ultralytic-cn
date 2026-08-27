@@ -21,7 +21,7 @@ from .modules.transformer import TwoWayTransformer
 
 
 def _load_checkpoint(model, checkpoint):
-    """从文件路径将检查点加载到模型中。"""
+    """从文件路径将检查点加载到模型中。."""
     if checkpoint is None:
         return model
 
@@ -36,7 +36,7 @@ def _load_checkpoint(model, checkpoint):
 
 
 def build_sam_vit_h(checkpoint=None):
-    """使用指定编码器参数构建并返回 h 尺寸的 Segment Anything Model（SAM）。"""
+    """使用指定编码器参数构建并返回 h 尺寸的 Segment Anything Model（SAM）。."""
     return _build_sam(
         encoder_embed_dim=1280,
         encoder_depth=32,
@@ -47,7 +47,7 @@ def build_sam_vit_h(checkpoint=None):
 
 
 def build_sam_vit_l(checkpoint=None):
-    """使用指定编码器参数构建并返回 l 尺寸的 Segment Anything Model（SAM）。"""
+    """使用指定编码器参数构建并返回 l 尺寸的 Segment Anything Model（SAM）。."""
     return _build_sam(
         encoder_embed_dim=1024,
         encoder_depth=24,
@@ -58,7 +58,7 @@ def build_sam_vit_l(checkpoint=None):
 
 
 def build_sam_vit_b(checkpoint=None):
-    """使用指定编码器参数构建并返回 b 尺寸的 Segment Anything Model（SAM）。"""
+    """使用指定编码器参数构建并返回 b 尺寸的 Segment Anything Model（SAM）。."""
     return _build_sam(
         encoder_embed_dim=768,
         encoder_depth=12,
@@ -69,7 +69,7 @@ def build_sam_vit_b(checkpoint=None):
 
 
 def build_mobile_sam(checkpoint=None):
-    """构建并返回用于高效图像分割的 Mobile Segment Anything Model（Mobile-SAM）。"""
+    """构建并返回用于高效图像分割的 Mobile Segment Anything Model（Mobile-SAM）。."""
     return _build_sam(
         encoder_embed_dim=[64, 128, 160, 320],
         encoder_depth=[2, 2, 6, 2],
@@ -81,7 +81,7 @@ def build_mobile_sam(checkpoint=None):
 
 
 def build_sam2_t(checkpoint=None):
-    """使用指定架构参数构建并返回 tiny 尺寸的 Segment Anything Model 2（SAM2）。"""
+    """使用指定架构参数构建并返回 tiny 尺寸的 Segment Anything Model 2（SAM2）。."""
     return _build_sam2(
         encoder_embed_dim=96,
         encoder_stages=[1, 2, 7, 2],
@@ -94,7 +94,7 @@ def build_sam2_t(checkpoint=None):
 
 
 def build_sam2_s(checkpoint=None):
-    """使用指定架构参数构建并返回 small 尺寸的 Segment Anything Model 2（SAM2）。"""
+    """使用指定架构参数构建并返回 small 尺寸的 Segment Anything Model 2（SAM2）。."""
     return _build_sam2(
         encoder_embed_dim=96,
         encoder_stages=[1, 2, 11, 2],
@@ -107,7 +107,7 @@ def build_sam2_s(checkpoint=None):
 
 
 def build_sam2_b(checkpoint=None):
-    """使用指定架构参数构建并返回 base 尺寸的 Segment Anything Model 2（SAM2）。"""
+    """使用指定架构参数构建并返回 base 尺寸的 Segment Anything Model 2（SAM2）。."""
     return _build_sam2(
         encoder_embed_dim=112,
         encoder_stages=[2, 3, 16, 3],
@@ -121,7 +121,7 @@ def build_sam2_b(checkpoint=None):
 
 
 def build_sam2_l(checkpoint=None):
-    """使用指定架构参数构建并返回 large 尺寸的 Segment Anything Model 2（SAM2）。"""
+    """使用指定架构参数构建并返回 large 尺寸的 Segment Anything Model 2（SAM2）。."""
     return _build_sam2(
         encoder_embed_dim=144,
         encoder_stages=[2, 6, 36, 4],
@@ -141,7 +141,7 @@ def _build_sam(
     checkpoint=None,
     mobile_sam=False,
 ):
-    """使用指定编码器参数构建 Segment Anything Model（SAM）。
+    """使用指定编码器参数构建 Segment Anything Model（SAM）。.
 
     参数：
         encoder_embed_dim (int | 列表[int]): 编码器嵌入维度。
@@ -234,7 +234,7 @@ def _build_sam2(
     encoder_window_spec=(8, 4, 16, 8),
     checkpoint=None,
 ):
-    """使用指定架构参数构建并返回 Segment Anything Model 2（SAM2）。
+    """使用指定架构参数构建并返回 Segment Anything Model 2（SAM2）。.
 
     参数：
         encoder_embed_dim (int, 可选): 编码器嵌入维度。
@@ -332,7 +332,7 @@ sam_model_map = {
 
 
 def build_sam(ckpt="sam_b.pt"):
-    """根据给定检查点构建并返回 Segment Anything Model（SAM）。
+    """根据给定检查点构建并返回 Segment Anything Model（SAM）。.
 
     参数：
         ckpt (str | Path, 可选): 检查点文件路径或预定义 SAM 模型名称。

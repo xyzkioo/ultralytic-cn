@@ -20,7 +20,7 @@ from ultralytics.utils.plotting import Annotator, colors, save_one_box
 
 
 class BaseTensor(SimpleClass):
-    """基础张量类，提供便于操作和设备管理的附加方法。
+    """基础张量类，提供便于操作和设备管理的附加方法。.
 
     此类为类似张量的对象提供基础功能，支持 PyTorch 张量和 NumPy 数组，并提供在设备之间移动数据及转换数据类型的方法。
 
@@ -45,7 +45,7 @@ class BaseTensor(SimpleClass):
     """
 
     def __init__(self, data: torch.Tensor | np.ndarray, orig_shape: tuple[int, int]) -> None:
-        """使用预测数据和图像原始形状初始化 BaseTensor。
+        """使用预测数据和图像原始形状初始化 BaseTensor。.
 
         参数：
             data (torch.Tensor | np.ndarray): 预测数据，例如边界框、掩码或关键点。
@@ -57,7 +57,7 @@ class BaseTensor(SimpleClass):
 
     @property
     def shape(self) -> tuple[int, ...]:
-        """返回底层数据张量的形状。
+        """返回底层数据张量的形状。.
 
         返回：
             (tuple[int, ...]): 数据张量的形状。
@@ -71,7 +71,7 @@ class BaseTensor(SimpleClass):
         return self.data.shape
 
     def cpu(self):
-        """返回存储在 CPU 内存中的张量副本。
+        """返回存储在 CPU 内存中的张量副本。.
 
         返回：
             (BaseTensor): 将数据张量移动到 CPU 内存后的新 BaseTensor 对象。
@@ -88,7 +88,7 @@ class BaseTensor(SimpleClass):
         return self if isinstance(self.data, np.ndarray) else self.__class__(self.data.cpu(), self.orig_shape)
 
     def numpy(self):
-        """将数据转换为 NumPy 数组并返回对象副本。
+        """将数据转换为 NumPy 数组并返回对象副本。.
 
         返回：
             (BaseTensor): `data` 为 NumPy 数组的新实例。
@@ -104,7 +104,7 @@ class BaseTensor(SimpleClass):
         return self if isinstance(self.data, np.ndarray) else self.__class__(self.data.numpy(), self.orig_shape)
 
     def cuda(self):
-        """将张量移动到 GPU 内存。
+        """将张量移动到 GPU 内存。.
 
         返回：
             (BaseTensor): 数据已移动到 GPU 内存的新 BaseTensor 实例。
@@ -121,7 +121,7 @@ class BaseTensor(SimpleClass):
         return self.__class__(torch.as_tensor(self.data).cuda(), self.orig_shape)
 
     def to(self, *args, **kwargs):
-        """返回移动到指定设备并转换为指定数据类型的张量副本。
+        """返回移动到指定设备并转换为指定数据类型的张量副本。.
 
         参数：
             *args (Any): 要传递给 torch.Tensor.to() 的可变长度参数列表。
@@ -138,7 +138,7 @@ class BaseTensor(SimpleClass):
         return self.__class__(torch.as_tensor(self.data).to(*args, **kwargs), self.orig_shape)
 
     def __len__(self) -> int:
-        """返回底层数据张量的长度。
+        """返回底层数据张量的长度。.
 
         返回：
             (int): 数据张量第一维的元素数量。
@@ -152,7 +152,7 @@ class BaseTensor(SimpleClass):
         return len(self.data)
 
     def __getitem__(self, idx):
-        """返回包含数据张量中指定索引元素的新 BaseTensor 实例。
+        """返回包含数据张量中指定索引元素的新 BaseTensor 实例。.
 
         参数：
             idx (int | list[int] | torch.Tensor): 要从数据张量中选择的索引。
@@ -171,32 +171,31 @@ class BaseTensor(SimpleClass):
 
 
 class _DenseResultTensor(BaseTensor):
-    """表示每张图像零个或一个稠密结果的 BaseTensor，可避免按行索引破坏结果。"""
+    """表示每张图像零个或一个稠密结果的 BaseTensor，可避免按行索引破坏结果。."""
 
     def __len__(self) -> int:
-        """如果映射包含数据则返回 1；如果之前的索引操作将其清空则返回 0。"""
+        """如果映射包含数据则返回 1；如果之前的索引操作将其清空则返回 0。."""
         return int(self.data.shape[0] > 0)
 
     def __getitem__(self, idx):
-        """选择该结果的任意索引都返回完整映射；空选择则返回空映射。"""
+        """选择该结果的任意索引都返回完整映射；空选择则返回空映射。."""
         idx = idx.cpu().numpy() if isinstance(idx, torch.Tensor) else idx  # NumPy 将原始布尔张量读取为整数
         empty = np.size(np.arange(len(self))[idx]) == 0  # 根据逻辑长度检查任意类型的 idx 是否越界
         return self.__class__(self.data[:0] if empty else self.data, self.orig_shape)
 
 
 class SemanticMask(_DenseResultTensor):
-    """单张图像的语义分割类别图。"""
+    """单张图像的语义分割类别图。."""
 
 
 class DepthMap(_DenseResultTensor):
-    """单张图像的逐像素深度图（单位：米），形状为 (H, W)。"""
+    """单张图像的逐像素深度图（单位：米），形状为 (H, W)。."""
 
 
 class Results(SimpleClass, DataExportMixin):
-    """用于存储和操作推理结果的类。
+    """用于存储和操作推理结果的类。.
 
-    此类提供处理各种 Ultralytics 模型推理结果的完整功能，包括目标检测、实例分割、语义分割、分类、姿态估计和有向
-    边界框检测，并支持可视化、数据导出及多种坐标变换。
+    此类提供处理各种 Ultralytics 模型推理结果的完整功能，包括目标检测、实例分割、语义分割、分类、姿态估计和有向 边界框检测，并支持可视化、数据导出及多种坐标变换。
 
     属性：
         orig_img (np.ndarray): 以 NumPy 数组表示的原始图像。
@@ -254,7 +253,7 @@ class Results(SimpleClass, DataExportMixin):
         semantic_mask: torch.Tensor | None = None,
         depth: torch.Tensor | None = None,
     ) -> None:
-        """初始化用于存储和操作推理结果的 Results 类。
+        """初始化用于存储和操作推理结果的 Results 类。.
 
         参数：
             orig_img (np.ndarray): 以 NumPy 数组表示的原始图像。
@@ -292,7 +291,7 @@ class Results(SimpleClass, DataExportMixin):
         self._keys = "boxes", "masks", "probs", "keypoints", "obb", "semantic_mask", "depth"
 
     def __getitem__(self, idx):
-        """返回推理结果中指定索引对应的 Results 对象。
+        """返回推理结果中指定索引对应的 Results 对象。.
 
         参数：
             idx (int | slice): 要从 Results 对象中获取的索引或切片。
@@ -308,7 +307,7 @@ class Results(SimpleClass, DataExportMixin):
         return self._apply("__getitem__", idx)
 
     def __len__(self) -> int:
-        """返回 Results 对象中的结果数量。
+        """返回 Results 对象中的结果数量。.
 
         返回：
             (int): 结果数量，由 (boxes、masks、probs、keypoints、obb、semantic_mask 或 depth) 中第一个非空属性的
@@ -335,7 +334,7 @@ class Results(SimpleClass, DataExportMixin):
         semantic_mask: torch.Tensor | None = None,
         depth: torch.Tensor | None = None,
     ):
-        """使用新的检测数据更新 Results 对象。
+        """使用新的检测数据更新 Results 对象。.
 
         此方法可更新 Results 对象的边界框、掩码、关键点、概率和有向边界框（OBB），并确保边界框被裁剪到图像原始形状内。
 
@@ -369,7 +368,7 @@ class Results(SimpleClass, DataExportMixin):
             self.depth = DepthMap(depth, self.orig_shape)
 
     def _apply(self, fn: str, *args, **kwargs):
-        """对所有非空属性应用函数，并返回属性已修改的新 Results 对象。
+        """对所有非空属性应用函数，并返回属性已修改的新 Results 对象。.
 
         .to()、.cuda()、.cpu() 等方法会在内部调用此方法。
 
@@ -396,7 +395,7 @@ class Results(SimpleClass, DataExportMixin):
         return r
 
     def cpu(self):
-        """返回一个 Results 对象副本，并将其中的所有张量移动到 CPU 内存。
+        """返回一个 Results 对象副本，并将其中的所有张量移动到 CPU 内存。.
 
         此方法创建新的 Results 对象，并将所有张量属性（boxes、masks、probs、keypoints、obb）转移到 CPU 内存，
         适用于将数据从 GPU 移到 CPU 以便进一步处理或保存。
@@ -412,7 +411,7 @@ class Results(SimpleClass, DataExportMixin):
         return self._apply("cpu")
 
     def numpy(self):
-        """将 Results 对象中的所有张量转换为 NumPy 数组。
+        """将 Results 对象中的所有张量转换为 NumPy 数组。.
 
         返回：
             (Results): 所有张量均已转换为 NumPy 数组的新 Results 对象。
@@ -429,7 +428,7 @@ class Results(SimpleClass, DataExportMixin):
         return self._apply("numpy")
 
     def cuda(self):
-        """将 Results 对象中的所有张量移动到 GPU 内存。
+        """将 Results 对象中的所有张量移动到 GPU 内存。.
 
         返回：
             (Results): 所有张量均已移动到 CUDA 设备的新 Results 对象。
@@ -443,7 +442,7 @@ class Results(SimpleClass, DataExportMixin):
         return self._apply("cuda")
 
     def to(self, *args, **kwargs):
-        """将 Results 对象中的所有张量移动到指定设备并转换为指定数据类型。
+        """将 Results 对象中的所有张量移动到指定设备并转换为指定数据类型。.
 
         参数：
             *args (Any): 要传递给 torch.Tensor.to() 的可变长度参数列表。
@@ -461,7 +460,7 @@ class Results(SimpleClass, DataExportMixin):
         return self._apply("to", *args, **kwargs)
 
     def new(self):
-        """使用相同的图像、路径、名称和速度属性创建新的 Results 对象。
+        """使用相同的图像、路径、名称和速度属性创建新的 Results 对象。.
 
         返回：
             (Results): 从原实例复制属性得到的新 Results 对象。
@@ -492,7 +491,7 @@ class Results(SimpleClass, DataExportMixin):
         color_mode: str = "class",
         txt_color: tuple[int, int, int] = (255, 255, 255),
     ) -> np.ndarray:
-        """在输入 BGR 图像上绘制检测结果。
+        """在输入 BGR 图像上绘制检测结果。.
 
         参数：
             conf (bool): Whether to plot detection confidence scores.
@@ -619,7 +618,7 @@ class Results(SimpleClass, DataExportMixin):
         return annotator.result(pil)
 
     def show(self, *args, **kwargs):
-        """显示带有推理结果标注的图像。
+        """显示带有推理结果标注的图像。.
 
         此方法在原始图像上绘制检测结果并显示图像，可直接查看模型预测结果。
 
@@ -636,7 +635,7 @@ class Results(SimpleClass, DataExportMixin):
         self.plot(*args, show=True, **kwargs)
 
     def save(self, filename: str | None = None, *args, **kwargs) -> str:
-        """将带有推理结果标注的图像保存到文件。
+        """将带有推理结果标注的图像保存到文件。.
 
         此方法在原始图像上绘制检测结果，将标注后的图像保存到文件。它使用 `plot` 方法生成标注图像，
         然后将其保存到指定文件名。
@@ -666,7 +665,7 @@ class Results(SimpleClass, DataExportMixin):
         return filename
 
     def verbose(self) -> str:
-        """返回每个任务的日志字符串，详细描述检测和分类结果。
+        """返回每个任务的日志字符串，详细描述检测和分类结果。.
 
         此方法生成易于阅读的字符串，用于概括检测和分类结果。其中包含每个类别的检测数量，
         以及分类任务中概率最高的类别。
@@ -692,7 +691,9 @@ class Results(SimpleClass, DataExportMixin):
         if self.probs is not None:
             return f"{', '.join(f'{self.names[j]} {self.probs.data[j]:.2f}' for j in self.probs.top5)}, "
         if boxes:
-            counts = torch.as_tensor(boxes.cls, dtype=torch.int64).bincount()  # 对 torch 不执行操作，对 numpy() 进行转换
+            counts = torch.as_tensor(
+                boxes.cls, dtype=torch.int64
+            ).bincount()  # 对 torch 不执行操作，对 numpy() 进行转换
             return "".join(f"{n} {self.names[i]}{'s' * (n > 1)}, " for i, n in enumerate(counts) if n > 0)
         if self.depth is not None:
             d = self.depth.data
@@ -702,7 +703,7 @@ class Results(SimpleClass, DataExportMixin):
             return ""
 
     def save_txt(self, txt_file: str | Path, save_conf: bool = False) -> str:
-        """将检测结果保存到文本文件。
+        """将检测结果保存到文本文件。.
 
         参数：
             txt_file (str | Path): Path to the output text file.
@@ -770,7 +771,7 @@ class Results(SimpleClass, DataExportMixin):
         return str(txt_file)
 
     def save_crop(self, save_dir: str | Path, file_name: str | Path = Path("im.jpg")):
-        """将裁剪后的检测图像保存到指定目录。
+        """将裁剪后的检测图像保存到指定目录。.
 
         此方法将检测目标的裁剪图像保存到指定目录。每个裁剪图像都保存在以目标类别命名的子目录中，
         文件名根据输入的 file_name 生成。
@@ -811,7 +812,7 @@ class Results(SimpleClass, DataExportMixin):
             )
 
     def summary(self, normalize: bool = False, decimals: int = 5) -> list[dict[str, Any]]:
-        """将推理结果转换为摘要字典，并可选择对边界框坐标进行归一化。
+        """将推理结果转换为摘要字典，并可选择对边界框坐标进行归一化。.
 
         此方法创建检测字典列表，每个字典包含一个检测或分类结果的信息。
         对于分类任务，返回概率最高的 5 个类别及其置信度；对于检测任务，包含类别信息和边界框坐标，
@@ -912,10 +913,9 @@ class Results(SimpleClass, DataExportMixin):
 
 
 class Boxes(BaseTensor):
-    """用于管理和操作检测边界框的类。
+    """用于管理和操作检测边界框的类。.
 
-    此类提供完整的检测边界框处理功能，包括坐标、置信度分数、类别标签和可选的跟踪 ID。
-    支持多种边界框格式，并提供在不同坐标系之间便捷操作和转换的方法。
+    此类提供完整的检测边界框处理功能，包括坐标、置信度分数、类别标签和可选的跟踪 ID。 支持多种边界框格式，并提供在不同坐标系之间便捷操作和转换的方法。
 
     属性：
         data (torch.Tensor | np.ndarray): 包含检测边界框及相关数据的原始张量。
@@ -947,7 +947,7 @@ class Boxes(BaseTensor):
     """
 
     def __init__(self, boxes: torch.Tensor | np.ndarray, orig_shape: tuple[int, int]) -> None:
-        """使用检测边界框数据和图像原始形状初始化 Boxes 类。
+        """使用检测边界框数据和图像原始形状初始化 Boxes 类。.
 
         此类管理检测边界框，便于访问和操作边界框坐标、置信度分数、类别标识及可选的跟踪 ID。
         支持绝对坐标和归一化坐标等多种边界框格式。
@@ -967,7 +967,7 @@ class Boxes(BaseTensor):
 
     @property
     def xyxy(self) -> torch.Tensor | np.ndarray:
-        """返回 [x1, y1, x2, y2] 格式的边界框。
+        """返回 [x1, y1, x2, y2] 格式的边界框。.
 
         返回：
             (torch.Tensor | np.ndarray): 形状为 (n, 4) 的张量或数组，包含 [x1, y1, x2, y2] 格式的边界框坐标，
@@ -983,7 +983,7 @@ class Boxes(BaseTensor):
 
     @property
     def conf(self) -> torch.Tensor | np.ndarray:
-        """返回每个检测边界框的置信度分数。
+        """返回每个检测边界框的置信度分数。.
 
         返回：
             (torch.Tensor | np.ndarray): 包含每个检测结果置信度分数的一维张量或数组，形状为 (N,)，
@@ -999,7 +999,7 @@ class Boxes(BaseTensor):
 
     @property
     def cls(self) -> torch.Tensor | np.ndarray:
-        """返回表示每个边界框类别预测结果的类别 ID 张量。
+        """返回表示每个边界框类别预测结果的类别 ID 张量。.
 
         返回：
             (torch.Tensor | np.ndarray): 包含每个检测边界框类别 ID 的张量或数组。
@@ -1015,7 +1015,7 @@ class Boxes(BaseTensor):
 
     @property
     def id(self) -> torch.Tensor | np.ndarray | None:
-        """如果存在，则返回每个检测边界框的跟踪 ID。
+        """如果存在，则返回每个检测边界框的跟踪 ID。.
 
         返回：
             (torch.Tensor | np.ndarray | None): 如果启用跟踪，则返回包含每个边界框跟踪 ID 的张量或数组，否则返回 None。
@@ -1039,7 +1039,7 @@ class Boxes(BaseTensor):
 
     @cached_property
     def xywh(self) -> torch.Tensor | np.ndarray:
-        """将边界框从 [x1, y1, x2, y2] 格式转换为 [x, y, width, height] 格式。
+        """将边界框从 [x1, y1, x2, y2] 格式转换为 [x, y, width, height] 格式。.
 
         返回：
             (torch.Tensor | np.ndarray): Boxes in [x_center, y_center, width, height] format, where x_center, y_center
@@ -1056,7 +1056,7 @@ class Boxes(BaseTensor):
 
     @cached_property
     def xyxyn(self) -> torch.Tensor | np.ndarray:
-        """返回相对于图像原始尺寸归一化后的边界框坐标。
+        """返回相对于图像原始尺寸归一化后的边界框坐标。.
 
         此属性计算并返回 [x1, y1, x2, y2] 格式的边界框坐标，并根据原始图像尺寸归一化到 [0, 1] 范围。
 
@@ -1077,7 +1077,7 @@ class Boxes(BaseTensor):
 
     @cached_property
     def xywhn(self) -> torch.Tensor | np.ndarray:
-        """返回 [x, y, width, height] 格式的归一化边界框。
+        """返回 [x, y, width, height] 格式的归一化边界框。.
 
         此属性计算并返回 [x_center, y_center, width, height] 格式的归一化边界框坐标，
         所有值均相对于原始图像尺寸。
@@ -1099,7 +1099,7 @@ class Boxes(BaseTensor):
 
 
 class Masks(BaseTensor):
-    """用于存储和操作检测掩码的类。
+    """用于存储和操作检测掩码的类。.
 
     此类继承 BaseTensor，用于处理分割掩码，并提供像素坐标与归一化坐标之间的转换方法。
 
@@ -1124,7 +1124,7 @@ class Masks(BaseTensor):
     """
 
     def __init__(self, masks: torch.Tensor | np.ndarray, orig_shape: tuple[int, int]) -> None:
-        """使用检测掩码数据和图像原始形状初始化 Masks 类。
+        """使用检测掩码数据和图像原始形状初始化 Masks 类。.
 
         参数：
             masks (torch.Tensor | np.ndarray): 形状为 (num_masks, height, width) 的检测掩码。
@@ -1136,7 +1136,7 @@ class Masks(BaseTensor):
 
     @cached_property
     def xyn(self) -> list[np.ndarray]:
-        """返回分割掩码的归一化 xy 坐标。
+        """返回分割掩码的归一化 xy 坐标。.
 
         此属性计算并缓存分割掩码的归一化 xy 坐标。坐标相对于原始图像形状进行归一化。
 
@@ -1157,7 +1157,7 @@ class Masks(BaseTensor):
 
     @cached_property
     def xy(self) -> list[np.ndarray]:
-        """返回掩码张量中每个分割区域的 [x, y] 像素坐标。
+        """返回掩码张量中每个分割区域的 [x, y] 像素坐标。.
 
         此属性计算并返回 Masks 对象中每个分割掩码的像素坐标列表。
         坐标会缩放到与原始图像尺寸一致。
@@ -1180,7 +1180,7 @@ class Masks(BaseTensor):
 
 
 class Keypoints(BaseTensor):
-    """用于存储和操作检测关键点的类。
+    """用于存储和操作检测关键点的类。.
 
     此类用于处理关键点数据，包括坐标操作、归一化和置信度值，并支持带可选可见性信息的关键点检测结果。
 
@@ -1210,7 +1210,7 @@ class Keypoints(BaseTensor):
     """
 
     def __init__(self, keypoints: torch.Tensor | np.ndarray, orig_shape: tuple[int, int]) -> None:
-        """使用检测关键点和图像原始尺寸初始化 Keypoints 对象。
+        """使用检测关键点和图像原始尺寸初始化 Keypoints 对象。.
 
         此方法处理输入关键点张量，同时支持二维和三维格式。
 
@@ -1227,7 +1227,7 @@ class Keypoints(BaseTensor):
 
     @cached_property
     def xy(self) -> torch.Tensor | np.ndarray:
-        """返回关键点的 x、y 坐标。
+        """返回关键点的 x、y 坐标。.
 
         返回：
             (torch.Tensor | np.ndarray): 包含关键点 x、y 坐标的张量或数组，形状为 (N, K, 2)，
@@ -1248,7 +1248,7 @@ class Keypoints(BaseTensor):
 
     @cached_property
     def xyn(self) -> torch.Tensor | np.ndarray:
-        """返回相对于图像原始尺寸归一化后的关键点坐标（x、y）。
+        """返回相对于图像原始尺寸归一化后的关键点坐标（x、y）。.
 
         返回：
             (torch.Tensor | np.ndarray): 形状为 (N, K, 2) 的张量或数组，包含归一化关键点坐标；
@@ -1267,7 +1267,7 @@ class Keypoints(BaseTensor):
 
     @cached_property
     def conf(self) -> torch.Tensor | np.ndarray | None:
-        """返回每个关键点的置信度值。
+        """返回每个关键点的置信度值。.
 
         返回：
             (torch.Tensor | np.ndarray | None): 如果可用，则返回包含每个关键点置信度分数的张量或数组，否则返回 None。
@@ -1282,7 +1282,7 @@ class Keypoints(BaseTensor):
 
 
 class Probs(BaseTensor):
-    """用于存储和操作分类概率的类。
+    """用于存储和操作分类概率的类。.
 
     此类继承 BaseTensor，提供访问和操作分类概率的方法，包括最高概率和前五名预测结果。
 
@@ -1314,7 +1314,7 @@ class Probs(BaseTensor):
     """
 
     def __init__(self, probs: torch.Tensor | np.ndarray, orig_shape: tuple[int, int] | None = None) -> None:
-        """使用分类概率初始化 Probs 类。
+        """使用分类概率初始化 Probs 类。.
 
         此类存储并管理分类概率，便于访问最高概率预测结果及其置信度。
 
@@ -1326,7 +1326,7 @@ class Probs(BaseTensor):
 
     @cached_property
     def top1(self) -> int:
-        """返回概率最高的类别索引。
+        """返回概率最高的类别索引。.
 
         返回：
             (int): 概率最高类别的索引。
@@ -1340,7 +1340,7 @@ class Probs(BaseTensor):
 
     @cached_property
     def top5(self) -> list[int]:
-        """返回概率最高的前 5 个类别索引。
+        """返回概率最高的前 5 个类别索引。.
 
         返回：
             (list[int]): 包含前五名类别概率索引的列表，按降序排列。
@@ -1354,7 +1354,7 @@ class Probs(BaseTensor):
 
     @cached_property
     def top1conf(self) -> torch.Tensor | np.ndarray:
-        """返回概率最高类别的置信度分数。
+        """返回概率最高类别的置信度分数。.
 
         此属性从分类结果中获取预测概率最高类别的置信度分数（概率）。
 
@@ -1371,7 +1371,7 @@ class Probs(BaseTensor):
 
     @cached_property
     def top5conf(self) -> torch.Tensor | np.ndarray:
-        """返回前 5 个分类预测结果的置信度分数。
+        """返回前 5 个分类预测结果的置信度分数。.
 
         此属性获取模型预测的前五名类别概率对应的置信度分数，便于快速访问最可能的类别及其置信度。
 
@@ -1388,10 +1388,9 @@ class Probs(BaseTensor):
 
 
 class OBB(BaseTensor):
-    """用于存储和操作有向边界框（OBB）的类。
+    """用于存储和操作有向边界框（OBB）的类。.
 
-    此类用于处理有向边界框，包括不同格式之间的转换、归一化以及访问边界框的各种属性。
-    同时支持跟踪和非跟踪场景。
+    此类用于处理有向边界框，包括不同格式之间的转换、归一化以及访问边界框的各种属性。 同时支持跟踪和非跟踪场景。
 
     属性：
         data (torch.Tensor): 包含边界框坐标及相关数据的原始 OBB 张量。
@@ -1420,7 +1419,7 @@ class OBB(BaseTensor):
     """
 
     def __init__(self, boxes: torch.Tensor | np.ndarray, orig_shape: tuple[int, int]) -> None:
-        """使用有向边界框数据和图像原始形状初始化 OBB（Oriented Bounding Box）实例。
+        """使用有向边界框数据和图像原始形状初始化 OBB（Oriented Bounding Box）实例。.
 
         此类存储并操作用于目标检测任务的有向边界框（OBB），并提供访问和转换 OBB 数据的各种属性与方法。
 
@@ -1442,7 +1441,7 @@ class OBB(BaseTensor):
 
     @property
     def xywhr(self) -> torch.Tensor | np.ndarray:
-        """返回 [x_center, y_center, width, height, rotation] 格式的边界框。
+        """返回 [x_center, y_center, width, height, rotation] 格式的边界框。.
 
         返回：
             (torch.Tensor | np.ndarray): 包含 [x_center, y_center, width, height, rotation] 格式有向边界框的张量或数组。
@@ -1463,7 +1462,7 @@ class OBB(BaseTensor):
 
     @property
     def conf(self) -> torch.Tensor | np.ndarray:
-        """返回有向边界框（OBB）的置信度分数。
+        """返回有向边界框（OBB）的置信度分数。.
 
         此属性获取每个 OBB 检测结果对应的置信度值，置信度分数表示模型对该检测结果的确信程度。
 
@@ -1481,7 +1480,7 @@ class OBB(BaseTensor):
 
     @property
     def cls(self) -> torch.Tensor | np.ndarray:
-        """返回有向边界框的类别值。
+        """返回有向边界框的类别值。.
 
         返回：
             (torch.Tensor | np.ndarray): 包含每个有向边界框类别值的张量或数组。
@@ -1498,7 +1497,7 @@ class OBB(BaseTensor):
 
     @property
     def id(self) -> torch.Tensor | np.ndarray | None:
-        """返回有向边界框的跟踪 ID（如果存在）。
+        """返回有向边界框的跟踪 ID（如果存在）。.
 
         返回：
             (torch.Tensor | np.ndarray | None): 包含每个有向边界框跟踪 ID 的张量或数组。
@@ -1516,7 +1515,7 @@ class OBB(BaseTensor):
 
     @cached_property
     def xyxyxyxy(self) -> torch.Tensor | np.ndarray:
-        """将 OBB 格式转换为旋转边界框使用的 8 点（xyxyxyxy）坐标格式。
+        """将 OBB 格式转换为旋转边界框使用的 8 点（xyxyxyxy）坐标格式。.
 
         返回：
             (torch.Tensor | np.ndarray): 形状为 (N, 4, 2) 的 xyxyxyxy 格式旋转边界框，其中 N 为边界框数量。
@@ -1533,7 +1532,7 @@ class OBB(BaseTensor):
 
     @cached_property
     def xyxyxyxyn(self) -> torch.Tensor | np.ndarray:
-        """将旋转边界框转换为归一化的 xyxyxyxy 格式。
+        """将旋转边界框转换为归一化的 xyxyxyxy 格式。.
 
         返回：
             (torch.Tensor | np.ndarray): 形状为 (N, 4, 2) 的归一化 xyxyxyxy 格式旋转边界框，其中 N 为边界框数量。
@@ -1552,7 +1551,7 @@ class OBB(BaseTensor):
 
     @cached_property
     def xyxy(self) -> torch.Tensor | np.ndarray:
-        """将有向边界框（OBB）转换为 xyxy 格式的轴对齐边界框。
+        """将有向边界框（OBB）转换为 xyxy 格式的轴对齐边界框。.
 
         此属性计算每个有向边界框的最小外接矩形，并以 xyxy 格式（x1, y1, x2, y2）返回。
         这对于需要轴对齐边界框的操作很有用，例如与非旋转边界框计算 IoU。

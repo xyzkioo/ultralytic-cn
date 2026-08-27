@@ -15,10 +15,10 @@ from ultralytics.utils.checks import check_requirements
 
 
 class IOSDetectModel(nn.Module):
-    """包装 Ultralytics YOLO 模型，以便导出为 Apple iOS CoreML。"""
+    """包装 Ultralytics YOLO 模型，以便导出为 Apple iOS CoreML。."""
 
     def __init__(self, model: nn.Module, im: torch.Tensor, mlprogram: bool = True):
-        """使用 YOLO 模型和示例图像初始化 IOSDetectModel 类。
+        """使用 YOLO 模型和示例图像初始化 IOSDetectModel 类。.
 
         参数：
             model (nn.Module): 要封装的 YOLO 模型。
@@ -39,7 +39,7 @@ class IOSDetectModel(nn.Module):
             )
 
     def forward(self, x: torch.Tensor):
-        """使用依赖输入尺寸的因子归一化目标检测模型的预测结果。"""
+        """使用依赖输入尺寸的因子归一化目标检测模型的预测结果。."""
         xywh, cls = self.model(x)[0].transpose(0, 1).split((4, self.nc), 1)
         if self.mlprogram and self.nc % 80 != 0:  # NMS bug https://github.com/ultralytics/ultralytics/issues/22309
             pad_length = int(((self.nc + 79) // 80) * 80) - self.nc  # 将类别长度填充到 80 的倍数
@@ -58,7 +58,7 @@ def pipeline_coreml(
     weights_dir: Path | str | None = None,
     prefix: str = "",
 ):
-    """为 YOLO 检测模型创建带 NMS 的 CoreML 流水线。
+    """为 YOLO 检测模型创建带 NMS 的 CoreML 流水线。.
 
     参数：
         模型: CoreML 模型.
@@ -168,7 +168,7 @@ def pipeline_coreml(
 
 
 def _coreml_gather(self, x: torch.Tensor, index: torch.Tensor) -> torch.Tensor:
-    """沿 dim 1 选择 x 中索引为 (batch, k) 的行，并通过 MIL 保持索引为 int32。"""
+    """沿 dim 1 选择 x 中索引为 (batch, k) 的行，并通过 MIL 保持索引为 int32。."""
     return x[torch.arange(x.shape[0])[..., None], index]
 
 
@@ -183,7 +183,7 @@ def torch2coreml(
     metadata: dict | None = None,
     prefix: str = "",
 ) -> Any:
-    """将 PyTorch 模型导出为 CoreML ``.mlpackage`` 或 ``.mlmodel`` 格式。
+    """将 PyTorch 模型导出为 CoreML ``.mlpackage`` 或 ``.mlmodel`` 格式。.
 
     参数：
         model (nn.Module): 要导出的 PyTorch 模型。

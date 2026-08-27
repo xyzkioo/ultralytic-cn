@@ -6,10 +6,9 @@ import numpy as np
 
 
 class KalmanFilterXYAH:
-    """使用卡尔曼滤波器在图像空间中跟踪边界框的 KalmanFilterXYAH 类。
+    """使用卡尔曼滤波器在图像空间中跟踪边界框的 KalmanFilterXYAH 类。.
 
-    该类实现了一个用于图像空间边界框跟踪的简单卡尔曼滤波器。八维状态空间
-    `(x, y, a, h, vx, vy, va, vh)` 包含边界框中心位置 `(x, y)`、宽高比 `a`、高度 `h` 及其对应速度。
+    该类实现了一个用于图像空间边界框跟踪的简单卡尔曼滤波器。八维状态空间 `(x, y, a, h, vx, vy, va, vh)` 包含边界框中心位置 `(x, y)`、宽高比 `a`、高度 `h` 及其对应速度。
     对象运动遵循匀速模型，边界框位置 `(x, y, a, h)` 作为状态空间的直接观测值（线性观测模型）。
 
     属性：
@@ -34,7 +33,7 @@ class KalmanFilterXYAH:
     """
 
     def __init__(self):
-        """使用运动和观测不确定性权重初始化卡尔曼滤波器矩阵。
+        """使用运动和观测不确定性权重初始化卡尔曼滤波器矩阵。.
 
         卡尔曼滤波器使用八维状态空间 `(x, y, a, h, vx, vy, va, vh)`，其中 `(x, y)` 表示边界框中心位置，
         `a` 表示宽高比，`h` 表示高度，`(vx, vy, va, vh)` 表示对应速度。滤波器使用匀速模型描述对象运动，
@@ -53,7 +52,7 @@ class KalmanFilterXYAH:
         self._std_weight_velocity = 1.0 / 160
 
     def initiate(self, measurement: np.ndarray):
-        """根据未关联的观测值创建跟踪对象。
+        """根据未关联的观测值创建跟踪对象。.
 
         参数：
             measurement (np.ndarray): 边界框坐标 `(x, y, a, h)`，其中 `(x, y)` 为中心位置，`a` 为宽高比，`h` 为高度。
@@ -86,7 +85,7 @@ class KalmanFilterXYAH:
         return mean, covariance
 
     def predict(self, mean: np.ndarray, covariance: np.ndarray):
-        """执行卡尔曼滤波预测步骤。
+        """执行卡尔曼滤波预测步骤。.
 
         参数：
             mean (np.ndarray): 对象在上一时间步的八维状态均值向量。
@@ -122,7 +121,7 @@ class KalmanFilterXYAH:
         return mean, covariance
 
     def project(self, mean: np.ndarray, covariance: np.ndarray, confidence: float | None = None):
-        """将状态分布投影到观测空间。
+        """将状态分布投影到观测空间。.
 
         参数：
             mean (np.ndarray): 状态均值向量（八维数组）。
@@ -154,7 +153,7 @@ class KalmanFilterXYAH:
         return mean, covariance + innovation_cov
 
     def multi_predict(self, mean: np.ndarray, covariance: np.ndarray):
-        """批量执行多个对象状态的卡尔曼滤波预测步骤。
+        """批量执行多个对象状态的卡尔曼滤波预测步骤。.
 
         参数：
             mean (np.ndarray): 对象状态在上一时间步的 N×8 均值矩阵。
@@ -196,7 +195,7 @@ class KalmanFilterXYAH:
     def update(
         self, mean: np.ndarray, covariance: np.ndarray, measurement: np.ndarray, confidence: float | None = None
     ):
-        """执行卡尔曼滤波校正步骤。
+        """执行卡尔曼滤波校正步骤。.
 
         参数：
             mean (np.ndarray): 预测状态的八维均值向量。
@@ -232,7 +231,7 @@ class KalmanFilterXYAH:
         only_position: bool = False,
         metric: str = "maha",
     ) -> np.ndarray:
-        """计算状态分布与观测值之间的门控距离。
+        """计算状态分布与观测值之间的门控距离。.
 
         返回的平方马氏距离可使用卡方分布的第 95 百分位数作为合适阈值：当 `only_position` 为 False 时，
         四个自由度对应 9.4877；否则两个自由度对应 5.9915。`"gaussian"` 度量返回平方欧氏距离，不适用上述阈值。
@@ -273,11 +272,10 @@ class KalmanFilterXYAH:
 
 
 class KalmanFilterXYWH(KalmanFilterXYAH):
-    """使用卡尔曼滤波器在图像空间中跟踪边界框的 KalmanFilterXYWH 类。
+    """使用卡尔曼滤波器在图像空间中跟踪边界框的 KalmanFilterXYWH 类。.
 
-    该类实现了一个用于跟踪边界框的卡尔曼滤波器，状态空间为 `(x, y, w, h, vx, vy, vw, vh)`。
-    其中 `(x, y)` 为中心位置，`w` 为宽度，`h` 为高度，`vx`、`vy`、`vw`、`vh` 为对应速度。
-    对象运动遵循匀速模型，边界框位置 `(x, y, w, h)` 作为状态空间的直接观测值（线性观测模型）。
+    该类实现了一个用于跟踪边界框的卡尔曼滤波器，状态空间为 `(x, y, w, h, vx, vy, vw, vh)`。 其中 `(x, y)` 为中心位置，`w` 为宽度，`h` 为高度，`vx`、`vy`、`vw`、`vh`
+    为对应速度。 对象运动遵循匀速模型，边界框位置 `(x, y, w, h)` 作为状态空间的直接观测值（线性观测模型）。
 
     属性：
         _motion_mat (np.ndarray): 卡尔曼滤波器的运动矩阵。
@@ -300,7 +298,7 @@ class KalmanFilterXYWH(KalmanFilterXYAH):
     """
 
     def initiate(self, measurement: np.ndarray):
-        """根据未关联的观测值创建跟踪对象。
+        """根据未关联的观测值创建跟踪对象。.
 
         参数：
             measurement (np.ndarray): 边界框坐标 `(x, y, w, h)`，其中 `(x, y)` 为中心位置，`w` 为宽度，`h` 为高度。
@@ -333,7 +331,7 @@ class KalmanFilterXYWH(KalmanFilterXYAH):
         return mean, covariance
 
     def predict(self, mean: np.ndarray, covariance: np.ndarray):
-        """执行卡尔曼滤波预测步骤。
+        """执行卡尔曼滤波预测步骤。.
 
         参数：
             mean (np.ndarray): 对象在上一时间步的八维状态均值向量。
@@ -369,7 +367,7 @@ class KalmanFilterXYWH(KalmanFilterXYAH):
         return mean, covariance
 
     def project(self, mean: np.ndarray, covariance: np.ndarray, confidence: float | None = None):
-        """将状态分布投影到观测空间。
+        """将状态分布投影到观测空间。.
 
         参数：
             mean (np.ndarray): 状态均值向量（八维数组）。
@@ -401,7 +399,7 @@ class KalmanFilterXYWH(KalmanFilterXYAH):
         return mean, covariance + innovation_cov
 
     def multi_predict(self, mean: np.ndarray, covariance: np.ndarray):
-        """批量执行卡尔曼滤波预测步骤。
+        """批量执行卡尔曼滤波预测步骤。.
 
         参数：
             mean (np.ndarray): 对象状态在上一时间步的 N×8 均值矩阵。
@@ -443,7 +441,7 @@ class KalmanFilterXYWH(KalmanFilterXYAH):
     def update(
         self, mean: np.ndarray, covariance: np.ndarray, measurement: np.ndarray, confidence: float | None = None
     ):
-        """执行卡尔曼滤波校正步骤。
+        """执行卡尔曼滤波校正步骤。.
 
         参数：
             mean (np.ndarray): 预测状态的八维均值向量。

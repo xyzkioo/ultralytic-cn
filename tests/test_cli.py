@@ -15,12 +15,12 @@ from ultralytics.utils.torch_utils import TORCH_1_11, TORCH_VERSION
 
 
 def run(cmd: str) -> None:
-    """使用 subprocess 执行 shell 命令。"""
+    """使用 subprocess 执行 shell 命令。."""
     subprocess.run(cmd.split(), check=True)
 
 
 def test_special_modes() -> None:
-    """测试 YOLO 的各种特殊命令行模式。"""
+    """测试 YOLO 的各种特殊命令行模式。."""
     run("yolo help")
     run("yolo checks")
     run("yolo version")
@@ -31,7 +31,7 @@ def test_special_modes() -> None:
 
 @pytest.mark.parametrize("api_key", ["legacy_api_key", "ul_" + "a" * 40])
 def test_settings_migration(tmp_path: Path, api_key: str) -> None:
-    """验证架构迁移会保留用户设置，并且只保留 Platform API 密钥。"""
+    """验证架构迁移会保留用户设置，并且只保留 Platform API 密钥。."""
     from ultralytics.utils import SettingsManager
 
     settings_file = tmp_path / "settings.json"
@@ -54,7 +54,7 @@ def test_settings_migration(tmp_path: Path, api_key: str) -> None:
 
 
 def test_platform_login(monkeypatch) -> None:
-    """验证 Platform 登录会保存有效密钥，退出登录会移除这些密钥。"""
+    """验证 Platform 登录会保存有效密钥，退出登录会移除这些密钥。."""
     import requests
 
     from ultralytics import cfg
@@ -73,7 +73,7 @@ def test_platform_login(monkeypatch) -> None:
 
 
 def test_cli_imports_defer_torchvision() -> None:
-    """验证启动导入不会加载 torchvision 或 SAM3 几何模块。"""
+    """验证启动导入不会加载 torchvision 或 SAM3 几何模块。."""
     code = (
         "import sys; "
         "from ultralytics import YOLO; "
@@ -87,27 +87,27 @@ def test_cli_imports_defer_torchvision() -> None:
 @pytest.mark.parametrize("task,model,data", TASK_MODEL_DATA)
 @pytest.mark.skipif(IS_RASPBERRYPI, reason="Edge devices not intended for training")
 def test_train(task: str, model: str, data: str) -> None:
-    """测试 YOLO 在不同任务、模型和数据集上的训练。"""
+    """测试 YOLO 在不同任务、模型和数据集上的训练。."""
     run(f"yolo train {task} model={model} data={data} imgsz=32 epochs=1 cache=disk")
 
 
 @pytest.mark.parametrize("task,model,data", TASK_MODEL_DATA)
 def test_val(task: str, model: str, data: str) -> None:
-    """使用 shell 命令测试指定任务、模型和数据的 YOLO 验证流程。"""
+    """使用 shell 命令测试指定任务、模型和数据的 YOLO 验证流程。."""
     for end2end in (False, True):
         run(f"yolo val {task} model={model} data={data} imgsz=32 end2end={end2end} max_det=100 agnostic_nms")
 
 
 @pytest.mark.parametrize("task,model,data", TASK_MODEL_DATA)
 def test_predict(task: str, model: str, data: str) -> None:
-    """使用给定的示例资源测试指定任务和模型的 YOLO 预测。"""
+    """使用给定的示例资源测试指定任务和模型的 YOLO 预测。."""
     for end2end in (False, True):
         run(f"yolo {task} predict model={model} source={ASSETS} imgsz=32 save end2end={end2end} max_det=100")
 
 
 @pytest.mark.parametrize("model", MODELS)
 def test_export(model: str, tmp_path: Path) -> None:
-    """测试将 YOLO 模型导出为 TorchScript 格式。"""
+    """测试将 YOLO 模型导出为 TorchScript 格式。."""
     from ultralytics.utils.downloads import attempt_download_asset
 
     isolated = tmp_path / model
@@ -126,7 +126,7 @@ def test_export(model: str, tmp_path: Path) -> None:
     ],
 )
 def test_distill(task: str, data: str, student: str, teacher: Path) -> None:
-    """通过 CLI 测试支持任务的 YOLO 知识蒸馏训练。"""
+    """通过 CLI 测试支持任务的 YOLO 知识蒸馏训练。."""
     run(f"yolo train {task} model={student} distill_model={teacher} data={data} imgsz=32 epochs=1")
 
 
@@ -136,7 +136,7 @@ def test_distill(task: str, data: str, student: str, teacher: Path) -> None:
     reason="RTDETR CPU training produces NaN losses with JetPack 5 torch 2.1.0a0",
 )
 def test_rtdetr(task: str = "detect", model: Path = WEIGHTS_DIR / "rtdetr-l.pt", data: str = "coco8.yaml") -> None:
-    """使用指定模型和数据测试 Ultralytics 中检测任务的 RTDETR 功能。"""
+    """使用指定模型和数据测试 Ultralytics 中检测任务的 RTDETR 功能。."""
     # 添加逗号和空格，以测试 CLI 参数清理。
     run(f"yolo predict {task} model={model} source={ASSETS / 'bus.jpg'} imgsz=160 save")
     run(f"yolo train {task} model={model} data={data} --imgsz= 160 epochs =1, cache = disk")
@@ -151,7 +151,7 @@ def test_rtdetr(task: str = "detect", model: Path = WEIGHTS_DIR / "rtdetr-l.pt",
 def test_fastsam(
     task: str = "segment", model: str = WEIGHTS_DIR / "FastSAM-s.pt", data: str = "coco8-seg.yaml"
 ) -> None:
-    """在 Ultralytics 中使用各种提示测试 FastSAM 模型的图像目标分割。"""
+    """在 Ultralytics 中使用各种提示测试 FastSAM 模型的图像目标分割。."""
     source = ASSETS / "bus.jpg"
 
     run(f"yolo segment val {task} model={model} data={data} imgsz=32")
@@ -175,7 +175,7 @@ def test_fastsam(
 
 
 def test_mobilesam() -> None:
-    """使用 Ultralytics 和点提示、框提示测试 MobileSAM 分割。"""
+    """使用 Ultralytics 和点提示、框提示测试 MobileSAM 分割。."""
     from ultralytics import SAM
 
     # 加载模型
@@ -203,7 +203,7 @@ def test_mobilesam() -> None:
 @pytest.mark.skipif(not CUDA_IS_AVAILABLE, reason="CUDA is not available")
 @pytest.mark.skipif(CUDA_DEVICE_COUNT < 2, reason="DDP is not available")
 def test_train_gpu(task: str, model: str, data: str) -> None:
-    """使用 GPU 测试 YOLO 在各种任务和模型上的训练。"""
+    """使用 GPU 测试 YOLO 在各种任务和模型上的训练。."""
     run(f"yolo train {task} model={model} data={data} imgsz=32 epochs=1 device=0")  # 单 GPU
     run(f"yolo train {task} model={model} data={data} imgsz=32 epochs=1 device=0,1")  # 多 GPU
 
@@ -213,5 +213,5 @@ def test_train_gpu(task: str, model: str, data: str) -> None:
     ["count", "blur", "workout", "heatmap", "isegment", "visioneye", "speed", "queue", "analytics", "trackzone"],
 )
 def test_solutions(solution: str) -> None:
-    """测试 yolo solutions 命令行模式。"""
+    """测试 yolo solutions 命令行模式。."""
     run(f"yolo solutions {solution} verbose=False")

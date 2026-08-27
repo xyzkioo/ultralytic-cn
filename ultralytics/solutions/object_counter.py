@@ -10,7 +10,7 @@ from ultralytics.utils.plotting import colors
 
 
 class ObjectCounter(BaseSolution):
-    """根据跟踪结果管理实时视频流中对象计数的类。
+    """根据跟踪结果管理实时视频流中对象计数的类。.
 
     此类扩展 BaseSolution，提供统计视频流中进出指定区域对象数量的功能，同时支持多边形区域和线性区域计数。
 
@@ -37,7 +37,7 @@ class ObjectCounter(BaseSolution):
     """
 
     def __init__(self, **kwargs: Any) -> None:
-        """初始化 ObjectCounter 类，用于实时视频流中的对象计数。"""
+        """初始化 ObjectCounter 类，用于实时视频流中的对象计数。."""
         super().__init__(**kwargs)
 
         self.in_count = 0  # 向内移动对象的计数
@@ -57,7 +57,7 @@ class ObjectCounter(BaseSolution):
         prev_position: tuple[float, float] | None,
         cls: int,
     ) -> None:
-        """根据跟踪结果统计多边形或线性区域内的对象。
+        """根据跟踪结果统计多边形或线性区域内的对象。.
 
         参数：
             current_centroid (tuple[float, float]): 当前帧中的中心点坐标 `(x, y)`。
@@ -123,12 +123,12 @@ class ObjectCounter(BaseSolution):
             self.counted_ids.add(track_id)
 
     def forget_tracks(self, track_ids: list[int]) -> None:
-        """从 `counted_ids` 中移除已结束的 ID，避免全天候视频流中的集合无限增长（参见 BaseSolution）。"""
+        """从 `counted_ids` 中移除已结束的 ID，避免全天候视频流中的集合无限增长（参见 BaseSolution）。."""
         super().forget_tracks(track_ids)
         self.counted_ids.difference_update(track_ids)
 
     def display_counts(self, plot_im) -> None:
-        """在输入图像或帧上显示对象计数。
+        """在输入图像或帧上显示对象计数。.
 
         参数：
             plot_im (np.ndarray): 要显示计数的图像或帧。
@@ -148,7 +148,7 @@ class ObjectCounter(BaseSolution):
             self.annotator.display_analytics(plot_im, labels_dict, (104, 31, 17), (255, 255, 255), self.margin)
 
     def process(self, im0) -> SolutionResults:
-        """处理输入数据（帧或对象跟踪结果）并更新对象计数。
+        """处理输入数据（帧或对象跟踪结果）并更新对象计数。.
 
         此方法初始化计数区域、提取跟踪结果、绘制边界框和区域、更新对象计数，并在输入图像上显示结果。
 
@@ -171,9 +171,7 @@ class ObjectCounter(BaseSolution):
         self.extract_tracks(im0)  # 提取跟踪结果
         self.annotator = SolutionAnnotator(im0, line_width=self.line_width)  # 初始化标注器
 
-        self.annotator.draw_region(
-            reg_pts=self.region, color=(104, 0, 123), thickness=self.line_width * 2
-        )  # 绘制区域
+        self.annotator.draw_region(reg_pts=self.region, color=(104, 0, 123), thickness=self.line_width * 2)  # 绘制区域
 
         # 遍历边界框、跟踪 ID 和类别索引
         for box, track_id, cls, conf in zip(self.boxes, self.track_ids, self.clss, self.confs):

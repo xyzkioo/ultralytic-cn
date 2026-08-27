@@ -10,7 +10,7 @@ from ultralytics.utils.plotting import colors
 
 
 class DistanceCalculation(BaseSolution):
-    """根据跟踪结果计算实时视频流中两个对象之间距离的类。
+    """根据跟踪结果计算实时视频流中两个对象之间距离的类。.
 
     此类扩展 BaseSolution，使用 YOLO 目标检测和跟踪功能，在视频流中选择对象并计算它们之间的距离。
 
@@ -32,7 +32,7 @@ class DistanceCalculation(BaseSolution):
     """
 
     def __init__(self, **kwargs: Any) -> None:
-        """初始化 DistanceCalculation 类，用于测量视频流中对象之间的距离。"""
+        """初始化 DistanceCalculation 类，用于测量视频流中对象之间的距离。."""
         super().__init__(**kwargs)
 
         # 鼠标事件信息
@@ -41,7 +41,7 @@ class DistanceCalculation(BaseSolution):
         self.centroids: list[list[int]] = []  # 保存所选对象的中心点
 
     def mouse_event_for_distance(self, event: int, x: int, y: int, flags: int, param: Any) -> None:
-        """处理实时视频流中的鼠标事件，以选择区域并计算距离。
+        """处理实时视频流中的鼠标事件，以选择区域并计算距离。.
 
         参数：
             event (int): 鼠标事件类型（例如 cv2.EVENT_MOUSEMOVE、cv2.EVENT_LBUTTONDOWN）。
@@ -67,7 +67,7 @@ class DistanceCalculation(BaseSolution):
             self.left_mouse_count = 0
 
     def process(self, im0) -> SolutionResults:
-        """处理视频帧，并计算两个所选边界框之间的距离。
+        """处理视频帧，并计算两个所选边界框之间的距离。.
 
         此方法从输入帧中提取跟踪结果，为边界框添加标注，并在用户选择了两个对象时计算它们之间的距离。
 

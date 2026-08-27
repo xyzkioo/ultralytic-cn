@@ -9,7 +9,7 @@ from ultralytics.nn.modules import MLP, LayerNorm2d
 
 
 class MaskDecoder(nn.Module):
-    """使用 Transformer 架构生成掩码及其质量分数的解码器模块。
+    """使用 Transformer 架构生成掩码及其质量分数的解码器模块。.
 
     此类根据图像和提示嵌入预测掩码，使用 Transformer 处理输入，并生成掩码预测结果及其质量分数。
 
@@ -45,7 +45,7 @@ class MaskDecoder(nn.Module):
         iou_head_depth: int = 3,
         iou_head_hidden_dim: int = 256,
     ) -> None:
-        """初始化用于生成掩码及其质量分数的 MaskDecoder 模块。
+        """初始化用于生成掩码及其质量分数的 MaskDecoder 模块。.
 
         参数：
             transformer_dim (int): Transformer 模块的通道维度。
@@ -86,7 +86,7 @@ class MaskDecoder(nn.Module):
         dense_prompt_embeddings: torch.Tensor,
         multimask_output: bool,
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        """根据图像和提示嵌入预测掩码。
+        """根据图像和提示嵌入预测掩码。.
 
         参数：
             image_embeddings (torch.Tensor): 图像编码器生成的嵌入。
@@ -129,7 +129,7 @@ class MaskDecoder(nn.Module):
         sparse_prompt_embeddings: torch.Tensor,
         dense_prompt_embeddings: torch.Tensor,
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        """通过 Transformer 架构，使用图像和提示嵌入预测掩码及质量分数。"""
+        """通过 Transformer 架构，使用图像和提示嵌入预测掩码及质量分数。."""
         # 拼接输出令牌
         output_tokens = torch.cat([self.iou_token.weight, self.mask_tokens.weight], dim=0)
         output_tokens = output_tokens.unsqueeze(0).expand(sparse_prompt_embeddings.shape[0], -1, -1)
@@ -163,7 +163,7 @@ class MaskDecoder(nn.Module):
 
 
 class SAM2MaskDecoder(nn.Module):
-    """基于 Transformer 的解码器，用于根据图像和提示嵌入预测实例分割掩码。
+    """基于 Transformer 的解码器，用于根据图像和提示嵌入预测实例分割掩码。.
 
     此类扩展 MaskDecoder 的功能，加入高分辨率特征处理、动态多掩码输出和对象分数预测等特性。
 
@@ -222,7 +222,7 @@ class SAM2MaskDecoder(nn.Module):
         pred_obj_scores_mlp: bool = False,
         use_multimask_token_for_obj_ptr: bool = False,
     ) -> None:
-        """初始化用于预测实例分割掩码的 SAM2MaskDecoder 模块。
+        """初始化用于预测实例分割掩码的 SAM2MaskDecoder 模块。.
 
         此解码器扩展 MaskDecoder 的功能，加入高分辨率特征处理、动态多掩码输出和对象分数预测等特性。
 
@@ -301,7 +301,7 @@ class SAM2MaskDecoder(nn.Module):
         repeat_image: bool,
         high_res_features: list[torch.Tensor] | None = None,
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
-        """根据图像和提示嵌入预测掩码。
+        """根据图像和提示嵌入预测掩码。.
 
         参数：
             image_embeddings (torch.Tensor): 来自图像编码器的嵌入，形状为 (B, C, H, W)。
@@ -367,7 +367,7 @@ class SAM2MaskDecoder(nn.Module):
         repeat_image: bool,
         high_res_features: list[torch.Tensor] | None = None,
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
-        """使用 Transformer 根据图像和提示嵌入预测实例分割掩码。"""
+        """使用 Transformer 根据图像和提示嵌入预测实例分割掩码。."""
         # 拼接输出令牌
         s = 0
         if self.pred_obj_scores:
@@ -430,14 +430,14 @@ class SAM2MaskDecoder(nn.Module):
         return masks, iou_pred, mask_tokens_out, object_score_logits
 
     def _get_stability_scores(self, mask_logits):
-        """根据上下阈值之间的 IoU 计算掩码稳定性分数。"""
+        """根据上下阈值之间的 IoU 计算掩码稳定性分数。."""
         mask_logits = mask_logits.flatten(-2)
         area_i = torch.sum(mask_logits > self.dynamic_multimask_stability_delta, dim=-1).float()
         area_u = torch.sum(mask_logits > -self.dynamic_multimask_stability_delta, dim=-1).float()
         return torch.where(area_u > 0, area_i / area_u, 1.0)
 
     def _dynamic_multimask_via_stability(self, all_mask_logits, all_iou_scores):
-        """根据稳定性分数和 IoU 预测结果动态选择最稳定的掩码输出。
+        """根据稳定性分数和 IoU 预测结果动态选择最稳定的掩码输出。.
 
         此方法用于输出单个掩码。当当前单掩码输出（基于输出令牌 0）的稳定性分数低于阈值时，会从多掩码输出（基于输出令牌 1-3）中选择预测 IoU 分数最高的掩码，从而保证点击和跟踪场景都能得到有效掩码。
 

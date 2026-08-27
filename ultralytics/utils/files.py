@@ -13,7 +13,7 @@ from pathlib import Path
 
 
 class WorkingDirectory(contextlib.ContextDecorator):
-    """用于临时切换工作目录的上下文管理器和装饰器。
+    """用于临时切换工作目录的上下文管理器和装饰器。.
 
     此类允许通过上下文管理器或装饰器临时切换工作目录，并确保上下文或被装饰函数执行完毕后恢复原工作目录。
 
@@ -39,25 +39,24 @@ class WorkingDirectory(contextlib.ContextDecorator):
     """
 
     def __init__(self, new_dir: str | Path):
-        """使用目标目录初始化 WorkingDirectory 上下文管理器。"""
+        """使用目标目录初始化 WorkingDirectory 上下文管理器。."""
         self.dir = new_dir  # 新目录
         self.cwd = Path.cwd().resolve()  # 当前目录
 
     def __enter__(self):
-        """进入上下文时将当前工作目录切换到指定目录。"""
+        """进入上下文时将当前工作目录切换到指定目录。."""
         os.chdir(self.dir)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        """退出上下文时恢复原始工作目录。"""
+        """退出上下文时恢复原始工作目录。."""
         os.chdir(self.cwd)
 
 
 @contextmanager
 def spaces_in_path(path: str | Path):
-    """处理路径名称中包含空格情况的上下文管理器。
+    """处理路径名称中包含空格情况的上下文管理器。.
 
-    如果路径包含空格，则将空格替换为下划线，把文件或目录复制到新路径，执行上下文代码块，
-    最后再将文件或目录复制回原位置。
+    如果路径包含空格，则将空格替换为下划线，把文件或目录复制到新路径，执行上下文代码块， 最后再将文件或目录复制回原位置。
 
     参数：
         path (str | Path): 可能包含空格的原始路径。
@@ -65,10 +64,8 @@ def spaces_in_path(path: str | Path):
     Yields:
         (Path | str): 将空格替换为下划线后的临时路径。
 
-    示例：
-        >>> with spaces_in_path("/path/with spaces") as new_path:
-        ...     # Your code here
-        ...     pass
+            示例：
+        >>> with spaces_in_path("/path/with spaces") as new_path: ... # Your code here ... pass
     """
     # 如果路径包含空格，则将空格替换为下划线
     if " " in str(path):
@@ -103,10 +100,9 @@ def spaces_in_path(path: str | Path):
 
 
 def increment_path(path: str | Path, exist_ok: bool = False, sep: str = "-", mkdir: bool = False) -> Path:
-    """递增文件或目录路径，例如 runs/exp --> runs/exp{sep}2、runs/exp{sep}3 等。
+    """递增文件或目录路径，例如 runs/exp --> runs/exp{sep}2、runs/exp{sep}3 等。.
 
-    如果路径存在且 `exist_ok` 不为 True，则在路径末尾追加分隔符 `sep` 和编号来递增路径。
-    如果路径是文件，则保留文件扩展名；如果路径是目录，则直接在目录名末尾追加编号。
+    如果路径存在且 `exist_ok` 不为 True，则在路径末尾追加分隔符 `sep` 和编号来递增路径。 如果路径是文件，则保留文件扩展名；如果路径是目录，则直接在目录名末尾追加编号。
 
     参数：
         path (str | Path): 要递增的路径。
@@ -152,19 +148,19 @@ def increment_path(path: str | Path, exist_ok: bool = False, sep: str = "-", mkd
 
 
 def file_age(path: str | Path = __file__) -> int:
-    """返回指定文件自上次修改以来经过的天数。"""
+    """返回指定文件自上次修改以来经过的天数。."""
     dt = datetime.now().astimezone() - datetime.fromtimestamp(Path(path).stat().st_mtime).astimezone()  # 时间差
     return dt.days  # + dt.seconds / 86400  # 小数天数
 
 
 def file_date(path: str | Path = __file__) -> str:
-    """以 `YYYY-M-D` 格式返回文件的修改日期。"""
+    """以 `YYYY-M-D` 格式返回文件的修改日期。."""
     t = datetime.fromtimestamp(Path(path).stat().st_mtime).astimezone()
     return f"{t.year}-{t.month}-{t.day}"
 
 
 def file_size(path: str | Path) -> float:
-    """以 mebibyte（MiB）为单位返回文件或目录的大小。"""
+    """以 mebibyte（MiB）为单位返回文件或目录的大小。."""
     if isinstance(path, (str, Path)):
         mb = 1 << 20  # 字节转换为 MiB（1024 ** 2）
         path = Path(path)
@@ -176,13 +172,13 @@ def file_size(path: str | Path) -> float:
 
 
 def get_latest_run(search_dir: str = ".") -> str:
-    """返回指定目录中最近的 `last.pt` 文件路径，用于恢复训练。"""
+    """返回指定目录中最近的 `last.pt` 文件路径，用于恢复训练。."""
     last_list = glob.glob(f"{search_dir}/**/last*.pt", recursive=True)
     return max(last_list, key=os.path.getctime) if last_list else ""
 
 
 def update_models(model_names: tuple = ("yolo26n.pt",), source_dir: Path = Path("."), update_names: bool = False):
-    """更新指定的 YOLO 模型，并将其重新保存到 `updated_models` 子目录。
+    """更新指定的 YOLO 模型，并将其重新保存到 `updated_models` 子目录。.
 
     参数：
         model_names (tuple, 可选): 要更新的模型文件名。

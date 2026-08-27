@@ -13,14 +13,13 @@ from .base import BaseBackend
 
 
 class RKNNBackend(BaseBackend):
-    """用于 Rockchip NPU 硬件的 Rockchip RKNN 推理后端。
+    """用于 Rockchip NPU 硬件的 Rockchip RKNN 推理后端。.
 
-    使用 RKNN-Toolkit-Lite2 运行时加载并执行 RKNN 模型（.rknn 文件）推理。
-    仅支持带有 NPU 硬件的 Rockchip 设备（例如 RK3588、RK3566）。
+    使用 RKNN-Toolkit-Lite2 运行时加载并执行 RKNN 模型（.rknn 文件）推理。 仅支持带有 NPU 硬件的 Rockchip 设备（例如 RK3588、RK3566）。
     """
 
     def load_model(self, weight: str | Path) -> None:
-        """从 .rknn 文件或模型目录加载 Rockchip RKNN 模型。
+        """从 .rknn 文件或模型目录加载 Rockchip RKNN 模型。.
 
         参数：
             weight (str | Path): .rknn 文件或包含模型的目录路径。
@@ -52,7 +51,7 @@ class RKNNBackend(BaseBackend):
         self.apply_metadata(self.read_metadata(w))
 
     def forward(self, im: torch.Tensor) -> list:
-        """在 Rockchip NPU 上执行推理。
+        """在 Rockchip NPU 上执行推理。.
 
         参数：
             im (torch.Tensor): 输入图像 张量 in BHWC format, normalized to [0, 1].

@@ -1,5 +1,5 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
-"""卷积模块。"""
+"""卷积模块。."""
 
 from __future__ import annotations
 
@@ -28,7 +28,7 @@ __all__ = (
 
 
 def autopad(k, p=None, d=1):  # 卷积核、填充、膨胀系数
-    """计算使输出保持 same 形状所需的填充大小。"""
+    """计算使输出保持 same 形状所需的填充大小。."""
     if d > 1:
         k = d * (k - 1) + 1 if isinstance(k, int) else [d * (x - 1) + 1 for x in k]  # 实际卷积核尺寸
     if p is None:
@@ -37,7 +37,7 @@ def autopad(k, p=None, d=1):  # 卷积核、填充、膨胀系数
 
 
 class Conv(nn.Module):
-    """带批归一化和激活函数的标准卷积模块。
+    """带批归一化和激活函数的标准卷积模块。.
 
     属性：
         conv (nn.Conv2d)：卷积层。
@@ -49,7 +49,7 @@ class Conv(nn.Module):
     default_act = nn.SiLU()  # 默认激活函数
 
     def __init__(self, c1, c2, k=1, s=1, p=None, g=1, d=1, act=True):
-        """使用给定参数初始化 Conv 层。
+        """使用给定参数初始化 Conv 层。.
 
         参数：
             c1 (int)：输入通道数。
@@ -67,7 +67,7 @@ class Conv(nn.Module):
         self.act = self.default_act if act is True else act if isinstance(act, nn.Module) else nn.Identity()
 
     def forward(self, x):
-        """对输入张量依次应用卷积、批归一化和激活函数。
+        """对输入张量依次应用卷积、批归一化和激活函数。.
 
         参数：
             x (torch.Tensor)：输入张量。
@@ -78,7 +78,7 @@ class Conv(nn.Module):
         return self.act(self.bn(self.conv(x)))
 
     def forward_fuse(self, x):
-        """在不使用批归一化的情况下，对输入应用卷积和激活函数。
+        """在不使用批归一化的情况下，对输入应用卷积和激活函数。.
 
         参数：
             x (torch.Tensor)：输入张量。
@@ -90,7 +90,7 @@ class Conv(nn.Module):
 
 
 class Conv2(Conv):
-    """支持卷积融合的简化 RepConv 模块。
+    """支持卷积融合的简化 RepConv 模块。.
 
     属性：
         conv (nn.Conv2d)：主 3x3 卷积层。
@@ -100,7 +100,7 @@ class Conv2(Conv):
     """
 
     def __init__(self, c1, c2, k=3, s=1, p=None, g=1, d=1, act=True):
-        """使用给定参数初始化 Conv2 层。
+        """使用给定参数初始化 Conv2 层。.
 
         参数：
             c1 (int): 输入通道数.
@@ -116,7 +116,7 @@ class Conv2(Conv):
         self.cv2 = nn.Conv2d(c1, c2, 1, s, autopad(1, p, d), groups=g, dilation=d, bias=False)  # 添加 1x1 卷积
 
     def forward(self, x):
-        """对输入张量依次应用卷积、批归一化和激活函数。
+        """对输入张量依次应用卷积、批归一化和激活函数。.
 
         参数：
             x (torch.Tensor): 输入张量.
@@ -127,7 +127,7 @@ class Conv2(Conv):
         return self.act(self.bn(self.conv(x) + self.cv2(x)))
 
     def forward_fuse(self, x):
-        """对输入张量应用融合后的卷积、批归一化和激活函数。
+        """对输入张量应用融合后的卷积、批归一化和激活函数。.
 
         参数：
             x (torch.Tensor)：输入张量。
@@ -138,7 +138,7 @@ class Conv2(Conv):
         return self.act(self.bn(self.conv(x)))
 
     def fuse_convs(self):
-        """融合并行卷积。"""
+        """融合并行卷积。."""
         w = torch.zeros_like(self.conv.weight.data)
         i = [x // 2 for x in w.shape[2:]]
         w[:, :, i[0] : i[0] + 1, i[1] : i[1] + 1] = self.cv2.weight.data.clone()
@@ -148,7 +148,7 @@ class Conv2(Conv):
 
 
 class LightConv(nn.Module):
-    """由 1x1 卷积和深度卷积组成的轻量卷积模块。
+    """由 1x1 卷积和深度卷积组成的轻量卷积模块。.
 
     此实现基于 PaddleDetection 的 HGNetV2 主干网络。
 
@@ -158,7 +158,7 @@ class LightConv(nn.Module):
     """
 
     def __init__(self, c1, c2, k=1, act=None):
-        """使用给定参数初始化 LightConv 层。
+        """使用给定参数初始化 LightConv 层。.
 
         参数：
             c1 (int): 输入通道数.
@@ -172,7 +172,7 @@ class LightConv(nn.Module):
         self.conv2 = DWConv(c2, c2, k, act=act)
 
     def forward(self, x):
-        """对输入张量依次应用两个卷积。
+        """对输入张量依次应用两个卷积。.
 
         参数：
             x (torch.Tensor)：输入张量。
@@ -184,10 +184,10 @@ class LightConv(nn.Module):
 
 
 class DWConv(Conv):
-    """深度卷积模块。"""
+    """深度卷积模块。."""
 
     def __init__(self, c1, c2, k=1, s=1, d=1, act=True):
-        """使用给定参数初始化深度卷积。
+        """使用给定参数初始化深度卷积。.
 
         参数：
             c1 (int): 输入通道数.
@@ -201,10 +201,10 @@ class DWConv(Conv):
 
 
 class DWConvTranspose2d(nn.ConvTranspose2d):
-    """深度转置卷积模块。"""
+    """深度转置卷积模块。."""
 
     def __init__(self, c1, c2, k=1, s=1, p1=0, p2=0):
-        """使用给定参数初始化深度转置卷积。
+        """使用给定参数初始化深度转置卷积。.
 
         参数：
             c1 (int)：输入通道数。
@@ -218,7 +218,7 @@ class DWConvTranspose2d(nn.ConvTranspose2d):
 
 
 class ConvTranspose(nn.Module):
-    """带可选批归一化和激活函数的转置卷积模块。
+    """带可选批归一化和激活函数的转置卷积模块。.
 
     属性：
         conv_transpose (nn.ConvTranspose2d)：转置卷积层。
@@ -230,7 +230,7 @@ class ConvTranspose(nn.Module):
     default_act = nn.SiLU()  # 默认激活函数
 
     def __init__(self, c1, c2, k=2, s=2, p=0, bn=True, act=True):
-        """使用给定参数初始化 ConvTranspose 层。
+        """使用给定参数初始化 ConvTranspose 层。.
 
         参数：
             c1 (int): 输入通道数.
@@ -247,7 +247,7 @@ class ConvTranspose(nn.Module):
         self.act = self.default_act if act is True else act if isinstance(act, nn.Module) else nn.Identity()
 
     def forward(self, x):
-        """对输入依次应用转置卷积、批归一化和激活函数。
+        """对输入依次应用转置卷积、批归一化和激活函数。.
 
         参数：
             x (torch.Tensor): 输入张量.
@@ -258,7 +258,7 @@ class ConvTranspose(nn.Module):
         return self.act(self.bn(self.conv_transpose(x)))
 
     def forward_fuse(self, x):
-        """对输入应用转置卷积和激活函数。
+        """对输入应用转置卷积和激活函数。.
 
         参数：
             x (torch.Tensor)：输入张量。
@@ -270,7 +270,7 @@ class ConvTranspose(nn.Module):
 
 
 class Focus(nn.Module):
-    """用于聚合特征信息的 Focus 模块。
+    """用于聚合特征信息的 Focus 模块。.
 
     此模块将输入张量切分为 4 个部分，并沿通道维度将它们拼接起来。
 
@@ -279,7 +279,7 @@ class Focus(nn.Module):
     """
 
     def __init__(self, c1, c2, k=1, s=1, p=None, g=1, act=True):
-        """使用给定参数初始化 Focus 模块。
+        """使用给定参数初始化 Focus 模块。.
 
         参数：
             c1 (int)：输入通道数。
@@ -295,7 +295,7 @@ class Focus(nn.Module):
         # self.contract = Contract(gain=2)
 
     def forward(self, x):
-        """对输入张量执行 Focus 操作和卷积。
+        """对输入张量执行 Focus 操作和卷积。.
 
         输入形状为 ``(B, C, H, W)``，输出形状为 ``(B, c2, H/2, W/2)``。
 
@@ -310,7 +310,7 @@ class Focus(nn.Module):
 
 
 class GhostConv(nn.Module):
-    """Ghost 卷积模块。
+    """Ghost 卷积模块。.
 
     通过低开销操作用更少的参数生成更多特征。
 
@@ -323,7 +323,7 @@ class GhostConv(nn.Module):
     """
 
     def __init__(self, c1, c2, k=1, s=1, g=1, act=True):
-        """使用给定参数初始化 Ghost 卷积模块。
+        """使用给定参数初始化 Ghost 卷积模块。.
 
         参数：
             c1 (int): 输入通道数.
@@ -339,7 +339,7 @@ class GhostConv(nn.Module):
         self.cv2 = Conv(c_, c_, 5, 1, None, c_, act=act)
 
     def forward(self, x):
-        """对输入张量应用 Ghost 卷积。
+        """对输入张量应用 Ghost 卷积。.
 
         参数：
             x (torch.Tensor): 输入张量.
@@ -352,7 +352,7 @@ class GhostConv(nn.Module):
 
 
 class RepConv(nn.Module):
-    """支持训练模式和部署模式的 RepConv 模块。
+    """支持训练模式和部署模式的 RepConv 模块。.
 
     此模块用于 RT-DETR，并可在推理期间融合卷积以提高效率。
 
@@ -370,7 +370,7 @@ class RepConv(nn.Module):
     default_act = nn.SiLU()  # 默认激活函数
 
     def __init__(self, c1, c2, k=3, s=1, p=1, g=1, d=1, act=True, bn=False, deploy=False):
-        """使用给定参数初始化 RepConv 模块。
+        """使用给定参数初始化 RepConv 模块。.
 
         参数：
             c1 (int): 输入通道数.
@@ -396,7 +396,7 @@ class RepConv(nn.Module):
         self.conv2 = Conv(c1, c2, 1, s, p=(p - k // 2), g=g, act=False)
 
     def forward_fuse(self, x):
-        """执行部署模式下的前向传播。
+        """执行部署模式下的前向传播。.
 
         参数：
             x (torch.Tensor): 输入张量.
@@ -407,7 +407,7 @@ class RepConv(nn.Module):
         return self.act(self.conv(x))
 
     def forward(self, x):
-        """执行训练模式下的前向传播。
+        """执行训练模式下的前向传播。.
 
         参数：
             x (torch.Tensor): 输入张量.
@@ -419,7 +419,7 @@ class RepConv(nn.Module):
         return self.act(self.conv1(x) + self.conv2(x) + id_out)
 
     def get_equivalent_kernel_bias(self):
-        """通过融合卷积计算等效卷积核和偏置。
+        """通过融合卷积计算等效卷积核和偏置。.
 
         返回：
             (torch.Tensor)：等效卷积核。
@@ -432,7 +432,7 @@ class RepConv(nn.Module):
 
     @staticmethod
     def _pad_1x1_to_3x3_tensor(kernel1x1):
-        """将 1x1 卷积核填充为 3x3 尺寸。
+        """将 1x1 卷积核填充为 3x3 尺寸。.
 
         参数：
             kernel1x1 (torch.Tensor)：1x1 卷积核。
@@ -446,7 +446,7 @@ class RepConv(nn.Module):
             return torch.nn.functional.pad(kernel1x1, [1, 1, 1, 1])
 
     def _fuse_bn_tensor(self, branch):
-        """将批归一化层与卷积权重融合。
+        """将批归一化层与卷积权重融合。.
 
         参数：
             branch (Conv | nn.BatchNorm2d | None)：要融合的分支。
@@ -482,7 +482,7 @@ class RepConv(nn.Module):
         return kernel * t, beta - running_mean * gamma / std
 
     def fuse_convs(self):
-        """创建单个等效卷积以融合卷积，用于推理。"""
+        """创建单个等效卷积以融合卷积，用于推理。."""
         if hasattr(self, "conv"):
             return
         kernel, bias = self.get_equivalent_kernel_bias()
@@ -511,7 +511,7 @@ class RepConv(nn.Module):
 
 
 class ChannelAttention(nn.Module):
-    """用于特征重校准的通道注意力模块。
+    """用于特征重校准的通道注意力模块。.
 
     根据全局平均池化结果为各通道应用注意力权重。
 
@@ -525,7 +525,7 @@ class ChannelAttention(nn.Module):
     """
 
     def __init__(self, channels: int) -> None:
-        """初始化通道注意力模块。
+        """初始化通道注意力模块。.
 
         参数：
             channels (int)：输入通道数。
@@ -536,7 +536,7 @@ class ChannelAttention(nn.Module):
         self.act = nn.Sigmoid()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """对输入张量应用通道注意力。
+        """对输入张量应用通道注意力。.
 
         参数：
             x (torch.Tensor)：输入张量。
@@ -548,7 +548,7 @@ class ChannelAttention(nn.Module):
 
 
 class SpatialAttention(nn.Module):
-    """用于特征重校准的空间注意力模块。
+    """用于特征重校准的空间注意力模块。.
 
     根据通道统计信息为空间维度应用注意力权重。
 
@@ -558,7 +558,7 @@ class SpatialAttention(nn.Module):
     """
 
     def __init__(self, kernel_size=7):
-        """初始化空间注意力模块。
+        """初始化空间注意力模块。.
 
         参数：
             kernel_size (int)：卷积核尺寸，可取 3 或 7。
@@ -570,7 +570,7 @@ class SpatialAttention(nn.Module):
         self.act = nn.Sigmoid()
 
     def forward(self, x):
-        """对输入张量应用空间注意力。
+        """对输入张量应用空间注意力。.
 
         参数：
             x (torch.Tensor): 输入张量.
@@ -582,7 +582,7 @@ class SpatialAttention(nn.Module):
 
 
 class CBAM(nn.Module):
-    """卷积块注意力模块（CBAM）。
+    """卷积块注意力模块（CBAM）。.
 
     结合通道注意力和空间注意力机制，全面细化特征。
 
@@ -592,7 +592,7 @@ class CBAM(nn.Module):
     """
 
     def __init__(self, c1, kernel_size=7):
-        """使用给定参数初始化 CBAM。
+        """使用给定参数初始化 CBAM。.
 
         参数：
             c1 (int): 输入通道数.
@@ -603,7 +603,7 @@ class CBAM(nn.Module):
         self.spatial_attention = SpatialAttention(kernel_size)
 
     def forward(self, x):
-        """依次对输入张量应用通道注意力和空间注意力。
+        """依次对输入张量应用通道注意力和空间注意力。.
 
         参数：
             x (torch.Tensor): 输入张量.
@@ -615,14 +615,14 @@ class CBAM(nn.Module):
 
 
 class Concat(nn.Module):
-    """沿指定维度拼接张量列表。
+    """沿指定维度拼接张量列表。.
 
     属性：
         d (int)：拼接张量所沿的维度。
     """
 
     def __init__(self, dimension=1):
-        """初始化 Concat 模块。
+        """初始化 Concat 模块。.
 
         参数：
             dimension (int)：拼接张量所沿的维度。
@@ -631,7 +631,7 @@ class Concat(nn.Module):
         self.d = dimension
 
     def forward(self, x: list[torch.Tensor]):
-        """沿指定维度拼接输入张量。
+        """沿指定维度拼接输入张量。.
 
         参数：
             x (list[torch.Tensor])：输入张量列表。
@@ -643,14 +643,14 @@ class Concat(nn.Module):
 
 
 class Index(nn.Module):
-    """返回输入中的指定索引项。
+    """返回输入中的指定索引项。.
 
     属性：
         index (int)：要从输入中选择的索引。
     """
 
     def __init__(self, index=0):
-        """初始化 Index 模块。
+        """初始化 Index 模块。.
 
         参数：
             index (int)：要从输入中选择的索引。
@@ -659,7 +659,7 @@ class Index(nn.Module):
         self.index = index
 
     def forward(self, x: list[torch.Tensor]):
-        """从输入中选择并返回指定索引项。
+        """从输入中选择并返回指定索引项。.
 
         参数：
             x (list[torch.Tensor])：输入张量列表。

@@ -15,13 +15,13 @@ from ultralytics.utils.export.engine import _NormalizeCoords
 
 
 def _litert_grouped_topk(x: torch.Tensor, k: int, groups: int) -> tuple[torch.Tensor, torch.Tensor]:
-    """沿 dim 1 选择 x 的前 k 项并返回 int32 索引；GPU 委托支持 int32，但不支持 int64。"""
+    """沿 dim 1 选择 x 的前 k 项并返回 int32 索引；GPU 委托支持 int32，但不支持 int64。."""
     values, index = Detect._grouped_topk(x, k, groups)
     return values, index.int()
 
 
 def _litert_gather(self, x: torch.Tensor, index: torch.Tensor) -> torch.Tensor:
-    """沿 dim 1 选择 x 中索引为 (batch, k) 的行，不使用 GPU 委托未实现的 gather_nd。"""
+    """沿 dim 1 选择 x 中索引为 (batch, k) 的行，不使用 GPU 委托未实现的 gather_nd。."""
     b, n = x.shape[:2]
     offset = torch.arange(b, device=x.device, dtype=index.dtype)[..., None] * n
     return x.flatten(0, 1).index_select(0, (index + offset).flatten()).view(b, index.shape[1], *x.shape[2:])
@@ -36,13 +36,11 @@ def torch2litert(
     metadata: dict | None,
     prefix: str,
 ) -> Path:
-    """使用 litert_torch 将 PyTorch 模型导出为 LiteRT 格式，并支持可选 INT8 量化。
+    """使用 litert_torch 将 PyTorch 模型导出为 LiteRT 格式，并支持可选 INT8 量化。.
 
-    通过 ``quantize`` 支持三种 INT8 方案：``8`` 执行静态 INT8（int8 权重 + int8 激活值），
-    ``'w8a16'`` 执行带 int16 激活值的静态 INT8；两者都需要 ``calibration_dataset``。
-    ``'w8a32'`` 执行动态或仅权重 INT8（int8 权重 + FP32 激活值），无需校准。
-    ``None``/``32`` 导出 FP32。FP16 不作为单独模型导出：LiteRT 在运行时通过 GPU 委托（默认 FP16）
-    或 ARM 上的 XNNPACK ``FORCE_FP16`` 标志，以 FP16 运行 FP32 模型。
+    通过 ``quantize`` 支持三种 INT8 方案：``8`` 执行静态 INT8（int8 权重 + int8 激活值）， ``'w8a16'`` 执行带 int16 激活值的静态 INT8；两者都需要
+    ``calibration_dataset``。 ``'w8a32'`` 执行动态或仅权重 INT8（int8 权重 + FP32 激活值），无需校准。 ``None``/``32`` 导出 FP32。FP16
+    不作为单独模型导出：LiteRT 在运行时通过 GPU 委托（默认 FP16） 或 ARM 上的 XNNPACK ``FORCE_FP16`` 标志，以 FP16 运行 FP32 模型。
 
     参数：
         model (torch.nn.Module): 要导出的 PyTorch 模型。

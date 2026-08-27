@@ -1,5 +1,5 @@
 # Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
-"""模型验证指标。"""
+"""模型验证指标。."""
 
 from __future__ import annotations
 
@@ -49,7 +49,7 @@ CITYSCAPES_WEIGHT = np.array(
 
 
 def bbox_ioa(box1: np.ndarray, box2: np.ndarray, iou: bool = False, eps: float = 1e-7) -> np.ndarray:
-    """给定 box1 和 box2，计算交集面积与 box2 面积之比。
+    """给定 box1 和 box2，计算交集面积与 box2 面积之比。.
 
     参数：
         box1 (np.ndarray): 形状为 (N, 4) 的 NumPy 数组，表示 x1y1x2y2 格式的 N 个边界框。
@@ -80,7 +80,7 @@ def bbox_ioa(box1: np.ndarray, box2: np.ndarray, iou: bool = False, eps: float =
 
 
 def box_iou(box1: torch.Tensor, box2: torch.Tensor, eps: float = 1e-7) -> torch.Tensor:
-    """计算边界框的交并比（IoU）。
+    """计算边界框的交并比（IoU）。.
 
     参数：
         box1 (torch.Tensor): 形状为 (N, 4) 的张量，表示 (x1, y1, x2, y2) 格式的 N 个边界框。
@@ -111,10 +111,10 @@ def bbox_iou(
     CIoU: bool = False,
     eps: float = 1e-7,
 ) -> torch.Tensor:
-    """计算边界框之间的交并比（IoU）。
+    """计算边界框之间的交并比（IoU）。.
 
-    只要最后一个维度为 4，此函数就支持 `box1` 和 `box2` 的多种形状，例如 (4,)、(N, 4)、(B, N, 4) 或 (B, N, 1, 4)。
-    当 `xywh=True` 时，内部将最后一个维度解析为 (x, y, w, h)；当 `xywh=False` 时解析为 (x1, y1, x2, y2)。
+    只要最后一个维度为 4，此函数就支持 `box1` 和 `box2` 的多种形状，例如 (4,)、(N, 4)、(B, N, 4) 或 (B, N, 1, 4)。 当 `xywh=True` 时，内部将最后一个维度解析为 (x,
+    y, w, h)；当 `xywh=False` 时解析为 (x1, y1, x2, y2)。
 
     参数：
         box1 (torch.Tensor): 表示一个或多个边界框的张量，最后一个维度为 4。
@@ -170,7 +170,7 @@ def bbox_iou(
 
 
 def mask_iou(mask1: torch.Tensor, mask2: torch.Tensor, eps: float = 1e-7) -> torch.Tensor:
-    """计算掩码 IoU。
+    """计算掩码 IoU。.
 
     参数：
         mask1 (torch.Tensor): 形状为 (N, n) 的张量，其中 N 是真实目标数量，n 是图像宽度与高度的乘积。
@@ -188,7 +188,7 @@ def mask_iou(mask1: torch.Tensor, mask2: torch.Tensor, eps: float = 1e-7) -> tor
 def kpt_iou(
     kpt1: torch.Tensor, kpt2: torch.Tensor, area: torch.Tensor, sigma: list[float], eps: float = 1e-7
 ) -> torch.Tensor:
-    """计算目标关键点相似度（OKS）。
+    """计算目标关键点相似度（OKS）。.
 
     参数：
         kpt1 (torch.Tensor): 形状为 (N, 17, 3) 的张量，表示真实关键点。
@@ -209,7 +209,7 @@ def kpt_iou(
 
 
 def _get_covariance_matrix(boxes: torch.Tensor, floor: float = 0.0) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-    """根据旋转边界框生成协方差矩阵。
+    """根据旋转边界框生成协方差矩阵。.
 
     参数：
         boxes (torch.Tensor): 形状为 (N, 5) 的张量，表示 xywhr 格式的旋转边界框。
@@ -232,7 +232,7 @@ def _get_covariance_matrix(boxes: torch.Tensor, floor: float = 0.0) -> tuple[tor
 def probiou(
     obb1: torch.Tensor, obb2: torch.Tensor, CIoU: bool = False, eps: float = 1e-7, floor: float = 0.0
 ) -> torch.Tensor:
-    """计算旋转边界框之间的概率 IoU。
+    """计算旋转边界框之间的概率 IoU。.
 
     参数：
         obb1 (torch.Tensor): 真实 OBB，形状为 (N, 5)，格式为 xywhr。
@@ -278,7 +278,7 @@ def probiou(
 
 
 def batch_probiou(obb1: torch.Tensor | np.ndarray, obb2: torch.Tensor | np.ndarray, eps: float = 1e-7) -> torch.Tensor:
-    """计算旋转边界框之间的概率 IoU。
+    """计算旋转边界框之间的概率 IoU。.
 
     参数：
         obb1 (torch.Tensor | np.ndarray): 形状为 (N, 5) 的张量，表示 xywhr 格式的真实 OBB。
@@ -314,7 +314,7 @@ def batch_probiou(obb1: torch.Tensor | np.ndarray, obb2: torch.Tensor | np.ndarr
 
 
 def smooth_bce(eps: float = 0.1) -> tuple[float, float]:
-    """计算平滑后的正、负二元交叉熵目标值。
+    """计算平滑后的正、负二元交叉熵目标值。.
 
     参数：
         eps (float, optional): 标签平滑使用的 epsilon 值。
@@ -330,7 +330,7 @@ def smooth_bce(eps: float = 0.1) -> tuple[float, float]:
 
 
 class ConfusionMatrix(DataExportMixin):
-    """计算和更新目标检测、分类等任务混淆矩阵的类。
+    """计算和更新目标检测、分类等任务混淆矩阵的类。.
 
     属性：
         task (str): 任务类型，可选 'detect'、'classify'、'semantic' 或 'obb'。
@@ -341,7 +341,7 @@ class ConfusionMatrix(DataExportMixin):
     """
 
     def __init__(self, names: dict[int, str] | None = None, task: str = "detect", save_matches: bool = False):
-        """初始化 ConfusionMatrix 实例。
+        """初始化 ConfusionMatrix 实例。.
 
         参数：
             names (dict[int, str], 可选): 类别名称，用作绘图标签。
@@ -360,7 +360,7 @@ class ConfusionMatrix(DataExportMixin):
         self.matches = {} if save_matches else None
 
     def _append_matches(self, mtype: str, batch: dict[str, Any], idx: int) -> None:
-        """将上一批次的匹配结果追加到 TP、FP、FN 或 GT 列表。
+        """将上一批次的匹配结果追加到 TP、FP、FN 或 GT 列表。.
 
         此方法将批次数据追加到 matches 字典中对应的匹配类型（真正例、假正例或假负例）。
 
@@ -383,7 +383,7 @@ class ConfusionMatrix(DataExportMixin):
                 self.matches[mtype][k] += [v[0] == idx + 1] if v.max() > 1.0 else [v[idx]]
 
     def process_cls_preds(self, preds: list[torch.Tensor], targets: list[torch.Tensor]) -> None:
-        """更新分类任务的混淆矩阵。
+        """更新分类任务的混淆矩阵。.
 
         参数：
             preds (列表[torch.Tensor]): 预测类别标签。
@@ -400,7 +400,7 @@ class ConfusionMatrix(DataExportMixin):
         conf: float = 0.25,
         iou_thres: float = 0.45,
     ) -> None:
-        """更新目标检测任务的混淆矩阵。
+        """更新目标检测任务的混淆矩阵。.
 
         参数：
             detections (dict[str, torch.Tensor]): 包含检测边界框及其相关信息的字典。应包含 'cls'、'conf' 和 'bboxes' 键，
@@ -473,7 +473,7 @@ class ConfusionMatrix(DataExportMixin):
                 self._append_matches("FP", detections, i)
 
     def tp_fp(self) -> tuple[np.ndarray, np.ndarray]:
-        """返回真正例和假正例。
+        """返回真正例和假正例。.
 
         返回：
             tp (np.ndarray): 真正例。
@@ -487,7 +487,7 @@ class ConfusionMatrix(DataExportMixin):
     def plot_matches(
         self, img: torch.Tensor, im_file: str, save_dir: Path, show_labels: bool = True, show_conf: bool = True
     ) -> None:
-        """为每张图像绘制 GT、TP、FP、FN 网格。
+        """为每张图像绘制 GT、TP、FP、FN 网格。.
 
         参数：
             img (torch.Tensor): 要绘制的图像。
@@ -530,7 +530,7 @@ class ConfusionMatrix(DataExportMixin):
     @TryExcept(msg="ConfusionMatrix plot failure")
     @plt_settings()
     def plot(self, normalize: bool = True, save_dir: str = "", on_plot=None):
-        """使用 matplotlib 绘制混淆矩阵并保存到文件。
+        """使用 matplotlib 绘制混淆矩阵并保存到文件。.
 
         参数：
             normalize (bool, 可选): 是否对混淆矩阵进行归一化。
@@ -603,12 +603,12 @@ class ConfusionMatrix(DataExportMixin):
             on_plot(plot_fname, {"type": "confusion_matrix", "matrix": self.matrix.tolist()})
 
     def print(self):
-        """将混淆矩阵打印到控制台。"""
+        """将混淆矩阵打印到控制台。."""
         for i in range(self.matrix.shape[0]):
             LOGGER.info(" ".join(map(str, self.matrix[i])))
 
     def summary(self, normalize: bool = False, decimals: int = 5) -> list[dict[str, float]]:
-        """将混淆矩阵汇总为字典列表，并可选择进行归一化。
+        """将混淆矩阵汇总为字典列表，并可选择进行归一化。.
 
         该表示形式便于将矩阵导出为 CSV、XML、HTML、JSON 或 SQL 等多种格式。
 
@@ -649,7 +649,7 @@ class ConfusionMatrix(DataExportMixin):
 
 
 def smooth(y: np.ndarray, f: float = 0.05) -> np.ndarray:
-    """使用比例 f 的盒式滤波器平滑数组。"""
+    """使用比例 f 的盒式滤波器平滑数组。."""
     nf = round(len(y) * f * 2) // 2 + 1  # 滤波器元素数量（必须为奇数）
     p = np.ones(nf // 2)  # 全 1 填充
     yp = np.concatenate((p * y[0], y, p * y[-1]), 0)  # 填充后的 y
@@ -665,7 +665,7 @@ def plot_pr_curve(
     names: dict[int, str] | None = None,
     on_plot=None,
 ):
-    """绘制精确率-召回率曲线。
+    """绘制精确率-召回率曲线。.
 
     参数：
         px (np.ndarray): PR 曲线的 X 值。
@@ -712,7 +712,7 @@ def plot_mc_curve(
     ylabel: str = "Metric",
     on_plot=None,
 ):
-    """绘制指标-置信度曲线。
+    """绘制指标-置信度曲线。.
 
     参数：
         px (np.ndarray): 指标-置信度曲线的 X 值。
@@ -750,7 +750,7 @@ def plot_mc_curve(
 
 
 def compute_ap(recall: list[float], precision: list[float]) -> tuple[float, np.ndarray, np.ndarray]:
-    """根据召回率和精确率曲线计算平均精度（AP）。
+    """根据召回率和精确率曲线计算平均精度（AP）。.
 
     参数：
         recall (列表[float]): 召回率曲线。
@@ -793,7 +793,7 @@ def ap_per_class(
     eps: float = 1e-16,
     prefix: str = "",
 ) -> tuple:
-    """计算目标检测评估中每个类别的平均精度。
+    """计算目标检测评估中每个类别的平均精度。.
 
     参数：
         tp (np.ndarray): 指示检测是否正确（True 或 False）的二值数组。
@@ -880,7 +880,7 @@ def ap_per_class(
 
 
 class Metric(SimpleClass):
-    """用于计算 Ultralytics YOLO 模型评估指标的类。
+    """用于计算 Ultralytics YOLO 模型评估指标的类。.
 
     属性：
         p (列表): 每个类别的精确率，形状为 (nc,)。
@@ -908,7 +908,7 @@ class Metric(SimpleClass):
     """
 
     def __init__(self) -> None:
-        """初始化用于计算 YOLO 模型评估指标的 Metric 实例。"""
+        """初始化用于计算 YOLO 模型评估指标的 Metric 实例。."""
         self.p = []  # (nc, )
         self.r = []  # (nc, )
         self.f1 = []  # (nc, )
@@ -919,7 +919,7 @@ class Metric(SimpleClass):
 
     @property
     def ap50(self) -> np.ndarray | list:
-        """返回所有类别在 IoU 阈值 0.5 下的平均精度（AP）。
+        """返回所有类别在 IoU 阈值 0.5 下的平均精度（AP）。.
 
         返回：
             (np.ndarray | 列表): 形状为 (nc,) 的数组，包含每个类别的 AP50 值；没有数据时返回空列表。
@@ -928,7 +928,7 @@ class Metric(SimpleClass):
 
     @property
     def ap(self) -> np.ndarray | list:
-        """返回所有类别在 IoU 阈值 0.5 到 0.95 下的平均精度（AP）。
+        """返回所有类别在 IoU 阈值 0.5 到 0.95 下的平均精度（AP）。.
 
         返回：
             (np.ndarray | 列表): 形状为 (nc,) 的数组，包含每个类别的 AP50-95 值；没有数据时返回空列表。
@@ -937,7 +937,7 @@ class Metric(SimpleClass):
 
     @property
     def mp(self) -> float:
-        """返回所有类别的平均精确率。
+        """返回所有类别的平均精确率。.
 
         返回：
             (float): 所有类别的平均精确率。
@@ -946,7 +946,7 @@ class Metric(SimpleClass):
 
     @property
     def mr(self) -> float:
-        """返回所有类别的平均召回率。
+        """返回所有类别的平均召回率。.
 
         返回：
             (float): 所有类别的平均召回率。
@@ -955,7 +955,7 @@ class Metric(SimpleClass):
 
     @property
     def map50(self) -> float:
-        """返回 IoU 阈值为 0.5 时的平均精度（mAP）。
+        """返回 IoU 阈值为 0.5 时的平均精度（mAP）。.
 
         返回：
             (float): IoU 阈值为 0.5 时的 mAP。
@@ -964,7 +964,7 @@ class Metric(SimpleClass):
 
     @property
     def map75(self) -> float:
-        """返回 IoU 阈值为 0.75 时的平均精度（mAP）。
+        """返回 IoU 阈值为 0.75 时的平均精度（mAP）。.
 
         返回：
             (float): IoU 阈值为 0.75 时的 mAP。
@@ -973,7 +973,7 @@ class Metric(SimpleClass):
 
     @property
     def map(self) -> float:
-        """返回 IoU 阈值 0.5 到 0.95（步长 0.05）范围内的平均精度（mAP）。
+        """返回 IoU 阈值 0.5 到 0.95（步长 0.05）范围内的平均精度（mAP）。.
 
         返回：
             (float): IoU 阈值 0.5 到 0.95（步长 0.05）范围内的 mAP。
@@ -981,28 +981,28 @@ class Metric(SimpleClass):
         return self.all_ap.mean() if len(self.all_ap) else 0.0
 
     def mean_results(self) -> list[float]:
-        """返回结果、mp、mr、map50 和 map 的平均值。"""
+        """返回结果、mp、mr、map50 和 map 的平均值。."""
         return [self.mp, self.mr, self.map50, self.map]
 
     def class_result(self, i: int) -> tuple[float, float, float, float]:
-        """返回类别相关结果 p[i]、r[i]、ap50[i] 和 ap[i]。"""
+        """返回类别相关结果 p[i]、r[i]、ap50[i] 和 ap[i]。."""
         return self.p[i], self.r[i], self.ap50[i], self.ap[i]
 
     @property
     def maps(self) -> np.ndarray:
-        """返回每个类别的 mAP。"""
+        """返回每个类别的 mAP。."""
         maps = np.zeros(self.nc) + self.map
         for i, c in enumerate(self.ap_class_index):
             maps[c] = self.ap[i]
         return maps
 
     def fitness(self) -> float:
-        """返回指标加权组合作为模型适应度分数。"""
+        """返回指标加权组合作为模型适应度分数。."""
         w = [0.0, 0.0, 0.0, 1.0]  # [P、R、mAP@0.5、mAP@0.5:0.95] 的权重
         return float((np.nan_to_num(np.array(self.mean_results())) * w).sum())
 
     def update(self, results: tuple):
-        """使用一组新的结果更新评估指标。
+        """使用一组新的结果更新评估指标。.
 
         参数：
             results (tuple): 包含以下评估指标的元组：
@@ -1031,17 +1031,17 @@ class Metric(SimpleClass):
         ) = results
 
     def clear_image_metrics(self) -> None:
-        """清除当前验证运行中保存的逐图像指标。"""
+        """清除当前验证运行中保存的逐图像指标。."""
         self.image_metrics.clear()
 
     @property
     def curves(self) -> list:
-        """返回用于访问特定指标曲线的曲线列表。"""
+        """返回用于访问特定指标曲线的曲线列表。."""
         return []
 
     @property
     def curves_results(self) -> list[list]:
-        """返回用于访问特定指标曲线的曲线结果列表。"""
+        """返回用于访问特定指标曲线的曲线结果列表。."""
         return [
             [self.px, self.prec_values, "Recall", "Precision"],
             [self.px, self.f1_curve, "Confidence", "F1"],
@@ -1050,7 +1050,7 @@ class Metric(SimpleClass):
         ]
 
     def update_image_metrics(self, tp: np.ndarray, target_cls: np.ndarray, pred_cls: np.ndarray, im_name: str) -> None:
-        """更新 IoU 阈值为 0.5 时的逐图像精确率、召回率、F1、TP、FP 和 FN。
+        """更新 IoU 阈值为 0.5 时的逐图像精确率、召回率、F1、TP、FP 和 FN。.
 
         参数：
             tp (np.ndarray): 形状为 (num_preds, num_iou_thresholds) 的真正例数组，使用第一列（IoU >= 0.5）。
@@ -1084,7 +1084,7 @@ class Metric(SimpleClass):
 
 
 class DetMetrics(SimpleClass, DataExportMixin):
-    """用于计算精确率、召回率和平均精度（mAP）等检测指标的工具类。
+    """用于计算精确率、召回率和平均精度（mAP）等检测指标的工具类。.
 
     属性：
         names (dict[int, str]): 类别名称字典。
@@ -1111,7 +1111,7 @@ class DetMetrics(SimpleClass, DataExportMixin):
     """
 
     def __init__(self, names: dict[int, str] | None = None) -> None:
-        """使用类别名称初始化 DetMetrics 实例。
+        """使用类别名称初始化 DetMetrics 实例。.
 
         参数：
             names (dict[int, str], 可选): 类别名称字典。
@@ -1124,7 +1124,7 @@ class DetMetrics(SimpleClass, DataExportMixin):
         self.nt_per_image = None
 
     def update_stats(self, stat: dict[str, Any]) -> None:
-        """将新值追加到现有统计集合中。
+        """将新值追加到现有统计集合中。.
 
         参数：
             stat (dict[str, Any]): 包含待追加统计值的字典，键应与 self.stats 中的现有键匹配。
@@ -1134,7 +1134,7 @@ class DetMetrics(SimpleClass, DataExportMixin):
         self.box.update_image_metrics(stat["tp"], stat["target_cls"], stat["pred_cls"], stat["im_name"])
 
     def process(self, save_dir: Path = Path("."), plot: bool = False, on_plot=None) -> dict[str, np.ndarray]:
-        """处理目标检测预测结果并更新指标。
+        """处理目标检测预测结果并更新指标。.
 
         参数：
             save_dir (Path): 绘图保存目录，默认为 Path(".")。
@@ -1165,61 +1165,61 @@ class DetMetrics(SimpleClass, DataExportMixin):
         return stats
 
     def clear_stats(self):
-        """清除已保存的统计信息。"""
+        """清除已保存的统计信息。."""
         for v in self.stats.values():
             v.clear()
 
     def clear_image_metrics(self) -> None:
-        """清除已保存的逐图像指标。"""
+        """清除已保存的逐图像指标。."""
         self.box.clear_image_metrics()
 
     @property
     def keys(self) -> list[str]:
-        """返回用于访问特定指标的键列表。"""
+        """返回用于访问特定指标的键列表。."""
         return ["metrics/precision(B)", "metrics/recall(B)", "metrics/mAP50(B)", "metrics/mAP50-95(B)"]
 
     def mean_results(self) -> list[float]:
-        """计算检测目标的平均结果，并返回精确率、召回率、mAP50 和 mAP50-95。"""
+        """计算检测目标的平均结果，并返回精确率、召回率、mAP50 和 mAP50-95。."""
         return self.box.mean_results()
 
     def class_result(self, i: int) -> tuple[float, float, float, float]:
-        """返回目标检测模型在指定类别上的评估结果。"""
+        """返回目标检测模型在指定类别上的评估结果。."""
         return self.box.class_result(i)
 
     @property
     def maps(self) -> np.ndarray:
-        """返回每个类别的平均精度（mAP）分数。"""
+        """返回每个类别的平均精度（mAP）分数。."""
         return self.box.maps
 
     @property
     def fitness(self) -> float:
-        """返回边界框目标的适应度。"""
+        """返回边界框目标的适应度。."""
         return self.box.fitness()
 
     @property
     def ap_class_index(self) -> list:
-        """返回每个类别的平均精度索引。"""
+        """返回每个类别的平均精度索引。."""
         return self.box.ap_class_index
 
     @property
     def results_dict(self) -> dict[str, float]:
-        """返回包含计算后性能指标和统计信息的字典。"""
+        """返回包含计算后性能指标和统计信息的字典。."""
         keys = [*self.keys, "fitness"]
         values = ((float(x) if hasattr(x, "item") else x) for x in ([*self.mean_results(), self.fitness]))
         return dict(zip(keys, values))
 
     @property
     def curves(self) -> list[str]:
-        """返回用于访问特定指标曲线的曲线列表。"""
+        """返回用于访问特定指标曲线的曲线列表。."""
         return ["Precision-Recall(B)", "F1-Confidence(B)", "Precision-Confidence(B)", "Recall-Confidence(B)"]
 
     @property
     def curves_results(self) -> list[list]:
-        """返回计算后的性能指标和统计信息列表。"""
+        """返回计算后的性能指标和统计信息列表。."""
         return self.box.curves_results
 
     def summary(self, normalize: bool = True, decimals: int = 5) -> list[dict[str, Any]]:
-        """将逐类别检测指标汇总为字典列表。
+        """将逐类别检测指标汇总为字典列表。.
 
         对每个类别同时包含共享标量指标（mAP、mAP50、mAP75）、精确率、召回率和 F1 分数。
 
@@ -1254,7 +1254,7 @@ class DetMetrics(SimpleClass, DataExportMixin):
 
 
 class SegmentMetrics(DetMetrics):
-    """计算并汇总给定类别集合上的检测和分割指标。
+    """计算并汇总给定类别集合上的检测和分割指标。.
 
     属性：
         names (dict[int, str]): 类别名称字典。
@@ -1278,7 +1278,7 @@ class SegmentMetrics(DetMetrics):
     """
 
     def __init__(self, names: dict[int, str] | None = None) -> None:
-        """使用类别名称初始化 SegmentMetrics 实例。
+        """使用类别名称初始化 SegmentMetrics 实例。.
 
         参数：
             names (dict[int, str], 可选): 类别名称字典。
@@ -1288,7 +1288,7 @@ class SegmentMetrics(DetMetrics):
         self.stats["tp_m"] = []  # 添加掩码的额外统计信息
 
     def update_stats(self, stat: dict[str, Any]) -> None:
-        """将新值追加到现有统计集合中。
+        """将新值追加到现有统计集合中。.
 
         参数：
             stat (dict[str, Any]): 包含待追加统计值的字典，键应与 self.stats 中的现有键匹配。
@@ -1297,12 +1297,12 @@ class SegmentMetrics(DetMetrics):
         self.seg.update_image_metrics(stat["tp_m"], stat["target_cls"], stat["pred_cls"], stat["im_name"])
 
     def clear_image_metrics(self) -> None:
-        """清除已保存的逐图像指标。"""
+        """清除已保存的逐图像指标。."""
         super().clear_image_metrics()
         self.seg.clear_image_metrics()
 
     def process(self, save_dir: Path = Path("."), plot: bool = False, on_plot=None) -> dict[str, np.ndarray]:
-        """处理给定预测结果集合上的检测和分割指标。
+        """处理给定预测结果集合上的检测和分割指标。.
 
         参数：
             save_dir (Path): 绘图保存目录，默认为 Path(".")。
@@ -1330,7 +1330,7 @@ class SegmentMetrics(DetMetrics):
 
     @property
     def keys(self) -> list[str]:
-        """返回用于访问指标的键列表。"""
+        """返回用于访问指标的键列表。."""
         return [
             *DetMetrics.keys.fget(self),
             "metrics/precision(M)",
@@ -1340,26 +1340,26 @@ class SegmentMetrics(DetMetrics):
         ]
 
     def mean_results(self) -> list[float]:
-        """返回边界框和分割结果的平均指标。"""
+        """返回边界框和分割结果的平均指标。."""
         return DetMetrics.mean_results(self) + self.seg.mean_results()
 
     def class_result(self, i: int) -> list[float]:
-        """返回指定类别索引的分类结果。"""
+        """返回指定类别索引的分类结果。."""
         return DetMetrics.class_result(self, i) + self.seg.class_result(i)
 
     @property
     def maps(self) -> np.ndarray:
-        """返回目标检测和分割模型的 mAP 分数。"""
+        """返回目标检测和分割模型的 mAP 分数。."""
         return DetMetrics.maps.fget(self) + self.seg.maps
 
     @property
     def fitness(self) -> float:
-        """返回分割模型和边界框模型的适应度分数。"""
+        """返回分割模型和边界框模型的适应度分数。."""
         return self.seg.fitness() + DetMetrics.fitness.fget(self)
 
     @property
     def curves(self) -> list[str]:
-        """返回用于访问特定指标曲线的曲线名称列表。"""
+        """返回用于访问特定指标曲线的曲线名称列表。."""
         return [
             *DetMetrics.curves.fget(self),
             "Precision-Recall(M)",
@@ -1370,12 +1370,11 @@ class SegmentMetrics(DetMetrics):
 
     @property
     def curves_results(self) -> list[list]:
-        """返回计算得到的性能指标和统计信息列表。"""
+        """返回计算得到的性能指标和统计信息列表。."""
         return DetMetrics.curves_results.fget(self) + self.seg.curves_results
 
     def summary(self, normalize: bool = True, decimals: int = 5) -> list[dict[str, Any]]:
-        """生成每个类别分割指标的摘要字典列表。
-        摘要包含边界框和掩码的标量指标（mAP、mAP50、mAP75），以及每个类别的精确率、召回率和 F1 分数。
+        """生成每个类别分割指标的摘要字典列表。 摘要包含边界框和掩码的标量指标（mAP、mAP50、mAP75），以及每个类别的精确率、召回率和 F1 分数。.
 
         参数：
             normalize (bool): 对 Segment 指标，是否默认将所有数值归一化到 [0, 1]。
@@ -1401,7 +1400,7 @@ class SegmentMetrics(DetMetrics):
 
 
 class PoseMetrics(DetMetrics):
-    """计算并汇总给定类别集合上的检测和姿态指标。
+    """计算并汇总给定类别集合上的检测和姿态指标。.
 
     属性：
         names (dict[int, str]): 类别名称字典。
@@ -1425,7 +1424,7 @@ class PoseMetrics(DetMetrics):
     """
 
     def __init__(self, names: dict[int, str] | None = None) -> None:
-        """使用类别名称初始化 PoseMetrics 实例。
+        """使用类别名称初始化 PoseMetrics 实例。.
 
         参数：
             names (dict[int, str], 可选): 类别名称字典。
@@ -1435,7 +1434,7 @@ class PoseMetrics(DetMetrics):
         self.stats["tp_p"] = []  # 添加姿态任务的额外统计信息
 
     def update_stats(self, stat: dict[str, Any]) -> None:
-        """将新值追加到现有统计数据集合中，以更新统计信息。
+        """将新值追加到现有统计数据集合中，以更新统计信息。.
 
         参数：
             stat (dict[str, Any]): 包含待追加统计值的字典。键应与 self.stats 中的现有键一致。
@@ -1444,12 +1443,12 @@ class PoseMetrics(DetMetrics):
         self.pose.update_image_metrics(stat["tp_p"], stat["target_cls"], stat["pred_cls"], stat["im_name"])
 
     def clear_image_metrics(self) -> None:
-        """清除已保存的逐图像指标。"""
+        """清除已保存的逐图像指标。."""
         super().clear_image_metrics()
         self.pose.clear_image_metrics()
 
     def process(self, save_dir: Path = Path("."), plot: bool = False, on_plot=None) -> dict[str, np.ndarray]:
-        """根据给定的预测结果处理检测和姿态指标。
+        """根据给定的预测结果处理检测和姿态指标。.
 
         参数：
             save_dir (Path): 保存绘图的目录，默认为 Path(".")。
@@ -1477,7 +1476,7 @@ class PoseMetrics(DetMetrics):
 
     @property
     def keys(self) -> list[str]:
-        """返回评估指标键列表。"""
+        """返回评估指标键列表。."""
         return [
             *DetMetrics.keys.fget(self),
             "metrics/precision(P)",
@@ -1487,26 +1486,26 @@ class PoseMetrics(DetMetrics):
         ]
 
     def mean_results(self) -> list[float]:
-        """返回边界框和姿态的平均结果。"""
+        """返回边界框和姿态的平均结果。."""
         return DetMetrics.mean_results(self) + self.pose.mean_results()
 
     def class_result(self, i: int) -> list[float]:
-        """返回指定类别 i 的类别级检测结果。"""
+        """返回指定类别 i 的类别级检测结果。."""
         return DetMetrics.class_result(self, i) + self.pose.class_result(i)
 
     @property
     def maps(self) -> np.ndarray:
-        """返回每个类别的边界框和姿态检测平均精度（mAP）。"""
+        """返回每个类别的边界框和姿态检测平均精度（mAP）。."""
         return DetMetrics.maps.fget(self) + self.pose.maps
 
     @property
     def fitness(self) -> float:
-        """返回姿态和边界框检测的组合适应度分数。"""
+        """返回姿态和边界框检测的组合适应度分数。."""
         return self.pose.fitness() + DetMetrics.fitness.fget(self)
 
     @property
     def curves(self) -> list[str]:
-        """返回用于访问特定指标曲线的曲线名称列表。"""
+        """返回用于访问特定指标曲线的曲线名称列表。."""
         return [
             *DetMetrics.curves.fget(self),
             "Precision-Recall(P)",
@@ -1517,12 +1516,11 @@ class PoseMetrics(DetMetrics):
 
     @property
     def curves_results(self) -> list[list]:
-        """返回计算得到的性能指标和统计信息列表。"""
+        """返回计算得到的性能指标和统计信息列表。."""
         return DetMetrics.curves_results.fget(self) + self.pose.curves_results
 
     def summary(self, normalize: bool = True, decimals: int = 5) -> list[dict[str, Any]]:
-        """生成每个类别姿态指标的摘要字典列表。
-        摘要包含边界框和姿态的标量指标（mAP、mAP50、mAP75），以及每个类别的精确率、召回率和 F1 分数。
+        """生成每个类别姿态指标的摘要字典列表。 摘要包含边界框和姿态的标量指标（mAP、mAP50、mAP75），以及每个类别的精确率、召回率和 F1 分数。.
 
         参数：
             normalize (bool): 对 Pose 指标，是否默认将所有数值归一化到 [0, 1]。
@@ -1548,7 +1546,7 @@ class PoseMetrics(DetMetrics):
 
 
 class ClassifyMetrics(SimpleClass, DataExportMixin):
-    """计算分类指标的类，包括 Top-1 和 Top-5 准确率。
+    """计算分类指标的类，包括 Top-1 和 Top-5 准确率。.
 
     属性：
         top1 (float): Top-1 准确率。
@@ -1566,13 +1564,13 @@ class ClassifyMetrics(SimpleClass, DataExportMixin):
     """
 
     def __init__(self) -> None:
-        """初始化 ClassifyMetrics 实例。"""
+        """初始化 ClassifyMetrics 实例。."""
         self.top1 = 0
         self.top5 = 0
         self.speed = {"preprocess": 0.0, "inference": 0.0, "loss": 0.0, "postprocess": 0.0}
 
     def process(self, targets: torch.Tensor, pred: torch.Tensor):
-        """处理目标类别和预测类别，并据此计算指标。
+        """处理目标类别和预测类别，并据此计算指标。.
 
         参数：
             targets (torch.Tensor): 目标类别。
@@ -1585,31 +1583,31 @@ class ClassifyMetrics(SimpleClass, DataExportMixin):
 
     @property
     def fitness(self) -> float:
-        """返回 Top-1 和 Top-5 准确率的平均值，作为适应度分数。"""
+        """返回 Top-1 和 Top-5 准确率的平均值，作为适应度分数。."""
         return (self.top1 + self.top5) / 2
 
     @property
     def results_dict(self) -> dict[str, float]:
-        """返回包含模型性能指标和适应度分数的字典。"""
+        """返回包含模型性能指标和适应度分数的字典。."""
         return dict(zip([*self.keys, "fitness"], [self.top1, self.top5, self.fitness]))
 
     @property
     def keys(self) -> list[str]:
-        """返回 results_dict 属性使用的键列表。"""
+        """返回 results_dict 属性使用的键列表。."""
         return ["metrics/accuracy_top1", "metrics/accuracy_top5"]
 
     @property
     def curves(self) -> list:
-        """返回用于访问特定指标曲线的曲线名称列表。"""
+        """返回用于访问特定指标曲线的曲线名称列表。."""
         return []
 
     @property
     def curves_results(self) -> list:
-        """返回用于访问特定指标曲线的曲线结果列表。"""
+        """返回用于访问特定指标曲线的曲线结果列表。."""
         return []
 
     def summary(self, normalize: bool = True, decimals: int = 5) -> list[dict[str, float]]:
-        """生成分类指标的单行摘要（Top-1 和 Top-5 准确率）。
+        """生成分类指标的单行摘要（Top-1 和 Top-5 准确率）。.
 
         参数：
             normalize (bool): 对分类指标，是否默认将所有数值归一化到 [0, 1]。
@@ -1627,7 +1625,7 @@ class ClassifyMetrics(SimpleClass, DataExportMixin):
 
 
 class OBBMetrics(DetMetrics):
-    """用于评估旋转边界框（OBB）检测的指标。
+    """用于评估旋转边界框（OBB）检测的指标。.
 
     属性：
         names (dict[int, str]): 类别名称字典。
@@ -1642,7 +1640,7 @@ class OBBMetrics(DetMetrics):
     """
 
     def __init__(self, names: dict[int, str] | None = None) -> None:
-        """使用类别名称初始化 OBBMetrics 实例。
+        """使用类别名称初始化 OBBMetrics 实例。.
 
         参数：
             names (dict[int, str], 可选): 类别名称字典。
@@ -1651,7 +1649,7 @@ class OBBMetrics(DetMetrics):
 
 
 class SemanticMetrics(SimpleClass, DataExportMixin):
-    """用于语义分割的指标，包括 mIoU、像素准确率和逐类别 IoU。
+    """用于语义分割的指标，包括 mIoU、像素准确率和逐类别 IoU。.
 
     属性：
         names (dict): 类别名称映射。
@@ -1669,7 +1667,7 @@ class SemanticMetrics(SimpleClass, DataExportMixin):
     """
 
     def __init__(self, names: dict[int, str] | None = None) -> None:
-        """初始化语义分割指标。
+        """初始化语义分割指标。.
 
         参数：
             names (dict, 可选): 类别索引到名称的映射字典。
@@ -1687,7 +1685,7 @@ class SemanticMetrics(SimpleClass, DataExportMixin):
         self.nt_per_class = np.zeros(self.nc, dtype=np.int32)
 
     def update_stats(self, preds: torch.Tensor, targets: torch.Tensor) -> None:
-        """根据预测结果和目标累计混淆矩阵。
+        """根据预测结果和目标累计混淆矩阵。.
 
         参数：
             preds (torch.Tensor): 预测类别 ID，形状为 [B, H, W]。
@@ -1711,7 +1709,7 @@ class SemanticMetrics(SimpleClass, DataExportMixin):
             self.nt_per_image += present[:, : self.nc].sum(0).cpu().numpy()
 
     def process(self, save_dir: Path = Path("."), plot: bool = False, on_plot: callable | None = None) -> None:
-        """根据累计的混淆矩阵计算最终指标。
+        """根据累计的混淆矩阵计算最终指标。.
 
         参数：
             save_dir (Path): 绘图保存目录，默认为 Path('.')。
@@ -1746,13 +1744,13 @@ class SemanticMetrics(SimpleClass, DataExportMixin):
             self._plot_iou_bars(save_dir, on_plot)
 
     def clear_stats(self):
-        """清除已累积的统计信息。"""
+        """清除已累积的统计信息。."""
         self.matrix = None
         self.nt_per_image.fill(0)
 
     @plt_settings()
     def _plot_iou_bars(self, save_dir, on_plot):
-        """绘制逐类别 IoU 柱状图。
+        """绘制逐类别 IoU 柱状图。.
 
         参数：
             save_dir (Path | str): 绘图保存目录。
@@ -1782,40 +1780,40 @@ class SemanticMetrics(SimpleClass, DataExportMixin):
 
     @property
     def miou(self):
-        """返回平均 IoU（二分类分割仅返回前景 IoU）。"""
+        """返回平均 IoU（二分类分割仅返回前景 IoU）。."""
         return self._miou
 
     @property
     def pixel_accuracy(self):
-        """返回整体像素准确率。"""
+        """返回整体像素准确率。."""
         return self._pixel_accuracy
 
     @property
     def per_class_iou(self):
-        """返回逐类别 IoU 值（二分类分割仅返回前景 IoU）。"""
+        """返回逐类别 IoU 值（二分类分割仅返回前景 IoU）。."""
         return self._per_class_iou
 
     @property
     def per_class_pixel_accuracy(self):
-        """返回逐类别像素准确率（每个类别的对角线值除以行和）。"""
+        """返回逐类别像素准确率（每个类别的对角线值除以行和）。."""
         return self._per_class_pixel_acc
 
     @property
     def fitness(self):
-        """返回模型适应度，即平均 IoU。"""
+        """返回模型适应度，即平均 IoU。."""
         return self.miou
 
     @property
     def keys(self):
-        """返回用于日志记录的指标键。"""
+        """返回用于日志记录的指标键。."""
         return ["metrics/mIoU", "metrics/pixel_acc"]
 
     def mean_results(self):
-        """返回用于日志记录的平均结果。"""
+        """返回用于日志记录的平均结果。."""
         return [self.miou, self.pixel_accuracy]
 
     def class_result(self, i: int) -> list[float]:
-        """返回指定类别的性能评估结果。"""
+        """返回指定类别的性能评估结果。."""
         if self._per_class_iou is None or len(self._per_class_iou) == 0:
             return [0.0, 0.0]
         c = self.ap_class_index[i]
@@ -1823,7 +1821,7 @@ class SemanticMetrics(SimpleClass, DataExportMixin):
 
     @property
     def ap_class_index(self):
-        """返回真实标注中出现的类别索引，用于逐类别报告。"""
+        """返回真实标注中出现的类别索引，用于逐类别报告。."""
         return [i for i in range(self.nc) if self.nt_per_class[i] > 0]
 
     @property
@@ -1833,16 +1831,16 @@ class SemanticMetrics(SimpleClass, DataExportMixin):
 
     @property
     def curves(self):
-        """返回空列表，因为语义分割没有 PR 曲线。"""
+        """返回空列表，因为语义分割没有 PR 曲线。."""
         return []
 
     @property
     def curves_results(self):
-        """返回空列表（没有 PR 曲线结果）。"""
+        """返回空列表（没有 PR 曲线结果）。."""
         return []
 
     def summary(self, normalize: bool = True, decimals: int = 5) -> list[dict]:
-        """生成逐类别语义分割指标汇总，每行包含全局 mIoU 和像素准确率。
+        """生成逐类别语义分割指标汇总，每行包含全局 mIoU 和像素准确率。.
 
         参数：
             normalize (bool): 语义指标值已处于 [0, 1] 范围，此参数仅为保持接口一致。
@@ -1869,13 +1867,11 @@ class SemanticMetrics(SimpleClass, DataExportMixin):
 
 
 class DepthMetrics(SimpleClass, DataExportMixin):
-    """单目深度估计指标：delta1-3、abs_rel、rmse 和 silog。
+    """单目深度估计指标：delta1-3、abs_rel、rmse 和 silog。.
 
-    指标按图像完成计算，再在验证集上求平均，使每张图像的权重相同，不受有效像素数量影响，
-    与 Depth Anything V2 和 Monodepth2 使用的逐样本平均方式一致。有效真实深度像素少于 10 个的图像会被完全跳过，
-    这与 Depth Anything V2 对其有效掩码采用的下限相同。非有限预测值会按深度边界计分，而不是从平均值中隐藏该图像。
-    逐图像结果在 CPU 上以 float64 累计，因此 DDP 归约仍是简单的求和再 all_reduce。按照标准 Eigen 评估协议，
-    gt 超出 (min_depth, max_depth) 的像素会被排除，预测结果会被限制在该范围内。
+    指标按图像完成计算，再在验证集上求平均，使每张图像的权重相同，不受有效像素数量影响， 与 Depth Anything V2 和 Monodepth2 使用的逐样本平均方式一致。有效真实深度像素少于 10 个的图像会被完全跳过，
+    这与 Depth Anything V2 对其有效掩码采用的下限相同。非有限预测值会按深度边界计分，而不是从平均值中隐藏该图像。 逐图像结果在 CPU 上以 float64 累计，因此 DDP 归约仍是简单的求和再
+    all_reduce。按照标准 Eigen 评估协议， gt 超出 (min_depth, max_depth) 的像素会被排除，预测结果会被限制在该范围内。
 
     属性：
         min_depth (float): 有效深度的最小值，单位为米。
@@ -1888,7 +1884,7 @@ class DepthMetrics(SimpleClass, DataExportMixin):
         max_depth: float = 100.0,
         align: str = "median",
     ) -> None:
-        """初始化深度指标累计器。
+        """初始化深度指标累计器。.
 
         参数：
             min_depth (float): 有效深度最小值，单位为米；gt <= min_depth 的像素会被忽略。
@@ -1906,7 +1902,7 @@ class DepthMetrics(SimpleClass, DataExportMixin):
         self._results = {}
 
     def update_stats(self, preds: torch.Tensor, targets: torch.Tensor) -> None:
-        """累计逐图像指标，并执行逐图像尺度对齐。
+        """累计逐图像指标，并执行逐图像尺度对齐。.
 
         参数：
             preds (torch.Tensor): 预测深度，形状为 (B,1,H,W) 或 (B,H,W)。
@@ -1951,7 +1947,7 @@ class DepthMetrics(SimpleClass, DataExportMixin):
             self._count += 1.0
 
     def process(self, *args, **kwargs) -> None:
-        """对累计的逐图像结果求平均，完成指标计算。"""
+        """对累计的逐图像结果求平均，完成指标计算。."""
         if self._totals is None or self._count == 0:
             self._results = dict.fromkeys(self.keys, 0.0)
             return
@@ -1966,14 +1962,14 @@ class DepthMetrics(SimpleClass, DataExportMixin):
         }
 
     def clear_stats(self) -> None:
-        """重置指标累计器。"""
+        """重置指标累计器。."""
         self._totals = None
         self._count = 0.0
         self._results = {}
 
     @property
     def keys(self) -> list[str]:
-        """用于日志记录的指标键。"""
+        """用于日志记录的指标键。."""
         return [
             "metrics/delta1",
             "metrics/delta2",
@@ -1984,59 +1980,59 @@ class DepthMetrics(SimpleClass, DataExportMixin):
         ]
 
     def mean_results(self) -> list[float]:
-        """按 `keys` 顺序返回指标值。"""
+        """按 `keys` 顺序返回指标值。."""
         return [self._results.get(k, 0.0) for k in self.keys]
 
     @property
     def delta1(self) -> float:
-        """逐图像平均像素比例，其中 max(p/g, g/p) < 1.25。"""
+        """逐图像平均像素比例，其中 max(p/g, g/p) < 1.25。."""
         return self._results.get("metrics/delta1", 0.0)
 
     @property
     def delta2(self) -> float:
-        """逐图像平均像素比例，其中 max(p/g, g/p) < 1.25**2。"""
+        """逐图像平均像素比例，其中 max(p/g, g/p) < 1.25**2。."""
         return self._results.get("metrics/delta2", 0.0)
 
     @property
     def delta3(self) -> float:
-        """逐图像平均像素比例，其中 max(p/g, g/p) < 1.25**3。"""
+        """逐图像平均像素比例，其中 max(p/g, g/p) < 1.25**3。."""
         return self._results.get("metrics/delta3", 0.0)
 
     @property
     def abs_rel(self) -> float:
-        """逐图像平均绝对相对误差。"""
+        """逐图像平均绝对相对误差。."""
         return self._results.get("metrics/abs_rel", 0.0)
 
     @property
     def rmse(self) -> float:
-        """逐图像平均均方根误差（单位：米）。"""
+        """逐图像平均均方根误差（单位：米）。."""
         return self._results.get("metrics/rmse", 0.0)
 
     @property
     def silog(self) -> float:
-        """逐图像平均尺度不变对数误差（乘以 100）。"""
+        """逐图像平均尺度不变对数误差（乘以 100）。."""
         return self._results.get("metrics/silog", 0.0)
 
     @property
     def fitness(self) -> float:
-        """适应度 = delta1（越高越好）。"""
+        """适应度 = delta1（越高越好）。."""
         return self._results.get("metrics/delta1", 0.0)
 
     @property
     def results_dict(self) -> dict[str, float]:
-        """返回包含适应度的结果字典。"""
+        """返回包含适应度的结果字典。."""
         return dict(zip([*self.keys, "fitness"], [*self.mean_results(), self.fitness]))
 
     @property
     def curves(self) -> list:
-        """深度任务没有 PR 曲线。"""
+        """深度任务没有 PR 曲线。."""
         return []
 
     @property
     def curves_results(self) -> list:
-        """深度任务没有 PR 曲线结果。"""
+        """深度任务没有 PR 曲线结果。."""
         return []
 
     def summary(self, normalize: bool = True, decimals: int = 5) -> list[dict]:
-        """全局深度指标的单行汇总。"""
+        """全局深度指标的单行汇总。."""
         return [{k.split("/")[-1]: round(v, decimals) for k, v in self._results.items()}]
